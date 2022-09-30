@@ -1004,9 +1004,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u32 sectorsize = 0;
 	u32 stripesize = 4096;
 	u64 metadata_profile = 0;
-	bool metadata_profile_opt = false;
+	bool metadata_profile_set = false;
 	u64 data_profile = 0;
-	bool data_profile_opt = false;
+	bool data_profile_set = false;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
 	bool mixed = false;
@@ -1069,7 +1069,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					error("unknown data profile %s", optarg);
 					exit(1);
 				}
-				data_profile_opt = true;
+				data_profile_set = true;
 				break;
 			case 'l':
 				warning("--leafsize is deprecated, use --nodesize");
@@ -1094,7 +1094,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					error("unknown metadata profile %s", optarg);
 					exit(1);
 				}
-				metadata_profile_opt = true;
+				metadata_profile_set = true;
 				break;
 			case 'M':
 				mixed = true;
@@ -1262,14 +1262,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (!mixed) {
 		u64 tmp;
 
-		if (!metadata_profile_opt) {
+		if (!metadata_profile_set) {
 			if (dev_cnt > 1)
 				tmp = BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE;
 			else
 				tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE;
 			metadata_profile = tmp;
 		}
-		if (!data_profile_opt) {
+		if (!data_profile_set) {
 			if (dev_cnt > 1)
 				tmp = BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE;
 			else
@@ -1277,7 +1277,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			data_profile = tmp;
 		}
 	} else {
-		if (metadata_profile_opt || data_profile_opt) {
+		if (metadata_profile_set || data_profile_set) {
 			if (metadata_profile != data_profile) {
 				error(
 	"with mixed block groups data and metadata profiles must be the same");
