@@ -375,7 +375,12 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 			break;
 		cur_len = min(cache->start + cache->size, range_end(range)) -
 			  cur_off;
-		BUG_ON(cur_len < root->fs_info->sectorsize);
+		if (cur_len < root->fs_info->sectorsize) {
+			error("reserved range cannot be migrated: length %llu < sectorsize %u",
+				cur_len, root->fs_info->sectorsize);
+			ret = -EUCLEAN;
+			break;
+		}
 
 		/* reserve extent for the data */
 		ret = btrfs_reserve_extent(trans, root, cur_len, 0, 0, (u64)-1,

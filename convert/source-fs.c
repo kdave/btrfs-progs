@@ -22,6 +22,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "common/internal.h"
+#include "common/messages.h"
 #include "common/extent-cache.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
@@ -125,7 +126,11 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 			bytenr = range_end(reserved);
 		} else {
 			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
-			BUG_ON(!cache);
+			if (!cache) {
+				error("block group %llu not found", bytenr);
+				ret = -EUCLEAN;
+				goto fail;
+			}
 			bytenr = cache->start + cache->length;
 		}
 

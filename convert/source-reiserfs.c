@@ -760,7 +760,10 @@ static int reiserfs_acl_to_xattr(void *dst, const void *src,
 	if (count <= 0)
 		goto fail;
 
-	BUG_ON(dst_size < acl_ea_size(count));
+	if (dst_size < acl_ea_size(count)) {
+		error("not enough space to store ACLs");
+		goto fail;
+	}
 	ext_acl->a_version = cpu_to_le32(ACL_EA_VERSION);
 	for (i = 0; i < count; i++, dst_entry++) {
 		src_entry = (struct reiserfs_acl_entry *)src;

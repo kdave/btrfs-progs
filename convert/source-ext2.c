@@ -224,7 +224,11 @@ static int ext2_dir_iterate_proc(ext2_ino_t dir, int entry,
 	objectid = dirent->inode + INO_OFFSET;
 	if (!strncmp(dirent->name, dotdot, name_len)) {
 		if (name_len == 2) {
-			BUG_ON(idata->parent != 0);
+			if (idata->parent != 0) {
+				error("dotdot entry parent not zero: %llu",
+						idata->parent);
+				return BLOCK_ABORT;
+			}
 			idata->parent = objectid;
 		}
 		return 0;
@@ -233,7 +237,10 @@ static int ext2_dir_iterate_proc(ext2_ino_t dir, int entry,
 		return 0;
 
 	file_type = dirent->name_len >> 8;
-	BUG_ON(file_type > EXT2_FT_SYMLINK);
+	if (file_type >= EXT2_FT_MAX) {
+		error("invalid file type %d for %*s", file_type, name_len, dirent->name);
+		return BLOCK_ABORT;
+	}
 
 	ret = convert_insert_dirent(idata->trans, idata->root, dirent->name,
 				    name_len, idata->objectid, objectid,
@@ -459,7 +466,10 @@ static int ext2_acl_to_xattr(void *dst, const void *src,
 	if (count <= 0)
 		goto fail;
 
-	BUG_ON(dst_size < acl_ea_size(count));
+	if (dst_size < acl_ea_size(count)) {
+		error("not enough space to store ACLs");
+		goto fail;
+	}
 	ext_acl->a_version = cpu_to_le32(ACL_EA_VERSION);
 	for (i = 0; i < count; i++, dst_entry++) {
 		src_entry = (ext2_acl_entry *)src;
