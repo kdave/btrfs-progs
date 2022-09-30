@@ -420,7 +420,7 @@ static void print_usage(int ret)
 	printf("\t-L|--label LABEL            set the filesystem label\n");
 	printf("\t-U|--uuid UUID              specify the filesystem UUID (must be unique)\n");
 	printf("  creation:\n");
-	printf("\t-b|--byte-count SIZE        set filesystem size to SIZE (on the first device)\n");
+	printf("\t-b|--byte-count SIZE        set size of each device to SIZE (filesystem size is sum of all device sizes)\n");
 	printf("\t-r|--rootdir DIR            copy files from DIR to the image root directory\n");
 	printf("\t--shrink                    (with --rootdir) shrink the filled filesystem to minimal size\n");
 	printf("\t-K|--nodiscard              do not perform whole device TRIM\n");

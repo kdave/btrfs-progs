@@ -27,8 +27,10 @@ OPTIONS
 -------
 
 -b|--byte-count <size>
-        Specify the size of the filesystem. If this option is not used, then
-        mkfs.btrfs uses the entire device space for the filesystem.
+        Specify the size of each device as seen by the filesystem. If not set,
+        the entire device size is used. The total filesystem size will be sum
+        of all device sizes, for a single device filesystem the option
+        effectively specifies the size of the filesystem.
 
 --csum <type>, --checksum <type>
         Specify the checksum algorithm. Default is *crc32c*. Valid values are *crc32c*,
