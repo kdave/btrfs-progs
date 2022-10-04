@@ -115,7 +115,9 @@ void pr_verbose(int level, const char *fmt, ...)
 	if (bconf.verbose == BTRFS_BCONF_QUIET || level == BTRFS_BCONF_QUIET)
 		return;
 
-	if (bconf.verbose < level)
+	if (bconf.verbose == BTRFS_BCONF_UNSET && level == LOG_DEFAULT)
+		/* Pass */;
+	else if (bconf.verbose < level)
 		return;
 
 	va_start(args, fmt);
