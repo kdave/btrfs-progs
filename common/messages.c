@@ -19,6 +19,9 @@
 #include "common/messages.h"
 #include "common/utils.h"
 
+#define PREFIX_ERROR		"ERROR: "
+#define PREFIX_WARNING		"WARNING: "
+
 static const char *common_error_string[] = {
 	[ERROR_MSG_MEMORY]	= "not enough memory",
 	[ERROR_MSG_START_TRANS] = "failed to start transaction",
@@ -30,7 +33,7 @@ void __btrfs_warning(const char *fmt, ...)
 {
 	va_list args;
 
-	fputs("WARNING: ", stderr);
+	fputs(PREFIX_WARNING, stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -42,7 +45,7 @@ void __btrfs_error(const char *fmt, ...)
 {
 	va_list args;
 
-	fputs("ERROR: ", stderr);
+	fputs(PREFIX_ERROR, stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -57,7 +60,7 @@ int __btrfs_warning_on(int condition, const char *fmt, ...)
 	if (!condition)
 		return 0;
 
-	fputs("WARNING: ", stderr);
+	fputs(PREFIX_WARNING, stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -74,7 +77,7 @@ int __btrfs_error_on(int condition, const char *fmt, ...)
 	if (!condition)
 		return 0;
 
-	fputs("ERROR: ", stderr);
+	fputs(PREFIX_ERROR, stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -89,7 +92,7 @@ void internal_error(const char *fmt, ...)
 	va_list vargs;
 
 	va_start(vargs, fmt);
-	fputs("INTERNAL ERROR: ", stderr);
+	fputs("INTERNAL " PREFIX_ERROR, stderr);
 	vfprintf(stderr, fmt, vargs);
 	va_end(vargs);
 	fputc('\n', stderr);
@@ -130,11 +133,11 @@ void error_msg(enum common_error error, const char *msg, ...)
 		va_list args;
 
 		va_start(args, msg);
-		fprintf(stderr, "ERROR: %s: ", str);
+		fprintf(stderr, PREFIX_ERROR "%s: ", str);
 		vfprintf(stderr, msg, args);
 		va_end(args);
 		fputc('\n', stderr);
 	} else {
-		fprintf(stderr, "ERROR: %s\n", str);
+		fprintf(stderr, PREFIX_ERROR "%s\n", str);
 	}
 }
