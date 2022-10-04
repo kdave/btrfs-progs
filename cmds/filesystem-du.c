@@ -119,8 +119,6 @@ static void cleanup_shared_extents(struct rb_root *root)
 	}
 }
 
-#define dbgprintf(...)
-
 /*
  * Find all extents which overlap 'n', calculate the space
  * covered by them and remove those nodes from the tree.
@@ -131,7 +129,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 	u64 wstart = n->start;
 	u64 wlast = n->last;
 
-	dbgprintf("Count overlaps:");
+	pr_verbose(LOG_DEBUG, "Count overlaps:");
 
 	do {
 		/*
@@ -144,7 +142,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 		if (wlast < n->last)
 			wlast = n->last;
 
-		dbgprintf(" (%llu, %llu)", n->start, n->last);
+		pr_verbose(LOG_DEBUG, " (%llu, %llu)", n->start, n->last);
 
 		tmp = n;
 		n = extent_tree_iter_next(n, wstart, wlast);
@@ -153,7 +151,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 		free(tmp);
 	} while (n);
 
-	dbgprintf("; wstart: %llu wlast: %llu total: %llu\n", wstart,
+	pr_verbose(LOG_DEBUG, "; wstart: %llu wlast: %llu total: %llu\n", wstart,
 		wlast, wlast - wstart + 1);
 
 	return wlast - wstart + 1;
@@ -524,13 +522,13 @@ static int du_add_file(const char *filename, int dirfd,
 			if (is_dir)
 				set_shared = dir_set_shared;
 
-			printf("%10s  %10s  %10s  %s\n",
+			pr_verbose(LOG_DEFAULT, "%10s  %10s  %10s  %s\n",
 			       pretty_size_mode(file_total, unit_mode),
 			       pretty_size_mode(excl, unit_mode),
 			       pretty_size_mode(set_shared, unit_mode),
 			       path);
 		} else {
-			printf("%10s  %10s  %10s  %s\n",
+			pr_verbose(LOG_DEFAULT, "%10s  %10s  %10s  %s\n",
 			       pretty_size_mode(file_total, unit_mode),
 			       pretty_size_mode(excl, unit_mode),
 			       "-", path);
@@ -599,7 +597,7 @@ static int cmd_filesystem_du(const struct cmd_struct *cmd,
 "due to missing support for FIEMAP_EXTENT_SHARED flag");
 	}
 
-	printf("%10s  %10s  %10s  %s\n", "Total", "Exclusive", "Set shared",
+	pr_verbose(LOG_DEFAULT, "%10s  %10s  %10s  %s\n", "Total", "Exclusive", "Set shared",
 			"Filename");
 
 	for (i = optind; i < argc; i++) {
