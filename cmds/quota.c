@@ -169,9 +169,9 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 			return 1;
 		}
 		if (!args.flags)
-			printf("no rescan operation in progress\n");
+			pr_verbose(LOG_DEFAULT, "no rescan operation in progress\n");
 		else
-			printf("rescan operation running (current key %lld)\n",
+			pr_verbose(LOG_DEFAULT, "rescan operation running (current key %lld)\n",
 				args.progress);
 		return 0;
 	}
