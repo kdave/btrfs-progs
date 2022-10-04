@@ -404,8 +404,13 @@ else
 	check_echo = true
 endif
 
+# Insert .deps/ to the output path
 %.o.d: %.c
-	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
+	$(Q)mkdir -p $(dir $@).deps/
+	$(Q)$(CC) -MM -MG -MF $(dir $@).deps/$(notdir $@) \
+		-MT $($(dir $@).deps/$(notdir $@):.o.d=.o) \
+		-MT $($(dir $@).deps/$(notdir $@):.o.d=.static.o) \
+		-MT $(dir $@).deps/$(notdir $@) $(CFLAGS) $<
 
 #
 # Pick from per-file variables, btrfs_*_cflags
@@ -783,15 +788,15 @@ clean-all: clean clean-doc clean-gen
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
-	$(Q)$(RM) -f -- $(progs) *.o *.o.d \
-		kernel-lib/*.o kernel-lib/*.o.d \
-		kernel-shared/*.o kernel-shared/*.o.d \
-		image/*.o image/*.o.d \
-		convert/*.o convert/*.o.d \
-		mkfs/*.o mkfs/*.o.d check/*.o check/*.o.d \
-		cmds/*.o cmds/*.o.d common/*.o common/*.o.d \
-		crypto/*.o crypto/*.o.d \
-		libbtrfs/*.o libbtrfs/*.o.d \
+	$(Q)$(RM) -f -- $(progs) *.o .deps/*.o.d \
+		kernel-lib/*.o kernel-lib/.deps/*.o.d \
+		kernel-shared/*.o kernel-shared/.deps/*.o.d \
+		image/*.o image/.deps/*.o.d \
+		convert/.deps/*.o convert/.deps/*.o.d \
+		mkfs/*.o mkfs/.deps/*.o.d check/*.o check/.deps/*.o.d \
+		cmds/*.o cmds/.deps/*.o.d common/*.o common/.deps/*.o.d \
+		crypto/*.o crypto/.deps/*.o.d \
+		libbtrfs/*.o libbtrfs/.deps/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      btrfs.box btrfs.box.static json-formatter-test \
@@ -799,7 +804,8 @@ clean: $(CLEANDIRS)
 	      $(check_defs) \
 	      libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links) \
 	      $(progs_static) \
-	      libbtrfsutil/*.o libbtrfsutil/*.o.d
+	      libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d
+	$(Q)$(RM) -fd -- .deps */.deps */*/.deps
 ifeq ($(PYTHON_BINDINGS),1)
 	$(Q)cd libbtrfsutil/python; \
 		$(PYTHON) setup.py $(SETUP_PY_Q) clean -a
@@ -820,7 +826,9 @@ clean-gen:
 
 clean-dep:
 	@echo "Cleaning dependency files"
-	$(Q)$(RM) -f -- *.o.d */*.o.d */*/*.o.d
+	$(Q)$(RM) -f -- *.o.d */*.o.d */*/*.o.d \
+		.deps/*.o.d */.deps/*.o.d */*/.deps/*.o.d
+	$(Q)$(RM) -fd -- .deps */.deps */*/.deps
 
 $(CLEANDIRS):
 	@echo "Cleaning $(patsubst clean-%,%,$@)"
