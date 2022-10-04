@@ -530,7 +530,13 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 				goto fail;
 			}
 
-			cur_inum = st.st_ino;
+			/*
+			 * We can not directly use the source ino number,
+			 * as there is a chance that the ino is smaller than
+			 * BTRFS_FIRST_FREE_OBJECTID, which will screw up
+			 * backref code.
+			 */
+			cur_inum = st.st_ino + BTRFS_FIRST_FREE_OBJECTID;
 			ret = add_directory_items(trans, root,
 						  cur_inum, parent_inum,
 						  cur_file->d_name,

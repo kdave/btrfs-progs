@@ -3530,6 +3530,12 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 	u64 num_bytes = *ret_num_bytes;
 
 	/*
+	 * @objectid should be an inode number, thus it must not be smaller
+	 * than BTRFS_FIRST_FREE_OBJECTID.
+	 */
+	ASSERT(objectid >= BTRFS_FIRST_FREE_OBJECTID);
+
+	/*
 	 * All supported file system should not use its 0 extent.
 	 * As it's for hole
 	 *
