@@ -86,7 +86,7 @@ static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit
 		unusable = device_get_zone_unusable(fd, sp->flags);
 		ok = (unusable != DEVICE_ZONE_UNUSABLE_UNKNOWN);
 
-		printf("%s, %s: total=%s, used=%s%s%s\n",
+		pr_verbose(LOG_DEFAULT, "%s, %s: total=%s, used=%s%s%s\n",
 			btrfs_group_type_str(sp->flags),
 			btrfs_group_profile_str(sp->flags),
 			pretty_size_mode(sp->total_bytes, unit_mode),
@@ -243,7 +243,7 @@ static void print_devices(struct btrfs_fs_devices *fs_devices,
 
 	list_sort(NULL, all_devices, cmp_device_id);
 	list_for_each_entry(device, all_devices, dev_list) {
-		printf("\tdevid %4llu size %s used %s path %s\n",
+		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s\n",
 		       (unsigned long long)device->devid,
 		       pretty_size_mode(device->total_bytes, unit_mode),
 		       pretty_size_mode(device->bytes_used, unit_mode),
@@ -268,21 +268,21 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices,
 	device = list_entry(fs_devices->devices.next, struct btrfs_device,
 			    dev_list);
 	if (device->label && device->label[0])
-		printf("Label: '%s' ", device->label);
+		pr_verbose(LOG_DEFAULT, "Label: '%s' ", device->label);
 	else
-		printf("Label: none ");
+		pr_verbose(LOG_DEFAULT, "Label: none ");
 
 	total = device->total_devs;
-	printf(" uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
+	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
 	       (unsigned long long)total,
 	       pretty_size_mode(device->super_bytes_used, unit_mode));
 
 	print_devices(fs_devices, &devs_found, unit_mode);
 
 	if (devs_found < total) {
-		printf("\t*** Some devices missing\n");
+		pr_verbose(LOG_DEFAULT, "\t*** Some devices missing\n");
 	}
-	printf("\n");
+	pr_verbose(LOG_DEFAULT, "\n");
 }
 
 /* adds up all the used spaces as reported by the space info ioctl
@@ -315,11 +315,11 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 
 	uuid_unparse(fs_info->fsid, uuidbuf);
 	if (label && *label)
-		printf("Label: '%s' ", label);
+		pr_verbose(LOG_DEFAULT, "Label: '%s' ", label);
 	else
-		printf("Label: none ");
+		pr_verbose(LOG_DEFAULT, "Label: none ");
 
-	printf(" uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
+	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
 			fs_info->num_devices,
 			pretty_size_mode(calc_used_bytes(space_info),
 					 unit_mode));
@@ -332,14 +332,14 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		/* Add check for missing devices even mounted */
 		fd = open((char *)tmp_dev_info->path, O_RDONLY);
 		if (fd < 0) {
-			printf("\tdevid %4llu size 0 used 0 path %s MISSING\n",
+			pr_verbose(LOG_DEFAULT, "\tdevid %4llu size 0 used 0 path %s MISSING\n",
 					tmp_dev_info->devid, tmp_dev_info->path);
 			continue;
 
 		}
 		close(fd);
 		canonical_path = path_canonicalize((char *)tmp_dev_info->path);
-		printf("\tdevid %4llu size %s used %s path %s\n",
+		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size_mode(tmp_dev_info->total_bytes, unit_mode),
 			pretty_size_mode(tmp_dev_info->bytes_used, unit_mode),
@@ -348,7 +348,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		free(canonical_path);
 	}
 
-	printf("\n");
+	pr_verbose(LOG_DEFAULT, "\n");
 	return 0;
 }
 
@@ -1159,7 +1159,7 @@ static int check_resize_args(const char *amount, const char *path) {
 		res_str = "max";
 	} else if (strcmp(sizestr, "cancel") == 0) {
 		/* Different format, print and exit */
-		printf("Request to cancel resize\n");
+		pr_verbose(LOG_DEFAULT, "Request to cancel resize\n");
 		goto out;
 	} else {
 		if (sizestr[0] == '-') {
@@ -1202,7 +1202,7 @@ static int check_resize_args(const char *amount, const char *path) {
 		res_str = pretty_size_mode(new_size, UNITS_DEFAULT);
 	}
 
-	printf("Resize device id %lld (%s) from %s to %s\n", devid,
+	pr_verbose(LOG_DEFAULT, "Resize device id %lld (%s) from %s to %s\n", devid,
 		di_args[dev_idx].path,
 		pretty_size_mode(di_args[dev_idx].total_bytes, UNITS_DEFAULT),
 		res_str);
