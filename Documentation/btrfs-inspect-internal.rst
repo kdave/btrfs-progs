@@ -196,7 +196,14 @@ subvolid-resolve <subvolid> <path>
 tree-stats [options] <device>
         (needs root privileges)
 
-        Print sizes and statistics of trees.
+        Print sizes and statistics of trees. This takes a device as an argument
+        and not a mount point unlike other commands.
+
+        .. note::
+                In case the the filesystem is still mounted it's possible to
+                run the command but the results may be inaccurate or various
+                errors may be printed in case there are ongoing writes to the
+                filesystem. A warning is printed in such case.
 
         ``Options``
 
