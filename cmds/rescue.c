@@ -97,12 +97,12 @@ static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
 
 	ret = btrfs_recover_chunk_tree(file, yes);
 	if (!ret) {
-		fprintf(stdout, "Chunk tree recovered successfully\n");
+		pr_verbose(LOG_DEFAULT, "Chunk tree recovered successfully\n");
 	} else if (ret > 0) {
 		ret = 0;
-		fprintf(stdout, "Chunk tree recovery aborted\n");
+		pr_verbose(LOG_DEFAULT, "Chunk tree recovery aborted\n");
 	} else {
-		fprintf(stdout, "Chunk tree recovery failed\n");
+		pr_verbose(LOG_DEFAULT, "Chunk tree recovery failed\n");
 	}
 	return ret;
 }
@@ -207,7 +207,7 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 	}
 
 	sb = root->fs_info->super_copy;
-	printf("Clearing log on %s, previous log_root %llu, level %u\n",
+	pr_verbose(LOG_DEFAULT, "Clearing log on %s, previous log_root %llu, level %u\n",
 			devname,
 			(unsigned long long)btrfs_super_log_root(sb),
 			(unsigned)btrfs_super_log_root_level(sb));
