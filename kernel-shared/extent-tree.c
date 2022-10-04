@@ -3582,7 +3582,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 					    struct btrfs_extent_item);
 
 			btrfs_set_extent_refs(leaf, ei, 0);
-			btrfs_set_extent_generation(leaf, ei, 0);
+			btrfs_set_extent_generation(leaf, ei, trans->transid);
 			btrfs_set_extent_flags(leaf, ei,
 					       BTRFS_EXTENT_FLAG_DATA);
 			btrfs_mark_buffer_dirty(leaf);
