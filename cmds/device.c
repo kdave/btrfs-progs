@@ -237,7 +237,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		}
 		if (strcmp("cancel", argv[i]) == 0) {
 			cancel = true;
-			printf("Request to cancel running device deletion\n");
+			pr_verbose(LOG_DEFAULT, "Request to cancel running device deletion\n");
 		}
 	}
 
@@ -485,7 +485,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 				error("cannot unregister device '%s': %m", path);
 			}
 		} else {
-			printf("Scanning for btrfs filesystems on '%s'\n", path);
+			pr_verbose(LOG_DEFAULT, "Scanning for btrfs filesystems on '%s'\n", path);
 			if (btrfs_register_one_device(path) != 0) {
 				ret = 1;
 				free(path);
@@ -632,7 +632,7 @@ static int print_device_stat_string(struct format_ctx *fctx,
 		if (json) {
 			fmt_print(fctx, dev_stats[j].name, args->values[stat_idx]);
 		} else {
-			printf("[%s].%-16s %llu\n", canonical_path, dev_stats[j].name,
+			pr_verbose(LOG_DEFAULT, "[%s].%-16s %llu\n", canonical_path, dev_stats[j].name,
 					(unsigned long long)args->values[stat_idx]);
 		}
 		if (check && (args->values[stat_idx] > 0))
@@ -868,11 +868,11 @@ static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 		goto out;
 
 	for (i = 0; i < devcount; i++) {
-		printf("%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
+		pr_verbose(LOG_DEFAULT, "%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
 		print_device_sizes(&devinfo[i], unit_mode);
 		print_device_chunks(&devinfo[i], chunkinfo, chunkcount,
 				unit_mode);
-		printf("\n");
+		pr_verbose(LOG_DEFAULT, "\n");
 	}
 
 out:
@@ -900,7 +900,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 		DIR *dirstream = NULL;
 
 		if (i > 1)
-			printf("\n");
+			pr_verbose(LOG_DEFAULT, "\n");
 
 		fd = btrfs_open_dir(argv[i], &dirstream, 1);
 		if (fd < 0) {
