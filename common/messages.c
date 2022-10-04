@@ -102,6 +102,19 @@ void internal_error(const char *fmt, ...)
 #endif
 }
 
+static bool should_print(int level)
+{
+	if (bconf.verbose == BTRFS_BCONF_QUIET || level == BTRFS_BCONF_QUIET)
+		return false;
+
+	if (bconf.verbose == BTRFS_BCONF_UNSET && level == LOG_DEFAULT)
+		return true;
+	if (bconf.verbose < level)
+		return false;
+
+	return true;
+}
+
 /*
  * Print a message according to the global verbosity level.
  *
@@ -112,12 +125,7 @@ void pr_verbose(int level, const char *fmt, ...)
 {
 	va_list args;
 
-	if (bconf.verbose == BTRFS_BCONF_QUIET || level == BTRFS_BCONF_QUIET)
-		return;
-
-	if (bconf.verbose == BTRFS_BCONF_UNSET && level == LOG_DEFAULT)
-		/* Pass */;
-	else if (bconf.verbose < level)
+	if (!should_print(level))
 		return;
 
 	va_start(args, fmt);
