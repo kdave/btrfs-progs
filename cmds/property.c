@@ -105,7 +105,7 @@ static int prop_read_only(enum prop_object_type type,
 		if (err)
 			warning("cannot read subvolume info");
 		if (is_ro && !uuid_is_null(info.received_uuid)) {
-			pr_verbose(2, "ro->rw switch but has set receive_uuid");
+			pr_verbose(LOG_INFO, "ro->rw switch but has set receive_uuid");
 
 			if (force) {
 				do_clear_received_uuid = true;
@@ -128,7 +128,7 @@ static int prop_read_only(enum prop_object_type type,
 			char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
 			uuid_unparse(info.received_uuid, uuid_str);
-			pr_verbose(2, "force used, clearing received_uuid, previously %s",
+			pr_verbose(LOG_INFO, "force used, clearing received_uuid, previously %s",
 					uuid_str);
 			ret = subvolume_clear_received_uuid(object);
 			if (ret < 0)

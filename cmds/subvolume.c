@@ -308,7 +308,7 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	if (subvolid > 0 && check_argc_exact(argc - optind, 1))
 		return 1;
 
-	pr_verbose(1, "Transaction commit: %s\n",
+	pr_verbose(LOG_INFO, "Transaction commit: %s\n",
 		   !commit_mode ? "none (default)" :
 		   commit_mode == COMMIT_AFTER ? "at the end" : "after each");
 
@@ -447,7 +447,7 @@ again:
 
 		if (add_seen_fsid(fsid, seen_fsid_hash, fd, dirstream) == 0) {
 			uuid_unparse(fsid, uuidbuf);
-			pr_verbose(1, "  new fs is found for '%s', fsid: %s\n",
+			pr_verbose(LOG_INFO, "  new fs is found for '%s', fsid: %s\n",
 				   path, uuidbuf);
 			/*
 			 * This is the first time a subvolume on this
@@ -491,7 +491,7 @@ keep_fd:
 					ret = 1;
 				} else {
 					uuid_unparse(seen->fsid, uuidbuf);
-					pr_verbose(1,
+					pr_verbose(LOG_INFO,
 					   "final sync is done for fsid: %s\n",
 						   uuidbuf);
 				}

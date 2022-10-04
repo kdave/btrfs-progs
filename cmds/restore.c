@@ -790,7 +790,7 @@ static int overwrite_ok(const char * path)
 			pr_verbose(LOG_DEFAULT, "Skipping existing file %s\n", path);
 			pr_verbose(LOG_DEFAULT, "If you wish to overwrite use -o\n");
 		} else {
-			pr_verbose(1, "Skipping existing file %s\n", path);
+			pr_verbose(LOG_INFO, "Skipping existing file %s\n", path);
 		}
 
 		warn = 1;
@@ -941,7 +941,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 
 	leaf = path.nodes[0];
 	while (!leaf) {
-		pr_verbose(2,
+		pr_verbose(LOG_INFO,
 			   "No leaf after search, looking for the next leaf\n");
 		ret = next_leaf(root, &path);
 		if (ret < 0) {
@@ -949,7 +949,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			goto out;
 		} else if (ret > 0) {
 			/* No more leaves to search */
-			pr_verbose(1,
+			pr_verbose(LOG_INFO,
 		   "Reached the end of the tree looking for the directory\n");
 			ret = 0;
 			goto out;
@@ -966,7 +966,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					goto out;
 				} else if (ret > 0) {
 					/* No more leaves to search */
-					pr_verbose(1,
+					pr_verbose(LOG_INFO,
 		"Reached the end of the tree searching the directory\n");
 					ret = 0;
 					goto out;
@@ -977,12 +977,12 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (found_key.objectid != key->objectid) {
-			pr_verbose(2, "Found objectid=%llu, key=%llu\n",
+			pr_verbose(LOG_VERBOSE, "Found objectid=%llu, key=%llu\n",
 				   found_key.objectid, key->objectid);
 			break;
 		}
 		if (found_key.type != key->type) {
-			pr_verbose(2, "Found type=%u, want=%u\n",
+			pr_verbose(LOG_VERBOSE, "Found type=%u, want=%u\n",
 				       found_key.type, key->type);
 			break;
 		}
@@ -1011,7 +1011,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			if (!overwrite_ok(path_name))
 				goto next;
 
-			pr_verbose(1, "Restoring %s\n", path_name);
+			pr_verbose(LOG_INFO, "Restoring %s\n", path_name);
 			if (dry_run)
 				goto next;
 			fd = open(path_name, O_CREAT|O_WRONLY, 0644);
@@ -1077,7 +1077,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				location.objectid = BTRFS_FIRST_FREE_OBJECTID;
 			}
 
-			pr_verbose(1, "Restoring %s\n", path_name);
+			pr_verbose(LOG_INFO, "Restoring %s\n", path_name);
 
 			errno = 0;
 			if (dry_run)
@@ -1138,7 +1138,7 @@ next:
 		}
 	}
 
-	pr_verbose(1, "Done searching %s\n", in_dir);
+	pr_verbose(LOG_INFO, "Done searching %s\n", in_dir);
 out:
 	btrfs_release_path(&path);
 	return ret;
