@@ -151,3 +151,21 @@ void error_msg(enum common_error error, const char *msg, ...)
 		fprintf(stderr, PREFIX_ERROR "%s\n", str);
 	}
 }
+
+/*
+ * Print a message according to the global verbosity level - to stderr.
+ *
+ * level: minimum verbose level at which the message will be printed
+ */
+__attribute__ ((format (printf, 2, 3)))
+void pr_stderr(int level, const char *fmt, ...)
+{
+	va_list args;
+
+	if (!should_print(level))
+		return;
+
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+}

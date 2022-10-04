@@ -130,6 +130,9 @@ void internal_error(const char *fmt, ...);
 __attribute__ ((format (printf, 2, 3)))
 void pr_verbose(int level, const char *fmt, ...);
 
+__attribute__ ((format (printf, 2, 3)))
+void pr_stderr(int level, const char *fmt, ...);
+
 /*
  * Commonly used errors
  */
