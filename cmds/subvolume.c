@@ -58,7 +58,7 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				continue;
 			err = btrfs_util_subvolume_info_fd(fd, ids[i], NULL);
 			if (err == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
-				printf("Subvolume id %" PRIu64 " is gone\n",
+				pr_verbose(LOG_DEFAULT, "Subvolume id %" PRIu64 " is gone\n",
 				       ids[i]);
 				ids[i] = 0;
 			} else if (err) {
@@ -705,7 +705,7 @@ static int cmd_subvol_get_default(const struct cmd_struct *cmd,
 
 	/* no need to resolve roots if FS_TREE is default */
 	if (default_id == BTRFS_FS_TREE_OBJECTID) {
-		printf("ID 5 (FS_TREE)\n");
+		pr_verbose(LOG_DEFAULT, "ID 5 (FS_TREE)\n");
 		ret = 0;
 		goto out;
 	}
@@ -722,7 +722,7 @@ static int cmd_subvol_get_default(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	printf("ID %" PRIu64 " gen %" PRIu64 " top level %" PRIu64 " path %s\n",
+	pr_verbose(LOG_DEFAULT, "ID %" PRIu64 " gen %" PRIu64 " top level %" PRIu64 " path %s\n",
 	       subvol.id, subvol.generation, subvol.parent_id, path);
 
 	free(path);
@@ -1072,7 +1072,7 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 
 		return -EIO;
 	}
-	printf("inode %llu file offset %llu len %llu disk start %llu "
+	pr_verbose(LOG_DEFAULT, "inode %llu file offset %llu len %llu disk start %llu "
 	       "offset %llu gen %llu flags ",
 	       (unsigned long long)btrfs_search_header_objectid(sh),
 	       (unsigned long long)btrfs_search_header_offset(sh),
@@ -1082,21 +1082,21 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 	       (unsigned long long)found_gen);
 
 	if (compressed) {
-		printf("COMPRESS");
+		pr_verbose(LOG_DEFAULT, "COMPRESS");
 		flags++;
 	}
 	if (type == BTRFS_FILE_EXTENT_PREALLOC) {
-		printf("%sPREALLOC", flags ? "|" : "");
+		pr_verbose(LOG_DEFAULT, "%sPREALLOC", flags ? "|" : "");
 		flags++;
 	}
 	if (type == BTRFS_FILE_EXTENT_INLINE) {
-		printf("%sINLINE", flags ? "|" : "");
+		pr_verbose(LOG_DEFAULT, "%sINLINE", flags ? "|" : "");
 		flags++;
 	}
 	if (!flags)
-		printf("NONE");
+		pr_verbose(LOG_DEFAULT, "NONE");
 
-	printf(" %s\n", name);
+	pr_verbose(LOG_DEFAULT, " %s\n", name);
 	return 0;
 }
 
@@ -1193,7 +1193,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	}
 	free(cache_dir_name);
 	free(cache_full_name);
-	printf("transid marker was %llu\n", (unsigned long long)max_found);
+	pr_verbose(LOG_DEFAULT, "transid marker was %llu\n", (unsigned long long)max_found);
 	return ret;
 }
 
@@ -1380,8 +1380,8 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 			"\t further information.");
 	}
 	/* print the info */
-	printf("%s\n", subvol.id == BTRFS_FS_TREE_OBJECTID ? "/" : subvol_path);
-	printf("\tName: \t\t\t%s\n",
+	pr_verbose(LOG_DEFAULT, "%s\n", subvol.id == BTRFS_FS_TREE_OBJECTID ? "/" : subvol_path);
+	pr_verbose(LOG_DEFAULT, "\tName: \t\t\t%s\n",
 	       (subvol.id == BTRFS_FS_TREE_OBJECTID ? "<FS_TREE>" :
 		basename(subvol_path)));
 
@@ -1389,19 +1389,19 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(subvol.uuid, uuidparse);
-	printf("\tUUID: \t\t\t%s\n", uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tUUID: \t\t\t%s\n", uuidparse);
 
 	if (uuid_is_null(subvol.parent_uuid))
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(subvol.parent_uuid, uuidparse);
-	printf("\tParent UUID: \t\t%s\n", uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tParent UUID: \t\t%s\n", uuidparse);
 
 	if (uuid_is_null(subvol.received_uuid))
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(subvol.received_uuid, uuidparse);
-	printf("\tReceived UUID: \t\t%s\n", uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tReceived UUID: \t\t%s\n", uuidparse);
 
 	if (subvol.otime.tv_sec) {
 		struct tm tm;
@@ -1410,21 +1410,21 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
 	} else
 		strcpy(tstr, "-");
-	printf("\tCreation time: \t\t%s\n", tstr);
+	pr_verbose(LOG_DEFAULT, "\tCreation time: \t\t%s\n", tstr);
 
-	printf("\tSubvolume ID: \t\t%" PRIu64 "\n", subvol.id);
-	printf("\tGeneration: \t\t%" PRIu64 "\n", subvol.generation);
-	printf("\tGen at creation: \t%" PRIu64 "\n", subvol.otransid);
-	printf("\tParent ID: \t\t%" PRIu64 "\n", subvol.parent_id);
-	printf("\tTop level ID: \t\t%" PRIu64 "\n", subvol.parent_id);
+	pr_verbose(LOG_DEFAULT, "\tSubvolume ID: \t\t%" PRIu64 "\n", subvol.id);
+	pr_verbose(LOG_DEFAULT, "\tGeneration: \t\t%" PRIu64 "\n", subvol.generation);
+	pr_verbose(LOG_DEFAULT, "\tGen at creation: \t%" PRIu64 "\n", subvol.otransid);
+	pr_verbose(LOG_DEFAULT, "\tParent ID: \t\t%" PRIu64 "\n", subvol.parent_id);
+	pr_verbose(LOG_DEFAULT, "\tTop level ID: \t\t%" PRIu64 "\n", subvol.parent_id);
 
 	if (subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)
-		printf("\tFlags: \t\t\treadonly\n");
+		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\treadonly\n");
 	else
-		printf("\tFlags: \t\t\t-\n");
+		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\t-\n");
 
-	printf("\tSend transid: \t\t%" PRIu64 "\n", subvol.stransid);
-	printf("\tSend time: \t\t%s\n", tstr);
+	pr_verbose(LOG_DEFAULT, "\tSend transid: \t\t%" PRIu64 "\n", subvol.stransid);
+	pr_verbose(LOG_DEFAULT, "\tSend time: \t\t%s\n", tstr);
 	if (subvol.stime.tv_sec) {
 		struct tm tm;
 
@@ -1433,7 +1433,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	} else {
 		strcpy(tstr, "-");
 	}
-	printf("\tReceive transid: \t%" PRIu64 "\n", subvol.rtransid);
+	pr_verbose(LOG_DEFAULT, "\tReceive transid: \t%" PRIu64 "\n", subvol.rtransid);
 	if (subvol.rtime.tv_sec) {
 		struct tm tm;
 
@@ -1442,10 +1442,10 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	} else {
 		strcpy(tstr, "-");
 	}
-	printf("\tReceive time: \t\t%s\n", tstr);
+	pr_verbose(LOG_DEFAULT, "\tReceive time: \t\t%s\n", tstr);
 
 	/* print the snapshots of the given subvol if any*/
-	printf("\tSnapshot(s):\n");
+	pr_verbose(LOG_DEFAULT, "\tSnapshot(s):\n");
 
 	err = btrfs_util_create_subvolume_iterator_fd(fd,
 						      BTRFS_FS_TREE_OBJECTID, 0,
@@ -1465,7 +1465,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 
 		if (uuid_compare(subvol2.parent_uuid, subvol.uuid) == 0)
-			printf("\t\t\t\t%s\n", path);
+			pr_verbose(LOG_DEFAULT, "\t\t\t\t%s\n", path);
 
 		free(path);
 	}
@@ -1479,7 +1479,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	if (ret == -ENOTTY) {
 		/* Quota information not available, not fatal */
-		printf("\tQuota group:\t\tn/a\n");
+		pr_verbose(LOG_DEFAULT, "\tQuota group:\t\tn/a\n");
 		ret = 0;
 		goto out;
 	}
@@ -1489,18 +1489,18 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 	}
 
-	printf("\tQuota group:\t\t0/%" PRIu64 "\n", subvol.id);
+	pr_verbose(LOG_DEFAULT, "\tQuota group:\t\t0/%" PRIu64 "\n", subvol.id);
 	fflush(stdout);
 
-	printf("\t  Limit referenced:\t%s\n",
+	pr_verbose(LOG_DEFAULT, "\t  Limit referenced:\t%s\n",
 			stats.limit.max_referenced == 0 ? "-" :
 			pretty_size_mode(stats.limit.max_referenced, unit_mode));
-	printf("\t  Limit exclusive:\t%s\n",
+	pr_verbose(LOG_DEFAULT, "\t  Limit exclusive:\t%s\n",
 			stats.limit.max_exclusive == 0 ? "-" :
 			pretty_size_mode(stats.limit.max_exclusive, unit_mode));
-	printf("\t  Usage referenced:\t%s\n",
+	pr_verbose(LOG_DEFAULT, "\t  Usage referenced:\t%s\n",
 			pretty_size_mode(stats.info.referenced, unit_mode));
-	printf("\t  Usage exclusive:\t%s\n",
+	pr_verbose(LOG_DEFAULT, "\t  Usage exclusive:\t%s\n",
 			pretty_size_mode(stats.info.exclusive, unit_mode));
 
 out:
