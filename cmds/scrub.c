@@ -1354,7 +1354,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	}
 
 	if (!n_start && !n_resume) {
-		pr_verbose(LOG_ALWAYS,
+		pr_verbose(LOG_DEFAULT,
 			   "scrub: nothing to resume for %s, fsid %s\n",
 			   path, fsid);
 		nothing_to_resume = 1;
@@ -1427,7 +1427,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		if (pid) {
 			int stat;
 			scrub_handle_sigint_parent();
-			pr_verbose(LOG_ALWAYS,
+			pr_verbose(LOG_DEFAULT,
 				   "scrub %s on %s, fsid %s (pid=%d)\n",
 				   n_start ? "started" : "resumed",
 				   path, fsid, pid);
@@ -1688,7 +1688,7 @@ static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	ret = 0;
-	pr_verbose(LOG_ALWAYS, "scrub cancelled\n");
+	pr_verbose(LOG_DEFAULT, "scrub cancelled\n");
 
 out:
 	close_file_or_dir(fdmnt, dirstream);

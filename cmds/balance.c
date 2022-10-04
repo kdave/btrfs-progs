@@ -351,7 +351,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	} else if (ret > 0) {
 		error("balance: %s", btrfs_err_str(ret));
 	} else {
-		pr_verbose(LOG_ALWAYS,
+		pr_verbose(LOG_DEFAULT,
 			   "Done, had to relocate %llu out of %llu chunks\n",
 			   (unsigned long long)args->stat.completed,
 			   (unsigned long long)args->stat.considered);
@@ -742,7 +742,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 			ret = 1;
 		}
 	} else {
-		pr_verbose(LOG_ALWAYS,
+		pr_verbose(LOG_DEFAULT,
 			   "Done, had to relocate %llu out of %llu chunks\n",
 			   (unsigned long long)args.stat.completed,
 			   (unsigned long long)args.stat.considered);

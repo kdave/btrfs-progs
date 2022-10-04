@@ -453,7 +453,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 				error("cannot unregister devices: %m");
 			}
 		} else {
-			pr_verbose(LOG_ALWAYS, "Scanning for Btrfs filesystems\n");
+			pr_verbose(LOG_DEFAULT, "Scanning for Btrfs filesystems\n");
 			ret = btrfs_scan_devices(1);
 			error_on(ret, "error %d while scanning", ret);
 			ret = btrfs_register_all_devices();
