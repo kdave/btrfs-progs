@@ -74,9 +74,9 @@ static int __ino_to_path_fd(u64 inum, int fd, const char *prepend)
 		ptr += fspath->val[i];
 		str = (char *)(unsigned long)ptr;
 		if (prepend)
-			printf("%s/%s\n", prepend, str);
+			pr_verbose(LOG_DEFAULT, "%s/%s\n", prepend, str);
 		else
-			printf("%s\n", str);
+			pr_verbose(LOG_DEFAULT, "%s\n", str);
 	}
 
 out:
@@ -296,7 +296,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			if (path_fd != fd)
 				close_file_or_dir(path_fd, dirs);
 		} else {
-			printf("inode %llu offset %llu root %llu\n", inum,
+			pr_verbose(LOG_DEFAULT, "inode %llu offset %llu root %llu\n", inum,
 				offset, root);
 		}
 	}
@@ -344,7 +344,7 @@ static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
 	}
 
 	path[PATH_MAX - 1] = '\0';
-	printf("%s\n", path);
+	pr_verbose(LOG_DEFAULT, "%s\n", path);
 
 out:
 	close_file_or_dir(fd, dirstream);
@@ -384,7 +384,7 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	printf("%llu\n", (unsigned long long)rootid);
+	pr_verbose(LOG_DEFAULT, "%llu\n", (unsigned long long)rootid);
 out:
 	close_file_or_dir(fd, dirstream);
 
@@ -632,7 +632,7 @@ static int print_min_dev_size(int fd, u64 devid)
 	}
 
 	adjust_dev_min_size(&extents, &holes, &min_size);
-	printf("%llu bytes (%s)\n", min_size, pretty_size(min_size));
+	pr_verbose(LOG_DEFAULT, "%llu bytes (%s)\n", min_size, pretty_size(min_size));
 	ret = 0;
 out:
 	free_dev_extent_list(&extents);
