@@ -2,9 +2,15 @@
 # Test that only toplevel directory self-reference is created
 
 source "$TEST_TOP/common"
+source "$TEST_TOP/common.convert"
 
 setup_root_helper
 prepare_test_dev
+
+if ! check_kernel_support_reiserfs >/dev/null; then
+	_not_run "no reiserfs support"
+fi
+
 check_global_prereq mkreiserfs
 check_prereq btrfs-convert
 
