@@ -425,7 +425,7 @@ again:
 					mirror_num, num_copies);
 				goto out;
 			}
-			fprintf(stderr, "trying another mirror\n");
+			pr_stderr(LOG_DEFAULT, "trying another mirror\n");
 			continue;
 		}
 		cur += length;
@@ -453,7 +453,7 @@ again:
 			ret = -1;
 			goto out;
 		}
-		fprintf(stderr,
+		pr_stderr(LOG_DEFAULT,
 			"trying another mirror due to decompression error\n");
 		goto again;
 	}
@@ -1225,7 +1225,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 		fs_info = open_ctree_fs_info(&ocf);
 		if (fs_info)
 			break;
-		fprintf(stderr, "Could not open root, trying backup super\n");
+		pr_stderr(LOG_DEFAULT, "Could not open root, trying backup super\n");
 	}
 
 	if (!fs_info)
