@@ -406,7 +406,7 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 static int sort_comp(const struct root_info *entry1, const struct root_info *entry2,
 		     struct btrfs_list_comparer_set *set)
 {
-	int rootid_compared = 0;
+	bool rootid_compared = false;
 	int i, ret = 0;
 
 	if (!set || !set->ncomps)
@@ -423,7 +423,7 @@ static int sort_comp(const struct root_info *entry1, const struct root_info *ent
 			return ret;
 
 		if (set->comps[i].comp_func == comp_entry_with_rootid)
-			rootid_compared = 1;
+			rootid_compared = true;
 	}
 
 	if (!rootid_compared)
@@ -1362,24 +1362,24 @@ static int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter
 static int btrfs_list_parse_sort_string(char *opt_arg,
 				 struct btrfs_list_comparer_set **comps)
 {
-	int order;
-	int flag;
+	bool order;
+	bool flag;
 	char *p;
 	char **ptr_argv;
 	int what_to_sort;
 
 	while ((p = strtok(opt_arg, ",")) != NULL) {
-		flag = 0;
+		flag = false;
 		ptr_argv = all_sort_items;
 
 		while (*ptr_argv) {
 			if (strcmp(*ptr_argv, p) == 0) {
-				flag = 1;
+				flag = true;
 				break;
 			} else {
 				p++;
 				if (strcmp(*ptr_argv, p) == 0) {
-					flag = 1;
+					flag = true;
 					p--;
 					break;
 				}
@@ -1388,18 +1388,18 @@ static int btrfs_list_parse_sort_string(char *opt_arg,
 			ptr_argv++;
 		}
 
-		if (flag == 0)
+		if (flag == false)
 			return -1;
 
 		else {
 			if (*p == '+') {
-				order = 0;
+				order = false;
 				p++;
 			} else if (*p == '-') {
-				order = 1;
+				order = true;
 				p++;
 			} else
-				order = 0;
+				order = false;
 
 			what_to_sort = btrfs_list_get_sort_item(p);
 			btrfs_list_setup_comparer(comps, what_to_sort, order);
@@ -1491,8 +1491,8 @@ static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
 	u64 top_id;
 	int ret = -1, uerr = 0;
 	char *subvol;
-	int is_list_all = 0;
-	int is_only_in_path = 0;
+	bool is_list_all = false;
+	bool is_only_in_path = false;
 	DIR *dirstream = NULL;
 	enum btrfs_list_layout layout = BTRFS_LIST_LAYOUT_DEFAULT;
 
@@ -1517,7 +1517,7 @@ static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
 			btrfs_list_setup_print_column(BTRFS_LIST_PARENT);
 			break;
 		case 'a':
-			is_list_all = 1;
+			is_list_all = true;
 			break;
 		case 'c':
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
@@ -1531,7 +1531,7 @@ static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
 			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
 			break;
 		case 'o':
-			is_only_in_path = 1;
+			is_only_in_path = true;
 			break;
 		case 't':
 			layout = BTRFS_LIST_LAYOUT_TABLE;

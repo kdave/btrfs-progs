@@ -558,7 +558,7 @@ static int qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 static int sort_comp(struct btrfs_qgroup *entry1, struct btrfs_qgroup *entry2,
 		     struct btrfs_qgroup_comparer_set *set)
 {
-	int qgroupid_compared = 0;
+	bool qgroupid_compared = false;
 	int i, ret = 0;
 
 	if (!set || !set->ncomps)
@@ -574,7 +574,7 @@ static int sort_comp(struct btrfs_qgroup *entry1, struct btrfs_qgroup *entry2,
 			return ret;
 
 		if (set->comps[i].comp_func == comp_entry_with_qgroupid)
-			qgroupid_compared = 1;
+			qgroupid_compared = true;
 	}
 
 	if (!qgroupid_compared) {
@@ -1354,8 +1354,8 @@ static int show_qgroups(int fd,
 static int qgroup_parse_sort_string(const char *opt_arg,
 				   struct btrfs_qgroup_comparer_set **comps)
 {
-	int order;
-	int flag;
+	bool order;
+	bool flag;
 	char *p;
 	char **ptr_argv;
 	int what_to_sort;
@@ -1368,17 +1368,17 @@ static int qgroup_parse_sort_string(const char *opt_arg,
 
 	p = strtok(opt_tmp, ",");
 	while (p) {
-		flag = 0;
+		flag = false;
 		ptr_argv = all_sort_items;
 
 		while (*ptr_argv) {
 			if (strcmp(*ptr_argv, p) == 0) {
-				flag = 1;
+				flag = true;
 				break;
 			} else {
 				p++;
 				if (strcmp(*ptr_argv, p) == 0) {
-					flag = 1;
+					flag = true;
 					p--;
 					break;
 				}
@@ -1387,18 +1387,18 @@ static int qgroup_parse_sort_string(const char *opt_arg,
 			ptr_argv++;
 		}
 
-		if (flag == 0) {
+		if (!flag) {
 			ret = 1;
 			goto out;
 		} else {
 			if (*p == '+') {
-				order = 0;
+				order = false;
 				p++;
 			} else if (*p == '-') {
-				order = 1;
+				order = true;
 				p++;
 			} else
-				order = 0;
+				order = false;
 
 			what_to_sort = qgroup_get_sort_item(p);
 			if (what_to_sort < 0) {
@@ -1749,7 +1749,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 	u64 qgroupid;
 	int filter_flag = 0;
 	unsigned unit_mode;
-	int sync = 0;
+	bool sync = false;
 	enum btrfs_util_error err;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
@@ -1807,7 +1807,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 			break;
 		case GETOPT_VAL_SYNC:
-			sync = 1;
+			sync = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1876,8 +1876,8 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	char *path = NULL;
 	struct btrfs_ioctl_qgroup_limit_args args;
 	unsigned long long size;
-	int compressed = 0;
-	int exclusive = 0;
+	bool compressed = false;
+	bool exclusive = false;
 	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 
@@ -1888,10 +1888,10 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		switch (c) {
 		case 'c':
-			compressed = 1;
+			compressed = true;
 			break;
 		case 'e':
-			exclusive = 1;
+			exclusive = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

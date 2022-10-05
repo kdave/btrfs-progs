@@ -132,10 +132,10 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	char *path;
 	char *srcdev;
 	char *dstdev = NULL;
-	int avoid_reading_from_srcdev = 0;
-	int force_using_targetdev = 0;
+	bool avoid_reading_from_srcdev = false;
+	bool force_using_targetdev = false;
 	u64 dstdev_block_count;
-	int do_not_background = 0;
+	bool do_not_background = false;
 	DIR *dirstream = NULL;
 	u64 srcdev_size;
 	u64 dstdev_size;
@@ -157,16 +157,16 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			break;
 		switch (c) {
 		case 'B':
-			do_not_background = 1;
+			do_not_background = true;
 			break;
 		case 'K':
 			discard = false;
 			break;
 		case 'r':
-			avoid_reading_from_srcdev = 1;
+			avoid_reading_from_srcdev = true;
 			break;
 		case 'f':
-			force_using_targetdev = 1;
+			force_using_targetdev = true;
 			break;
 		case GETOPT_VAL_ENQUEUE:
 			enqueue = true;

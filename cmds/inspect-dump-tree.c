@@ -321,11 +321,11 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret = 0;
 	int slot;
-	int extent_only = 0;
-	int device_only = 0;
-	int uuid_tree_only = 0;
-	int roots_only = 0;
-	int root_backups = 0;
+	bool extent_only = false;
+	bool device_only = false;
+	bool uuid_tree_only = false;
+	bool roots_only = false;
+	bool root_backups = false;
 	int traverse = BTRFS_PRINT_TREE_DEFAULT;
 	int dev_optind;
 	unsigned open_ctree_flags;
@@ -376,20 +376,20 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			break;
 		switch (c) {
 		case 'e':
-			extent_only = 1;
+			extent_only = true;
 			break;
 		case 'd':
-			device_only = 1;
+			device_only = true;
 			break;
 		case 'r':
-			roots_only = 1;
+			roots_only = true;
 			break;
 		case 'u':
-			uuid_tree_only = 1;
+			uuid_tree_only = true;
 			break;
 		case 'R':
-			roots_only = 1;
-			root_backups = 1;
+			roots_only = true;
+			root_backups = true;
 			break;
 		case 'b':
 			/*
@@ -622,7 +622,7 @@ again:
 		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			struct extent_buffer *buf;
-			int skip = extent_only | device_only | uuid_tree_only;
+			bool skip = (extent_only || device_only || uuid_tree_only);
 
 			offset = btrfs_item_ptr_offset(leaf, slot);
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));

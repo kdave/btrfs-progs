@@ -78,9 +78,9 @@ static const char * const cmd_inspect_dump_super_usage[] = {
 static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 				  int argc, char **argv)
 {
-	int all = 0;
-	int full = 0;
-	int force = 0;
+	bool all = false;
+	bool full = false;
+	bool force = false;
 	char *filename;
 	int fd = -1;
 	int i;
@@ -118,13 +118,13 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			break;
 
 		case 'a':
-			all = 1;
+			all = true;
 			break;
 		case 'f':
-			full = 1;
+			full = true;
 			break;
 		case 'F':
-			force = 1;
+			force = true;
 			break;
 		case 's':
 			arg = arg_strtou64(optarg);
@@ -136,12 +136,12 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			} else {
 				sb_bytenr = btrfs_sb_offset(arg);
 			}
-			all = 0;
+			all = false;
 			break;
 		case GETOPT_VAL_BYTENR:
 			arg = arg_strtou64(optarg);
 			sb_bytenr = arg;
-			all = 0;
+			all = false;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

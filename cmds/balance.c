@@ -388,8 +388,8 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 	struct btrfs_ioctl_balance_args args;
 	struct btrfs_balance_args *ptrs[] = { &args.data, &args.sys,
 						&args.meta, NULL };
-	int force = 0;
-	int background = 0;
+	bool force = false;
+	bool background = false;
 	bool enqueue = false;
 	unsigned start_flags = 0;
 	bool raid56_warned = false;
@@ -443,7 +443,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 				return 1;
 			break;
 		case 'f':
-			force = 1;
+			force = true;
 			break;
 		case 'v':
 			bconf_be_verbose();
@@ -452,7 +452,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			start_flags |= BALANCE_START_NOWARN;
 			break;
 		case GETOPT_VAL_BACKGROUND:
-			background = 1;
+			background = true;
 			break;
 		case GETOPT_VAL_ENQUEUE:
 			enqueue = true;

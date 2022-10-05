@@ -44,7 +44,7 @@
 #define FIEMAP_EXTENT_SHARED           0x00002000
 #endif
 
-static int summarize = 0;
+static bool summarize = false;
 static unsigned unit_mode = UNITS_RAW;
 static char path[PATH_MAX] = { 0, };
 static char *pathp = path;
@@ -300,7 +300,7 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 	int count = (sizeof(buf) - sizeof(*fiemap)) /
 			sizeof(struct fiemap_extent);
 	unsigned int i, ret;
-	int last = 0;
+	bool last = false;
 	int rc;
 	u64 ext_len;
 	u64 file_total = 0;
@@ -327,7 +327,7 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 			flags = fm_ext[i].fe_flags;
 
 			if (flags & FIEMAP_EXTENT_LAST)
-				last = 1;
+				last = true;
 
 			if (flags & SKIP_FLAGS)
 				continue;
@@ -354,7 +354,7 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 
 		fiemap->fm_start = (fm_ext[i - 1].fe_logical +
 				    fm_ext[i - 1].fe_length);
-	} while (last == 0);
+	} while (!last);
 
 	*ret_total = file_total;
 	*ret_shared = file_shared;
@@ -578,7 +578,7 @@ static int cmd_filesystem_du(const struct cmd_struct *cmd,
 			break;
 		switch (c) {
 		case 's':
-			summarize = 1;
+			summarize = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

@@ -51,7 +51,7 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 	enum btrfs_util_error err;
 
 	while (1) {
-		int clean = 1;
+		bool clean = true;
 
 		for (i = 0; i < count; i++) {
 			if (!ids[i])
@@ -65,7 +65,7 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				error_btrfs_util(err);
 				return -errno;
 			} else {
-				clean = 0;
+				clean = false;
 			}
 		}
 		if (clean)
@@ -529,7 +529,8 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 	char	*subvol, *dst;
 	int	res, retval;
 	int	fd = -1, fddst = -1;
-	int	len, readonly = 0;
+	int	len;
+	bool readonly = false;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
 	char	*newname;
@@ -562,7 +563,7 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 			}
 			break;
 		case 'r':
-			readonly = 1;
+			readonly = true;
 			break;
 		case 'x':
 			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 1);

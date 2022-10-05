@@ -526,7 +526,7 @@ static struct scrub_file_record **scrub_read_file(int fd, int report_errors)
 	int i = 0;
 	int j;
 	int ret;
-	int eof = 0;
+	bool eof = false;
 	int lineno = 0;
 	u64 version;
 	char empty_uuid[BTRFS_FSID_SIZE] = {0};
@@ -542,7 +542,7 @@ again:
 		memmove(l, l + i, old_avail);
 	avail = read(fd, l + old_avail, sizeof(l) - old_avail);
 	if (avail == 0)
-		eof = 1;
+		eof = true;
 	if (avail == 0 && old_avail == 0) {
 		if (curr >= 0 &&
 		    memcmp(p[curr]->fsid, empty_uuid, BTRFS_FSID_SIZE) == 0) {
@@ -1159,15 +1159,15 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	int err = 0;
 	int e_uncorrectable = 0;
 	int e_correctable = 0;
-	int print_raw = 0;
+	bool print_raw = false;
 	char *path;
-	int do_background = 1;
-	int do_wait = 0;
-	int do_print = 0;
+	bool do_background = true;
+	bool do_wait = false;
+	bool do_print = false;
 	int do_quiet = !bconf.verbose; /*Read the global quiet option if set*/
-	int do_record = 1;
-	int readonly = 0;
-	int do_stats_per_dev = 0;
+	bool do_record = true;
+	bool readonly = false;
+	bool do_stats_per_dev = false;
 	int ioprio_class = IOPRIO_CLASS_IDLE;
 	int ioprio_classdata = 0;
 	int n_start = 0;
@@ -1193,28 +1193,28 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	void *terr;
 	u64 devid;
 	DIR *dirstream = NULL;
-	int force = 0;
-	int nothing_to_resume = 0;
+	bool force = false;
+	bool nothing_to_resume = false;
 
 	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
 		switch (c) {
 		case 'B':
-			do_background = 0;
-			do_wait = 1;
-			do_print = 1;
+			do_background = false;
+			do_wait = true;
+			do_print = true;
 			break;
 		case 'd':
-			do_stats_per_dev = 1;
+			do_stats_per_dev = true;
 			break;
 		case 'q':
 			bconf_be_quiet();
 			do_quiet = !bconf.verbose;
 			break;
 		case 'r':
-			readonly = 1;
+			readonly = true;
 			break;
 		case 'R':
-			print_raw = 1;
+			print_raw = true;
 			break;
 		case 'c':
 			ioprio_class = (int)strtol(optarg, NULL, 10);
@@ -1223,7 +1223,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			ioprio_classdata = (int)strtol(optarg, NULL, 10);
 			break;
 		case 'f':
-			force = 1;
+			force = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1237,13 +1237,13 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	spc.progress = NULL;
 	if (do_quiet && do_print)
-		do_print = 0;
+		do_print = false;
 
 	if (mkdir_p(datafile)) {
 		warning_on(!do_quiet,
     "cannot create scrub data file, mkdir %s failed: %m. Status recording disabled",
 			datafile);
-		do_record = 0;
+		do_record = false;
 	}
 	free(datafile);
 
@@ -1286,7 +1286,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	 * canceled=0, finished=0 but no scrub is running.
 	 */
 	if (!is_scrub_running_in_kernel(fdmnt, di_args, fi_args.num_devices))
-		force = 1;
+		force = true;
 
 	/*
 	 * check whether any involved device is already busy running a
@@ -1357,7 +1357,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		pr_verbose(LOG_DEFAULT,
 			   "scrub: nothing to resume for %s, fsid %s\n",
 			   path, fsid);
-		nothing_to_resume = 1;
+		nothing_to_resume = true;
 		goto out;
 	}
 
@@ -1412,7 +1412,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			errno = -ret;
 			warning_on(!do_quiet,
    "failed to write the progress status file: %m. Status recording disabled");
-			do_record = 0;
+			do_record = false;
 		}
 	}
 
@@ -1744,8 +1744,8 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	int ret;
 	int i;
 	int fdmnt;
-	int print_raw = 0;
-	int do_stats_per_dev = 0;
+	bool print_raw = false;
+	bool do_stats_per_dev = false;
 	int c;
 	char fsid[BTRFS_UUID_UNPARSED_SIZE];
 	int fdres = -1;
@@ -1758,10 +1758,10 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	while ((c = getopt(argc, argv, "dR")) != -1) {
 		switch (c) {
 		case 'd':
-			do_stats_per_dev = 1;
+			do_stats_per_dev = true;
 			break;
 		case 'R':
-			print_raw = 1;
+			print_raw = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

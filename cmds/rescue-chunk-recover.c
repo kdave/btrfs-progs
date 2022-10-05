@@ -820,7 +820,7 @@ static int scan_devices(struct recover_control *rc)
 	int devnr = 0;
 	int devidx = 0;
 	int i;
-	int all_done;
+	bool all_done;
 
 	list_for_each_entry(dev, &rc->fs_devices->devices, dev_list)
 		devnr++;
@@ -866,14 +866,14 @@ static int scan_devices(struct recover_control *rc)
 	}
 
 	while (1) {
-		all_done = 1;
+		all_done = true;
 		for (i = 0; i < devidx; i++) {
 			if (dev_scans[i].bytenr == -1)
 				continue;
 			ret = pthread_tryjoin_np(t_scans[i],
 						 (void **)&t_rets[i]);
 			if (ret == EBUSY) {
-				all_done = 0;
+				all_done = false;
 				continue;
 			}
 			if (ret || t_rets[i]) {

@@ -57,7 +57,7 @@ static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
 {
 	int ret = 0;
 	char *file;
-	int yes = 0;
+	bool yes = false;
 
 	/* If verbose is unset, set it to 0 */
 	if (bconf.verbose == BTRFS_BCONF_UNSET)
@@ -70,7 +70,7 @@ static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
 			break;
 		switch (c) {
 		case 'y':
-			yes = 1;
+			yes = true;
 			break;
 		case 'v':
 			bconf.verbose++;
@@ -131,7 +131,7 @@ static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
 				    int argc, char **argv)
 {
 	int ret;
-	int yes = 0;
+	bool yes = false;
 	char *dname;
 
 	optind = 0;
@@ -144,7 +144,7 @@ static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
 			bconf_be_verbose();
 			break;
 		case 'y':
-			yes = 1;
+			yes = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

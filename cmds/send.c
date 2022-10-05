@@ -502,8 +502,8 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 	char *snapshot_parent = NULL;
 	u64 root_id = 0;
 	u64 parent_root_id = 0;
-	int full_send = 1;
-	int new_end_cmd_semantic = 0;
+	bool full_send = true;
+	bool new_end_cmd_semantic = false;
 	u64 send_flags = 0;
 	u64 proto = 0;
 
@@ -551,7 +551,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			bconf_be_quiet();
 			break;
 		case 'e':
-			new_end_cmd_semantic = 1;
+			new_end_cmd_semantic = true;
 			break;
 		case 'c':
 			subvol = realpath(optarg, NULL);
@@ -583,7 +583,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			free(subvol);
 			subvol = NULL;
 			free_send_info(&send);
-			full_send = 0;
+			full_send = false;
 			break;
 		case 'f':
 			if (arg_copy_path(outname, optarg, sizeof(outname))) {
@@ -615,7 +615,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 				goto out;
 			}
 
-			full_send = 0;
+			full_send = false;
 			break;
 		case 'i':
 			error("option -i was removed, use -c instead");

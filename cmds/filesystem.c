@@ -907,12 +907,12 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 				 int argc, char **argv)
 {
 	int fd;
-	int flush = 0;
+	bool flush = false;
 	u64 start = 0;
 	u64 len = (u64)-1;
 	u64 thresh;
 	int i;
-	int recursive = 0;
+	bool recursive = false;
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
 	DIR *dirstream;
@@ -947,7 +947,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 				compress_type = parse_compress_type_arg(optarg);
 			break;
 		case 'f':
-			flush = 1;
+			flush = true;
 			break;
 		case 'v':
 			bconf_be_verbose();
@@ -968,7 +968,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			}
 			break;
 		case 'r':
-			recursive = 1;
+			recursive = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

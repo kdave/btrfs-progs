@@ -65,8 +65,8 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
-	int discard = 1;
-	int force = 0;
+	bool discard = true;
+	bool force = false;
 	int last_dev;
 	bool enqueue = false;
 	int zoned;
@@ -88,10 +88,10 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 			break;
 		switch (c) {
 		case 'K':
-			discard = 0;
+			discard = false;
 			break;
 		case 'f':
-			force = 1;
+			force = true;
 			break;
 		case GETOPT_VAL_ENQUEUE:
 			enqueue = true;
@@ -256,13 +256,13 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	for(i = optind; i < argc - 1; i++) {
 		struct	btrfs_ioctl_vol_args arg;
 		struct btrfs_ioctl_vol_args_v2 argv2 = {0};
-		int is_devid = 0;
+		bool is_devid = false;
 		int	res;
 
 		if (string_is_numerical(argv[i])) {
 			argv2.devid = arg_strtou64(argv[i]);
 			argv2.flags = BTRFS_DEVICE_SPEC_BY_ID;
-			is_devid = 1;
+			is_devid = true;
 		} else if (strcmp(argv[i], "missing") == 0 ||
 			   cancel ||
 			   path_is_block_device(argv[i]) == 1) {
@@ -410,9 +410,9 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int i;
 	int devstart;
-	int all = 0;
+	bool all = false;
+	bool forget = 0;
 	int ret = 0;
-	int forget = 0;
 
 	optind = 0;
 	while (1) {
@@ -428,10 +428,10 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		switch (c) {
 		case 'd':
-			all = 1;
+			all = true;
 			break;
 		case 'u':
-			forget = 1;
+			forget = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

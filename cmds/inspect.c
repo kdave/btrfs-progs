@@ -152,7 +152,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	int ret;
 	int fd;
 	int i;
-	int getpath = 1;
+	bool getpath = true;
 	int bytes_left;
 	struct btrfs_ioctl_logical_ino_args loi = { 0 };
 	struct btrfs_data_container *inodes;
@@ -171,7 +171,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 
 		switch (c) {
 		case 'P':
-			getpath = 0;
+			getpath = false;
 			break;
 		case 'v':
 			bconf_be_verbose();

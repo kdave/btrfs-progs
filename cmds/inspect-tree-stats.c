@@ -36,7 +36,7 @@
 #include "cmds/commands.h"
 
 static int verbose = 0;
-static int no_pretty = 0;
+static bool no_pretty = false;
 
 struct seek {
 	u64 distance;
@@ -453,7 +453,7 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			verbose++;
 			break;
 		case 'b':
-			no_pretty = 1;
+			no_pretty = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

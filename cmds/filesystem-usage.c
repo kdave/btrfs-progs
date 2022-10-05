@@ -474,7 +474,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 free_min = 0;
 	u64 zone_unusable = 0;
 	double max_data_ratio = 1.0;
-	int mixed = 0;
+	bool mixed = false;
 	struct statfs statfs_buf;
 	struct btrfs_ioctl_feature_flags feature_flags;
 
@@ -527,7 +527,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		}
 		if ((flags & (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA))
 		    == (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA)) {
-			mixed = 1;
+			mixed = true;
 		} else {
 			/*
 			 * As mixed mode is not supported in zoned mode, this

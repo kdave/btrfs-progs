@@ -634,7 +634,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	int compression;
 	u64 found_size = 0;
 	struct timespec times[2];
-	int times_ok = 0;
+	bool times_ok = false;
 
 	btrfs_init_path(&path);
 	ret = btrfs_lookup_inode(NULL, root, &path, key, 0);
@@ -665,7 +665,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 			bts = btrfs_inode_mtime(inode_item);
 			times[1].tv_sec = btrfs_timespec_sec(path.nodes[0], bts);
 			times[1].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
-			times_ok = 1;
+			times_ok = true;
 		}
 	}
 	btrfs_release_path(&path);

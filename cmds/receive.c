@@ -1427,7 +1427,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	int ret;
 	char *dest_dir_full_path;
 	char root_subvol_path[PATH_MAX];
-	int end = 0;
+	bool end = false;
 	int iterations = 0;
 
 	dest_dir_full_path = realpath(tomnt, NULL);
@@ -1540,7 +1540,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 			ret = 1;
 		}
 		if (ret > 0)
-			end = 1;
+			end = true;
 
 		close_inode_for_write(rctx);
 		ret = finish_subvol(rctx);
@@ -1642,7 +1642,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	struct btrfs_receive rctx;
 	int receive_fd = fileno(stdin);
 	u64 max_errors = 1;
-	int dump = 0;
+	bool dump = false;
 	int ret = 0;
 
 	memset(&rctx, 0, sizeof(rctx));
@@ -1718,7 +1718,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 			break;
 		case GETOPT_VAL_DUMP:
-			dump = 1;
+			dump = true;
 			break;
 		case GETOPT_VAL_FORCE_DECOMPRESS:
 			rctx.force_decompress = true;

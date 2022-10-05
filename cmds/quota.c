@@ -125,7 +125,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	struct btrfs_ioctl_quota_rescan_args args;
 	unsigned long ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
 	DIR *dirstream = NULL;
-	int wait_for_completion = 0;
+	bool wait_for_completion = false;
 
 	optind = 0;
 	while (1) {
@@ -137,7 +137,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;
 			break;
 		case 'w':
-			wait_for_completion = 1;
+			wait_for_completion = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
