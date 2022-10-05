@@ -403,8 +403,7 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 						  0);
 				if (ret) {
 					errno = -ret;
-					fprintf(stderr, "cannot access: '%s:' %m\n",
-							entry->d_name);
+					warning("cannot access '%s': %m\n", entry->d_name);
 					if (ret == -ENOTTY || ret == -EACCES) {
 						ret = 0;
 						continue;
