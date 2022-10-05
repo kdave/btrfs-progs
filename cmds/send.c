@@ -284,15 +284,12 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 		ret = -errno;
 		error("send ioctl failed with %d: %m", ret);
 		if (ret == -EINVAL && (!is_first_subvol || !is_last_subvol))
-			fprintf(stderr,
+			pr_stderr(LOG_DEFAULT,
 				"Try upgrading your kernel or don't use -e.\n");
 		goto out;
 	}
-	if (bconf.verbose > 1)
-		fprintf(stderr, "BTRFS_IOC_SEND returned %d\n", ret);
-
-	if (bconf.verbose > 1)
-		fprintf(stderr, "joining genl thread\n");
+	pr_stderr(LOG_INFO, "BTRFS_IOC_SEND returned %d\n", ret);
+	pr_stderr(LOG_DEBUG, "joining genl thread\n");
 
 	close(pipefd[1]);
 	pipefd[1] = -1;
@@ -745,7 +742,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if ((send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA) && bconf.verbose > 1)
 		if (bconf.verbose > 1)
-			fprintf(stderr, "Mode NO_FILE_DATA enabled\n");
+			pr_stderr(LOG_DEFAULT, "Mode NO_FILE_DATA enabled\n");
 	send.proto_supported = get_sysfs_proto_supported();
 	if (send.proto_supported == 1) {
 		if (send.proto > send.proto_supported) {
@@ -773,9 +770,8 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			goto out;
 		}
 	}
-	if (bconf.verbose > 1)
-		fprintf(stderr, "Protocol version requested: %u (supported %u)\n",
-			send.proto, send.proto_supported);
+	pr_stderr(LOG_INFO, "Protocol version requested: %u (supported %u)\n",
+		send.proto, send.proto_supported);
 
 	for (i = optind; i < argc; i++) {
 		int is_first_subvol;
@@ -784,8 +780,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 		free(subvol);
 		subvol = argv[i];
 
-		if (bconf.verbose > BTRFS_BCONF_QUIET)
-			fprintf(stderr, "At subvol %s\n", subvol);
+		pr_stderr(LOG_DEFAULT, "At subvol %s\n", subvol);
 
 		subvol = realpath(subvol, NULL);
 		if (!subvol) {
