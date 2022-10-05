@@ -27,6 +27,7 @@
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
+#include "common/fsfeatures.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;
@@ -78,10 +79,7 @@ struct btrfs_mkfs_config {
 	u32 sectorsize;
 	u32 stripesize;
 	u32 leaf_data_size;
-	/* Bitfield of incompat features, BTRFS_FEATURE_INCOMPAT_* */
-	u64 features;
-	/* Bitfield of BTRFS_RUNTIME_FEATURE_* */
-	u64 runtime_features;
+	struct btrfs_mkfs_features features;
 	/* Size of the filesystem in bytes */
 	u64 num_bytes;
 	/* checksum algorithm to use */

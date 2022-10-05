@@ -1134,7 +1134,8 @@ static int convert_open_fs(const char *devname,
 }
 
 static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
-		const char *fslabel, int progress, u64 features, u16 csum_type,
+		const char *fslabel, int progress,
+		struct btrfs_mkfs_features *features, u16 csum_type,
 		char fsid[BTRFS_UUID_UNPARSED_SIZE])
 {
 	int ret;
@@ -1183,7 +1184,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		goto fail;
 	}
 	btrfs_parse_fs_features_to_string(features_buf, features);
-	if (features == BTRFS_MKFS_DEFAULT_FEATURES)
+	if (!memcmp(features, &btrfs_mkfs_default_features,
+		   sizeof(struct btrfs_mkfs_features)))
 		strcat(features_buf, " (default)");
 
 	if (convert_flags & CONVERT_FLAG_COPY_FSID) {
@@ -1231,7 +1233,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = blocksize;
 	mkfs_cfg.stripesize = blocksize;
-	mkfs_cfg.features = features;
+	memcpy(&mkfs_cfg.features, features, sizeof(struct btrfs_mkfs_features));
 	mkfs_cfg.leaf_data_size = __BTRFS_LEAF_DATA_SIZE(nodesize);
 
 	printf("Create initial btrfs filesystem\n");
@@ -1827,7 +1829,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	int progress = 1;
 	char *file;
 	char fslabel[BTRFS_LABEL_SIZE] = { 0 };
-	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+	struct btrfs_mkfs_features features = btrfs_mkfs_default_features;
 	u16 csum_type = BTRFS_CSUM_TYPE_CRC32;
 	u32 copy_fsid = 0;
 	char fsid[BTRFS_UUID_UNPARSED_SIZE] = {0};
@@ -1905,16 +1907,18 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 					exit(1);
 				}
 				free(orig);
-				if (features & BTRFS_FEATURE_LIST_ALL) {
+				if (features.runtime_flags &
+				    BTRFS_FEATURE_RUNTIME_LIST_ALL) {
 					btrfs_list_all_fs_features(
-						~BTRFS_CONVERT_ALLOWED_FEATURES);
+						&btrfs_convert_allowed_features);
 					exit(0);
 				}
-				if (features & ~BTRFS_CONVERT_ALLOWED_FEATURES) {
+				if (btrfs_check_features(&features,
+						&btrfs_convert_allowed_features)) {
 					char buf[64];
 
 					btrfs_parse_fs_features_to_string(buf,
-						features & ~BTRFS_CONVERT_ALLOWED_FEATURES);
+						&btrfs_convert_allowed_features);
 					error("features not allowed for convert: %s",
 						buf);
 					exit(1);
@@ -1989,7 +1993,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 		cf |= noxattr ? 0 : CONVERT_FLAG_XATTR;
 		cf |= copy_fsid;
 		cf |= copylabel;
-		ret = do_convert(file, cf, nodesize, fslabel, progress, features,
+		ret = do_convert(file, cf, nodesize, fslabel, progress, &features,
 				 csum_type, fsid);
 	}
 	if (ret)

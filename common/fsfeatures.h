@@ -22,46 +22,69 @@
 #include "kernel-lib/sizes.h"
 
 #define BTRFS_MKFS_DEFAULT_NODE_SIZE SZ_16K
-#define BTRFS_MKFS_DEFAULT_FEATURES 				\
-		(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF		\
-		| BTRFS_FEATURE_INCOMPAT_NO_HOLES		\
-		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
-
-#define BTRFS_MKFS_DEFAULT_RUNTIME_FEATURES			\
-	(BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE)
 
 /*
- * Avoid multi-device features (RAID56), mixed block groups, and zoned mode
+ * Since one feature can set at least one bit in either
+ * incompat/compat_or/runtime flags, all mkfs features users should
+ * use this structure to parse the features.
  */
-#define BTRFS_CONVERT_ALLOWED_FEATURES				\
-	(BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF			\
-	| BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL			\
-	| BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO			\
-	| BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD			\
-	| BTRFS_FEATURE_INCOMPAT_BIG_METADATA			\
-	| BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF			\
-	| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA		\
-	| BTRFS_FEATURE_INCOMPAT_NO_HOLES)
+struct btrfs_mkfs_features {
+	u64 incompat_flags;
+	u64 compat_ro_flags;
+	u64 runtime_flags;
+};
 
-#define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
+#define BTRFS_FEATURE_RUNTIME_QUOTA		(1ULL << 0)
+#define BTRFS_FEATURE_RUNTIME_LIST_ALL		(1ULL << 1)
 
-#define BTRFS_RUNTIME_FEATURE_QUOTA		(1ULL << 0)
-#define BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE	(1ULL << 1)
-#define BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE	(1ULL << 2)
+static const struct btrfs_mkfs_features btrfs_mkfs_default_features = {
+	.compat_ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
+			   BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID,
+	.incompat_flags	 = BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF |
+			   BTRFS_FEATURE_INCOMPAT_NO_HOLES |
+			   BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+};
 
+/*
+ * Avoid multi-device features (RAID56 and RAID1C34), mixed bgs, and zoned
+ * mode for btrfs-convert, as all supported fses are single device fses.
+ *
+ * Features like compression is disabled in btrfs-convert by default, as
+ * data is reusing the old data from the source fs.
+ * Corresponding flag will be set when the first compression write happens.
+ */
+static const struct btrfs_mkfs_features btrfs_convert_allowed_features = {
+	.compat_ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
+			   BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID |
+			   BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
+	.incompat_flags  = BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF |
+			   BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL |
+			   BTRFS_FEATURE_INCOMPAT_BIG_METADATA |
+			   BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF |
+			   BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA |
+			   BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+	.runtime_flags   = BTRFS_FEATURE_RUNTIME_QUOTA,
+};
 
-void btrfs_list_all_fs_features(u64 mask_disallowed);
-void btrfs_list_all_runtime_features(u64 mask_disallowed);
-char *btrfs_parse_fs_features(char *namelist, u64 *flags);
-char *btrfs_parse_runtime_features(char *namelist, u64 *flags);
-void btrfs_process_fs_features(u64 flags);
-void btrfs_process_runtime_features(u64 flags);
-void btrfs_parse_fs_features_to_string(char *buf, u64 flags);
-void btrfs_parse_runtime_features_to_string(char *buf, u64 flags);
+void btrfs_list_all_fs_features(const struct btrfs_mkfs_features *allowed);
+void btrfs_list_all_runtime_features(const struct btrfs_mkfs_features *allowed);
+char *btrfs_parse_fs_features(char *namelist,
+		struct btrfs_mkfs_features *features);
+char *btrfs_parse_runtime_features(char *namelist,
+		struct btrfs_mkfs_features *features);
+void btrfs_process_fs_features(struct btrfs_mkfs_features *features);
+void btrfs_process_runtime_features(struct btrfs_mkfs_features *features);
+void btrfs_parse_fs_features_to_string(char *buf,
+		const struct btrfs_mkfs_features *features);
+void btrfs_parse_runtime_features_to_string(char *buf,
+		const struct btrfs_mkfs_features *features);
 void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features);
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize,
+			 struct btrfs_mkfs_features *features);
 int btrfs_check_sectorsize(u32 sectorsize);
+int btrfs_check_features(const struct btrfs_mkfs_features *features,
+			 const struct btrfs_mkfs_features *allowed);
 int btrfs_tree_search2_ioctl_supported(int fd);
 
 #endif

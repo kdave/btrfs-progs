@@ -1007,8 +1007,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 system_group_size;
 	/* Options */
 	bool force_overwrite = false;
-	u64 runtime_features = BTRFS_MKFS_DEFAULT_RUNTIME_FEATURES;
-	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+	struct btrfs_mkfs_features features = btrfs_mkfs_default_features;
 	enum btrfs_csum_type csum_type = BTRFS_CSUM_TYPE_CRC32;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u32 nodesize = 0;
@@ -1125,8 +1124,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					goto error;
 				}
 				free(orig);
-				if (features & BTRFS_FEATURE_LIST_ALL) {
-					btrfs_list_all_fs_features(0);
+				if (features.runtime_flags &
+				    BTRFS_FEATURE_RUNTIME_LIST_ALL) {
+					btrfs_list_all_fs_features(NULL);
 					goto success;
 				}
 				break;
@@ -1136,7 +1136,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				char *tmp = orig;
 
 				tmp = btrfs_parse_runtime_features(tmp,
-						&runtime_features);
+						&features);
 				if (tmp) {
 					error("unrecognized runtime feature '%s'",
 					      tmp);
@@ -1144,8 +1144,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					goto error;
 				}
 				free(orig);
-				if (runtime_features & BTRFS_FEATURE_LIST_ALL) {
-					btrfs_list_all_runtime_features(0);
+				if (features.runtime_flags &
+				    BTRFS_FEATURE_RUNTIME_LIST_ALL) {
+					btrfs_list_all_runtime_features(NULL);
 					goto success;
 				}
 				break;
@@ -1213,7 +1214,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (device_count == 0)
 		print_usage(1);
 
-	opt_zoned = !!(features & BTRFS_FEATURE_INCOMPAT_ZONED);
+	opt_zoned = !!(features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
 
 	if (source_dir_set && device_count > 1) {
 		error("the option -r is limited to a single device");
@@ -1266,7 +1267,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	"Zoned: %s: host-managed device detected, setting zoned feature\n",
 			       file);
 		opt_zoned = true;
-		features |= BTRFS_FEATURE_INCOMPAT_ZONED;
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_ZONED;
 	}
 
 	/*
@@ -1308,23 +1309,26 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	 * just set the bit here
 	 */
 	if (mixed)
-		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
 
 	if ((data_profile | metadata_profile) & BTRFS_BLOCK_GROUP_RAID56_MASK) {
-		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_RAID56;
 		warning("RAID5/6 support has known problems is strongly discouraged\n"
 			"\t to be used besides testing or evaluation.\n");
 	}
 
 	if ((data_profile | metadata_profile) &
 	    (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4)) {
-		features |= BTRFS_FEATURE_INCOMPAT_RAID1C34;
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_RAID1C34;
 	}
 
 	/* Extent tree v2 comes with a set of mandatory features. */
-	if (features & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
-		features |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
-		runtime_features |= BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE;
+	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
+		features.compat_ro_flags |=
+			BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
+			BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID |
+			BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE;
 
 		if (!nr_global_roots) {
 			error("you must set a non-zero num-global-roots value");
@@ -1333,9 +1337,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	/* Block group tree feature requires no-holes and free-space-tree. */
-	if (runtime_features & BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE &&
-	    (!(features & BTRFS_FEATURE_INCOMPAT_NO_HOLES) ||
-	     !(runtime_features & BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE))) {
+	if (features.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE &&
+	    (!(features.incompat_flags & BTRFS_FEATURE_INCOMPAT_NO_HOLES) ||
+	     !(features.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE))) {
 		error("block group tree requires no-holes and free-space-tree features");
 		exit(1);
 	}
@@ -1345,19 +1349,18 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			exit(1);
 		}
 
-		if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS) {
+		if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS) {
 			error("cannot enable mixed-bg in zoned mode");
 			exit(1);
 		}
 
-		if (features & BTRFS_FEATURE_INCOMPAT_RAID56) {
+		if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_RAID56) {
 			error("cannot enable RAID5/6 in zoned mode");
 			exit(1);
 		}
 	}
 
-	if (btrfs_check_nodesize(nodesize, sectorsize,
-				 features))
+	if (btrfs_check_nodesize(nodesize, sectorsize, &features))
 		goto error;
 
 	if (sectorsize < sizeof(struct btrfs_super_block)) {
@@ -1546,7 +1549,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.sectorsize = sectorsize;
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
-	mkfs_cfg.runtime_features = runtime_features;
 	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.leaf_data_size = __BTRFS_LEAF_DATA_SIZE(nodesize);
 	if (opt_zoned)
@@ -1591,7 +1593,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	if (features & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
+	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
 		ret = create_global_roots(trans, nr_global_roots);
 		if (ret) {
 			error("failed to create global roots: %d", ret);
@@ -1740,7 +1742,7 @@ raid_groups:
 		}
 	}
 
-	if (runtime_features & BTRFS_RUNTIME_FEATURE_QUOTA) {
+	if (features.runtime_flags & BTRFS_FEATURE_RUNTIME_QUOTA) {
 		ret = setup_quota_root(fs_info);
 		if (ret < 0) {
 			error("failed to initialize quota: %d (%m)", ret);
@@ -1778,11 +1780,14 @@ raid_groups:
 		if (opt_zoned)
 			printf("  Zone size:        %s\n",
 			       pretty_size(fs_info->zone_size));
-		btrfs_parse_fs_features_to_string(features_buf, features);
+		btrfs_parse_fs_features_to_string(features_buf, &features);
+#if EXPERIMENTAL
+		printf("Features:           %s\n", features_buf);
+#else
 		printf("Incompat features:  %s\n", features_buf);
-		btrfs_parse_runtime_features_to_string(features_buf,
-				runtime_features);
+		btrfs_parse_runtime_features_to_string(features_buf, &features);
 		printf("Runtime features:   %s\n", features_buf);
+#endif
 		printf("Checksum:           %s",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));
 		printf("\n");

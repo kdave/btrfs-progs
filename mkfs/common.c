@@ -84,8 +84,8 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 	int blk;
 	int i;
 	u8 uuid[BTRFS_UUID_SIZE];
-	bool block_group_tree = !!(cfg->runtime_features &
-				   BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE);
+	bool block_group_tree = !!(cfg->features.compat_ro_flags &
+				   BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE);
 
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
@@ -372,18 +372,17 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	u32 array_size;
 	u32 item_size;
 	u64 total_used = 0;
-	u64 ro_flags = 0;
-	int skinny_metadata = !!(cfg->features &
+	int skinny_metadata = !!(cfg->features.incompat_flags &
 				 BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 	u64 num_bytes;
 	u64 system_group_offset = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
 	u64 system_group_size = BTRFS_MKFS_SYSTEM_GROUP_SIZE;
 	bool add_block_group = true;
-	bool free_space_tree = !!(cfg->runtime_features &
-				  BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE);
-	bool block_group_tree = !!(cfg->runtime_features &
-				   BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE);
-	bool extent_tree_v2 = !!(cfg->features &
+	bool free_space_tree = !!(cfg->features.compat_ro_flags &
+				  BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE);
+	bool block_group_tree = !!(cfg->features.compat_ro_flags &
+				   BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE);
+	bool extent_tree_v2 = !!(cfg->features.incompat_flags &
 				 BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2);
 
 	memcpy(blocks, default_blocks,
@@ -405,7 +404,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	if (!free_space_tree)
 		mkfs_blocks_remove(blocks, &blocks_nr, MKFS_FREE_SPACE_TREE);
 
-	if ((cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)) {
+	if ((cfg->features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		system_group_offset = zoned_system_group_offset(cfg->zone_size);
 		system_group_size = cfg->zone_size;
 	}
@@ -449,20 +448,14 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_super_stripesize(&super, cfg->stripesize);
 	btrfs_set_super_csum_type(&super, cfg->csum_type);
 	btrfs_set_super_chunk_root_generation(&super, 1);
-	if (cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)
+	if (cfg->features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)
 		btrfs_set_super_cache_generation(&super, 0);
 	else
 		btrfs_set_super_cache_generation(&super, -1);
-	btrfs_set_super_incompat_flags(&super, cfg->features);
-	if (free_space_tree) {
-		ro_flags |= (BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
-			     BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID);
-
+	btrfs_set_super_incompat_flags(&super, cfg->features.incompat_flags);
+	if (free_space_tree)
 		btrfs_set_super_cache_generation(&super, 0);
-	}
-	if (block_group_tree)
-		ro_flags |= BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE;
-	btrfs_set_super_compat_ro_flags(&super, ro_flags);
+	btrfs_set_super_compat_ro_flags(&super, cfg->features.compat_ro_flags);
 
 	if (extent_tree_v2)
 		btrfs_set_super_nr_global_roots(&super, 1);
