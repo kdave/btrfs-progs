@@ -1074,7 +1074,7 @@ next:
 	}
 
 	if (defrag_global_errors)
-		fprintf(stderr, "total %d failures\n", defrag_global_errors);
+		pr_stderr(LOG_DEFAULT, "total %d failures\n", defrag_global_errors);
 
 	return !!defrag_global_errors;
 }
@@ -1344,7 +1344,7 @@ static int cmd_filesystem_label(const struct cmd_struct *cmd,
 
 		ret = get_label(argv[optind], label);
 		if (!ret)
-			fprintf(stdout, "%s\n", label);
+			pr_verbose(LOG_DEFAULT, "%s\n", label);
 
 		return ret;
 	}
