@@ -330,15 +330,15 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 
 		if (errno == ECANCELED) {
 			if (args->state & BTRFS_BALANCE_STATE_PAUSE_REQ)
-				fprintf(stderr, "balance paused by user\n");
+				pr_stderr(LOG_DEFAULT, "balance paused by user\n");
 			if (args->state & BTRFS_BALANCE_STATE_CANCEL_REQ)
-				fprintf(stderr, "balance canceled by user\n");
+				pr_stderr(LOG_DEFAULT, "balance canceled by user\n");
 			ret = 0;
 		} else {
 			error("error during balancing '%s': %m", path);
 			if (errno != EINPROGRESS)
-				fprintf(stderr,
-			"There may be more info in syslog - try dmesg | tail\n");
+				pr_stderr(LOG_DEFAULT,
+				"There may be more info in syslog - try dmesg | tail\n");
 			ret = 1;
 		}
 	} else if (ret > 0) {
@@ -716,9 +716,9 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 	if (ret < 0) {
 		if (errno == ECANCELED) {
 			if (args.state & BTRFS_BALANCE_STATE_PAUSE_REQ)
-				fprintf(stderr, "balance paused by user\n");
+				pr_stderr(LOG_DEFAULT, "balance paused by user\n");
 			if (args.state & BTRFS_BALANCE_STATE_CANCEL_REQ)
-				fprintf(stderr, "balance canceled by user\n");
+				pr_stderr(LOG_DEFAULT, "balance canceled by user\n");
 		} else if (errno == ENOTCONN || errno == EINPROGRESS) {
 			error("balance resume on '%s' failed: %s", path,
 				(errno == ENOTCONN) ? "Not in progress" :
