@@ -203,10 +203,10 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	if (ret < 0) {
 		error("ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %m", path);
 		if (status_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
-			fprintf(stderr, ", %s\n",
+			pr_stderr(LOG_DEFAULT, ", %s\n",
 				replace_dev_result2string(status_args.result));
 		else
-			fprintf(stderr, "\n");
+			pr_stderr(LOG_DEFAULT, "\n");
 		goto leave_with_error;
 	}
 
@@ -324,10 +324,10 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		if (ret < 0) {
 			error("ioctl(DEV_REPLACE_START) failed on \"%s\": %m", path);
 			if (start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
-				fprintf(stderr, ", %s\n",
+				pr_stderr(LOG_DEFAULT, ", %s\n",
 					replace_dev_result2string(start_args.result));
 			else
-				fprintf(stderr, "\n");
+				pr_stderr(LOG_DEFAULT, "\n");
 
 			if (errno == EOPNOTSUPP)
 				warning("device replace of RAID5/6 not supported with this kernel");
@@ -426,10 +426,10 @@ static int print_replace_status(int fd, const char *path, int once)
 		if (ret < 0) {
 			error("ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %m", path);
 			if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
-				fprintf(stderr, ", %s\n",
+				pr_stderr(LOG_DEFAULT, ", %s\n",
 					replace_dev_result2string(args.result));
 			else
-				fprintf(stderr, "\n");
+				pr_stderr(LOG_DEFAULT, "\n");
 			return ret;
 		}
 
@@ -574,10 +574,10 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 	if (ret < 0) {
 		error("ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %m", path);
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
-			fprintf(stderr, ", %s\n",
+			pr_stderr(LOG_DEFAULT, ", %s\n",
 				replace_dev_result2string(args.result));
 		else
-			fprintf(stderr, "\n");
+			pr_stderr(LOG_DEFAULT, "\n");
 		return 1;
 	}
 	if (args.result == BTRFS_IOCTL_DEV_REPLACE_RESULT_NOT_STARTED) {
