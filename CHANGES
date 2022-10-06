@@ -1,5 +1,20 @@
+btrfs-progs-6.1 (2022-12-22)
+----------------------------
+   * filesystem df: add json output
+   * qgroup show: add json output
+   * new command: 'inspect-internal map-swapfile' to check swapfile and its
+     swapfile_offset value used for hibernation
+   * corrupt-block: fix parsing of option --root argument
+   * experimental (interfaces not finalized):
+      * new command 'inspect-internal list-chunks'
+      * new group reflink, command clone
+   * other:
+      * synchronize some files with kernel versions
+      * docs updates
+      * build: use gnu11
+
 btrfs-progs-6.0 (2022-10-11)
------------------------------
+----------------------------
    * fi usage: in tabular output, print total size and slack size
    * mkfs:
       * option -O now accepts values from -R to unify the interface (-R will
