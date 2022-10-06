@@ -1,3 +1,26 @@
+btrfs-progs-6.0 (2022-10-11)
+-----------------------------
+   * fi usage: in tabular output, print total size and slack size
+   * mkfs:
+      * option -O now accepts values from -R to unify the interface (-R will
+	continue to work)
+      * zone reset and discard is done in parallel on all devices
+      * removed option --leafsize, deprecated long time ago
+   * corrupt-block: recalculate checksum when changing generation
+   * fixes:
+      * convert: fix reserved range detection and overlaps
+      * mkfs: fix creating files with reserved inode numbers with --rootdir
+      * receive: escape filenames in command attributes
+      * fix extent buffer leaks after transaction abort
+   * experimental:
+      * mkfs: support for block-group-tree (kernel 6.1)
+      * fsverity in send (protocol v3, WIP)
+      * btrfstune -b converts to block-group-tree
+   * other:
+      * cleanups, refactoring
+      * new and updated tests
+      * update documentation
+
 btrfs-progs-5.19 (2022-08-16)
 -----------------------------
    * send: support protocol version 2
