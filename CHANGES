@@ -21,6 +21,10 @@ btrfs-progs-6.1.1 (2023-01-03)
      applications
    * hide __init definition in kerncompat.h, may break build
 
+btrfs-progs-6.1.2 (2023-01-05)
+""""""""""""""""""""""""""""""
+   * revert libbtrfs changes to v6.0.2, fix remaining build problems
+
 btrfs-progs-6.0 (2022-10-11)
 ----------------------------
    * fi usage: in tabular output, print total size and slack size
