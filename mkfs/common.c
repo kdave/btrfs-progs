@@ -227,12 +227,22 @@ static int create_block_group_tree(int fd, struct btrfs_mkfs_config *cfg,
 				   u64 bg_offset, u64 bg_size, u64 bg_used)
 {
 	int ret;
+	u64 chunk_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+
+	/*
+	 * For extent-tree-v2, chunk_objectid of block group item is reused
+	 * to indicate which extent-tree the block group is in.
+	 *
+	 * Thus for the initial image, we should set the chunk_objectid to 0,
+	 * as all initial bgs are in the extent tree with global id 0.
+	 */
+	if (cfg->features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2)
+		chunk_objectid = 0;
 
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
 	write_block_group_item(buf, 0, bg_offset, bg_size, bg_used,
-			       BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			       cfg->leaf_data_size -
+			       chunk_objectid, cfg->leaf_data_size -
 			       sizeof(struct btrfs_block_group_item));
 	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_BLOCK_GROUP_TREE]);
 	btrfs_set_header_owner(buf, BTRFS_BLOCK_GROUP_TREE_OBJECTID);
