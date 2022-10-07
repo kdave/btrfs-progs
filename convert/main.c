@@ -1147,7 +1147,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	struct btrfs_key key;
 	char subvol_name[SOURCE_FS_NAME_LEN + 8];
 	struct task_ctx ctx;
-	char features_buf[64];
+	char features_buf[BTRFS_FEATURE_STRING_BUF_SIZE];
 	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_mkfs_config mkfs_cfg;
 	bool btrfs_sb_committed = false;
@@ -1835,6 +1835,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	char fsid[BTRFS_UUID_UNPARSED_SIZE] = {0};
 
 	crc32c_optimization_init();
+	btrfs_assert_feature_buf_size();
 	printf("btrfs-convert from %s\n\n", PACKAGE_STRING);
 
 	while(1) {

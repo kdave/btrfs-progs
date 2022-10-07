@@ -1028,6 +1028,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	crc32c_optimization_init();
 	btrfs_config_init();
+	btrfs_assert_feature_buf_size();
 
 	while(1) {
 		int c;
@@ -1750,7 +1751,7 @@ raid_groups:
 		}
 	}
 	if (bconf.verbose) {
-		char features_buf[64];
+		char features_buf[BTRFS_FEATURE_STRING_BUF_SIZE];
 
 		update_chunk_allocation(fs_info, &allocation);
 		printf("Label:              %s\n", label);

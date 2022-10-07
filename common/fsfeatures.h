@@ -37,6 +37,12 @@ struct btrfs_mkfs_features {
 #define BTRFS_FEATURE_RUNTIME_QUOTA		(1ULL << 0)
 #define BTRFS_FEATURE_RUNTIME_LIST_ALL		(1ULL << 1)
 
+/*
+ * Such buffer size should be able to contain all feature string, with extra
+ * ", " for each feature.
+ */
+#define BTRFS_FEATURE_STRING_BUF_SIZE		(160)
+
 static const struct btrfs_mkfs_features btrfs_mkfs_default_features = {
 	.compat_ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
 			   BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID,
@@ -86,5 +92,6 @@ int btrfs_check_sectorsize(u32 sectorsize);
 int btrfs_check_features(const struct btrfs_mkfs_features *features,
 			 const struct btrfs_mkfs_features *allowed);
 int btrfs_tree_search2_ioctl_supported(int fd);
+void btrfs_assert_feature_buf_size(void);
 
 #endif

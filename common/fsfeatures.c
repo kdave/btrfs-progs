@@ -251,6 +251,32 @@ static const struct btrfs_feature runtime_features[] = {
 	}
 };
 
+/*
+ * This is a sanity check to make sure BTRFS_FEATURE_STRING_BUF_SIZE is large
+ * enough to contain all strings.
+ *
+ * All callers using btrfs_parse_*_features_to_string() should call this first.
+ */
+void btrfs_assert_feature_buf_size(void)
+{
+	int total_size = 0;
+	int i;
+
+	/*
+	 * This is a little over-calculated, as we include ", list-all".
+	 * But 10 extra bytes should not be a big deal.
+	 */
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++)
+		/* The extra 2 bytes are for the ", " prefix. */
+		total_size += strlen(mkfs_features[i].name) + 2;
+	BUG_ON(BTRFS_FEATURE_STRING_BUF_SIZE < total_size);
+
+	total_size = 0;
+	for (i = 0; i < ARRAY_SIZE(runtime_features); i++)
+		total_size += strlen(runtime_features[i].name) + 2;
+	BUG_ON(BTRFS_FEATURE_STRING_BUF_SIZE < total_size);
+}
+
 static size_t get_feature_array_size(enum feature_source source)
 {
 	if (source == FS_FEATURES)
