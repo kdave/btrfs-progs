@@ -10,6 +10,7 @@
 #               to default locationh (/usr/local)
 #   clean       clean built binaries (not the documentation)
 #   clean-all   clean as above, clean docs and generated files
+#   clean-dep   clean header dependency files (*.o.d)
 #
 # All-in-one binary (busybox style):
 #   btrfs.box         single binary with functionality of mkfs.btrfs, btrfs-image,
@@ -815,6 +816,10 @@ clean-gen:
 		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
+
+clean-dep:
+	@echo "Cleaning dependency files"
+	$(Q)$(RM) -f -- *.o.d */*.o.d */*/*.o.d
 
 $(CLEANDIRS):
 	@echo "Cleaning $(patsubst clean-%,%,$@)"
