@@ -21,6 +21,15 @@ The following contributed in the past (sorted alphabetically):
 * Red Hat
 * STRATO AG
 
+Statistics for 6.x series
+-------------------------
+
+.. csv-table::
+   :header: "Version", "Contributors", "SLOC", "Raw lines", "Patches", "Diffstat"
+   :align: left
+
+    "6.0", "24", "109726", "156988", "192", "+4248 -3108"
+
 Statistics for 5.x series
 -------------------------
 
