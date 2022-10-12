@@ -43,7 +43,7 @@ start [options] <path>
                 sharing).  The run time is potentially very long, depending on the filesystem
                 size. To prevent starting a full balance by accident, the user is warned and
                 has a few seconds to cancel the operation before it starts.  The warning and
-                delay can be skipped with *--full-bauance* option.
+                delay can be skipped with *--full-balance* option.
 
         Please note that the filters must be written together with the *-d*, *-m* and
         *-s* options, because they're optional and bare *-d* and *-m* also work and
