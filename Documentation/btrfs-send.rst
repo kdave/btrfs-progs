@@ -68,8 +68,8 @@ please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume(8)<btrfs-subvolume
         The default is 1, which was the original protocol version. Version 2
         encodes file data slightly more efficiently; it is also required for
         sending compressed data directly (see *--compressed-data*). Version 2
-        requires at least btrfs-progs 5.18 on both the sender and receiver and
-        at least Linux 5.18 on the sender. Passing 0 means to use the highest
+        requires at least btrfs-progs 6.0 on both the sender and receiver and
+        at least Linux 6.0 on the sender. Passing 0 means to use the highest
         version supported by the running kernel.
 
 --compressed-data
@@ -77,7 +77,7 @@ please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume(8)<btrfs-subvolume
         decompressing it
 
         If the receiver supports the *BTRFS_IOC_ENCODED_WRITE* ioctl (added in
-        Linux 5.18), it can also write it directly without decompressing it.
+        Linux 6.0), it can also write it directly without decompressing it.
         Otherwise, the receiver will fall back to decompressing it and writing
         it normally.
 
