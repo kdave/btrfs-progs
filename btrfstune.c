@@ -909,7 +909,6 @@ static void print_usage(void)
 	printf("Tune settings of filesystem features on an unmounted device\n\n");
 	printf("Options:\n");
 	printf("  change feature status:\n");
-	printf("\t-b          enable block group tree (mkfs: block-group-tree, for less mount time)\n");
 	printf("\t-r          enable extended inode refs (mkfs: extref, for hardlink limits)\n");
 	printf("\t-x          enable skinny metadata extent refs (mkfs: skinny-metadata)\n");
 	printf("\t-n          enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)\n");
@@ -927,6 +926,7 @@ static void print_usage(void)
 	printf("\nEXPERIMENTAL FEATURES:\n");
 	printf("  checksum changes:\n");
 	printf("\t--csum CSUM	switch checksum for data and metadata to CSUM\n");
+	printf("\t-b          enable block group tree (mkfs: block-group-tree, for less mount time)\n");
 #endif
 }
 

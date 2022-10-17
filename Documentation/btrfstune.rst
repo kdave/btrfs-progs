@@ -25,7 +25,7 @@ OPTIONS
 -------
 
 -b
-        (since kernel 6.0)
+        (since kernel 6.1, needs experimental build of btrfs-progs)
         Enable block group tree feature (greatly reduce mount time),
         enabled by mkfs feature *block-group-tree*.
 
