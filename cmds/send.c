@@ -37,7 +37,10 @@
 #include "cmds/commands.h"
 #include "ioctl.h"
 
-#define SEND_BUFFER_SIZE	SZ_64K
+#define BTRFS_SEND_BUF_SIZE_V1	(SZ_64K)
+#define BTRFS_MAX_COMPRESSED	(SZ_128K)
+#define BTRFS_SEND_BUF_SIZE_V2	(SZ_16K + BTRFS_MAX_COMPRESSED)
+
 
 struct btrfs_send {
 	int send_fd;
@@ -201,11 +204,18 @@ static void *read_sent_data(void *arg)
 	struct btrfs_send *sctx = (struct btrfs_send*)arg;
 
 	while (1) {
+		size_t splice_buf_size = BTRFS_SEND_BUF_SIZE_V1;
 		ssize_t sbytes;
 
+		if(sctx->proto > 1){
+			splice_buf_size = BTRFS_SEND_BUF_SIZE_V2;
+
+			/* Try to change pipe buffer size */
+			fcntl(sctx->dump_fd, F_SETPIPE_SZ, splice_buf_size);
+		}
 		/* Source is a pipe, output is either file or stdout */
 		sbytes = splice(sctx->send_fd, NULL, sctx->dump_fd,
-				NULL, SEND_BUFFER_SIZE, SPLICE_F_MORE);
+				NULL, splice_buf_size, SPLICE_F_MORE);
 		if (sbytes < 0) {
 			ret = -errno;
 			error("failed to read stream from kernel: %m");
@@ -261,6 +271,9 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 		 */
 		io_send.version = send->proto;
 		io_send.flags |= BTRFS_SEND_FLAG_VERSION;
+
+		fcntl(pipefd[0], F_SETPIPE_SZ, BTRFS_SEND_BUF_SIZE_V2);
+		fcntl(pipefd[1], F_SETPIPE_SZ, BTRFS_SEND_BUF_SIZE_V2);
 	}
 
 	if (!ret)
