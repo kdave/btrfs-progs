@@ -966,6 +966,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			break;
 		switch(c) {
 		case 'b':
+			btrfs_warn_experimental("Feature: block-group-tree");
 			to_bg_tree = true;
 			break;
 		case 'S':
