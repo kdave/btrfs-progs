@@ -110,6 +110,7 @@ void init_rand_seed(u64 seed);
 
 char *btrfs_test_for_multiple_profiles(int fd);
 int btrfs_warn_multiple_profiles(int fd);
+void btrfs_warn_experimental(const char *str);
 
 int sysfs_open_file(const char *name);
 int sysfs_open_fsid_file(int fd, const char *filename);

@@ -1152,6 +1152,14 @@ int btrfs_warn_multiple_profiles(int fd)
 	return 1;
 }
 
+void btrfs_warn_experimental(const char *str)
+{
+#if EXPERIMENTAL
+	warning("Experimental build with unstable or unfinished features");
+	warning_on(str != NULL, "%s\n", str);
+#endif
+}
+
 /*
  * Open a file in fsid directory in sysfs and return the file descriptor or
  * error
