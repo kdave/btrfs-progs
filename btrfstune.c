@@ -966,7 +966,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			break;
 		switch(c) {
 		case 'b':
-			btrfs_warn_experimental("Feature: block-group-tree");
+			btrfs_warn_experimental("Feature: conversion to block-group-tree");
 			to_bg_tree = true;
 			break;
 		case 'S':
@@ -1004,9 +1004,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			break;
 #if EXPERIMENTAL
 		case GETOPT_VAL_CSUM:
+			btrfs_warn_experimental(
+				"Switching checksums is experimental, do not use for valuable data!");
 			ctree_flags |= OPEN_CTREE_SKIP_CSUM_CHECK;
 			csum_type = parse_csum_type(optarg);
-			warning("Switching checksums is experimental, do not use for valuable data!");
 			printf("Switch csum to %s\n",
 					btrfs_super_csum_name(csum_type));
 			break;

@@ -3109,6 +3109,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			multi_devices = 1;
 			break;
 		case 'd':
+			btrfs_warn_experimental("Feature: dump image with data");
 			dump_data = true;
 			break;
 		case GETOPT_VAL_HELP:

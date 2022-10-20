@@ -1188,6 +1188,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				csum_type = parse_csum_type(optarg);
 				break;
 			case GETOPT_VAL_GLOBAL_ROOTS:
+				btrfs_warn_experimental("Feature: num-global-roots is part of exten-tree-v2");
 				nr_global_roots = (int)arg_strtou64(optarg);
 				break;
 			case GETOPT_VAL_HELP:
