@@ -79,6 +79,9 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         crash.  Use one of the *--commit* options to wait until the operation is
         safely stored on the device.
 
+        Deleting subvolume needs sufficient permissions, by default the owner
+        cannot delete it unless it's enabled by a mount option
+        *user_subvol_rm_allowed*, or deletion is run as root.
         The default subvolume (see ``btrfs subvolume set-default``) cannot be deleted and
         returns error (EPERM) and this is logged to the system log. A subvolume that's
         currently involved in send (see ``btrfs send``) also cannot be deleted until the
