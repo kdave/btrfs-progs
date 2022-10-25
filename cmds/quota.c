@@ -109,8 +109,8 @@ static const char * const cmd_quota_rescan_usage[] = {
 	"btrfs quota rescan [-sw] <path>",
 	"Trash all qgroup numbers and scan the metadata again with the current config.",
 	"",
-	"-s   show status of a running rescan operation",
-	"-w   wait for rescan operation to finish (can be already in progress)",
+	"-s|--status   show status of a running rescan operation",
+	"-w|--wait     wait for rescan operation to finish (can be already in progress)",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
@@ -129,9 +129,17 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 
 	optind = 0;
 	while (1) {
-		int c = getopt(argc, argv, "sw");
+		static const struct option long_options[] = {
+			{"status", no_argument, NULL, 's'},
+			{"wait", no_argument, NULL, 'w'},
+			{NULL, 0, NULL, 0}
+		};
+		int c;
+
+		c = getopt_long(argc, argv, "sw", long_options, NULL);
 		if (c < 0)
 			break;
+
 		switch (c) {
 		case 's':
 			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;

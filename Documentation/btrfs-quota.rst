@@ -52,9 +52,9 @@ rescan [-s] <path>
 
         ``Options``
 
-        -s
+        -s|--status
                 show status of a running rescan operation.
-        -w
+        -w|--wait
                 wait for rescan operation to finish(can be already in progress).
 
 EXIT STATUS
