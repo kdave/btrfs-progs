@@ -109,8 +109,9 @@ static const char * const cmd_quota_rescan_usage[] = {
 	"btrfs quota rescan [-sw] <path>",
 	"Trash all qgroup numbers and scan the metadata again with the current config.",
 	"",
-	"-s|--status   show status of a running rescan operation",
-	"-w|--wait     wait for rescan operation to finish (can be already in progress)",
+	"-s|--status         show status of a running rescan operation",
+	"-w|--wait           start rescan and wait for it to finish (can be already in progress)",
+	"-W|--wait-norescan  wait for rescan to finish without starting it",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
@@ -132,11 +133,12 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 		static const struct option long_options[] = {
 			{"status", no_argument, NULL, 's'},
 			{"wait", no_argument, NULL, 'w'},
+			{"wait-norescan", no_argument, NULL, 'W'},
 			{NULL, 0, NULL, 0}
 		};
 		int c;
 
-		c = getopt_long(argc, argv, "sw", long_options, NULL);
+		c = getopt_long(argc, argv, "swW", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -145,14 +147,19 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;
 			break;
 		case 'w':
+			ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
 			wait_for_completion = true;
+			break;
+		case 'W':
+			ioctlnum = 0;
+			wait_for_completion = 1;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
 	}
 
-	if (ioctlnum != BTRFS_IOC_QUOTA_RESCAN && wait_for_completion) {
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS && wait_for_completion) {
 		error("switch -w cannot be used with -s");
 		return 1;
 	}
@@ -167,8 +174,10 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	if (fd < 0)
 		return 1;
 
-	ret = ioctl(fd, ioctlnum, &args);
-	e = errno;
+	if (ioctlnum) {
+		ret = ioctl(fd, ioctlnum, &args);
+		e = errno;
+	}
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS) {
 		close_file_or_dir(fd, dirstream);
@@ -184,7 +193,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 		return 0;
 	}
 
-	if (ret == 0) {
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN && ret == 0) {
 		pr_verbose(LOG_DEFAULT, "quota rescan started\n");
 		fflush(stdout);
 	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {

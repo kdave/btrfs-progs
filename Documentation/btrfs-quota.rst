@@ -47,7 +47,7 @@ disable <path>
 enable <path>
         Enable subvolume quota support for a filesystem.
 
-rescan [-s] <path>
+rescan [options] <path>
         Trash all qgroup numbers and scan the metadata again with the current config.
 
         ``Options``
@@ -55,7 +55,9 @@ rescan [-s] <path>
         -s|--status
                 show status of a running rescan operation.
         -w|--wait
-                wait for rescan operation to finish(can be already in progress).
+                start rescan and wait for it to finish (can be already in progress)
+        -W|--wait-norescan
+                wait for rescan to finish without starting it
 
 EXIT STATUS
 -----------
