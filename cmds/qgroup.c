@@ -156,41 +156,41 @@ static struct {
 		.column_name	= "Qgroupid",
 		.need_print	= 1,
 		.unit_mode	= 0,
-		.max_len	= 8,
+		.max_len	= 9,
 	},
 	{
 		.name		= "rfer",
-		.column_name	= "Rfer",
+		.column_name	= "Referenced",
 		.need_print	= 1,
 		.unit_mode	= UNITS_DEFAULT,
 		.max_len	= 12,
 	},
 	{
 		.name		= "excl",
-		.column_name	= "Excl",
+		.column_name	= "Exclusive",
 		.need_print	= 1,
 		.unit_mode	= UNITS_DEFAULT,
 		.max_len	= 12,
 	},
 	{	.name		= "max_rfer",
-		.column_name	= "Max_rfer",
+		.column_name	= "Max referenced",
 		.need_print	= 0,
 		.unit_mode	= UNITS_DEFAULT,
-		.max_len	= 12,
+		.max_len	= 15,
 	},
 	{
 		.name		= "max_excl",
-		.column_name	= "Max_excl",
+		.column_name	= "Max exclusive",
 		.need_print	= 0,
 		.unit_mode	= UNITS_DEFAULT,
-		.max_len	= 12,
+		.max_len	= 14,
 	},
 	{
 		.name		= "parent",
 		.column_name	= "Parent",
 		.need_print	= 0,
 		.unit_mode	= 0,
-		.max_len	= 7,
+		.max_len	= 8,
 	},
 	{
 		.name		= "child",
@@ -204,7 +204,7 @@ static struct {
 		.column_name	= "Path",
 		.need_print	= 1,
 		.unit_mode	= 0,
-		.max_len	= 10,
+		.max_len	= 6,
 	},
 	{
 		.name		= NULL,
@@ -252,7 +252,7 @@ static int print_parent_column(struct btrfs_qgroup *qgroup)
 			len += printf(",");
 	}
 	if (list_empty(&qgroup->qgroups))
-		len += printf("---");
+		len += printf("-");
 
 	return len;
 }
@@ -270,7 +270,7 @@ static int print_child_column(struct btrfs_qgroup *qgroup)
 			len += printf(",");
 	}
 	if (list_empty(&qgroup->members))
-		len += printf("---");
+		len += printf("-");
 
 	return len;
 }
