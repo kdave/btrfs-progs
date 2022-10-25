@@ -35,7 +35,7 @@
 #include <linux/types.h>
 #include <linux/const.h>
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <features.h>
 
 /*
