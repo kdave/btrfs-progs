@@ -81,7 +81,7 @@ static const char * const subvolume_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_subvol_create_usage[] = {
+static const char * const cmd_subvolume_create_usage[] = {
 	"btrfs subvolume create [-i <qgroupid>] [<dest>/]<name>",
 	"Create a subvolume",
 	"Create a subvolume <name> in <dest>.  If <dest> is not given",
@@ -94,8 +94,7 @@ static const char * const cmd_subvol_create_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_create(const struct cmd_struct *cmd,
-			     int argc, char **argv)
+static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int	retval, res, len;
 	int	fddst = -1;
@@ -206,7 +205,7 @@ out:
 
 	return retval;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_create, "create");
+static DEFINE_SIMPLE_COMMAND(subvolume_create, "create");
 
 static int wait_for_commit(int fd)
 {
@@ -224,7 +223,7 @@ static int wait_for_commit(int fd)
 	return 0;
 }
 
-static const char * const cmd_subvol_delete_usage[] = {
+static const char * const cmd_subvolume_delete_usage[] = {
 	"btrfs subvolume delete [options] <subvolume> [<subvolume>...]\n"
 	"btrfs subvolume delete [options] -i|--subvolid <subvolid> <path>",
 	"Delete subvolume(s)",
@@ -246,8 +245,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_delete(const struct cmd_struct *cmd,
-			     int argc, char **argv)
+static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int res, ret = 0;
 	int cnt;
@@ -504,9 +502,9 @@ keep_fd:
 
 	return ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_delete, "delete");
+static DEFINE_SIMPLE_COMMAND(subvolume_delete, "delete");
 
-static const char * const cmd_subvol_snapshot_usage[] = {
+static const char * const cmd_subvolume_snapshot_usage[] = {
 	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> { <subdir>/<name> | <subdir> }",
 	"",
 	"Create a snapshot of a <subvolume>. Call it <name> and place it in the <subdir>.",
@@ -523,8 +521,7 @@ static const char * const cmd_subvol_snapshot_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
-			       int argc, char **argv)
+static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char	*subvol, *dst;
 	int	res, retval;
@@ -670,16 +667,15 @@ out:
 
 	return retval;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_snapshot, "snapshot");
+static DEFINE_SIMPLE_COMMAND(subvolume_snapshot, "snapshot");
 
-static const char * const cmd_subvol_get_default_usage[] = {
+static const char * const cmd_subvolume_get_default_usage[] = {
 	"btrfs subvolume get-default <path>",
 	"Get the default subvolume of a filesystem",
 	NULL
 };
 
-static int cmd_subvol_get_default(const struct cmd_struct *cmd,
-				  int argc, char **argv)
+static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int fd = -1;
 	int ret = 1;
@@ -733,9 +729,9 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_get_default, "get-default");
+static DEFINE_SIMPLE_COMMAND(subvolume_get_default, "get-default");
 
-static const char * const cmd_subvol_set_default_usage[] = {
+static const char * const cmd_subvolume_set_default_usage[] = {
 	"btrfs subvolume set-default <subvolume>\n"
 	"btrfs subvolume set-default <subvolid> <path>",
 	"Set the default subvolume of the filesystem mounted as default.",
@@ -744,8 +740,7 @@ static const char * const cmd_subvol_set_default_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_set_default(const struct cmd_struct *cmd,
-				  int argc, char **argv)
+static int cmd_subvolume_set_default(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	u64 objectid;
 	char *path;
@@ -781,9 +776,9 @@ static int cmd_subvol_set_default(const struct cmd_struct *cmd,
 	}
 	return 0;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_set_default, "set-default");
+static DEFINE_SIMPLE_COMMAND(subvolume_set_default, "set-default");
 
-static const char * const cmd_subvol_find_new_usage[] = {
+static const char * const cmd_subvolume_find_new_usage[] = {
 	"btrfs subvolume find-new <path> <lastgen>",
 	"List the recently modified files in a filesystem",
 	NULL
@@ -1193,8 +1188,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	return ret;
 }
 
-static int cmd_subvol_find_new(const struct cmd_struct *cmd,
-			       int argc, char **argv)
+static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int fd;
 	int ret;
@@ -1232,9 +1226,9 @@ static int cmd_subvol_find_new(const struct cmd_struct *cmd,
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_find_new, "find-new");
+static DEFINE_SIMPLE_COMMAND(subvolume_find_new, "find-new");
 
-static const char * const cmd_subvol_show_usage[] = {
+static const char * const cmd_subvolume_show_usage[] = {
 	"btrfs subvolume show [options] <path>",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots).",
@@ -1247,7 +1241,7 @@ static const char * const cmd_subvol_show_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char tstr[256];
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
@@ -1505,9 +1499,9 @@ out:
 	free(fullpath);
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_show, "show");
+static DEFINE_SIMPLE_COMMAND(subvolume_show, "show");
 
-static const char * const cmd_subvol_sync_usage[] = {
+static const char * const cmd_subvolume_sync_usage[] = {
 	"btrfs subvolume sync <path> [<subvol-id>...]",
 	"Wait until given subvolume(s) are completely removed from the filesystem.",
 	"Wait until given subvolume(s) are completely removed from the filesystem",
@@ -1520,7 +1514,7 @@ static const char * const cmd_subvol_sync_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_sync(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int fd = -1;
 	int ret = 1;
@@ -1611,22 +1605,22 @@ out:
 
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvol_sync, "sync");
+static DEFINE_SIMPLE_COMMAND(subvolume_sync, "sync");
 
 static const char subvolume_cmd_group_info[] =
 "manage subvolumes: create, delete, list, etc";
 
 static const struct cmd_group subvolume_cmd_group = {
 	subvolume_cmd_group_usage, subvolume_cmd_group_info, {
-		&cmd_struct_subvol_create,
-		&cmd_struct_subvol_delete,
-		&cmd_struct_subvol_list,
-		&cmd_struct_subvol_snapshot,
-		&cmd_struct_subvol_get_default,
-		&cmd_struct_subvol_set_default,
-		&cmd_struct_subvol_find_new,
-		&cmd_struct_subvol_show,
-		&cmd_struct_subvol_sync,
+		&cmd_struct_subvolume_create,
+		&cmd_struct_subvolume_delete,
+		&cmd_struct_subvolume_list,
+		&cmd_struct_subvolume_snapshot,
+		&cmd_struct_subvolume_get_default,
+		&cmd_struct_subvolume_set_default,
+		&cmd_struct_subvolume_find_new,
+		&cmd_struct_subvolume_show,
+		&cmd_struct_subvolume_sync,
 		NULL
 	}
 };

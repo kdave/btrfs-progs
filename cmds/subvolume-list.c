@@ -42,7 +42,7 @@
  * - uppercase for filters and sort options
  * - lowercase for enabling specific items in the output
  */
-static const char * const cmd_subvol_list_usage[] = {
+static const char * const cmd_subvolume_list_usage[] = {
 	"btrfs subvolume list [options] <path>",
 	"List subvolumes and snapshots in the filesystem.",
 	"",
@@ -1482,7 +1482,7 @@ static struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 	return set;
 }
 
-static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	struct btrfs_list_filter_set *filter_set;
 	struct btrfs_list_comparer_set *comparer_set;
@@ -1641,4 +1641,4 @@ out:
 		usage(cmd);
 	return !!ret;
 }
-DEFINE_SIMPLE_COMMAND(subvol_list, "list");
+DEFINE_SIMPLE_COMMAND(subvolume_list, "list");
