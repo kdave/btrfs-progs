@@ -292,7 +292,7 @@ void print_path_column(struct btrfs_qgroup *qgroup)
 {
 	struct btrfs_qgroup_list *list = NULL;
 
-	fputs("  ", stdout);
+	pr_verbose(LOG_DEFAULT, "  ");
 	if (btrfs_qgroup_level(qgroup->qgroupid) > 0) {
 		int count = 0;
 
@@ -303,27 +303,24 @@ void print_path_column(struct btrfs_qgroup *qgroup)
 			u64 sid = btrfs_qgroup_subvid(qgroupid);
 
 			if (count)
-				fputs(" ", stdout);
+				pr_verbose(LOG_DEFAULT, " ");
 			if (level == 0) {
 				const char *path = member->path;
 
 				if (!path)
-					path = "<missing>";
-				fputs(path, stdout);
+					path = "<stale>";
+				pr_verbose(LOG_DEFAULT, "%s", path);
 			} else {
-				printf("%llu/%llu", level, sid);
+				pr_verbose(LOG_DEFAULT, "%llu/%llu", level, sid);
 			}
 			count++;
 		}
-		if (!count)
-			fputs("<empty>", stdout);
-		else
-			printf("<%u member qgroup%c>", count,
+		pr_verbose(LOG_DEFAULT, "<%u member qgroup%c>", count,
 			       (count != 1 ? 's' : '\0'));
 	} else if (qgroup->path) {
-		printf("<FS_ROOT>%s%s", (*qgroup->path ? "/" : ""), qgroup->path);
+		pr_verbose(LOG_DEFAULT, "%s%s", (*qgroup->path ? "" : "<toplevel>"), qgroup->path);
 	} else {
-		fputs("<missing>", stdout);
+		pr_verbose(LOG_DEFAULT, "<stale>");
 	}
 }
 
