@@ -202,7 +202,7 @@ static struct {
 	{
 		.name		= "path",
 		.column_name	= "Path",
-		.need_print	= 0,
+		.need_print	= 1,
 		.unit_mode	= 0,
 		.max_len	= 10,
 	},
@@ -288,7 +288,7 @@ static void print_qgroup_column_add_blank(enum btrfs_qgroup_column_enum column,
 		printf(" ");
 }
 
-void print_path_column(struct btrfs_qgroup *qgroup, bool verbose)
+void print_path_column(struct btrfs_qgroup *qgroup)
 {
 	struct btrfs_qgroup_list *list = NULL;
 
@@ -296,42 +296,39 @@ void print_path_column(struct btrfs_qgroup *qgroup, bool verbose)
 	if (btrfs_qgroup_level(qgroup->qgroupid) > 0) {
 		int count = 0;
 
-		list_for_each_entry(list, &qgroup->qgroups,
-				    next_qgroup) {
-			if (verbose) {
-				struct btrfs_qgroup *member = list->qgroup;
-				u64 qgroupid = member->qgroupid;
-				u64 level = btrfs_qgroup_level(qgroupid);
-				u64 sid = btrfs_qgroup_subvid(qgroupid);
+		list_for_each_entry(list, &qgroup->qgroups, next_qgroup) {
+			struct btrfs_qgroup *member = list->qgroup;
+			u64 qgroupid = member->qgroupid;
+			u64 level = btrfs_qgroup_level(qgroupid);
+			u64 sid = btrfs_qgroup_subvid(qgroupid);
 
-				if (count)
-					fputs(" ", stdout);
-				if (level == 0) {
-					const char *path = member->path;
+			if (count)
+				fputs(" ", stdout);
+			if (level == 0) {
+				const char *path = member->path;
 
-					if (!path)
-						path = "<missing>";
-					fputs(path, stdout);
-				} else
-					printf("%llu/%llu", level, sid);
+				if (!path)
+					path = "<missing>";
+				fputs(path, stdout);
+			} else {
+				printf("%llu/%llu", level, sid);
 			}
 			count++;
 		}
 		if (!count)
 			fputs("<empty>", stdout);
-		else if (!verbose)
+		else
 			printf("<%u member qgroup%c>", count,
-			       count != 1 ? 's' : '\0');
-	} else if (qgroup->path)
-		printf("<FS_ROOT>%s%s", *qgroup->path ? "/" : "",
-		       qgroup->path);
-	else
+			       (count != 1 ? 's' : '\0'));
+	} else if (qgroup->path) {
+		printf("<FS_ROOT>%s%s", (*qgroup->path ? "/" : ""), qgroup->path);
+	} else {
 		fputs("<missing>", stdout);
+	}
 }
 
 static void print_qgroup_column(struct btrfs_qgroup *qgroup,
-				enum btrfs_qgroup_column_enum column,
-				bool verbose)
+				enum btrfs_qgroup_column_enum column)
 {
 	int len;
 	int unit_mode = btrfs_qgroup_columns[column].unit_mode;
@@ -376,21 +373,21 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_CHILD, len);
 		break;
 	case BTRFS_QGROUP_PATH:
-		print_path_column(qgroup, verbose);
+		print_path_column(qgroup);
 		break;
 	default:
 		break;
 	}
 }
 
-static void print_single_qgroup_table(struct btrfs_qgroup *qgroup, bool verbose)
+static void print_single_qgroup_table(struct btrfs_qgroup *qgroup)
 {
 	int i;
 
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		print_qgroup_column(qgroup, i, verbose);
+		print_qgroup_column(qgroup, i);
 
 		if (i != BTRFS_QGROUP_ALL - 1)
 			printf(" ");
@@ -1426,7 +1423,7 @@ int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats)
 	return ret;
 }
 
-static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup, bool verbose)
+static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 {
 
 	struct rb_node *n;
@@ -1437,15 +1434,14 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup, bool verbose)
 	n = rb_first(&qgroup_lookup->root);
 	while (n) {
 		entry = rb_entry(n, struct btrfs_qgroup, sort_node);
-		print_single_qgroup_table(entry, verbose);
+		print_single_qgroup_table(entry);
 		n = rb_next(n);
 	}
 }
 
 static int show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
-		       struct btrfs_qgroup_comparer_set *comp_set,
-		       bool verbose)
+		       struct btrfs_qgroup_comparer_set *comp_set)
 {
 
 	struct qgroup_lookup qgroup_lookup;
@@ -1457,7 +1453,7 @@ static int show_qgroups(int fd,
 		return ret;
 	__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
 				  filter_set, comp_set);
-	print_all_qgroups(&sort_tree, verbose);
+	print_all_qgroups(&sort_tree);
 
 	__free_all_qgroups(&qgroup_lookup);
 	return ret;
@@ -1850,9 +1846,6 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"               (including ancestral qgroups)",
 	"-f             list all qgroups which impact the given path",
 	"               (excluding ancestral qgroups)",
-	"-P             print first-level qgroups subvolume path",
-	"               - nested qgroups will be reported as a count",
-	"-v             verbose, prints pathn for all nested qgroups",
 	HELPINFO_UNITS_LONG,
 	"--sort=qgroupid,rfer,excl,max_rfer,max_excl,path",
 	"               list qgroups sorted by specified items",
@@ -1877,7 +1870,6 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 	struct btrfs_qgroup_filter_set *filter_set;
 	filter_set = qgroup_alloc_filter_set();
 	comparer_set = qgroup_alloc_comparer_set();
-	bool verbose = false;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
@@ -1891,11 +1883,10 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 		static const struct option long_options[] = {
 			{"sort", required_argument, NULL, GETOPT_VAL_SORT},
 			{"sync", no_argument, NULL, GETOPT_VAL_SYNC},
-			{"verbose", no_argument, NULL, 'v'},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "pPcreFfv", long_options, NULL);
+		c = getopt_long(argc, argv, "pcreFf", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -1916,12 +1907,6 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case 'f':
 			filter_flag |= 0x2;
-			break;
-		case 'P':
-			qgroup_setup_print_column(BTRFS_QGROUP_PATH);
-			break;
-		case 'v':
-			verbose = true;
 			break;
 		case GETOPT_VAL_SORT:
 			ret = qgroup_parse_sort_string(optarg, &comparer_set);
@@ -1978,7 +1963,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = show_qgroups(fd, filter_set, comparer_set, verbose);
+	ret = show_qgroups(fd, filter_set, comparer_set);
 	close_file_or_dir(fd, dirstream);
 	free(filter_set);
 	free(comparer_set);
