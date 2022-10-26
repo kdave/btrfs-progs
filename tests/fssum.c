@@ -605,18 +605,18 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 			if (fd == -1 && flags[FLAG_OPEN_ERROR]) {
 				sum_add_u64(&meta, errno);
 			} else if (fd == -1) {
-				fprintf(stderr, "open failed for %s/%s: %s\n",
-					path_prefix, path, strerror(errno));
+				fprintf(stderr, "open failed for %s/%s: %m\n",
+					path_prefix, path);
 				exit(-1);
 			} else {
 				ret = sum_xattrs(fd, &meta);
 				close(fd);
 				if (ret < 0) {
+					errno = -ret;
 					fprintf(stderr,
 						"failed to read xattrs from "
-						"%s/%s: %s\n",
-						path_prefix, path,
-						strerror(-ret));
+						"%s/%s: %m\n",
+						path_prefix, path);
 					exit(-1);
 				}
 			}

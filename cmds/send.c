@@ -316,8 +316,9 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	}
 	if (t_err) {
 		ret = (long int)t_err;
-		error("failed to process send stream, ret=%ld (%s)",
-				(long int)t_err, strerror(-ret));
+		errno = -ret;
+		error("failed to process send stream, ret=%ld (%m)",
+				(long int)t_err);
 		goto out;
 	}
 

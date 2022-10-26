@@ -486,7 +486,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	ASSERT(rw == READ || rw == WRITE);
 
 	if (fstat(fd, &stat_buf) == -1) {
-		error("fstat failed (%s)", strerror(errno));
+		error("fstat failed: %m");
 		exit(1);
 	}
 
@@ -589,7 +589,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 
 	/* Call fsync() to force the write order */
 	if (rw == WRITE && fsync(fd)) {
-		error("failed to synchronize superblock: %s", strerror(errno));
+		error("failed to synchronize superblock: %m");
 		exit(1);
 	}
 

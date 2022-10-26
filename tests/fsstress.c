@@ -1003,8 +1003,8 @@ check_cwd(void)
 
 	ret = stat64(".", &statbuf);
 	if (ret != 0) {
-		fprintf(stderr, "fsstress: check_cwd stat64() returned %d with errno: %d (%s)\n",
-			ret, errno, strerror(errno));
+		fprintf(stderr, "fsstress: check_cwd stat64() returned %d with errno: %d (%m)\n",
+			ret, errno);
 		goto out;
 	}
 

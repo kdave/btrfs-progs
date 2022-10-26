@@ -1375,10 +1375,12 @@ static int qgroups_search_all(int fd, struct qgroup_lookup *qgroup_lookup)
 	int ret;
 
 	ret = __qgroups_search(fd, &args, qgroup_lookup);
-	if (ret == -ENOTTY)
+	if (ret == -ENOTTY) {
 		error("can't list qgroups: quotas not enabled");
-	else if (ret < 0)
-		error("can't list qgroups: %s", strerror(-ret));
+	} else if (ret < 0) {
+		errno = -ret;
+		error("can't list qgroups: %m");
+	}
 	return ret;
 }
 
@@ -2099,7 +2101,8 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 		error("can't list qgroups: quotas not enabled");
 		goto out;
 	} else if (ret < 0) {
-		error("can't list qgroups: %s", strerror(-ret));
+		errno = -ret;
+		error("can't list qgroups: %m");
 		goto out;
 	}
 

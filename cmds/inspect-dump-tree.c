@@ -249,8 +249,8 @@ static int dump_add_tree_block(struct cache_tree *tree, u64 bytenr)
 		return 1;
 	}
 	if (ret < 0) {
-		error("failed to record tree block bytenr %llu: %d(%s)",
-			bytenr, ret, strerror(-ret));
+		errno = -ret;
+		error("failed to record tree block bytenr %llu: %m", bytenr);
 		return ret;
 	}
 	return ret;
