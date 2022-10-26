@@ -1502,7 +1502,7 @@ out:
 static DEFINE_SIMPLE_COMMAND(subvolume_show, "show");
 
 static const char * const cmd_subvolume_sync_usage[] = {
-	"btrfs subvolume sync <path> [<subvol-id>...]",
+	"btrfs subvolume sync <path> [<subvolid>...]",
 	"Wait until given subvolume(s) are completely removed from the filesystem.",
 	"Wait until given subvolume(s) are completely removed from the filesystem",
 	"after deletion.",
