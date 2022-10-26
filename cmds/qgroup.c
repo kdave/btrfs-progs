@@ -1773,9 +1773,12 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 
 static const char * const cmd_qgroup_assign_usage[] = {
 	"btrfs qgroup assign [options] <src> <dst> <path>",
-	"Assign SRC as the child qgroup of DST",
+	"Assign SRC as the child qgroup of DST.",
+	"Assign SRC qgroup as the child qgroup of DST, where the level of DST",
+	"must be higher than SRC. The quota accounting will be inconsistent",
+	"until the next rescan.",
 	"",
-	"--rescan       schedule qutoa rescan if needed",
+	"--rescan       schedule quota rescan if needed",
 	"--no-rescan    don't schedule quota rescan",
 	NULL
 };
@@ -1789,9 +1792,11 @@ static DEFINE_SIMPLE_COMMAND(qgroup_assign, "assign");
 
 static const char * const cmd_qgroup_remove_usage[] = {
 	"btrfs qgroup remove [options] <src> <dst> <path>",
-	"Remove a child qgroup SRC from DST.",
+	"Remove the relation between child qgroup SRC from DST.",
+	"Remove the relation between SRC and DST qgroups. The quota accounting",
+	"will be inconsistent until the next rescan.",
 	"",
-	"--rescan       schedule qutoa rescan if needed",
+	"--rescan       schedule quota rescan if needed",
 	"--no-rescan    don't schedule quota rescan",
 	NULL
 };
@@ -1806,6 +1811,9 @@ static DEFINE_SIMPLE_COMMAND(qgroup_remove, "remove");
 static const char * const cmd_qgroup_create_usage[] = {
 	"btrfs qgroup create <qgroupid> <path>",
 	"Create a subvolume quota group.",
+	"Create a subvolume quota group. The level can't be 0 as such qgroup is",
+	"created automatically for a subvolume. Higher level qgroups are supposed",
+	"to provide accounting for qgroups in a tree structure.",
 	NULL
 };
 
@@ -1835,7 +1843,8 @@ static DEFINE_SIMPLE_COMMAND(qgroup_destroy, "destroy");
 
 static const char * const cmd_qgroup_show_usage[] = {
 	"btrfs qgroup show [options] <path>",
-	"Show subvolume quota groups.",
+	"List subvolume quota groups.",
+	"List subvolume quota groups, accounted size, limits and path.",
 	"",
 	"-p             print parent qgroup id",
 	"-c             print child qgroup id",
