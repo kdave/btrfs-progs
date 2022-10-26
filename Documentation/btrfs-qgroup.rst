@@ -70,6 +70,11 @@ destroy <qgroupid> <path>
         If a qgroup is not isolated, meaning it is a parent or child qgroup, then it
         can only be destroyed after the relationship is removed.
 
+clear-stale <path>
+	Clear all stale qgroups whose subvolume does not exist anymore, this is the
+	level 0 qgroup like 0/subvolid. Higher level qgroups are not deleted even
+	if they don't have any child qgroups.
+
 limit [options] <size>|none [<qgroupid>] <path>
         Limit the size of a qgroup to *size* or no limit in the btrfs filesystem
         identified by *path*.

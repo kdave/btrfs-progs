@@ -2064,6 +2064,72 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_limit, "limit");
 
+static const char * const cmd_qgroup_clear_stale_usage[] = {
+	"btrfs qgroup clear-stale <path>",
+	"Clear all stale qgroups (level 0/subvolid), without a subvolume.",
+	"Clear all stale qgroups whose subvolume does not exist anymore, this is the",
+	"level 0 qgroup like 0/subvolid. Higher level qgroups are not deleted even",
+	"if they don't have any child qgroups.",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
+	NULL
+};
+
+static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int ret = 0;
+	int fd;
+	char *path = NULL;
+	DIR *dirstream = NULL;
+	struct qgroup_lookup qgroup_lookup;
+	struct rb_node *node;
+	struct btrfs_qgroup *entry;
+
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	path = argv[optind];
+
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
+		return 1;
+
+	ret = qgroups_search_all(fd, &qgroup_lookup);
+	if (ret == -ENOTTY) {
+		error("can't list qgroups: quotas not enabled");
+		goto out;
+	} else if (ret < 0) {
+		error("can't list qgroups: %s", strerror(-ret));
+		goto out;
+	}
+
+	node = rb_first(&qgroup_lookup.root);
+	while (node) {
+		u64 level;
+		struct btrfs_ioctl_qgroup_create_args args = { .create = false };
+
+		entry = rb_entry(node, struct btrfs_qgroup, rb_node);
+		level = btrfs_qgroup_level(entry->qgroupid);
+		if (!entry->path && level == 0) {
+			pr_verbose(LOG_DEFAULT, "Delete stale qgroup %llu/%llu\n",
+					level, btrfs_qgroup_subvid(entry->qgroupid));
+			args.qgroupid = entry->qgroupid;
+			ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
+			if (ret < 0) {
+				error("cannot delete qgroup %llu/%llu: %m",
+					level,
+					btrfs_qgroup_subvid(entry->qgroupid));
+			}
+		}
+		node = rb_next(node);
+	}
+
+out:
+	close_file_or_dir(fd, dirstream);
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(qgroup_clear_stale, "clear-stale");
+
 static const char qgroup_cmd_group_info[] =
 "manage quota groups";
 
@@ -2072,6 +2138,7 @@ static const struct cmd_group qgroup_cmd_group = {
 		&cmd_struct_qgroup_assign,
 		&cmd_struct_qgroup_remove,
 		&cmd_struct_qgroup_create,
+		&cmd_struct_qgroup_clear_stale,
 		&cmd_struct_qgroup_destroy,
 		&cmd_struct_qgroup_show,
 		&cmd_struct_qgroup_limit,
