@@ -1076,7 +1076,7 @@ static inline u64 btrfs_qgroup_level(u64 qgroupid)
 	return qgroupid >> BTRFS_QGROUP_LEVEL_SHIFT;
 }
 
-static inline u64 btrfs_qgroup_subvid(u64 qgroupid)
+static inline u64 btrfs_qgroup_subvolid(u64 qgroupid)
 {
 	return qgroupid & ((1ULL << BTRFS_QGROUP_LEVEL_SHIFT) - 1);
 }

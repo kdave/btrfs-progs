@@ -247,7 +247,7 @@ static int print_parent_column(struct btrfs_qgroup *qgroup)
 	list_for_each_entry(list, &qgroup->qgroups, next_qgroup) {
 		len += printf("%llu/%llu",
 			      btrfs_qgroup_level(list->qgroup->qgroupid),
-			      btrfs_qgroup_subvid(list->qgroup->qgroupid));
+			      btrfs_qgroup_subvolid(list->qgroup->qgroupid));
 		if (!list_is_last(&list->next_qgroup, &qgroup->qgroups))
 			len += printf(",");
 	}
@@ -265,7 +265,7 @@ static int print_child_column(struct btrfs_qgroup *qgroup)
 	list_for_each_entry(list, &qgroup->members, next_member) {
 		len += printf("%llu/%llu",
 			      btrfs_qgroup_level(list->member->qgroupid),
-			      btrfs_qgroup_subvid(list->member->qgroupid));
+			      btrfs_qgroup_subvolid(list->member->qgroupid));
 		if (!list_is_last(&list->next_member, &qgroup->members))
 			len += printf(",");
 	}
@@ -300,7 +300,7 @@ void print_path_column(struct btrfs_qgroup *qgroup)
 			struct btrfs_qgroup *member = list->qgroup;
 			u64 qgroupid = member->qgroupid;
 			u64 level = btrfs_qgroup_level(qgroupid);
-			u64 sid = btrfs_qgroup_subvid(qgroupid);
+			u64 sid = btrfs_qgroup_subvolid(qgroupid);
 
 			if (count)
 				pr_verbose(LOG_DEFAULT, " ");
@@ -338,7 +338,7 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	case BTRFS_QGROUP_QGROUPID:
 		len = printf("%llu/%llu",
 			     btrfs_qgroup_level(qgroup->qgroupid),
-			     btrfs_qgroup_subvid(qgroup->qgroupid));
+			     btrfs_qgroup_subvolid(qgroup->qgroupid));
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
@@ -849,7 +849,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 	if (!child) {
 		error("cannot find the qgroup %llu/%llu",
 		      btrfs_qgroup_level(child_id),
-		      btrfs_qgroup_subvid(child_id));
+		      btrfs_qgroup_subvolid(child_id));
 		return -ENOENT;
 	}
 
@@ -857,7 +857,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 	if (!parent) {
 		error("cannot find the qgroup %llu/%llu",
 		      btrfs_qgroup_level(parent_id),
-		      btrfs_qgroup_subvid(parent_id));
+		      btrfs_qgroup_subvolid(parent_id));
 		return -ENOENT;
 	}
 
@@ -1120,7 +1120,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	case BTRFS_QGROUP_QGROUPID:
 		sprintf(tmp, "%llu/%llu",
 			btrfs_qgroup_level(bq->qgroupid),
-			btrfs_qgroup_subvid(bq->qgroupid));
+			btrfs_qgroup_subvolid(bq->qgroupid));
 		len = strlen(tmp);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
@@ -1152,7 +1152,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 		list_for_each_entry(list, &bq->qgroups, next_qgroup) {
 			len += sprintf(tmp, "%llu/%llu",
 				btrfs_qgroup_level(list->qgroup->qgroupid),
-				btrfs_qgroup_subvid(list->qgroup->qgroupid));
+				btrfs_qgroup_subvolid(list->qgroup->qgroupid));
 			if (!list_is_last(&list->next_qgroup, &bq->qgroups))
 				len += 1;
 		}
@@ -1164,7 +1164,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 		list_for_each_entry(list, &bq->members, next_member) {
 			len += sprintf(tmp, "%llu/%llu",
 				btrfs_qgroup_level(list->member->qgroupid),
-				btrfs_qgroup_subvid(list->member->qgroupid));
+				btrfs_qgroup_subvolid(list->member->qgroupid));
 			if (!list_is_last(&list->next_member, &bq->members))
 				len += 1;
 		}
@@ -2112,13 +2112,13 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 		level = btrfs_qgroup_level(entry->qgroupid);
 		if (!entry->path && level == 0) {
 			pr_verbose(LOG_DEFAULT, "Delete stale qgroup %llu/%llu\n",
-					level, btrfs_qgroup_subvid(entry->qgroupid));
+					level, btrfs_qgroup_subvolid(entry->qgroupid));
 			args.qgroupid = entry->qgroupid;
 			ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
 			if (ret < 0) {
 				error("cannot delete qgroup %llu/%llu: %m",
 					level,
-					btrfs_qgroup_subvid(entry->qgroupid));
+					btrfs_qgroup_subvolid(entry->qgroupid));
 			}
 		}
 		node = rb_next(node);

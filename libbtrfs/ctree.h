@@ -1114,6 +1114,11 @@ static inline u64 btrfs_qgroup_subvid(u64 qgroupid)
 	return qgroupid & ((1ULL << BTRFS_QGROUP_LEVEL_SHIFT) - 1);
 }
 
+static inline u64 btrfs_qgroup_subvolid(u64 qgroupid)
+{
+	return qgroupid & ((1ULL << BTRFS_QGROUP_LEVEL_SHIFT) - 1);
+}
+
 #define BTRFS_QGROUP_STATUS_FLAG_ON		(1ULL << 0)
 #define BTRFS_QGROUP_STATUS_FLAG_RESCAN		(1ULL << 1)
 #define BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT	(1ULL << 2)

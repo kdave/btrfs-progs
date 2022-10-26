@@ -493,7 +493,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 		printf("account (%llu, %llu), qgroup %llu/%llu, rfer %llu,"
 		       " excl %llu, refs %llu, roots %llu\n", bytenr, num_bytes,
 		       btrfs_qgroup_level(count->qgroupid),
-		       btrfs_qgroup_subvid(count->qgroupid),
+		       btrfs_qgroup_subvolid(count->qgroupid),
 		       count->info.referenced, count->info.exclusive, nr_refs,
 		       nr_roots);
 #endif
@@ -1294,7 +1294,7 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 	if (verbose || (is_different && qgroup_printable(count))) {
 		printf("Counts for qgroup id: %llu/%llu %s\n",
 		       btrfs_qgroup_level(count->qgroupid),
-		       btrfs_qgroup_subvid(count->qgroupid),
+		       btrfs_qgroup_subvolid(count->qgroupid),
 		       is_different ? "are different" : "");
 
 		print_fields(info->referenced, info->referenced_compressed,
@@ -1568,7 +1568,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	if (!silent)
 		printf("Repair qgroup %llu/%llu\n",
 			btrfs_qgroup_level(count->qgroupid),
-			btrfs_qgroup_subvid(count->qgroupid));
+			btrfs_qgroup_subvolid(count->qgroupid));
 
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans))
@@ -1582,7 +1582,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	if (ret) {
 		error("could not find disk item for qgroup %llu/%llu",
 		      btrfs_qgroup_level(count->qgroupid),
-		      btrfs_qgroup_subvid(count->qgroupid));
+		      btrfs_qgroup_subvolid(count->qgroupid));
 		if (ret > 0)
 			ret = -ENOENT;
 		goto out;
