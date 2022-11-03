@@ -570,7 +570,7 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 		break;
 	case BTRFS_SEND_C_FILEATTR:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U32(sctx, BTRFS_SEND_A_FILEATTR, &fileattr);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_FILEATTR, &fileattr);
 		ret = sctx->ops->fileattr(path, fileattr, sctx->user);
 		break;
 	}
