@@ -35,6 +35,16 @@ btrfs-progs-6.0.1 (2022-11-04)
    * other:
       * documentation, help text, error message updates
 
+btrfs-progs-6.0.2 (2022-11-24)
+""""""""""""""""""""""""""""""
+   * fixes:
+      * resize cancel did not work in some cases
+      * fix fileattr stream command format and add workaround when it cannot be applied
+      * properly handle degraded raid56 reads
+      * fi defrag: fix verbosity, don't print file names by default
+      * receive: fix silent data loss after fall back from encoded write
+   * fi mkswapfile: new command to create a formatted swapfile in one go
+
 btrfs-progs-5.19 (2022-08-16)
 -----------------------------
    * send: support protocol version 2
