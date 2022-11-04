@@ -21,6 +21,20 @@ btrfs-progs-6.0 (2022-10-11)
       * new and updated tests
       * update documentation
 
+btrfs-progs-6.0.1 (2022-11-04)
+""""""""""""""""""""""""""""""
+   * send: minor speed up for v2 due to increased buffer size
+   * resize: invalid command line options fail with error code
+   * quota rescan:
+      * add long options --status and --wait
+      * new option to wait but don't start rescan
+   * qgroup show: print path by default, updated format
+   * qgroup: new subcommand clear-stale, remove qgroups without their subvolumes
+   * experimental:
+      * add warnings to commands that have it enabled (mkfs, image, btrfstune)
+   * other:
+      * documentation, help text, error message updates
+
 btrfs-progs-5.19 (2022-08-16)
 -----------------------------
    * send: support protocol version 2
