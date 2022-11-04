@@ -11,7 +11,8 @@ check_prereq btrfs
 setup_root_helper
 prepare_test_dev
 
-if ! grep -s '1$'  "/sys/fs/btrfs/features/send_stream_version"; then
+if ! [ -f "/sys/fs/btrfs/features/send_stream_version" ] ||
+   grep -s '1$' "/sys/fs/btrfs/features/send_stream_version"; then
 	_not_run "kernel does not support send stream >1"
 	exit
 fi
