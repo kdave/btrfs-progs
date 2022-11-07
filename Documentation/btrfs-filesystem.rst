@@ -188,6 +188,23 @@ label [<device>|<mountpoint>] [<newlabel>]
                 The maximum allowable length shall be less than 256 chars and must not contain
                 a newline. The trailing newline is stripped automatically.
 
+mkswapfile [-s size] file
+        Create a new file that's suitable and formatted as a swapfile. Default
+        size is 2GiB, minimum size is 40KiB.
+
+        A swapfile must be created in a specific way: NOCOW and preallocated.
+        Subvolume containing a swapfile cannot be snapshotted and blocks of an
+        activated swapfile cannot be balanced.
+
+        Swapfile creation can be achieved by standalone commands too. Activation
+        needs to be done by command ``swapon(8)``.
+
+        ``Options``
+
+        -s|--size SIZE
+                Create swapfile of a given size SIZE (accepting k/m/g/e/p
+                suffix).
+
 resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         Resize a mounted filesystem identified by *path*. A particular device
         can be resized by specifying a *devid*.
