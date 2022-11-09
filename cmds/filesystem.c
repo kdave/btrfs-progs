@@ -1124,7 +1124,6 @@ static int check_resize_args(const char *amount, const char *path) {
 		ret = 1;
 		goto out;
 	}
-	ret = 0;
 
 	sizestr = amount_dup;
 	devstr = strchr(sizestr, ':');
@@ -1211,7 +1210,7 @@ static int check_resize_args(const char *amount, const char *path) {
 
 out:
 	free(di_args);
-	return ret;
+	return 0;
 }
 
 static int cmd_filesystem_resize(const struct cmd_struct *cmd,
