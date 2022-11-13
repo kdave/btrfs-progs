@@ -27,6 +27,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/raid56.h"
+#include "kernel-lib/bitmap.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
@@ -791,9 +792,11 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 		       u64 len, int mirror, struct btrfs_multi_bio *multi,
 		       u64 *raid_map)
 {
+	const int tolerance = (multi->type & BTRFS_RAID_RAID6 ? 2 : 1);
 	const int num_stripes = multi->num_stripes;
 	const u64 full_stripe_start = raid_map[0];
 	void **pointers = NULL;
+	unsigned long *failed_stripe_bitmap = NULL;
 	int failed_a = -1;
 	int failed_b = -1;
 	int i;
@@ -820,6 +823,12 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 		}
 	}
 
+	failed_stripe_bitmap = bitmap_zalloc(num_stripes);
+	if (!failed_stripe_bitmap) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
 	/*
 	 * Read the full stripe.
 	 *
@@ -830,10 +839,8 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 		ret = btrfs_pread(multi->stripes[i].dev->fd, pointers[i],
 				  BTRFS_STRIPE_LEN, multi->stripes[i].physical,
 				  fs_info->zoned);
-		if (ret < BTRFS_STRIPE_LEN) {
-			ret = -EIO;
-			goto out;
-		}
+		if (ret < BTRFS_STRIPE_LEN)
+			set_bit(i, failed_stripe_bitmap);
 	}
 
 	/*
@@ -842,29 +849,30 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 	 * Since we're reading using mirror_num > 1 already, it means the data
 	 * stripe where @logical lies in is definitely corrupted.
 	 */
-	failed_a = (logical - full_stripe_start) / BTRFS_STRIPE_LEN;
+	set_bit((logical - full_stripe_start) / BTRFS_STRIPE_LEN, failed_stripe_bitmap);
 
 	/*
 	 * For RAID6, we don't have good way to exhaust all the combinations,
 	 * so here we can only go through the map to see if we have missing devices.
+	 *
+	 * If we only have one failed stripe (marked by above set_bit()), then
+	 * we have no better idea, fallback to use P corruption.
 	 */
-	if (multi->type & BTRFS_BLOCK_GROUP_RAID6) {
-		for (i = 0; i < num_stripes; i++) {
-			/* Skip failed_a, as it's already marked failed */
-			if (i == failed_a)
-				continue;
-			/* Missing dev */
-			if (multi->stripes[i].dev->fd == -1) {
-				failed_b = i;
-				break;
-			}
-		}
-		/*
-		 * No missing device, we have no better idea, default to P
-		 * corruption
-		 */
-		if (failed_b < 0)
-			failed_b = num_stripes - 2;
+	if (multi->type & BTRFS_BLOCK_GROUP_RAID6 &&
+	    bitmap_weight(failed_stripe_bitmap, num_stripes) < 2)
+		set_bit(num_stripes - 2, failed_stripe_bitmap);
+
+	/* Damaged beyond repair already. */
+	if (bitmap_weight(failed_stripe_bitmap, num_stripes) > tolerance) {
+		ret = -EIO;
+		goto out;
+	}
+
+	for_each_set_bit(i, failed_stripe_bitmap, num_stripes) {
+		if (failed_a < 0)
+			failed_a = i;
+		else if (failed_b < 0)
+			failed_b = i;
 	}
 
 	/* Rebuild the full stripe */
@@ -877,6 +885,7 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 			BTRFS_STRIPE_LEN, len);
 	ret = 0;
 out:
+	free(failed_stripe_bitmap);
 	for (i = 0; i < num_stripes; i++)
 		free(pointers[i]);
 	free(pointers);
