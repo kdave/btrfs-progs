@@ -1155,10 +1155,9 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 				u32 compression)
 {
 	int ret = 0;
-	size_t pos;
-	ssize_t w;
 	char *unencoded_data;
 	int sector_shift = 0;
+	u64 written = 0;
 
 	unencoded_data = calloc(unencoded_len, 1);
 	if (!unencoded_data) {
@@ -1209,17 +1208,19 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 		goto out;
 	}
 
-	pos = unencoded_offset;
-	while (pos < unencoded_file_len) {
-		w = pwrite(rctx->write_fd, unencoded_data + pos,
-			   unencoded_file_len - pos, offset);
+	while (written < unencoded_file_len) {
+		ssize_t w;
+
+		w = pwrite(rctx->write_fd, unencoded_data + unencoded_offset,
+			   unencoded_file_len - written, offset);
 		if (w < 0) {
 			ret = -errno;
 			error("writing unencoded data failed: %m");
 			goto out;
 		}
-		pos += w;
+		written += w;
 		offset += w;
+		unencoded_offset += w;
 	}
 out:
 	free(unencoded_data);
