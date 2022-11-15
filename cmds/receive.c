@@ -1246,6 +1246,12 @@ static int process_encoded_write(const char *path, const void *data, u64 offset,
 		.encryption = encryption,
 	};
 
+	if (bconf.verbose >= 3)
+		fprintf(stderr,
+"encoded_write %s - offset=%llu, len=%llu, unencoded_offset=%llu, unencoded_file_len=%llu, unencoded_len=%llu, compression=%u, encryption=%u\n",
+			path, offset, len, unencoded_offset, unencoded_file_len,
+			unencoded_len, compression, encryption);
+
 	if (encryption) {
 		error("encoded_write: encryption not supported");
 		return -EOPNOTSUPP;
@@ -1271,6 +1277,10 @@ static int process_encoded_write(const char *path, const void *data, u64 offset,
 			error("encoded_write: writing to %s failed: %m", path);
 			return ret;
 		}
+		if (bconf.verbose >= 3)
+			fprintf(stderr,
+"encoded_write %s - falling back to decompress and write due to errno %d (\"%m\")\n",
+				path, errno);
 	}
 
 	return decompress_and_write(rctx, data, offset, len, unencoded_file_len,
