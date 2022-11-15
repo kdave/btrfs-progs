@@ -1295,6 +1295,11 @@ static int process_fallocate(const char *path, int mode, u64 offset, u64 len,
 	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
+	if (bconf.verbose >= 3)
+		fprintf(stderr,
+			"fallocate %s - offset=%llu, len=%llu, mode=%d\n",
+			path, offset, len, mode);
+
 	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("fallocate: path invalid: %s", path);
