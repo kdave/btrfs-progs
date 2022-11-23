@@ -683,9 +683,10 @@ void free_extent_buffer_nocache(struct extent_buffer *eb)
 	free_extent_buffer_internal(eb, 1);
 }
 
-struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
+struct extent_buffer *find_extent_buffer(struct btrfs_fs_info *fs_info,
 					 u64 bytenr, u32 blocksize)
 {
+	struct extent_io_tree *tree = &fs_info->extent_cache;
 	struct extent_buffer *eb = NULL;
 	struct cache_extent *cache;
 
@@ -699,9 +700,10 @@ struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
 	return eb;
 }
 
-struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
+struct extent_buffer *find_first_extent_buffer(struct btrfs_fs_info *fs_info,
 					       u64 start)
 {
+	struct extent_io_tree *tree = &fs_info->extent_cache;
 	struct extent_buffer *eb = NULL;
 	struct cache_extent *cache;
 

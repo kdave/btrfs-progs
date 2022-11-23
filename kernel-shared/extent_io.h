@@ -129,9 +129,9 @@ static inline int extent_buffer_uptodate(struct extent_buffer *eb)
 
 int set_state_private(struct extent_io_tree *tree, u64 start, u64 xprivate);
 int get_state_private(struct extent_io_tree *tree, u64 start, u64 *xprivate);
-struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
+struct extent_buffer *find_extent_buffer(struct btrfs_fs_info *fs_info,
 					 u64 bytenr, u32 blocksize);
-struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
+struct extent_buffer *find_first_extent_buffer(struct btrfs_fs_info *fs_info,
 					       u64 start);
 struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 					  u64 bytenr, u32 blocksize);

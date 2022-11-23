@@ -150,7 +150,7 @@ again:
 			goto again;
 
 		while(start <= end) {
-			eb = find_first_extent_buffer(tree, start);
+			eb = find_first_extent_buffer(fs_info, start);
 			BUG_ON(!eb || eb->start != start);
 			ret = write_tree_block(trans, fs_info, eb);
 			if (ret < 0) {
@@ -180,7 +180,7 @@ cleanup:
 			break;
 
 		while (start <= end) {
-			eb = find_first_extent_buffer(tree, start);
+			eb = find_first_extent_buffer(fs_info, start);
 			BUG_ON(!eb || eb->start != start);
 			start += eb->len;
 			clear_extent_buffer_dirty(eb);
