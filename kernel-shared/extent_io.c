@@ -592,48 +592,6 @@ int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
 	return bitset;
 }
 
-int set_state_private(struct extent_io_tree *tree, u64 start, u64 private)
-{
-	struct cache_extent *node;
-	struct extent_state *state;
-	int ret = 0;
-
-	node = search_cache_extent(&tree->state, start);
-	if (!node) {
-		ret = -ENOENT;
-		goto out;
-	}
-	state = container_of(node, struct extent_state, cache_node);
-	if (state->start != start) {
-		ret = -ENOENT;
-		goto out;
-	}
-	state->xprivate = private;
-out:
-	return ret;
-}
-
-int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private)
-{
-	struct cache_extent *node;
-	struct extent_state *state;
-	int ret = 0;
-
-	node = search_cache_extent(&tree->state, start);
-	if (!node) {
-		ret = -ENOENT;
-		goto out;
-	}
-	state = container_of(node, struct extent_state, cache_node);
-	if (state->start != start) {
-		ret = -ENOENT;
-		goto out;
-	}
-	*private = state->xprivate;
-out:
-	return ret;
-}
-
 static struct extent_buffer *__alloc_extent_buffer(struct btrfs_fs_info *info,
 						   u64 bytenr, u32 blocksize)
 {
