@@ -93,8 +93,7 @@ static struct extent_record *btrfs_new_extent_record(struct extent_buffer *eb)
 	rec->cache.start = btrfs_header_bytenr(eb);
 	rec->cache.size = eb->len;
 	rec->generation = btrfs_header_generation(eb);
-	read_extent_buffer(eb, rec->csum, (unsigned long)btrfs_header_csum(eb),
-			   BTRFS_CSUM_SIZE);
+	read_extent_buffer(eb, rec->csum, 0, BTRFS_CSUM_SIZE);
 	return rec;
 }
 
