@@ -1067,10 +1067,10 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 	memcpy(dst, eb->data + start, len);
 }
 
-void write_extent_buffer(struct extent_buffer *eb, const void *src,
+void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len)
 {
-	memcpy(eb->data + start, src, len);
+	memcpy((void *)eb->data + start, src, len);
 }
 
 void copy_extent_buffer(struct extent_buffer *dst, struct extent_buffer *src,
