@@ -45,6 +45,8 @@ static int print_replace_status(int fd, const char *path, int once);
 static char *time2string(char *buf, size_t s, __u64 t);
 static char *progress2string(char *buf, size_t s, int progress_1000);
 
+/* Used to separate internal errors from actual dev replace ioctl results. */
+#define BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT		-1
 
 static const char *replace_dev_result2string(__u64 result)
 {
