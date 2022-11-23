@@ -25,6 +25,7 @@
 #include <strings.h>
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/compression.h"
 #include "common/parse-utils.h"
 #include "common/messages.h"
 #include "common/utils.h"

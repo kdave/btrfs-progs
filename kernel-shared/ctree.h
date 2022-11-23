@@ -713,15 +713,6 @@ struct btrfs_timespec {
 	__le32 nsec;
 } __attribute__ ((__packed__));
 
-typedef enum {
-	BTRFS_COMPRESS_NONE  = 0,
-	BTRFS_COMPRESS_ZLIB  = 1,
-	BTRFS_COMPRESS_LZO   = 2,
-	BTRFS_COMPRESS_ZSTD  = 3,
-	BTRFS_COMPRESS_TYPES = 3,
-	BTRFS_COMPRESS_LAST  = 4,
-} btrfs_compression_type;
-
 /* we don't understand any encryption methods right now */
 typedef enum {
 	BTRFS_ENCRYPTION_NONE = 0,

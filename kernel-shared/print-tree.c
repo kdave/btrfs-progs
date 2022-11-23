@@ -25,6 +25,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/compression.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,

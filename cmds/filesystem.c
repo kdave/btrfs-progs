@@ -36,6 +36,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-lib/list_sort.h"
 #include "kernel-shared/disk-io.h"

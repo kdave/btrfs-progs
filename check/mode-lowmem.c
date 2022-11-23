@@ -28,6 +28,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/backref.h"
+#include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
 #include "common/messages.h"
 #include "common/internal.h"

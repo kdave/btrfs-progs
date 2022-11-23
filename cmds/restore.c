@@ -43,6 +43,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/compression.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
@@ -718,7 +719,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 				    struct btrfs_file_extent_item);
 		extent_type = btrfs_file_extent_type(leaf, fi);
 		compression = btrfs_file_extent_compression(leaf, fi);
-		if (compression >= BTRFS_COMPRESS_LAST) {
+		if (compression >= BTRFS_NR_COMPRESS_TYPES) {
 			warning("compression type %d not supported",
 				compression);
 			ret = -1;
