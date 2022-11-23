@@ -794,7 +794,7 @@ clean: $(CLEANDIRS)
 		kernel-lib/*.o kernel-lib/.deps/*.o.d \
 		kernel-shared/*.o kernel-shared/.deps/*.o.d \
 		image/*.o image/.deps/*.o.d \
-		convert/.deps/*.o convert/.deps/*.o.d \
+		convert/*.o convert/.deps/*.o.d \
 		mkfs/*.o mkfs/.deps/*.o.d check/*.o check/.deps/*.o.d \
 		cmds/*.o cmds/.deps/*.o.d common/*.o common/.deps/*.o.d \
 		crypto/*.o crypto/.deps/*.o.d \
