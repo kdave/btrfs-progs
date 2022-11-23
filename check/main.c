@@ -4428,8 +4428,8 @@ again:
 		       i, shift, (unsigned long long)buf->start);
 		offset = btrfs_item_offset(buf, i);
 		memmove_extent_buffer(buf,
-				      btrfs_leaf_data(buf) + offset + shift,
-				      btrfs_leaf_data(buf) + offset,
+				      btrfs_item_nr_offset(buf, 0) + offset + shift,
+				      btrfs_item_nr_offset(buf, 0) + offset,
 				      btrfs_item_size(buf, i));
 		btrfs_set_item_offset(buf, i, offset + shift);
 		btrfs_mark_buffer_dirty(buf);

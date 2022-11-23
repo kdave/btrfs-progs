@@ -322,7 +322,7 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 		btrfs_item_key_to_cpu(src, &key, i);
 		if (key.type == BTRFS_CSUM_ITEM_KEY) {
 			size = btrfs_item_size(src, i);
-			memset(dst + btrfs_leaf_data(src) +
+			memset(dst + btrfs_item_nr_offset(src, 0) +
 			       btrfs_item_offset(src, i), 0, size);
 			continue;
 		}
@@ -368,7 +368,7 @@ static void copy_buffer(struct metadump_struct *md, u8 *dst,
 		size = sizeof(struct btrfs_header);
 		memset(dst + size, 0, src->len - size);
 	} else if (level == 0) {
-		size = btrfs_leaf_data(src) +
+		size = btrfs_item_nr_offset(src, 0) +
 			btrfs_item_offset(src, nritems - 1) -
 			btrfs_item_nr_offset(src, nritems);
 		memset(dst + btrfs_item_nr_offset(src, nritems), 0, size);
@@ -1247,8 +1247,8 @@ static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 		btrfs_set_item_offset(eb, i, ioff + size_diff);
 	}
 
-	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end + size_diff,
-			      btrfs_leaf_data(eb) + data_end,
+	memmove_extent_buffer(eb, btrfs_item_nr_offset(eb, 0) + data_end + size_diff,
+			      btrfs_item_nr_offset(eb, 0) + data_end,
 			      old_data_start + new_size - data_end);
 	btrfs_set_item_size(eb, slot, new_size);
 }
