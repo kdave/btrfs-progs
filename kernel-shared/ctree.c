@@ -473,7 +473,7 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 	write_extent_buffer(cow, root->fs_info->fs_devices->metadata_uuid,
 			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
-	WARN_ON(!(buf->flags & EXTENT_BAD_TRANSID) &&
+	WARN_ON(!(buf->flags & EXTENT_BUFFER_BAD_TRANSID) &&
 		btrfs_header_generation(buf) > trans->transid);
 
 	update_ref_for_cow(trans, root, buf, cow);

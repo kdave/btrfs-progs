@@ -33,9 +33,12 @@
 #define EXTENT_DEFRAG_DONE	(1U << 7)
 #define EXTENT_BUFFER_FILLED	(1U << 8)
 #define EXTENT_CSUM		(1U << 9)
-#define EXTENT_BAD_TRANSID	(1U << 10)
-#define EXTENT_BUFFER_DUMMY	(1U << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
+
+#define EXTENT_BUFFER_UPTODATE		(1U << 0)
+#define EXTENT_BUFFER_DIRTY		(1U << 1)
+#define EXTENT_BUFFER_BAD_TRANSID	(1U << 2)
+#define EXTENT_BUFFER_DUMMY		(1U << 3)
 
 #define BLOCK_GROUP_DATA	(1U << 1)
 #define BLOCK_GROUP_METADATA	(1U << 2)
@@ -108,13 +111,13 @@ int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end);
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end);
 static inline int set_extent_buffer_uptodate(struct extent_buffer *eb)
 {
-	eb->flags |= EXTENT_UPTODATE;
+	eb->flags |= EXTENT_BUFFER_UPTODATE;
 	return 0;
 }
 
 static inline int clear_extent_buffer_uptodate(struct extent_buffer *eb)
 {
-	eb->flags &= ~EXTENT_UPTODATE;
+	eb->flags &= ~EXTENT_BUFFER_UPTODATE;
 	return 0;
 }
 
@@ -122,7 +125,7 @@ static inline int extent_buffer_uptodate(struct extent_buffer *eb)
 {
 	if (!eb || IS_ERR(eb))
 		return 0;
-	if (eb->flags & EXTENT_UPTODATE)
+	if (eb->flags & EXTENT_BUFFER_UPTODATE)
 		return 1;
 	return 0;
 }

@@ -276,7 +276,7 @@ static int verify_parent_transid(struct extent_buffer *eb, u64 parent_transid,
 	       (unsigned long long)parent_transid,
 	       (unsigned long long)btrfs_header_generation(eb));
 	if (ignore) {
-		eb->flags |= EXTENT_BAD_TRANSID;
+		eb->flags |= EXTENT_BUFFER_BAD_TRANSID;
 		printk("Ignoring transid failure\n");
 		return 0;
 	}
@@ -374,7 +374,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 		if (ret == 0 && csum_tree_block(fs_info, eb, 1) == 0 &&
 		    check_tree_block(fs_info, eb) == 0 &&
 		    verify_parent_transid(eb, parent_transid, ignore) == 0) {
-			if (eb->flags & EXTENT_BAD_TRANSID &&
+			if (eb->flags & EXTENT_BUFFER_BAD_TRANSID &&
 			    list_empty(&eb->recow)) {
 				list_add_tail(&eb->recow,
 					      &fs_info->recow_ebs);

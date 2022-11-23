@@ -649,7 +649,7 @@ static void free_extent_buffer_internal(struct extent_buffer *eb, bool free_now)
 	eb->refs--;
 	BUG_ON(eb->refs < 0);
 	if (eb->refs == 0) {
-		if (eb->flags & EXTENT_DIRTY) {
+		if (eb->flags & EXTENT_BUFFER_DIRTY) {
 			warning(
 			"dirty eb leak (aborted trans): start %llu len %u",
 				eb->start, eb->len);
@@ -1036,8 +1036,8 @@ out:
 int set_extent_buffer_dirty(struct extent_buffer *eb)
 {
 	struct extent_io_tree *tree = &eb->fs_info->dirty_buffers;
-	if (!(eb->flags & EXTENT_DIRTY)) {
-		eb->flags |= EXTENT_DIRTY;
+	if (!(eb->flags & EXTENT_BUFFER_DIRTY)) {
+		eb->flags |= EXTENT_BUFFER_DIRTY;
 		set_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
 		extent_buffer_get(eb);
 	}
@@ -1047,8 +1047,8 @@ int set_extent_buffer_dirty(struct extent_buffer *eb)
 int clear_extent_buffer_dirty(struct extent_buffer *eb)
 {
 	struct extent_io_tree *tree = &eb->fs_info->dirty_buffers;
-	if (eb->flags & EXTENT_DIRTY) {
-		eb->flags &= ~EXTENT_DIRTY;
+	if (eb->flags & EXTENT_BUFFER_DIRTY) {
+		eb->flags &= ~EXTENT_BUFFER_DIRTY;
 		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
 		free_extent_buffer(eb);
 	}
