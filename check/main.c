@@ -4393,9 +4393,9 @@ again:
 	for (i = 0; i < btrfs_header_nritems(buf); i++) {
 		unsigned int shift = 0, offset;
 
-		if (i == 0 && btrfs_item_end(buf, i) !=
+		if (i == 0 && btrfs_item_data_end(buf, i) !=
 		    BTRFS_LEAF_DATA_SIZE(gfs_info)) {
-			if (btrfs_item_end(buf, i) >
+			if (btrfs_item_data_end(buf, i) >
 			    BTRFS_LEAF_DATA_SIZE(gfs_info)) {
 				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
@@ -4406,10 +4406,10 @@ again:
 				break;
 			}
 			shift = BTRFS_LEAF_DATA_SIZE(gfs_info) -
-				btrfs_item_end(buf, i);
-		} else if (i > 0 && btrfs_item_end(buf, i) !=
+				btrfs_item_data_end(buf, i);
+		} else if (i > 0 && btrfs_item_data_end(buf, i) !=
 			   btrfs_item_offset(buf, i - 1)) {
-			if (btrfs_item_end(buf, i) >
+			if (btrfs_item_data_end(buf, i) >
 			    btrfs_item_offset(buf, i - 1)) {
 				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
@@ -4419,7 +4419,7 @@ again:
 				break;
 			}
 			shift = btrfs_item_offset(buf, i - 1) -
-				btrfs_item_end(buf, i);
+				btrfs_item_data_end(buf, i);
 		}
 		if (!shift)
 			continue;

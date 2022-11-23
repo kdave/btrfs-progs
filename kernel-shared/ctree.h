@@ -2022,7 +2022,7 @@ static inline void btrfs_set_item_##member(struct extent_buffer *eb,		\
 BTRFS_ITEM_SETGET_FUNCS(size)
 BTRFS_ITEM_SETGET_FUNCS(offset)
 
-static inline u32 btrfs_item_end(struct extent_buffer *eb, int nr)
+static inline u32 btrfs_item_data_end(struct extent_buffer *eb, int nr)
 {
 	return btrfs_item_offset(eb, nr) + btrfs_item_size(eb, nr);
 }
