@@ -1218,6 +1218,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *log_root_tree;
 
 	struct extent_io_tree extent_cache;
+	struct extent_io_tree dirty_buffers;
 	struct extent_io_tree free_space_cache;
 	struct extent_io_tree pinned_extents;
 	struct extent_io_tree extent_ins;

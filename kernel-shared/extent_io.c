@@ -1051,7 +1051,7 @@ out:
 
 int set_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_io_tree *tree = &eb->fs_info->extent_cache;
+	struct extent_io_tree *tree = &eb->fs_info->dirty_buffers;
 	if (!(eb->flags & EXTENT_DIRTY)) {
 		eb->flags |= EXTENT_DIRTY;
 		set_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
@@ -1062,7 +1062,7 @@ int set_extent_buffer_dirty(struct extent_buffer *eb)
 
 int clear_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_io_tree *tree = &eb->fs_info->extent_cache;
+	struct extent_io_tree *tree = &eb->fs_info->dirty_buffers;
 	if (eb->flags & EXTENT_DIRTY) {
 		eb->flags &= ~EXTENT_DIRTY;
 		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1);

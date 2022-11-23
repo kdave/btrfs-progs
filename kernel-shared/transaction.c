@@ -136,7 +136,7 @@ int __commit_transaction(struct btrfs_trans_handle *trans,
 	u64 end;
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *eb;
-	struct extent_io_tree *tree = &fs_info->extent_cache;
+	struct extent_io_tree *tree = &fs_info->dirty_buffers;
 	int ret;
 
 	while(1) {
