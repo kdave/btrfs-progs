@@ -117,4 +117,34 @@ int sysfs_open_fsid_file(int fd, const char *filename);
 int sysfs_read_file(int fd, char *buf, size_t size);
 int sysfs_open_fsid_dir(int fd, const char *dirname);
 
+/* An error code to error string mapping for the kernel error codes */
+static inline char *btrfs_err_str(enum btrfs_err_code err_code)
+{
+	switch (err_code) {
+	case BTRFS_ERROR_DEV_RAID1_MIN_NOT_MET:
+		return "unable to go below two devices on raid1";
+	case BTRFS_ERROR_DEV_RAID1C3_MIN_NOT_MET:
+		return "unable to go below three devices on raid1c3";
+	case BTRFS_ERROR_DEV_RAID1C4_MIN_NOT_MET:
+		return "unable to go below four devices on raid1c4";
+	case BTRFS_ERROR_DEV_RAID10_MIN_NOT_MET:
+		return "unable to go below four/two devices on raid10";
+	case BTRFS_ERROR_DEV_RAID5_MIN_NOT_MET:
+		return "unable to go below two devices on raid5";
+	case BTRFS_ERROR_DEV_RAID6_MIN_NOT_MET:
+		return "unable to go below three devices on raid6";
+	case BTRFS_ERROR_DEV_TGT_REPLACE:
+		return "unable to remove the dev_replace target dev";
+	case BTRFS_ERROR_DEV_MISSING_NOT_FOUND:
+		return "no missing devices found to remove";
+	case BTRFS_ERROR_DEV_ONLY_WRITABLE:
+		return "unable to remove the only writeable device";
+	case BTRFS_ERROR_DEV_EXCL_RUN_IN_PROGRESS:
+		return "add/delete/balance/replace/resize operation "
+			"in progress";
+	default:
+		return NULL;
+	}
+}
+
 #endif
