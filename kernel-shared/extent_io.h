@@ -165,5 +165,7 @@ void extent_buffer_bitmap_clear(struct extent_buffer *eb, unsigned long start,
                                 unsigned long pos, unsigned long len);
 void extent_buffer_bitmap_set(struct extent_buffer *eb, unsigned long start,
                               unsigned long pos, unsigned long len);
+void extent_buffer_init_cache(struct btrfs_fs_info *fs_info);
+void extent_buffer_free_cache(struct btrfs_fs_info *fs_info);
 
 #endif

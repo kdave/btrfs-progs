@@ -1217,7 +1217,11 @@ struct btrfs_fs_info {
 	/* the log root tree is a directory of all the other log roots */
 	struct btrfs_root *log_root_tree;
 
-	struct extent_io_tree extent_cache;
+	struct cache_tree extent_cache;
+	u64 max_cache_size;
+	u64 cache_size;
+	struct list_head lru;
+
 	struct extent_io_tree dirty_buffers;
 	struct extent_io_tree free_space_cache;
 	struct extent_io_tree pinned_extents;

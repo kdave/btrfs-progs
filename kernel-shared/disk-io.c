@@ -864,7 +864,7 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	    !fs_info->block_group_root || !fs_info->super_copy)
 		goto free_all;
 
-	extent_io_tree_init(&fs_info->extent_cache);
+	extent_buffer_init_cache(fs_info);
 	extent_io_tree_init(&fs_info->dirty_buffers);
 	extent_io_tree_init(&fs_info->free_space_cache);
 	extent_io_tree_init(&fs_info->pinned_extents);
@@ -1350,7 +1350,7 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 	}
 	free_mapping_cache_tree(&fs_info->mapping_tree.cache_tree);
 	extent_io_tree_cleanup(&fs_info->dirty_buffers);
-	extent_io_tree_cleanup(&fs_info->extent_cache);
+	extent_buffer_free_cache(fs_info);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);
 	extent_io_tree_cleanup(&fs_info->pinned_extents);
 	extent_io_tree_cleanup(&fs_info->extent_ins);
