@@ -94,7 +94,7 @@ struct metadump_struct {
 
 	union {
 		struct meta_cluster cluster;
-		char meta_cluster_bytes[BLOCK_SIZE];
+		char meta_cluster_bytes[IMAGE_BLOCK_SIZE];
 	};
 
 	pthread_t threads[MAX_WORKER_THREADS];
@@ -519,7 +519,7 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 
 static int write_zero(FILE *out, size_t size)
 {
-	static char zero[BLOCK_SIZE];
+	static char zero[IMAGE_BLOCK_SIZE];
 	return fwrite(zero, size, 1, out);
 }
 
@@ -563,14 +563,14 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 	}
 	header->nritems = cpu_to_le32(nritems);
 
-	ret = fwrite(&md->cluster, BLOCK_SIZE, 1, md->out);
+	ret = fwrite(&md->cluster, IMAGE_BLOCK_SIZE, 1, md->out);
 	if (ret != 1) {
 		error("unable to write out cluster: %m");
 		return -errno;
 	}
 
 	/* write buffers */
-	bytenr += le64_to_cpu(header->bytenr) + BLOCK_SIZE;
+	bytenr += le64_to_cpu(header->bytenr) + IMAGE_BLOCK_SIZE;
 	while (!list_empty(&md->ordered)) {
 		async = list_entry(md->ordered.next, struct async_work,
 				   ordered);
@@ -591,8 +591,8 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 	}
 
 	/* zero unused space in the last block */
-	if (!err && bytenr & BLOCK_MASK) {
-		size_t size = BLOCK_SIZE - (bytenr & BLOCK_MASK);
+	if (!err && bytenr & IMAGE_BLOCK_MASK) {
+		size_t size = IMAGE_BLOCK_SIZE - (bytenr & IMAGE_BLOCK_MASK);
 
 		bytenr += size;
 		ret = write_zero(md->out, size);
@@ -1613,7 +1613,7 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 static int detect_version(FILE *in)
 {
 	struct meta_cluster *cluster;
-	u8 buf[BLOCK_SIZE];
+	u8 buf[IMAGE_BLOCK_SIZE];
 	bool found = false;
 	int i;
 	int ret;
@@ -1622,7 +1622,7 @@ static int detect_version(FILE *in)
 		error("seek failed: %m");
 		return -errno;
 	}
-	ret = fread(buf, BLOCK_SIZE, 1, in);
+	ret = fread(buf, IMAGE_BLOCK_SIZE, 1, in);
 	if (!ret) {
 		error("failed to read header");
 		return -EIO;
@@ -1757,7 +1757,7 @@ static int add_cluster(struct meta_cluster *cluster,
 	mdres->compress_method = header->compress;
 	pthread_mutex_unlock(&mdres->mutex);
 
-	bytenr = le64_to_cpu(header->bytenr) + BLOCK_SIZE;
+	bytenr = le64_to_cpu(header->bytenr) + IMAGE_BLOCK_SIZE;
 	nritems = le32_to_cpu(header->nritems);
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
@@ -1799,9 +1799,9 @@ static int add_cluster(struct meta_cluster *cluster,
 		pthread_cond_signal(&mdres->cond);
 		pthread_mutex_unlock(&mdres->mutex);
 	}
-	if (bytenr & BLOCK_MASK) {
-		char buffer[BLOCK_MASK];
-		size_t size = BLOCK_SIZE - (bytenr & BLOCK_MASK);
+	if (bytenr & IMAGE_BLOCK_MASK) {
+		char buffer[IMAGE_BLOCK_MASK];
+		size_t size = IMAGE_BLOCK_SIZE - (bytenr & IMAGE_BLOCK_MASK);
 
 		bytenr += size;
 		ret = fread(buffer, size, 1, mdres->in);
@@ -2011,7 +2011,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 	u8 *buffer, *tmp = NULL;
 	int ret = 0;
 
-	cluster = malloc(BLOCK_SIZE);
+	cluster = malloc(IMAGE_BLOCK_SIZE);
 	if (!cluster) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
@@ -2043,7 +2043,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 			goto out;
 		}
 
-		ret = fread(cluster, BLOCK_SIZE, 1, mdres->in);
+		ret = fread(cluster, IMAGE_BLOCK_SIZE, 1, mdres->in);
 		if (ret == 0) {
 			if (feof(mdres->in))
 				goto out;
@@ -2071,7 +2071,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 		if (current_cluster > mdres->sys_chunk_end)
 			goto out;
 
-		bytenr += BLOCK_SIZE;
+		bytenr += IMAGE_BLOCK_SIZE;
 		nritems = le32_to_cpu(header->nritems);
 
 		/* Search items for tree blocks in sys chunks */
@@ -2139,8 +2139,8 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 			}
 			bytenr += bufsize;
 		}
-		if (bytenr & BLOCK_MASK)
-			bytenr += BLOCK_SIZE - (bytenr & BLOCK_MASK);
+		if (bytenr & IMAGE_BLOCK_MASK)
+			bytenr += IMAGE_BLOCK_SIZE - (bytenr & IMAGE_BLOCK_MASK);
 		current_cluster = bytenr;
 	}
 
@@ -2251,7 +2251,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	if (mdres->in == stdin)
 		return 0;
 
-	ret = fread(cluster, BLOCK_SIZE, 1, mdres->in);
+	ret = fread(cluster, IMAGE_BLOCK_SIZE, 1, mdres->in);
 	if (ret <= 0) {
 		error("unable to read cluster: %m");
 		return -EIO;
@@ -2265,7 +2265,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		return -EIO;
 	}
 
-	bytenr += BLOCK_SIZE;
+	bytenr += IMAGE_BLOCK_SIZE;
 	mdres->compress_method = header->compress;
 	nritems = le32_to_cpu(header->nritems);
 	for (i = 0; i < nritems; i++) {
@@ -2807,7 +2807,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		}
 	}
 
-	cluster = malloc(BLOCK_SIZE);
+	cluster = malloc(IMAGE_BLOCK_SIZE);
 	if (!cluster) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		ret = -ENOMEM;
@@ -2837,7 +2837,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	}
 
 	while (!mdrestore.error) {
-		ret = fread(cluster, BLOCK_SIZE, 1, in);
+		ret = fread(cluster, IMAGE_BLOCK_SIZE, 1, in);
 		if (!ret)
 			break;
 

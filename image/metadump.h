@@ -22,10 +22,10 @@
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 
-#define BLOCK_SIZE		SZ_1K
-#define BLOCK_MASK		(BLOCK_SIZE - 1)
+#define IMAGE_BLOCK_SIZE		SZ_1K
+#define IMAGE_BLOCK_MASK		(IMAGE_BLOCK_SIZE - 1)
 
-#define ITEMS_PER_CLUSTER ((BLOCK_SIZE - sizeof(struct meta_cluster)) / \
+#define ITEMS_PER_CLUSTER ((IMAGE_BLOCK_SIZE - sizeof(struct meta_cluster)) / \
 			   sizeof(struct meta_cluster_item))
 
 #define COMPRESS_NONE		0
