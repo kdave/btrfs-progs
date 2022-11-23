@@ -25,7 +25,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kerncompat.h"
-#include "ioctl.h"
+#include "libbtrfs/ioctl.h"
 #else
 #include <btrfs/list.h>
 #include <btrfs/rbtree.h>
