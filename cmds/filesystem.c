@@ -880,7 +880,7 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 	int fd = 0;
 
 	if ((typeflag == FTW_F) && S_ISREG(sb->st_mode)) {
-		pr_verbose(1, "%s\n", fpath);
+		pr_verbose(LOG_INFO, "%s\n", fpath);
 		fd = open(fpath, defrag_open_mode);
 		if (fd < 0) {
 			goto error;
@@ -934,6 +934,19 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	 */
 	thresh = SZ_32M;
 
+	/*
+	 * Workaround to emulate previous behaviour, the log level has to be
+	 * adjusted:
+	 *
+	 * - btrfs fi defrag - no file names printed (LOG_DEFAULT)
+	 * - btrfs fi defrag -v - filenames printed (LOG_INFO)
+	 * - btrfs -v fi defrag - filenames printed (LOG_INFO)
+	 * - btrfs -v fi defrag -v - filenames printed (LOG_VERBOSE)
+	 */
+
+	if (bconf.verbose != BTRFS_BCONF_UNSET)
+		bconf.verbose++;
+
 	defrag_global_errors = 0;
 	defrag_global_errors = 0;
 	optind = 0;
@@ -952,7 +965,10 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			flush = true;
 			break;
 		case 'v':
-			bconf_be_verbose();
+			if (bconf.verbose == BTRFS_BCONF_UNSET)
+				bconf.verbose = LOG_INFO;
+			else
+				bconf_be_verbose();
 			break;
 		case 's':
 			start = parse_size_from_string(optarg);
@@ -1052,7 +1068,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			/* errors are handled in the callback */
 			ret = 0;
 		} else {
-			pr_verbose(1, "%s\n", argv[i]);
+			pr_verbose(LOG_INFO, "%s\n", argv[i]);
 			ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE,
 					&defrag_global_range);
 			defrag_err = errno;
