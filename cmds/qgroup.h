@@ -24,10 +24,10 @@
 
 struct btrfs_qgroup_info {
 	u64 generation;
-	u64 referenced;
-	u64 referenced_compressed;
-	u64 exclusive;
-	u64 exclusive_compressed;
+	u64 rfer;
+	u64 rfer_cmpr;
+	u64 excl;
+	u64 excl_cmpr;
 };
 
 struct btrfs_qgroup_stats {
