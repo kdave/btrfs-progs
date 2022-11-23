@@ -400,7 +400,7 @@ ifdef C
 			grep -v __SIZE_TYPE__ > $(check_defs))
 	check = $(CHECKER)
 	check_echo = echo
-	CSTD = -std=gnu89
+	CSTD = -std=gnu11
 else
 	check = true
 	check_echo = true
