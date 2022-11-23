@@ -706,7 +706,7 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 		fprintf(stream, "%llu", (unsigned long long)objectid);
 		return;
 	case BTRFS_QGROUP_RELATION_KEY:
-		fprintf(stream, "%llu/%llu", btrfs_qgroup_level(objectid),
+		fprintf(stream, "%u/%llu", btrfs_qgroup_level(objectid),
 		       btrfs_qgroup_subvolid(objectid));
 		return;
 	case BTRFS_UUID_KEY_SUBVOL:
@@ -815,7 +815,7 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 	case BTRFS_QGROUP_RELATION_KEY:
 	case BTRFS_QGROUP_INFO_KEY:
 	case BTRFS_QGROUP_LIMIT_KEY:
-		printf(" %llu/%llu)", btrfs_qgroup_level(offset),
+		printf(" %u/%llu)", btrfs_qgroup_level(offset),
 		       btrfs_qgroup_subvolid(offset));
 		break;
 	case BTRFS_UUID_KEY_SUBVOL:
