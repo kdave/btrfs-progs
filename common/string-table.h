@@ -19,18 +19,25 @@
 
 #include <stdarg.h>
 
+enum string_table_spacing {
+	STRING_TABLE_SPACING_1,
+	STRING_TABLE_SPACING_2,
+};
+
 struct string_table {
-	int ncols;
-	int nrows;
+	unsigned int ncols;
+	unsigned int nrows;
+	enum string_table_spacing spacing;
 	char *cells[];
 };
 
-struct string_table *table_create(int columns, int rows);
-char *table_printf(struct string_table *tab, int column, int row,
+struct string_table *table_create(unsigned int columns, unsigned int rows);
+__attribute__ ((format (printf, 4, 0)))
+char *table_printf(struct string_table *tab, unsigned int column, unsigned int row,
 			  const char *fmt, ...);
-char *table_vprintf(struct string_table *tab, int column, int row,
+char *table_vprintf(struct string_table *tab, unsigned int column, unsigned int row,
 			  const char *fmt, va_list ap);
 void table_dump(struct string_table *tab);
-void table_free(struct string_table *);
+void table_free(struct string_table *tab);
 
 #endif
