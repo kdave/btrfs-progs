@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "common/messages.h"
 #include "common/string-table.h"
 
 /*
@@ -53,6 +54,12 @@ char *table_vprintf(struct string_table *tab, unsigned int column, unsigned int 
 
 	if (!msg)
 		return NULL;
+
+	if (column >= tab->ncols || row >= tab->nrows) {
+		error("attempt to write outside of table: col %u row %u fmt %s",
+			column, row, fmt);
+		return NULL;
+	}
 
 	if (tab->cells[idx])
 		free(tab->cells[idx]);
