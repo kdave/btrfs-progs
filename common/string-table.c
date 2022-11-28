@@ -21,12 +21,12 @@
 #include "common/string-table.h"
 
 /*
- *  This function create an array of char * which will represent a table
+ * Create an array of char* which will point to table cell strings
  */
-struct string_table *table_create(int columns, int rows)
+struct string_table *table_create(unsigned int columns, unsigned int rows)
 {
 	struct string_table *tab;
-	int size;
+	size_t size;
 
 	size = sizeof(struct string_table) + rows * columns * sizeof(char*);
 	tab = calloc(1, size);
@@ -36,22 +36,19 @@ struct string_table *table_create(int columns, int rows)
 
 	tab->ncols = columns;
 	tab->nrows = rows;
+	tab->spacing = STRING_TABLE_SPACING_1;
 
 	return tab;
 }
 
 /*
- * This function is like a vprintf, but store the results in a cell of
- * the table.
- * If fmt  starts with '<', the text is left aligned; if fmt starts with
- * '>' the text is right aligned. If fmt is equal to '=' the text will
- * be replaced by a '=====' dimensioned on the basis of the column width
+ * This is like a vprintf, but stores the results in a cell of the table.
  */
 __attribute__ ((format (printf, 4, 0)))
-char *table_vprintf(struct string_table *tab, int column, int row,
+char *table_vprintf(struct string_table *tab, unsigned int column, unsigned int row,
 			  const char *fmt, va_list ap)
 {
-	int idx = tab->ncols * row + column;
+	unsigned int idx = tab->ncols * row + column;
 	char *msg = calloc(100, 1);
 
 	if (!msg)
@@ -66,12 +63,11 @@ char *table_vprintf(struct string_table *tab, int column, int row,
 }
 
 /*
- * This function is like a printf, but store the results in a cell of
- * the table.
+ * This is like a printf, but stores the results in a cell of the table.
  */
 __attribute__ ((format (printf, 4, 5)))
-char *table_printf(struct string_table *tab, int column, int row,
-			  const char *fmt, ...)
+char *table_printf(struct string_table *tab, unsigned int column, unsigned int row,
+		   const char *fmt, ...)
 {
 	va_list ap;
 	char *ret;
@@ -84,8 +80,13 @@ char *table_printf(struct string_table *tab, int column, int row,
 }
 
 /*
- * This function dumps the table. Every "=" string will be replaced by
- * a "=======" length as the column
+ * Print the table to stdout, interpret the alignment and expand specifiers.
+ *
+ * Formatting:
+ * <TEXT - the TEXT is left aligned
+ * >TEXT - the TEXT is right aligned
+ * =     - the cell text will be filled by ===== (column width)
+ * *C    - the cell text will be filled by character C (column width)
  */
 void table_dump(struct string_table *tab)
 {
@@ -127,8 +128,11 @@ void table_dump(struct string_table *tab)
 					cell[0] == '<' ? -sizes[i] : sizes[i],
 					cell + 1);
 			}
-			if (i != (tab->ncols - 1))
+			if (i != (tab->ncols - 1)) {
 				putchar(' ');
+				if (tab->spacing == STRING_TABLE_SPACING_2)
+					putchar(' ');
+			}
 		}
 		putchar('\n');
 	}
@@ -139,7 +143,7 @@ void table_dump(struct string_table *tab)
  */
 void table_free(struct string_table *tab)
 {
-	int i, count;
+	unsigned int i, count;
 
 	count = tab->ncols * tab->nrows;
 
