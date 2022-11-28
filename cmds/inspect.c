@@ -16,6 +16,11 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <linux/fs.h>
+#include <linux/magic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -23,6 +28,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <string.h>
+#include <unistd.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
@@ -1108,6 +1114,413 @@ out_nomem:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_list_chunks, "list-chunks");
 
+static const char * const cmd_inspect_map_swapfile_usage[] = {
+	"btrfs inspect-internal map-swapfile <file>",
+	"Print physical offset of first block and resume offset if file is suitable as swapfile",
+	"Print physical offset of first block and resume offset if file is suitable as swapfile.",
+	"All conditions of a swapfile extents are verified if they could pass kernel tests.",
+	"Use the value of resume offset for /sys/power/resume_offset, this depends on the",
+	"page size that's detected on this system.",
+	"",
+	"-r|--resume-offset   print only the value of resume_offset",
+	NULL
+};
+
+struct stripe {
+	u64 devid;
+	u64 offset;
+};
+
+struct chunk {
+	u64 offset;
+	u64 length;
+	u64 stripe_len;
+	u64 type;
+	struct stripe *stripes;
+	size_t num_stripes;
+	size_t sub_stripes;
+};
+
+struct chunk_tree {
+	struct chunk *chunks;
+	size_t num_chunks;
+};
+
+static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
+{
+	struct btrfs_ioctl_search_args search = {
+		.key = {
+			.tree_id = BTRFS_CHUNK_TREE_OBJECTID,
+			.min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+			.min_type = BTRFS_CHUNK_ITEM_KEY,
+			.min_offset = 0,
+			.max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+			.max_type = BTRFS_CHUNK_ITEM_KEY,
+			.max_offset = (u64)-1,
+			.min_transid = 0,
+			.max_transid = (u64)-1,
+			.nr_items = 0,
+		},
+	};
+	size_t items_pos = 0, buf_off = 0;
+	size_t capacity = 0;
+	int ret;
+
+	*chunks = NULL;
+	*num_chunks = 0;
+	for (;;) {
+		const struct btrfs_ioctl_search_header *header;
+		const struct btrfs_chunk *item;
+		struct chunk *chunk;
+		size_t i;
+
+		if (items_pos >= search.key.nr_items) {
+			search.key.nr_items = 4096;
+			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+			if (ret == -1) {
+				perror("BTRFS_IOC_TREE_SEARCH");
+				return -1;
+			}
+			items_pos = 0;
+			buf_off = 0;
+
+			if (search.key.nr_items == 0)
+				break;
+		}
+
+		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		if (header->type != BTRFS_CHUNK_ITEM_KEY)
+			goto next;
+
+		item = (void *)(header + 1);
+		if (*num_chunks >= capacity) {
+			struct chunk *tmp;
+
+			if (capacity == 0)
+				capacity = 1;
+			else
+				capacity *= 2;
+			tmp = realloc(*chunks, capacity * sizeof(**chunks));
+			if (!tmp) {
+				perror("realloc");
+				return -1;
+			}
+			*chunks = tmp;
+		}
+
+		chunk = &(*chunks)[*num_chunks];
+		chunk->offset = header->offset;
+		chunk->length = le64_to_cpu(item->length);
+		chunk->stripe_len = le64_to_cpu(item->stripe_len);
+		chunk->type = le64_to_cpu(item->type);
+		chunk->num_stripes = le16_to_cpu(item->num_stripes);
+		chunk->sub_stripes = le16_to_cpu(item->sub_stripes);
+		chunk->stripes = calloc(chunk->num_stripes,
+					sizeof(*chunk->stripes));
+		if (!chunk->stripes) {
+			perror("calloc");
+			return -1;
+		}
+		(*num_chunks)++;
+
+		for (i = 0; i < chunk->num_stripes; i++) {
+			const struct btrfs_stripe *stripe;
+
+			stripe = &item->stripe + i;
+			chunk->stripes[i].devid = le64_to_cpu(stripe->devid);
+			chunk->stripes[i].offset = le64_to_cpu(stripe->offset);
+		}
+
+next:
+		items_pos++;
+		buf_off += sizeof(*header) + header->len;
+		if (header->offset == (u64)-1)
+			break;
+		else
+			search.key.min_offset = header->offset + 1;
+	}
+	return 0;
+}
+
+static struct chunk *find_chunk(struct chunk *chunks, size_t num_chunks, u64 logical)
+{
+	size_t lo, hi;
+
+	if (!num_chunks)
+		return NULL;
+
+	lo = 0;
+	hi = num_chunks - 1;
+	while (lo <= hi) {
+		size_t mid = lo + (hi - lo) / 2;
+
+		if (logical < chunks[mid].offset)
+			hi = mid - 1;
+		else if (logical >= chunks[mid].offset + chunks[mid].length)
+			lo = mid + 1;
+		else
+			return &chunks[mid];
+	}
+	return NULL;
+}
+
+static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
+			      u64 *physical_start)
+{
+	struct btrfs_ioctl_search_args search = {
+		.key = {
+			.min_type = BTRFS_EXTENT_DATA_KEY,
+			.max_type = BTRFS_EXTENT_DATA_KEY,
+			.min_offset = 0,
+			.max_offset = (u64)-1,
+			.min_transid = 0,
+			.max_transid = (u64)-1,
+			.nr_items = 0,
+		},
+	};
+	struct btrfs_ioctl_ino_lookup_args args = {
+		.treeid = 0,
+		.objectid = BTRFS_FIRST_FREE_OBJECTID,
+	};
+	size_t items_pos = 0, buf_off = 0;
+	struct stat st;
+	int ret;
+	u64 valid_devid = (u64)-1;
+
+	*physical_start = (u64)-1;
+
+	ret = fstat(fd, &st);
+	if (ret == -1) {
+		error("cannot fstat file: %m");
+		return -errno;
+	}
+	if (!S_ISREG(st.st_mode)) {
+		error("not a regular file");
+		return -EINVAL;
+	}
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	if (ret == -1) {
+		error("cannot lookup parent subvolume: %m");
+		return -errno;
+	}
+
+	search.key.tree_id = args.treeid;
+	search.key.min_objectid = search.key.max_objectid = st.st_ino;
+	for (;;) {
+		const struct btrfs_ioctl_search_header *header;
+		const struct btrfs_file_extent_item *item;
+		u8 type;
+		u64 logical_offset = 0;
+		struct chunk *chunk = NULL;
+
+		if (items_pos >= search.key.nr_items) {
+			search.key.nr_items = 4096;
+			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+			if (ret == -1) {
+				error("cannot search tree: %m");
+				return -errno;
+			}
+			items_pos = 0;
+			buf_off = 0;
+
+			if (search.key.nr_items == 0)
+				break;
+		}
+
+		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		if (header->type != BTRFS_EXTENT_DATA_KEY)
+			goto next;
+
+		item = (void *)(header + 1);
+
+		type = item->type;
+		if (type == BTRFS_FILE_EXTENT_REG ||
+		    type == BTRFS_FILE_EXTENT_PREALLOC) {
+			logical_offset = le64_to_cpu(item->disk_bytenr);
+			if (logical_offset) {
+				/* Regular extent */
+				chunk = find_chunk(chunks, num_chunks, logical_offset);
+				if (!chunk) {
+					error("cannot find chunk containing %llu",
+						(unsigned long long)logical_offset);
+					return -ENOENT;
+				}
+			} else {
+				error("file with holes");
+				ret = -EINVAL;
+				goto out;
+			}
+		} else {
+			if (type == BTRFS_FILE_EXTENT_INLINE)
+				error("file with inline extent");
+			else
+				error("unknown extent type: %u", type);
+			ret = -EINVAL;
+			goto out;
+		}
+
+		if (item->compression != 0) {
+			error("compressed extent: %u", item->compression);
+			ret = -EINVAL;
+			goto out;
+		}
+		if (item->encryption != 0) {
+			error("file with encryption: %u", item->encryption);
+			ret = -EINVAL;
+			goto out;
+		}
+		if (item->other_encoding != 0) {
+			error("file with other_encoding: %u", le16_to_cpu(item->other_encoding));
+			ret = -EINVAL;
+			goto out;
+		}
+
+		/* Only single profile */
+		if ((chunk->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) != 0) {
+			error("unsupported block group profile: %llu",
+				(unsigned long long)(chunk->type & BTRFS_BLOCK_GROUP_PROFILE_MASK));
+			ret = -EINVAL;
+			goto out;
+		}
+
+		if (valid_devid == (u64)-1) {
+			valid_devid = chunk->stripes[0].devid;
+		} else {
+			if (valid_devid != chunk->stripes[0].devid) {
+				error("file stored on multiple devices");
+				break;
+			}
+		}
+		if (*physical_start == (u64)-1) {
+			u64 offset;
+			u64 stripe_nr;
+			u64 stripe_offset;
+			u64 stripe_index;
+
+			offset = logical_offset - chunk->offset;
+			stripe_nr = offset / chunk->stripe_len;
+			stripe_offset = offset - stripe_nr * chunk->stripe_len;
+
+			stripe_index = stripe_nr % chunk->num_stripes;
+			stripe_nr /= chunk->num_stripes;
+
+			*physical_start = chunk->stripes[stripe_index].offset +
+				stripe_nr * chunk->stripe_len + stripe_offset;
+		}
+
+next:
+		items_pos++;
+		buf_off += sizeof(*header) + header->len;
+		if (header->offset == (u64)-1)
+			break;
+		else
+			search.key.min_offset = header->offset + 1;
+	}
+	return 0;
+
+out:
+	return ret;
+}
+
+static int cmd_inspect_map_swapfile(const struct cmd_struct *cmd,
+				    int argc, char **argv)
+{
+	int fd, ret;
+	struct chunk *chunks = NULL;
+	size_t num_chunks = 0, i;
+	struct statfs stfs;
+	long flags;
+	u64 physical_start;
+	long page_size = sysconf(_SC_PAGESIZE);
+	bool resume_offset = false;
+
+	optind = 0;
+	while (1) {
+		static const struct option long_options[] = {
+			{ "resume-offset", no_argument, NULL, 'r' },
+			{ NULL, 0, NULL, 0 }
+		};
+		int c;
+
+		c = getopt_long(argc, argv, "r", long_options, NULL);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case 'r':
+			resume_offset = true;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	fd = open(argv[optind], O_RDONLY);
+	if (fd == -1) {
+		error("cannot open %s: %m", argv[optind]);
+		ret = 1;
+		goto out;
+	}
+
+	/* Quick checks before extent enumeration. */
+	ret = fstatfs(fd, &stfs);
+	if (ret == -1) {
+		error("cannot statfs file: %m");
+		ret = 1;
+		goto out;
+	}
+	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
+		error("not a file on BTRFS");
+		ret = 1;
+		goto out;
+	}
+
+	ret = ioctl(fd, FS_IOC_GETFLAGS, &flags);
+	if (ret == -1) {
+		error("cannot verify file flags/attributes: %m");
+		ret = 1;
+		goto out;
+	}
+	if (!(flags & FS_NOCOW_FL)) {
+		error("file is not NOCOW");
+		ret = 1;
+		goto out;
+	}
+	if (flags & FS_COMPR_FL) {
+		error("file with COMP attribute");
+		ret = 1;
+		goto out;
+	}
+
+	ret = read_chunk_tree(fd, &chunks, &num_chunks);
+	if (ret == -1)
+		goto out;
+
+	ret = map_physical_start(fd, chunks, num_chunks, &physical_start);
+	if (ret == 0) {
+		if (resume_offset) {
+			printf("%llu\n", physical_start / page_size);
+		} else {
+			pr_verbose(LOG_DEFAULT, "Physical start: %12llu\n",
+					physical_start);
+			pr_verbose(LOG_DEFAULT, "Resume offset:  %12llu\n",
+					physical_start / page_size);
+		}
+	}
+
+out:
+	for (i = 0; i < num_chunks; i++)
+		free(chunks[i].stripes);
+
+	free(chunks);
+	close(fd);
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(inspect_map_swapfile, "map-swapfile");
+
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -1117,6 +1530,7 @@ static const struct cmd_group inspect_cmd_group = {
 		&cmd_struct_inspect_logical_resolve,
 		&cmd_struct_inspect_subvolid_resolve,
 		&cmd_struct_inspect_rootid,
+		&cmd_struct_inspect_map_swapfile,
 		&cmd_struct_inspect_min_dev_size,
 		&cmd_struct_inspect_dump_tree,
 		&cmd_struct_inspect_dump_super,
