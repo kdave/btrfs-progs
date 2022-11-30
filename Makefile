@@ -499,6 +499,16 @@ test-json: json-formatter-test
 		done							\
 	}
 
+test-string-table: string-table-test
+	@echo "    [TEST]   string-table formatting"
+	@{								\
+		max=`./string-table-test`;				\
+		for testno in `seq 1 $$max`; do				\
+			echo "    [TEST/s-t]  $$testno";		\
+			./string-table-test $$testno ;			\
+		done							\
+	}
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
@@ -745,6 +755,10 @@ hash-vectest: crypto/hash-vectest.c $(objects) libbtrfsutil.a
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 json-formatter-test: tests/json-formatter-test.c $(objects) libbtrfsutil.a
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+string-table-test: tests/string-table-test.c $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
