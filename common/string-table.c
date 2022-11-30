@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include "common/messages.h"
 #include "common/string-table.h"
+#include "common/internal.h"
 
 /*
  * Create an array of char* which will point to table cell strings
@@ -88,6 +89,8 @@ char *table_printf(struct string_table *tab, unsigned int column, unsigned int r
 
 /*
  * Print the table to stdout, interpret the alignment and expand specifiers.
+ * @from:    row from which to start
+ * @to:      upper row limit (not inclusive), 0 for the whole table
  *
  * Formatting:
  * <TEXT - the TEXT is left aligned
@@ -95,14 +98,26 @@ char *table_printf(struct string_table *tab, unsigned int column, unsigned int r
  * =     - the cell text will be filled by ===== (column width)
  * *C    - the cell text will be filled by character C (column width)
  */
-void table_dump(struct string_table *tab)
+void table_dump_range(struct string_table *tab, unsigned int from, unsigned int to)
 {
-	int sizes[tab->ncols];
-	int i, j;
+	unsigned int sizes[tab->ncols];
+	unsigned int i, j;
+	unsigned int prescan;
+
+	if (to == 0)
+		to = tab->nrows;
+
+	if (from > to) {
+		error("invalid range for table dump %u > %u", from, to);
+		return;
+	}
+
+	prescan = max_t(unsigned int, 100, to);
+	prescan = min_t(unsigned int, tab->nrows, prescan);
 
 	for (i = 0; i < tab->ncols; i++) {
 		sizes[i] = 0;
-		for (j = 0; j < tab->nrows; j++) {
+		for (j = 0; j < prescan; j++) {
 			int idx = i + j * tab->ncols;
 			int len;
 
@@ -118,7 +133,7 @@ void table_dump(struct string_table *tab)
 		}
 	}
 
-	for (j = 0; j < tab->nrows; j++) {
+	for (j = from; j < to; j++) {
 		for (i = 0; i < tab->ncols; i++) {
 			int idx = i + j * tab->ncols;
 			char *cell = tab->cells[idx];
@@ -159,4 +174,21 @@ void table_free(struct string_table *tab)
 			free(tab->cells[i]);
 
 	free(tab);
+}
+
+void table_clear_range(struct string_table *tab, unsigned int from, unsigned int to)
+{
+	unsigned int row, col;
+
+	if (to == 0)
+		to = tab->nrows;
+
+	for (row = from; row < to; row++) {
+		char **rowstart = &tab->cells[row * tab->ncols];
+
+		for (col = 0; col < tab->ncols; col++) {
+			free(rowstart[col]);
+			rowstart[col] = NULL;
+		}
+	}
 }
