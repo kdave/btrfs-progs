@@ -1521,6 +1521,363 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_map_swapfile, "map-swapfile");
 
+static const char * const cmd_inspect_compsize_usage[] = {
+	"btrfs inspect-internal compsize <file>",
+	"Print compression stats of a file",
+	"Print compression stats of a file",
+	NULL
+};
+
+/* We recognize yet-unknown compression types (u8), plus token for prealloc. */
+#define MAX_ENTRIES			(256 + 1)
+#define PREALLOC			(256)
+
+#define DPRINTF(fmt, args...)					\
+	do {							\
+		if (bconf.verbose >= LOG_DEBUG)			\
+			fprintf(stderr, fmt, ##args);		\
+	} while(0)
+
+struct btrfs_sv2_args
+{
+	struct btrfs_ioctl_search_key key;
+	u64 buf_size;
+	/* Hardcoded kernel's limit is 16MB */
+	u8  buf[65536];
+};
+
+struct workspace
+{
+	u64 disk[MAX_ENTRIES];
+	u64 uncomp[MAX_ENTRIES];
+	u64 refd[MAX_ENTRIES];
+	u64 disk_all;
+	u64 uncomp_all;
+	u64 refd_all;
+	u64 nfiles;
+	u64 nextents, nrefs, ninline, nfrag;
+	u64 fragend;
+	struct rb_root seen_extents;
+};
+
+struct seen_extent {
+	struct rb_node node;
+	u64 pageno;
+};
+
+static const char *comp_types[MAX_ENTRIES] = { "none", "zlib", "lzo", "zstd" };
+
+static void init_sv2_args(ino_t st_ino, struct btrfs_sv2_args *sv2_args)
+{
+	sv2_args->key.tree_id = 0;
+	sv2_args->key.max_objectid = st_ino;
+	sv2_args->key.min_objectid = st_ino;
+	sv2_args->key.min_offset = 0;
+	sv2_args->key.max_offset = -1;
+	sv2_args->key.min_transid = 0;
+	sv2_args->key.max_transid = -1;
+	// Only search for EXTENT_DATA_KEY
+	sv2_args->key.min_type = BTRFS_EXTENT_DATA_KEY;
+	sv2_args->key.max_type = BTRFS_EXTENT_DATA_KEY;
+	sv2_args->key.nr_items = -1;
+	sv2_args->buf_size = sizeof(sv2_args->buf);
+}
+
+static inline int is_hole(uint64_t disk_bytenr)
+{
+	return disk_bytenr == 0;
+}
+
+static int cmp_seen_extent(struct rb_node *node, const struct rb_node *parent)
+{
+	const struct seen_extent *se = rb_entry(node, struct seen_extent, node);
+	const struct seen_extent *pe = rb_entry(parent, struct seen_extent, node);
+
+	if (se->pageno == pe->pageno)
+		return 0;
+	if (se->pageno < pe->pageno)
+		return -1;
+	return 1;
+}
+
+static void parse_file_extent_item(u8 *bp, u32 hlen, struct workspace *ws,
+				   const char *filename)
+{
+	struct btrfs_file_extent_item *ei;
+	u64 disk_num_bytes, ram_bytes, disk_bytenr, num_bytes;
+	u32 inline_header_sz;
+	u32 comp_type;
+
+	DPRINTF("len=%u\n", hlen);
+
+	ei = (struct btrfs_file_extent_item *)bp;
+
+	ram_bytes = get_unaligned_64(&ei->ram_bytes);
+	comp_type = ei->compression;
+
+	if (ei->type == BTRFS_FILE_EXTENT_INLINE) {
+		inline_header_sz  = sizeof(*ei);
+		inline_header_sz -= sizeof(ei->disk_bytenr);
+		inline_header_sz -= sizeof(ei->disk_num_bytes);
+		inline_header_sz -= sizeof(ei->offset);
+		inline_header_sz -= sizeof(ei->num_bytes);
+
+		disk_num_bytes = hlen-inline_header_sz;
+		DPRINTF("inline: ram_bytes=%llu compression=%u disk_num_bytes=%llu\n",
+				ram_bytes, comp_type, disk_num_bytes);
+		ws->disk[comp_type] += disk_num_bytes;
+		ws->uncomp[comp_type] += ram_bytes;
+		ws->refd[comp_type] += ram_bytes;
+		ws->ninline++;
+		ws->nfrag++;
+		ws->fragend = -1;
+		return;
+	}
+
+	if (ei->type == BTRFS_FILE_EXTENT_PREALLOC)
+		comp_type = PREALLOC;
+
+	if (hlen != sizeof(*ei)) {
+		error("%s: Regular extent's header not 53 bytes (%u) long?!?", filename, hlen);
+		return;
+	}
+
+	disk_num_bytes = get_unaligned_64(&ei->disk_num_bytes);
+	disk_bytenr = get_unaligned_64(&ei->disk_bytenr);
+	num_bytes = get_unaligned_64(&ei->num_bytes);
+
+	if (is_hole(disk_bytenr))
+		return;
+
+	DPRINTF("regular: ram_bytes=%llu compression=%u disk_num_bytes=%llu disk_bytenr=%llu\n",
+			ram_bytes, comp_type, disk_num_bytes, disk_bytenr);
+
+	if (!IS_ALIGNED(disk_bytenr, 1 << 12)) {
+		error("%s: Extent not 4K-aligned at %llu?!?", filename, disk_bytenr);
+		return;
+	}
+
+	unsigned long pageno = disk_bytenr >> 12;
+	struct seen_extent *node;
+	node = calloc(sizeof (struct seen_extent), 1);
+	if (!node) {
+		error("cannot allocate node for extent tracking");
+		return;
+	}
+	node->pageno = pageno;
+	if (rb_find_add(&node->node, &ws->seen_extents, cmp_seen_extent) == NULL)
+	{
+		ws->disk[comp_type] += disk_num_bytes;
+		ws->uncomp[comp_type] += ram_bytes;
+		ws->nextents++;
+	} else {
+		free(node);
+	}
+	ws->refd[comp_type] += num_bytes;
+	ws->nrefs++;
+
+	if (disk_bytenr != ws->fragend)
+		ws->nfrag++;
+	ws->fragend = disk_bytenr + disk_num_bytes;
+}
+
+static void do_file(int fd, u64 st_ino, struct workspace *ws, const char *filename)
+{
+	static struct btrfs_sv2_args sv2_args;
+	struct btrfs_ioctl_search_header *head = NULL;
+	u32 nr_items, hlen;
+	u8 *bp;
+
+	DPRINTF("inode = %llu\n", st_ino);
+	ws->nfiles++;
+	ws->fragend = -1;
+
+	init_sv2_args(st_ino, &sv2_args);
+
+again:
+	if (ioctl(fd, BTRFS_IOC_TREE_SEARCH_V2, &sv2_args)) {
+		if (errno == ENOTTY) {
+			error("%s: Not btrfs (or SEARCH_V2 unsupported)", filename);
+			return;
+		} else {
+			error("%s: SEARCH_V2: %m", filename);
+			return;
+		}
+	}
+
+	nr_items = sv2_args.key.nr_items;
+	DPRINTF("nr_items = %u\n", nr_items);
+
+	bp = sv2_args.buf;
+	for (; nr_items > 0; nr_items--, bp += hlen) {
+		head = (struct btrfs_ioctl_search_header*)bp;
+		hlen = get_unaligned_32(&head->len);
+		DPRINTF("{ transid=%llu objectid=%llu offset=%llu type=%u len=%u }\n",
+				get_unaligned_64(&head->transid),
+				get_unaligned_64(&head->objectid),
+				get_unaligned_64(&head->offset),
+				get_unaligned_32(&head->type),
+				hlen);
+		bp += sizeof(*head);
+
+		parse_file_extent_item(bp, hlen, ws, filename);
+	}
+
+	/*
+	 * Will be exactly 197379 (16MB/85) on overflow, but let's play it safe.
+	 * In theory, we're supposed to retry until getting 0, but RTFK says
+	 * there are no short reads (just running out of buffer space), so we
+	 * avoid having to search twice.
+	 */
+	if (sv2_args.key.nr_items > 512) {
+		sv2_args.key.nr_items = -1;
+		sv2_args.key.min_offset = get_unaligned_64(&head->offset) + 1;
+		goto again;
+	}
+}
+
+static void print_table(const char *type,
+                        const char *percentage,
+                        const char *disk_usage,
+                        const char *uncomp_usage,
+                        const char *refd_usage)
+{
+        printf("%-10s %-8s %-12s %-12s %-12s\n", type, percentage,
+               disk_usage, uncomp_usage, refd_usage);
+}
+
+#define HB 24 /* size of buffers */
+static int opt_bytes = 0;
+static void human_bytes(u64 x, char *output)
+{
+    static const char *units = "BKMGTPE";
+    int u = 0;
+
+    if (opt_bytes)
+        return (void)snprintf(output, HB, "%llu", x);
+
+    while (x >= 10240)
+        u++, x>>=10;
+    if (x >= 1024)
+        snprintf(output, HB, " %llu.%llu%c", x>>10, x*10/1024%10, units[u+1]);
+    else
+        snprintf(output, HB, "%4llu%c", x, units[u]);
+}
+
+static int print_stats(struct workspace *ws)
+{
+	char perc[8], disk_usage[HB], uncomp_usage[HB], refd_usage[HB];
+	u32 percentage;
+	int t;
+
+	ws->uncomp_all = ws->disk_all = ws->refd_all = 0;
+	for (t=0; t<MAX_ENTRIES; t++) {
+		ws->uncomp_all += ws->uncomp[t];
+		ws->disk_all   += ws->disk[t];
+		ws->refd_all   += ws->refd[t];
+	}
+
+	if (!ws->uncomp_all) {
+		if (!ws->nfiles)
+			fprintf(stderr, "No files.\n");
+		else
+			fprintf(stderr, "All empty or still-delalloced files.\n");
+		return 1;
+	}
+
+	printf("Processed %llu file%s, %llu regular extents "
+			"(%llu refs), %llu inline, %llu fragments.\n",
+			ws->nfiles, ws->nfiles>1 ? "s" : "",
+			ws->nextents, ws->nrefs, ws->ninline, ws->nfrag);
+
+	print_table("Type", "Perc", "Disk Usage", "Uncompressed", "Referenced");
+	percentage = ws->disk_all * 100 / ws->uncomp_all;
+	snprintf(perc, sizeof(perc), "%3u%%", percentage);
+	human_bytes(ws->disk_all, disk_usage);
+	human_bytes(ws->uncomp_all, uncomp_usage);
+	human_bytes(ws->refd_all, refd_usage);
+	print_table("TOTAL", perc, disk_usage, uncomp_usage, refd_usage);
+
+	for (t=0; t<MAX_ENTRIES; t++)
+	{
+		if (!ws->uncomp[t])
+			continue;
+		const char *ct = t==PREALLOC? "prealloc" : comp_types[t];
+		char unkn_comp[12];
+		percentage = ws->disk[t]*100/ws->uncomp[t];
+		snprintf(perc, sizeof(perc), "%3u%%", percentage);
+		human_bytes(ws->disk[t], disk_usage);
+		human_bytes(ws->uncomp[t], uncomp_usage);
+		human_bytes(ws->refd[t], refd_usage);
+		if (!ct)
+		{
+			snprintf(unkn_comp, sizeof(unkn_comp), "?%u", t);
+			ct = unkn_comp;
+		}
+		print_table(ct, perc, disk_usage, uncomp_usage, refd_usage);
+	}
+
+	return 0;
+}
+
+static int compsize(int fd, const char *path)
+{
+	int ret;
+	struct workspace ws = { 0 };
+	struct stat st;
+
+	ret = fstat(fd, &st);
+	if (ret == -1) {
+		error("cannot fstat %s: %m", path);
+		return -errno;
+	}
+
+	do_file(fd, st.st_ino, &ws, path);
+
+	print_stats(&ws);
+
+	return 0;
+}
+
+static int cmd_inspect_compsize(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int fd, ret;
+
+	optind = 0;
+	while (1) {
+		static const struct option long_options[] = {
+			{ NULL, 0, NULL, 0 }
+		};
+		int c;
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	fd = open(argv[optind], O_RDONLY);
+	if (fd == -1) {
+		error("cannot open %s: %m", argv[optind]);
+		ret = 1;
+		goto out;
+	}
+
+	ret = compsize(fd, argv[optind]);
+
+out:
+
+	close(fd);
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(inspect_compsize, "compsize");
+
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -1537,6 +1894,7 @@ static const struct cmd_group inspect_cmd_group = {
 #if EXPERIMENTAL
 		&cmd_struct_inspect_list_chunks,
 		&cmd_struct_inspect_map_swapfile,
+		&cmd_struct_inspect_compsize,
 #endif
 		NULL
 	}
