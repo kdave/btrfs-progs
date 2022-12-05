@@ -3991,10 +3991,115 @@ static int do_check_fs_roots(struct cache_tree *root_cache)
 	return ret;
 }
 
+/*
+ * Define the minimal size for a buffer to describe the data backref.
+ * It needs to support something like:
+ *
+ *   root <U64_MAX> owner <U64_MAX> offset <U64_MAX>
+ *
+ * Or
+ *
+ *   parent <U64_MAX>
+ *
+ * Obviously the first pattern needs longer buffer size.  The minimal size
+ * (including the tailing NUL) would be:
+ *
+ *  5 + 20 + 7 + 20 + 8 + 20 = 80.
+ *
+ * Just round it to 128 to provide extra wiggle room.
+ */
+#define DATA_EXTENT_DESC_BUF_LEN (128)
+static void describe_data_extent_backref(char *buf, struct data_backref *dback)
+{
+	if (dback->node.full_backref)
+		sprintf(buf, "parent %llu", dback->parent);
+	else
+		sprintf(buf, "root %llu owner %llu offset %llu",
+			dback->root, dback->owner, dback->offset);
+}
+
+static void print_data_backref_error(struct extent_record *rec,
+				     struct data_backref *dback)
+{
+	struct extent_backref *back = &dback->node;
+	char desc[DATA_EXTENT_DESC_BUF_LEN] = { 0 };
+	u32 found_refs;
+	u32 expected_refs;
+
+	if (!back->found_extent_tree) {
+		/* No backref item in extent tree.  Thus expected refs should be 0. */
+		expected_refs = 0;
+		found_refs = dback->found_ref;
+	} else {
+		expected_refs = dback->num_refs;
+		found_refs = dback->found_ref;
+	}
+
+	/* Extent item bytenr mismatch with found file extent item. */
+	if (dback->disk_bytenr != rec->start)
+		fprintf(stderr,
+"data extent[%llu, %llu] bytenr mimsmatch, extent item bytenr %llu file item bytenr %llu\n",
+			rec->start, rec->max_size, rec->start,
+			dback->disk_bytenr);
+
+	/* Extent item size mismatch with found file item. */
+	if (dback->bytes != rec->nr)
+		fprintf(stderr,
+"data extent[%llu, %llu] size mimsmatch, extent item size %llu file item size %llu\n",
+			rec->start, rec->max_size, rec->nr, dback->bytes);
+
+	if (expected_refs != found_refs) {
+		describe_data_extent_backref(desc, dback);
+		fprintf(stderr,
+"data extent[%llu, %llu] referencer count mismatch (%s) wanted %u have %u\n",
+			rec->start, rec->max_size, desc, expected_refs,
+			found_refs);
+	}
+}
+
+static void print_tree_backref_error(struct extent_record *rec, struct tree_backref *tback)
+{
+	struct extent_backref *back = &tback->node;
+
+	/*
+	 * For tree blocks, we only handle two cases here:
+	 *
+	 * - No backref item in extent tree
+	 * - No tree block found (but with backref item)
+	 *
+	 * The refs count check is done by the global backref check at
+	 * all_backpointers_checked().
+	 */
+	if (!back->found_extent_tree) {
+		fprintf(stderr,
+"tree extent[%llu, %llu] %s %llu has no backref item in extent tree\n",
+			rec->start, rec->max_size,
+			(back->full_backref ? "parent" : "root"),
+			(back->full_backref ? tback->parent : tback->root));
+		return;
+	}
+	if (!back->found_ref) {
+		fprintf(stderr,
+"tree extent[%llu, %llu] %s %llu has no tree block found\n",
+			rec->start, rec->max_size,
+			(back->full_backref ? "parent" : "root"),
+			(back->full_backref ? tback->parent : tback->root));
+		return;
+	}
+}
+
+static void print_backref_error(struct extent_record *rec,
+				struct extent_backref *back)
+{
+	if (back->is_data)
+		print_data_backref_error(rec, to_data_backref(back));
+	else
+		print_tree_backref_error(rec, to_tree_backref(back));
+}
+
 static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 {
 	struct extent_backref *back, *tmp;
-	struct tree_backref *tback;
 	struct data_backref *dback;
 	u64 found = 0;
 	int err = 0;
@@ -4005,42 +4110,11 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			err = 1;
 			if (!print_errs)
 				goto out;
-			if (back->is_data) {
-				dback = to_data_backref(back);
-				fprintf(stderr,
-"data backref %llu %s %llu owner %llu offset %llu num_refs %lu not found in extent tree\n",
-					(unsigned long long)rec->start,
-					back->full_backref ?
-					"parent" : "root",
-					back->full_backref ?
-					(unsigned long long)dback->parent :
-					(unsigned long long)dback->root,
-					(unsigned long long)dback->owner,
-					(unsigned long long)dback->offset,
-					(unsigned long)dback->num_refs);
-			} else {
-				tback = to_tree_backref(back);
-				fprintf(stderr,
-"tree backref %llu %s %llu not found in extent tree\n",
-					(unsigned long long)rec->start,
-					back->full_backref ? "parent" : "root",
-					back->full_backref ?
-					(unsigned long long)tback->parent :
-					(unsigned long long)tback->root);
-			}
 		}
-		if (!back->is_data && !back->found_ref) {
+		if (!back->found_ref) {
 			err = 1;
 			if (!print_errs)
 				goto out;
-			tback = to_tree_backref(back);
-			fprintf(stderr,
-				"backref %llu %s %llu not referenced back %p\n",
-				(unsigned long long)rec->start,
-				back->full_backref ? "parent" : "root",
-				back->full_backref ?
-				(unsigned long long)tback->parent :
-				(unsigned long long)tback->root, back);
 		}
 		if (back->is_data) {
 			dback = to_data_backref(back);
@@ -4048,38 +4122,17 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 				err = 1;
 				if (!print_errs)
 					goto out;
-				fprintf(stderr,
-"incorrect local backref count on %llu %s %llu owner %llu offset %llu found %u wanted %u back %p\n",
-					(unsigned long long)rec->start,
-					back->full_backref ?
-					"parent" : "root",
-					back->full_backref ?
-					(unsigned long long)dback->parent :
-					(unsigned long long)dback->root,
-					(unsigned long long)dback->owner,
-					(unsigned long long)dback->offset,
-					dback->found_ref, dback->num_refs,
-					back);
 			}
 			if (dback->disk_bytenr != rec->start) {
 				err = 1;
 				if (!print_errs)
 					goto out;
-				fprintf(stderr,
-"backref disk bytenr does not match extent record, bytenr=%llu, ref bytenr=%llu\n",
-					(unsigned long long)rec->start,
-					(unsigned long long)dback->disk_bytenr);
 			}
 
 			if (dback->bytes != rec->nr) {
 				err = 1;
 				if (!print_errs)
 					goto out;
-				fprintf(stderr,
-"backref bytes do not match extent backref, bytenr=%llu, ref bytes=%llu, backref bytes=%llu\n",
-					(unsigned long long)rec->start,
-					(unsigned long long)rec->nr,
-					(unsigned long long)dback->bytes);
 			}
 		}
 		if (!back->is_data) {
@@ -4088,6 +4141,8 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			dback = to_data_backref(back);
 			found += dback->found_ref;
 		}
+		if (err)
+			print_backref_error(rec, back);
 	}
 	if (found != rec->refs) {
 		err = 1;
