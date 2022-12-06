@@ -54,6 +54,7 @@
 #include "common/parse-utils.h"
 #include "common/string-utils.h"
 #include "common/filesystem-utils.h"
+#include "common/format-output.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "ioctl.h"
@@ -75,10 +76,12 @@ static const char * const cmd_filesystem_df_usage[] = {
 	"Show space usage information for a mount point",
 	"",
 	HELPINFO_UNITS_SHORT_LONG,
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	NULL
 };
 
-static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
+static void print_df_text(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
 	struct btrfs_ioctl_space_info *sp = sargs->spaces;
@@ -97,6 +100,44 @@ static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit
 			(ok ? ", zone_unusable=" : ""),
 			(ok ? pretty_size_mode(unusable, unit_mode) : ""));
 	}
+}
+
+static const struct rowspec filesystem_df_rowspec[] = {
+	{ .key = "bg-type", .fmt = "%s", .out_json = "bg-type" },
+	{ .key = "bg-profile", .fmt = "%s", .out_json = "bg-profile" },
+	{ .key = "total", .fmt = "%llu", .out_json = "total" },
+	{ .key = "used", .fmt = "%llu", .out_json = "used" },
+	{ .key = "zone_unusable", .fmt = "%llu", .out_json = "zone_unusable" },
+	ROWSPEC_END
+};
+
+static void print_df_json(int fd, struct btrfs_ioctl_space_args *sargs)
+{
+	struct format_ctx fctx;
+	u64 i;
+	struct btrfs_ioctl_space_info *sp = sargs->spaces;
+	u64 unusable;
+	bool ok;
+
+	fmt_start(&fctx, filesystem_df_rowspec, 1, 0);
+	fmt_print_start_group(&fctx, "filesystem-df", JSON_TYPE_ARRAY);
+
+	for (i = 0; i < sargs->total_spaces; i++, sp++) {
+		unusable = device_get_zone_unusable(fd, sp->flags);
+		ok = (unusable != DEVICE_ZONE_UNUSABLE_UNKNOWN);
+
+		fmt_print_start_group(&fctx, NULL, JSON_TYPE_MAP);
+		fmt_print(&fctx, "bg-type", btrfs_group_type_str(sp->flags));
+		fmt_print(&fctx, "bg-profile", btrfs_group_profile_str(sp->flags));
+		fmt_print(&fctx, "total", sp->total_bytes);
+		fmt_print(&fctx, "used", sp->used_bytes);
+		if (ok)
+			fmt_print(&fctx, "zone_unusable", unusable);
+		fmt_print_end_group(&fctx, NULL);
+	}
+
+	fmt_print_end_group(&fctx, "filesystem-df");
+	fmt_end(&fctx);
 }
 
 static int cmd_filesystem_df(const struct cmd_struct *cmd,
@@ -125,7 +166,10 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 	ret = get_df(fd, &sargs);
 
 	if (ret == 0) {
-		print_df(fd, sargs, unit_mode);
+		if (bconf.output_format == CMD_FORMAT_JSON)
+			print_df_json(fd, sargs);
+		else
+			print_df_text(fd, sargs, unit_mode);
 		free(sargs);
 	} else {
 		errno = -ret;
@@ -136,7 +180,7 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(filesystem_df, "df");
+static DEFINE_COMMAND_WITH_FLAGS(filesystem_df, "df", CMD_FORMAT_JSON);
 
 static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 					char *search)
