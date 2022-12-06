@@ -1437,7 +1437,11 @@ static DEFINE_COMMAND(filesystem_balance, "balance", cmd_filesystem_balance,
 
 static const char * const cmd_filesystem_mkswapfile_usage[] = {
 	"btrfs filesystem mkswapfile <file>",
-	"Force a sync on a filesystem",
+        "Create a new file that's suitable and formatted as a swapfile.",
+        "Create a new file that's suitable and formatted as a swapfile. Default",
+        "size is 2GiB, minimum size is 40KiB.",
+	"",
+	"s|--size SIZE      create file of SIZE (accepting k/m/g/e/p suffix)",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
