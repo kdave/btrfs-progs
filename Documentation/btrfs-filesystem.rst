@@ -197,7 +197,8 @@ mkswapfile [-s size] file
         activated swapfile cannot be balanced.
 
         Swapfile creation can be achieved by standalone commands too. Activation
-        needs to be done by command ``swapon(8)``.
+        needs to be done by command ``swapon(8)``. See also command ``btrfs
+        inspect-internal map-swapfile`` and the :doc:`Swapfile feature<Swapfile>` description.
 
         ``Options``
 
