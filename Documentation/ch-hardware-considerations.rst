@@ -7,7 +7,7 @@ data on top of the storage device.*
 
 The filesystem assumes several features or limitations of the storage device
 and utilizes them or applies measures to guarantee reliability. BTRFS in
-particular is based on a COW (copy on write) mode of writing, ie. not updating
+particular is based on a COW (copy on write) mode of writing, i.e. not updating
 data in place but rather writing a new copy to a different location and then
 atomically switching the pointers.
 
@@ -41,7 +41,7 @@ When things go wrong
 
 **No or partial atomicity of block reads/writes (1)**
 
-- *Problem*: a partial block contents is written (*torn write*), eg. due to a
+- *Problem*: a partial block contents is written (*torn write*), e.g. due to a
   power glitch or other electronics failure during the read/write
 - *Detection*: checksum mismatch on read
 - *Repair*: use another copy or rebuild from multiple blocks using some encoding
@@ -188,7 +188,7 @@ remapping and garbage collection of used memory cells. Due to the additional
 processing there are measures to verity the data e.g. by ECC codes.
 
 The observations of failing SSDs show that the whole electronic fails at once
-or affects a lot of data (eg. stored on one chip). Recovering such data
+or affects a lot of data (e.g. stored on one chip). Recovering such data
 may need specialized equipment and reading data repeatedly does not help as
 it's possible with HDDs.
 

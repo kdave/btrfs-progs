@@ -12,7 +12,7 @@ DESCRIPTION
 Destructively overwrite all copies of the superblock with a specified copy.
 This helps in certain cases, for example when write barriers were disabled
 during a power failure and not all superblocks were written, or if the primary
-superblock is damaged, eg. accidentally overwritten.
+superblock is damaged, e.g. accidentally overwritten.
 
 The filesystem specified by *device* must not be mounted.
 

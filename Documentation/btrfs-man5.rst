@@ -109,7 +109,7 @@ mixed_backref
 mixed_groups
         (since: 2.6.37)
 
-        mixed data and metadata block groups, ie. the data and metadata are not
+        mixed data and metadata block groups, i.e. the data and metadata are not
         separated and occupy the same block groups, this mode is suitable for small
         volumes as there are no constraints how the remaining space should be used
         (compared to the split mode, where empty metadata space cannot be used for data
@@ -252,7 +252,7 @@ numbers 10 and 234 (the device can be found under the 'misc' category).
 The device accepts some ioctl calls that can perform following actions on the
 filesystem module:
 
-* scan devices for btrfs filesystem (ie. to let multi-device filesystems mount
+* scan devices for btrfs filesystem (i.e. to let multi-device filesystems mount
   automatically) and register them with the kernel module
 * similar to scan, but also wait until the device scanning process is finished
   for a given filesystem
@@ -260,7 +260,7 @@ filesystem module:
 
 The device is created when btrfs is initialized, either as a module or a
 built-in functionality and makes sense only in connection with that. Running
-eg. mkfs without the module loaded will not register the device and will
+e.g. mkfs without the module loaded will not register the device and will
 probably warn about that.
 
 In rare cases when the module is loaded but the device is not present (most
@@ -373,7 +373,7 @@ general may be stored on some other devices due to the way RAID1 works on
 btrfs, unlike on a striped profile (similar to *raid0*) that would need all
 devices all the time.
 
-The space allocation pattern and consumption is different (eg. on N devices):
+The space allocation pattern and consumption is different (e.g. on N devices):
 for *raid5* as an example, a 1GiB chunk is reserved on each device, while with
 *raid1* there's each 1GiB chunk stored on 2 devices. The consumption of each
 1GiB of used metadata is then *N * 1GiB* for vs *2 * 1GiB*. Using *raid1*
@@ -384,8 +384,8 @@ Missing/incomplete support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When RAID56 is on the same filesystem with different raid profiles, the space
-reporting is inaccurate, eg. **df**, **btrfs filesystem df** or **btrfs filesystem
-usage**. When there's only a one profile per block group type (eg. raid5 for data)
+reporting is inaccurate, e.g. **df**, **btrfs filesystem df** or **btrfs filesystem
+usage**. When there's only a one profile per block group type (e.g. raid5 for data)
 the reporting is accurate.
 
 When scrub is started on a RAID56 filesystem, it's started on all devices that

@@ -52,7 +52,7 @@ OPTIONS
         ignore errors during restoration and continue
 
 -o|--overwrite
-        overwrite directories/files in *path*, eg. for repeated runs
+        overwrite directories/files in *path*, e.g. for repeated runs
 
 -t <bytenr>
         use *bytenr* to read the root tree

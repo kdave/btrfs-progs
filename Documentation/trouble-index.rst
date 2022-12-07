@@ -90,7 +90,7 @@ Deletion still works.
 Balance does not have enough workspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Relocation of block groups requires a temporary work space, ie. area on the
+Relocation of block groups requires a temporary work space, i.e. area on the
 device that's available for the filesystem but without any other existing block
 groups. Before balance starts a check is performed to verify the requested
 action is possible. If not, ENOSPC is returned.
@@ -161,8 +161,8 @@ Stale signature on device
 Related problem regarding partitioned and unpartitioned device: *Long time ago
 I created btrfs on /dev/sda. After some changes btrfs moved to /dev/sda1.*
 
-Use ``wipefs -o 0x10040`` (ie. with the offset of the btrfs signature), it
-won't touch the parition table.
+Use ``wipefs -o 0x10040`` (i.e. with the offset of the btrfs signature), it
+won't touch the partition table.
 
 Manual deletion of super block signature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -190,7 +190,7 @@ Generic errors, errno
 ---------------------
 
 Note there's a established text message for the errors, though they are used in
-a broader sense (eg. error mentions a file but it can be relevant for another
+a broader sense (e.g. error mentions a file but it can be relevant for another
 structure). The title of each section uses the nonstandard meaning that is
 perhaps more suitable for a filesystem.
 
@@ -198,7 +198,7 @@ ENOENT (No such entry)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Common error "no such entry", in general it may mean that some structure hasn't
-been found, eg. an entry in some in-memory tree.  This becomes a critical
+been found, e.g. an entry in some in-memory tree.  This becomes a critical
 problem when the entry is expected to exist because of consistency of the
 structures.
 
@@ -209,14 +209,14 @@ Memory allocation error. In many cases the error is recoverable and the
 operation restartable after it's reported to userspace. In critical contexts,
 like when a transaction needs to be committed, the error is not recoverable and
 leads to flipping the filesystem to read-only. Such cases are rare under normal
-conditions. Memory can be artificially limited eg. by cgroups, which may
+conditions. Memory can be artificially limited e.g. by cgroups, which may
 trigger the condition, which is useful for testing but any real workload should
 have resources scaled accordingly.
 
 EINVAL (Invalid argument)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is typically returned from ioctl when a parameter is invalid, ie. unexpected
+This is typically returned from ioctl when a parameter is invalid, i.e. unexpected
 range, a bit flag not recognized, or a combination of input parameters that
 does not make sense. Errors are typically recoverable.
 

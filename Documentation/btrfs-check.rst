@@ -139,7 +139,7 @@ DANGEROUS OPTIONS
 --force
         allow work on a mounted filesystem. Note that this should work fine on a
         quiescent or read-only mounted filesystem but may crash if the device is
-        changed externally, eg. by the kernel module.  Repair without mount checks is
+        changed externally, e.g. by the kernel module.  Repair without mount checks is
         not supported right now.
 
         This option also skips the delay and warning in the repair mode (see

@@ -16,7 +16,7 @@ SUBCOMMAND
 
 cancel <path>
         cancels a running or paused balance, the command will block and wait until the
-        current blockgroup being processed completes
+        current block group being processed completes
 
         Since kernel 5.7 the response time of the cancellation is significantly
         improved, on older kernels it might take a long time until currently
@@ -28,7 +28,7 @@ pause <path>
 
 resume <path>
         resume interrupted balance, the balance status must be stored on the filesystem
-        from previous run, eg. after it was paused or forcibly interrupted and mounted
+        from previous run, e.g. after it was paused or forcibly interrupted and mounted
         again with *skip_balance*
 
 start [options] <path>
@@ -38,7 +38,7 @@ start [options] <path>
 
         .. note::
                 The balance command without filters will basically move everything in the
-                filesystem to a new physical location on devices (ie. it does not affect the
+                filesystem to a new physical location on devices (i.e. it does not affect the
                 logical properties of file extents like offsets within files and extent
                 sharing).  The run time is potentially very long, depending on the filesystem
                 size. To prevent starting a full balance by accident, the user is warned and
@@ -63,7 +63,7 @@ start [options] <path>
                 act on system chunks (requires *-f*), see *FILTERS* section for details about *filters*.
 
         -f
-                force a reduction of metadata integrity, eg. when going from *raid1* to
+                force a reduction of metadata integrity, e.g. when going from *raid1* to
                 *single*, or skip safety timeout when the target conversion profile is *raid5*
                 or *raid6*
 
@@ -149,7 +149,7 @@ Let's use the following real life example and start with the output:
 Roughly calculating for data, *75G - 64G = 11G*, the used/total ratio is
 about *85%*. How can we can interpret that:
 
-* chunks are filled by 85% on average, ie. the *usage* filter with anything
+* chunks are filled by 85% on average, i.e. the *usage* filter with anything
   smaller than 85 will likely not affect anything
 * in a more realistic scenario, the space is distributed unevenly, we can
   assume there are completely used chunks and the remaining are partially filled
@@ -188,7 +188,7 @@ usage filter.
         GlobalReserve, single: total=512.00MiB, used=0.00B
 
 Now the used/total ratio is about 94% and we moved about *74G - 68G = 6G* of
-data to the remaining blockgroups, ie. the 6GiB are now free of filesystem
+data to the remaining block groups, i.e. the 6GiB are now free of filesystem
 structures, and can be reused for new data or metadata block groups.
 
 We can do a similar exercise with the metadata block groups, but this should
@@ -210,7 +210,7 @@ reflinks updated frequently.
 
 Just 1 GiB decrease, which possibly means there are block groups with good
 utilization. Making the metadata layout more compact would in turn require
-updating more metadata structures, ie. lots of IO. As running out of metadata
+updating more metadata structures, i.e. lots of IO. As running out of metadata
 space is a more severe problem, it's not necessary to keep the utilization
 ratio too high. For the purpose of this example, let's see the effects of
 further compaction:

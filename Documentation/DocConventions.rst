@@ -23,7 +23,7 @@ Quotation in subcommands:
 - exact syntax: monotype ``usage=0``
 - reference to arguments etc: *italics*
 - command reference: bold ``btrfs filesystem show``
-  - subcommand names should be spelled in full, ie. *filesystem* instead of *fi*
+  - subcommand names should be spelled in full, i.e. *filesystem* instead of *fi*
 - section references: italics *EXAMPLES*
 
 - argument name in option description: caps in angle brackets <NAME>

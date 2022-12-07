@@ -41,11 +41,11 @@ df [options] <path>
           below.
         * *single* -- the allocation profile, defined at mkfs time
         * *total* -- sum of space reserved for all allocation profiles of the
-          given type, ie. all Data/single. Note that it's not total size of
+          given type, i.e. all Data/single. Note that it's not total size of
           filesystem.
-        * *used* -- sum of used space of the above, ie. file extents, metadata blocks
+        * *used* -- sum of used space of the above, i.e. file extents, metadata blocks
 
-        *GlobalReserve* is an artificial and internal emergency space. It is used eg.
+        *GlobalReserve* is an artificial and internal emergency space. It is used e.g.
         when the filesystem is full. Its *total* size is dynamic based on the
         filesystem size, usually not larger than 512MiB, *used* may fluctuate.
 
@@ -124,7 +124,7 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 This will limit the amount of dirty data to current file, otherwise the amount
                 accumulates from several files and will increase system load. This can also lead
                 to ENOSPC if there's too much dirty data to write and it's not possible to make
-                the reservations for the new data (ie. how the COW design works).
+                the reservations for the new data (i.e. how the COW design works).
 
         -s <start>[kKmMgGtTpPeE]
                 defragmentation will start from the given offset, default is beginning of a file
@@ -332,11 +332,11 @@ usage [options] <path> [<path>...]
         * *Free (statfs, df)* -- the amount of space available for data as
           reported by the **statfs** syscall, also returned as *Avail* in the
           output of **df**. The value is calculated in a different way and may
-          not match the estimate in some cases (eg.  multiple profiles).
+          not match the estimate in some cases (e.g.  multiple profiles).
         * *Data ratio* -- ratio of total space for data including redundancy or
-          parity to the effectively usable data space, eg. single is 1.0, RAID1
+          parity to the effectively usable data space, e.g. single is 1.0, RAID1
           is 2.0 and for RAID5/6 it depends on the number of devices
-        * *Metadata ratio* -- dtto, for metadata
+        * *Metadata ratio* -- ditto, for metadata
         * *Global reserve* -- portion of metadata currently used for global
           block reserve, used for emergency purposes (like deletion on a full
           filesystem)
@@ -352,7 +352,7 @@ usage [options] <path> [<path>...]
                     Device zone size:            256.00MiB
 
         * *Device zone unusable* -- sum of of space that's been used in the
-          past but now is not due to COW and not referenced anymory, the chunks
+          past but now is not due to COW and not referenced anymore, the chunks
           have to be reclaimed and zones reset to make it usable again
         * *Device zone size* -- the reported zone size of the host-managed
           device, same for all devices
@@ -448,7 +448,7 @@ specify the devid though.
 **$ btrfs filesystem resize 1:max /path**
 
 Let's assume that devid 1 exists and the filesystem does not occupy the whole
-block device, eg. it has been enlarged and we want to grow the filesystem. By
+block device, e.g. it has been enlarged and we want to grow the filesystem. By
 simply using *max* as size we will achieve that.
 
 .. note::

@@ -62,7 +62,7 @@ limit=<number>, limit=<range>
 stripes=<range>
         Balance only block groups which have the given number of stripes. The parameter
         is a range specified as *start..end*. Makes sense for block group profiles that
-        utilize striping, ie. RAID0/10/5/6.  The range minimum and maximum are
+        utilize striping, i.e. RAID0/10/5/6.  The range minimum and maximum are
         inclusive.
 
 soft

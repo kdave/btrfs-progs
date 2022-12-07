@@ -74,7 +74,7 @@ zero-log <device>
 
         This command will clear the filesystem log tree. This may fix a specific
         set of problem when the filesystem mount fails due to the log replay. See below
-        for sample stacktraces that may show up in system log.
+        for sample stack traces that may show up in system log.
 
         The common case where this happens was fixed a long time ago,
         so it is unlikely that you will see this particular problem, but the command is

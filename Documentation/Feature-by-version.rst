@@ -212,7 +212,7 @@ features see [[Status]] page.
         <i>ref-verify</i>, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
 
 4.15 - zlib level
-        Allow to set the zlib compression level via mount option, eg. like
+        Allow to set the zlib compression level via mount option, e.g. like
         *compress=zlib:9*. The levels match the default zlib compression
         levels. The default is 3.
 
@@ -289,7 +289,7 @@ features see [[Status]] page.
         if the kernel module is reloaded.
 
 5.1 - zstd level
-        Allow to set the zstd compression level via mount option, eg. like
+        Allow to set the zstd compression level via mount option, e.g. like
         *compress=zstd:9*. The levels match the default zstd compression
         levels. The default is 3, maximum is 15.
 
@@ -403,7 +403,7 @@ features see [[Status]] page.
         DUP metadata works with zoned mode
 
 5.18 - encoded data ioctl
-        New ioctls to read and write pre-encoded data (ie. no transformation
+        New ioctls to read and write pre-encoded data (i.e. no transformation
         and directly written as extents), now works for compressed data
 
 5.18 - *removed balance ioctl v1*

@@ -22,7 +22,7 @@ happen together with other data and the result depends on the remaining free
 space layout and fragmentation.
 
 .. warning::
-   Defragmentation does not preserve extent sharing, eg. files created by **cp
+   Defragmentation does not preserve extent sharing, e.g. files created by **cp
    --reflink** or existing on multiple snapshots. Due to that the data space
    consumption may increase.
 

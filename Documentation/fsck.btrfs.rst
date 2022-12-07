@@ -37,7 +37,7 @@ There are two possible exit codes returned:
         No error
 
 8
-        Operational error, eg. device does not exist
+        Operational error, e.g. device does not exist
 
 FILES
 -----

@@ -12,7 +12,7 @@ on the fly.
 On the other hand, the traditional approach has only a poor solution to
 restrict directories.
 At installation time, the harddisk can be partitioned so that every directory
-(eg. /usr, /var/, ...) that needs a limit gets its own partition.  The obvious
+(e.g. /usr, /var/, ...) that needs a limit gets its own partition.  The obvious
 problem is that those limits cannot be changed without a reinstallation.  The
 btrfs subvolume feature builds a bridge.  Subvolumes correspond in many ways to
 partitions, as every subvolume looks like its own filesystem.  With subvolume
@@ -46,7 +46,7 @@ Subvolume quota groups
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The basic notion of the Subvolume Quota feature is the quota group, short
-qgroup.  Qgroups are notated as *level/id*, eg.  the qgroup 3/2 is a qgroup of
+qgroup.  Qgroups are notated as *level/id*, e.g.  the qgroup 3/2 is a qgroup of
 level 3. For level 0, the leading '0/' can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
@@ -164,7 +164,7 @@ Multi-user machine
 When you have several users on a machine, with home directories probably under
 /home, you might want to restrict /home as a whole, while restricting every
 user to an individual limit as well.  This is easily accomplished by creating a
-qgroup for /home , eg. 1/1, and assigning all user subvolumes to it.
+qgroup for /home , e.g. 1/1, and assigning all user subvolumes to it.
 Restricting this qgroup will limit /home, while every user subvolume can get
 its own (lower) limit.
 

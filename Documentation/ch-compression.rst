@@ -6,7 +6,7 @@ You can have a single btrfs mount point that has some files that are
 uncompressed, some that are compressed with LZO, some with ZLIB, for instance
 (though you may not want it that way, it is supported).
 
-Once the compression is set, all newly written data will be compressed, ie.
+Once the compression is set, all newly written data will be compressed, i.e.
 existing data are untouched. Data are split into smaller chunks (128KiB) before
 compression to make random rewrites possible without a high performance hit. Due
 to the increased number of extents the metadata consumption is higher. The

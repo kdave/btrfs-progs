@@ -7,7 +7,7 @@ filesystem (send side). The stream is currently used in two ways: to generate a
 stream representing a standalone subvolume (full mode) or a difference between
 two snapshots of the same subvolume (incremental mode). The stream can be
 generated using a set of other subvolumes to look for extent references that
-could lead to a more efficient stream by transfering only the references and
+could lead to a more efficient stream by transferring only the references and
 not full data.
 
 The stream format is abstracted from on-disk structures (though it may share
@@ -32,7 +32,7 @@ Stream structure
 ----------------
 
 The stream starts with a descriptor bytes ``btrfs-stream`` followed by version
-stored as litte endian u32. Then the sequence of commands starts. The expected
+stored as little endian u32. Then the sequence of commands starts. The expected
 start is a subvolume or snapshot followed by commands to change the data.
 
 Command structure
@@ -128,7 +128,7 @@ Raw data type is processed in a different way in protocol version 1 and 2. In 1
 the maximum size of the TLV is 64KiB as the size is stored in u16. This is not
 sufficient for encoded write (ENCODED_WRITE) command. In 2 the data length is
 up to 4GiB (using the type u32) but the TLV must be last and the actual
-length is calculated as the delta between the whole command and the TLV (ie.
+length is calculated as the delta between the whole command and the TLV (i.e.
 ignoring the TLV header length).
 
 Stream version 1
@@ -265,7 +265,7 @@ Write file data to a given file offset.
 
 - string path - relative file path
 - u64 - file offset where to write data
-- data - raw file data (varaible length)
+- data - raw file data (variable length)
 
 BTRFS_SEND_C_CLONE (16)
 ^^^^^^^^^^^^^^^^^^^^^^^

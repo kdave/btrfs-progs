@@ -90,7 +90,7 @@ we're going to lose 50GiB of the second device for obvious reasons.
 
         $ btrfs balance start -dconvert=raid1 /mnt
 
-The balance process needs some workspace (ie. a free device space without any
+The balance process needs some workspace (i.e. a free device space without any
 data or metadata block groups) so the command could fail if there's too much
 data or the block groups occupy the whole first device.
 

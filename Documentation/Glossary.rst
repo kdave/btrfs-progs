@@ -4,12 +4,12 @@ Glossary
 Terms in *italics* also appear in this glossary.
 
 allocator
-	Usually *allocator* means the *block* allocator, ie. the logic
+	Usually *allocator* means the *block* allocator, i.e. the logic
 	inside filesystem which decides where to place newly allocated blocks
 	in order to maintain several constraints (like data locality, low
 	fragmentation).
 
-	In btrfs, allocator may also refer to *chunk* allocator, ie. the
+	In btrfs, allocator may also refer to *chunk* allocator, i.e. the
 	logic behind placing chunks on devices.
 
 balance
@@ -30,7 +30,7 @@ barrier
 
 block
 	A single physically and logically contiguous piece of storage on a
-	device, of size eg. 4K.
+	device, of size e.g. 4K.
 
 block group
 	The unit of allocation of space in btrfs. A block group is laid out on
@@ -47,7 +47,7 @@ B-tree
 	refers to its use of B-trees.
 
 btrfsck
-	Tool in *btrfs-progs* that checks a filesystem *offline* (ie.
+	Tool in *btrfs-progs* that checks a filesystem *offline* (i.e.
 	unmounted), and reports on any errors in the filesystem structures it
 	finds.  By default the tool runs in read-only mode as fixing errors is
         potentially dangerous.  See also *scrub*.
@@ -312,7 +312,7 @@ system array
 top-level subvolume
 	The *subvolume* at the very top of the filesystem. This is the only
 	subvolume present in a newly-created btrfs filesystem, and internally has ID 5,
-	otherwise could be referenced as 0 (eg. within the *set-default* subcommand of
+	otherwise could be referenced as 0 (e.g. within the *set-default* subcommand of
 	*btrfs*).
 
 transaction

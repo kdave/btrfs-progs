@@ -6,8 +6,8 @@ swap subsystem:
 * filesystem - must be only single device
 * filesystem - must have only *single* data profile
 * swapfile - the containing subvolume cannot be snapshotted
-* swapfile - must be preallocated (ie. no holes)
-* swapfile - must be nodatacow (ie. also nodatasum, no compression)
+* swapfile - must be preallocated (i.e. no holes)
+* swapfile - must be nodatacow (i.e. also nodatasum, no compression)
 
 The limitations come namely from the COW-based design and mapping layer of
 blocks that allows the advanced features like relocation and multi-device
@@ -28,7 +28,7 @@ swapfile extents or may fail:
 * device replace - ditto
 
 When there are no active swapfiles and a whole-filesystem exclusive operation
-is running (eg. balance, device delete, shrink), the swapfiles cannot be
+is running (e.g. balance, device delete, shrink), the swapfiles cannot be
 temporarily activated. The operation must finish first.
 
 To create and activate a swapfile run the following commands:
@@ -90,7 +90,7 @@ offset.
 
 Since version 6.1 there's a command ``btrfs inspect-internal map-swapfile`` that will
 print the device physical offset and the adjusted value for */sys/power/resume_offset*.
-Note that the value is divided by page size, ie. it's not the offset itself.
+Note that the value is divided by page size, i.e. it's not the offset itself.
 
 .. code-block:: bash
 
@@ -106,7 +106,7 @@ For scripting and convenience the option *-r* will print just the offset:
         # btrfs inspect-internal map-swapfile -r swapfile
         198122980
 
-The command *map-swapfile* also verifies all the requirements, ie. no holes,
+The command *map-swapfile* also verifies all the requirements, i.e. no holes,
 single device, etc.
 
 
@@ -114,7 +114,7 @@ Troubleshooting
 ---------------
 
 If the swapfile activation fails please verify that you followed all the steps
-above or check the system log (eg. ``dmesg`` or ``journalctl``) for more
+above or check the system log (e.g. ``dmesg`` or ``journalctl``) for more
 information.
 
 Notably, the *swapon* utility exits with a message that does not say what

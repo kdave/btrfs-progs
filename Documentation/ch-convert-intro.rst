@@ -29,14 +29,14 @@ fragmentation, and also because the metadata blocks are bound to the original
 free space layout.
 
 Due to different constraints, it is only possible to convert filesystems that
-have a supported data block size (ie. the same that would be valid for
+have a supported data block size (i.e. the same that would be valid for
 **mkfs.btrfs**). This is typically the system page size (4KiB on x86_64
 machines).
 
 **BEFORE YOU START**
 
-The source filesystem must be clean, eg. no journal to replay or no repairs
-needed. The respective **fsck** utility must be run on the source filessytem prior
+The source filesystem must be clean, e.g. no journal to replay or no repairs
+needed. The respective **fsck** utility must be run on the source filesystem prior
 to conversion. Please refer to the manual pages in case you encounter problems.
 
 For ext2/3/4:

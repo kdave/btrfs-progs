@@ -283,7 +283,7 @@ zoned
 RUNTIME FEATURES
 ----------------
 
-Features that are typically enabled on a mounted filesystem, eg. by a mount
+Features that are typically enabled on a mounted filesystem, e.g. by a mount
 option or by an ioctl. Some of them can be enabled early, at mkfs time.  This
 applies to features that need to be enabled once and then the status is
 permanent, this does not replace mount options.
@@ -390,8 +390,8 @@ PROFILE LAYOUT
 ^^^^^^^^^^^^^^
 
 For the following examples, assume devices numbered by 1, 2, 3 and 4, data or
-metadata blocks A, B, C, D, with possible stripes eg. A1, A2 that would be
-logically A, etc. For parity profiles PA and QA are parity and syndrom,
+metadata blocks A, B, C, D, with possible stripes e.g. A1, A2 that would be
+logically A, etc. For parity profiles PA and QA are parity and syndrome,
 associated with the given stripe.  The simple layouts single or DUP are left
 out.  Actual physical block placement on devices depends on current state of
 the free/allocated space and may appear random. All devices are assumed to be

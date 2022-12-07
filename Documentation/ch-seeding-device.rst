@@ -26,7 +26,7 @@ Alternatively, deleting the seeding device from the filesystem can turn it into
 a normal filesystem, provided that the writable device can also contain all the
 data from the seeding device.
 
-The seeding device flag can be cleared again by **btrfstune -f -S 0**, eg.
+The seeding device flag can be cleared again by **btrfstune -f -S 0**, e.g.
 allowing to update with newer data but please note that this will invalidate
 all existing filesystems that use this particular seeding device. This works
 for some use cases, not for others, and the forcing flag to the command is
@@ -114,7 +114,7 @@ As a result we have:
 
 * *sda* is a single seeding device, with its initial contents
 * *sdb* is a seeding device but requires *sda*, the contents are from the time
-  when *sdb* is made seeding, ie. contents of *sda* with any later changes
+  when *sdb* is made seeding, i.e. contents of *sda* with any later changes
 * *sdc* last writable, can be made a seeding one the same way as was *sdb*,
   preserving its contents and depending on *sda* and *sdb*
 

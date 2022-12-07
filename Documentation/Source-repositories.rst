@@ -12,7 +12,7 @@ requests that go to Linus and for linux-next integration:
 * https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- pull requests, branch *for-next* gets pulled to the linux-next tree
 
 The following git repositories are used for development and are updated with
-patches from the mailinglist:
+patches from the mailing list:
 
 * https://github.com/kdave/btrfs-devel
 * https://gitlab.com/kdave/btrfs-devel
@@ -22,9 +22,9 @@ Branches are usually pushed to both repositories, either can be used.
 There are:
 
 * main queue with patches for next development cycle (branch name *misc-next*)
-* queue with patches for current release cycle (the name has the version, eg *for-4.15* or *misc-4.15*).
-* topic branches, eg. from a patchset picked from mailinglist
-* snapshots of *for-next*, that contain all of the above (eg. for-next-20200512)
+* queue with patches for current release cycle (the name has the version, e.g. *for-4.15* or *misc-4.15*).
+* topic branches, e.g. from a patchset picked from mailing list
+* snapshots of *for-next*, that contain all of the above (e.g. for-next-20200512)
 
 Note that the branches get rebased.  The base point for patches depend on the
 development phase.  See [[Developer%27s_FAQ#Development_schedule]].
@@ -68,8 +68,8 @@ Note to GitHub users
 ^^^^^^^^^^^^^^^^^^^^
 
 The pull requests will not be accepted directly, the preferred way is to send
-patches to the mailinglist instead. You can link to a branch in any git
-repository if the mails do not make it to the mailinglist or for convenience.
+patches to the mailing list instead. You can link to a branch in any git
+repository if the mails do not make it to the mailing list or for convenience.
 
 The development model of btrfs-progs shares a lot with the kernel model. The
 github way is different in some ways. We, the upstream community, expect that
@@ -96,8 +96,8 @@ tasks on btrfs. This is at:
 
 https://github.com/kdave/btrfsmaintenance/
 
-Patches sent to mailinglist
----------------------------
+Patches sent to mailing list
+----------------------------
 
 A convenient interface to get an overview of patches and the related mail
 discussions can be found at

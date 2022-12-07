@@ -43,7 +43,7 @@
  * why: running commands from scripts or among many other commands should be
    noticeable due to progress tracking or for analysis if something goes wrong
  * there's a global option to make the commands silent `btrfs -q subcommand`,
-   this can be easily scripted eg. storing the global verbosity option in a
+   this can be easily scripted e.g. storing the global verbosity option in a
    variable, `btrfs $quiet subcommand` and then enabling or disabling as needed
 * line length should not exceed 80 columns if possible but this is not a strict
   limit and we want to put the relevant information there rather abbreviate too
@@ -53,7 +53,7 @@
 
 * numeric values are not quoted
 * string values are quoted if they would be confused when parsed word by word
-  (eg. file paths)
+  (e.g. file paths)
   * quoting is by single apostrophe on both ends
 * all messages follow a few known and understood schemes
 

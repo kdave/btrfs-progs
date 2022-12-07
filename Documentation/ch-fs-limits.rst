@@ -5,7 +5,7 @@ maximum symlink target length
         depends on the *nodesize* value, for 4KiB it's 3949 bytes, for larger nodesize
         it's 4095 due to the system limit PATH_MAX
 
-        The symlink target may not be a valid path, ie. the path name components
+        The symlink target may not be a valid path, i.e. the path name components
         can exceed the limits (NAME_MAX), there's no content validation at ``symlink(3)``
         creation.
 

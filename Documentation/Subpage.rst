@@ -44,7 +44,7 @@ The following features has some limitations for subpage:
   non-subpage mount for certain corner cases, it's way easier to create such
   mixed extents for subpage.
 
-  Thus max_inline mount option will be sliently ignored for subpage mounts,
+  Thus max_inline mount option will be silently ignored for subpage mounts,
   and it always acts as "max_inline=0".
 
 - Compression write is limited to page aligned ranges

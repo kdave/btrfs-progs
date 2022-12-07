@@ -25,7 +25,7 @@ add [-Kf] <device> [<device>...] <path>
         If applicable, a whole device discard (TRIM) operation is performed prior to
         adding the device. A device with existing filesystem detected by ``blkid(8)``
         will prevent device addition and has to be forced. Alternatively the filesystem
-        can be wiped from the device using eg. the ``wipefs(8)`` tool.
+        can be wiped from the device using e.g. the ``wipefs(8)`` tool.
 
         The operation is instant and does not affect existing data. The operation merely
         adds the device to the filesystem structures and creates some block groups
@@ -157,7 +157,7 @@ usage [options] <path> [<path>...]::
         * *Device size* -- size of the device as seen by the filesystem (may be
           different than actual device size)
         * *Device slack* -- portion of device not used by the filesystem but
-          still available in the physical space provided by the device, eg.
+          still available in the physical space provided by the device, e.g.
           after a device shrink
         * *Data,single*, *Metadata,single*, *System,single* -- in general, list
           of block group type (Data, Metadata, System) and profile (single,
@@ -224,7 +224,7 @@ flush_io_errs
 corruption_errs
         A block checksum mismatched or a corrupted metadata header was found.
 generation_errs
-        The block generation does not match the expected value (eg. stored in the
+        The block generation does not match the expected value (e.g. stored in the
         parent node).
 
 Since kernel 5.14 the device stats are also available in textual form in

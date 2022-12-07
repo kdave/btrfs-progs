@@ -31,7 +31,7 @@ Incompatible features
 ^^^^^^^^^^^^^^^^^^^^^
 
 The main constraint of the zoned devices is lack of in-place update of the data.
-This is inherently incompatibile with some features:
+This is inherently incompatible with some features:
 
 * nodatacow - overwrite in-place, cannot create such files
 * fallocate - preallocating space for in-place first write
@@ -61,6 +61,6 @@ offsets of both zones and determine the last written version.
 The amount of space reserved for super block depends on the zone size. The
 secondary and tertiary copies are at distant offsets as the capacity of the
 devices is expected to be large, tens of terabytes. Maximum zone size supported
-is 8GiB, which would mean that eg. offset 0-16GiB would be reserved just for
+is 8GiB, which would mean that e.g. offset 0-16GiB would be reserved just for
 the super block on a hypothetical device of that zone size. This is wasteful
 but required to guarantee crash safety.

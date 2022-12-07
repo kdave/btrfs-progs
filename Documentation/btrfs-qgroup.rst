@@ -156,7 +156,7 @@ show [options] <path>
 QUOTA RESCAN
 ------------
 
-The rescan reads all extent sharing metadata and updates the respective qgoups
+The rescan reads all extent sharing metadata and updates the respective qgroups
 accordingly.
 
 The information consists of bytes owned exclusively (*excl*) or shared/referred

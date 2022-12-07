@@ -20,9 +20,8 @@ btrfs properties instead of using the traditional method like ``chattr(1)`` or
 Object types
 ^^^^^^^^^^^^
 
-
 A property might apply to several object types so in some cases it's necessary
-to specify that explicity, however it's not needed in the most common case of
+to specify that explicitly, however it's not needed in the most common case of
 files and directories.
 
 The subcommands take parameter *-t*, use first letter as a shortcut (*f/s/d/i*)
@@ -43,7 +42,7 @@ compression
         - *lzo*
         - *zlib*
         - *zstd*
-        - *no* or *none* - disable compresssion (equivalent to ``chattr +m``)
+        - *no* or *none* - disable compression (equivalent to ``chattr +m``)
         - *""* (empty string) - set the default value
 
            .. note::

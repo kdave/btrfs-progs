@@ -39,7 +39,7 @@ OPTIONS
 -s
         Sanitize the file names when generating the image. One -s means just
         generate random garbage, which means that the directory indexes won't match up
-        since the hashes won't match with the garbage filenames. Using -ss will
+        since the hashes won't match with the garbage filenames. Using *-s* will
         calculate a collision for the filename so that the hashes match, and if it
         can't calculate a collision then it will just generate garbage.  The collision
         calculator is very time and CPU intensive so only use it if you are having

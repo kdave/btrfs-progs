@@ -8,7 +8,7 @@ Files are not defragmented nor recompressed, file extents are preserved
 but the physical location on devices will change.
 
 The balance operation is cancellable by the user. The on-disk state of the
-filesystem is always consistent so an unexpected interruption (eg. system crash,
+filesystem is always consistent so an unexpected interruption (e.g. system crash,
 reboot) does not corrupt the filesystem. The progress of the balance operation
 is temporarily stored as an internal state and will be resumed upon mount,
 unless the mount option *skip_balance* is specified.
@@ -29,11 +29,11 @@ metadata, system). Note that changing only the *system* type needs the force
 option. Otherwise *system* gets automatically converted whenever *metadata*
 profile is converted.
 
-When metadata redundancy is reduced (eg. from RAID1 to single) the force option
+When metadata redundancy is reduced (e.g. from RAID1 to single) the force option
 is also required and it is noted in system log.
 
 .. note::
-   The balance operation needs enough work space, ie. space that is completely
+   The balance operation needs enough work space, i.e. space that is completely
    unused in the filesystem, otherwise this may lead to ENOSPC reports.  See
    the section *ENOSPC* for more details.
 

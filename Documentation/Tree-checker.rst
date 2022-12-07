@@ -63,8 +63,8 @@ The checks
 ----------
 
 As implemented right now, the metadata consistency is limited to one b-tree node
-and what items are stored there, ie. there's no extensive or broad check done
-eg. against other data structures in other b-tree nodes. This still provides
+and what items are stored there, i.e. there's no extensive or broad check done
+e.g. against other data structures in other b-tree nodes. This still provides
 enough opportunities to verify consistency of individual items, besides verifying
 general validity of the items like the length or offset. The b-tree items are
 also coupled with a key so proper key ordering is also part of the check and can
@@ -79,7 +79,7 @@ Reporting problems
 ------------------
 
 In many cases the bug is caused by hardware and cannot be automatically fixed
-by *btrfs check --repair*, so do not try that without being adviced to. Even if
+by *btrfs check --repair*, so do not try that without being advised to. Even if
 the error is unfixable it's useful to report it, either to validate the cause
 but also to give more ideas how to improve the tree checker.  Please consider
 reporting it to the mailing list *linux-btrfs@vger.kernel.org*.
