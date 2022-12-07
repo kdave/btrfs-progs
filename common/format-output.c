@@ -272,7 +272,8 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		} else {
 			/* Simple key/values */
 			fmt_separator(fctx);
-			printf("\"%s\": ", row->out_json);
+			if (row->out_json)
+				printf("\"%s\": ", row->out_json);
 		}
 	}
 
