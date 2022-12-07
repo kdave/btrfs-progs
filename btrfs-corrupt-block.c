@@ -1346,7 +1346,7 @@ int main(int argc, char **argv)
 			{ "item", no_argument, NULL, 'I'},
 			{ "dir-item", no_argument, NULL, 'D'},
 			{ "delete", no_argument, NULL, 'd'},
-			{ "root", no_argument, NULL, 'r'},
+			{ "root", required_argument, NULL, 'r'},
 			{ "csum", required_argument, NULL, 'C'},
 			{ "block-group", required_argument, NULL, GETOPT_VAL_BLOCK_GROUP},
 			{ "value", required_argument, NULL, GETOPT_VAL_VALUE},
