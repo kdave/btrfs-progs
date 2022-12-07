@@ -1615,6 +1615,9 @@ static const struct cmd_group subvolume_cmd_group = {
 		&cmd_struct_subvolume_create,
 		&cmd_struct_subvolume_delete,
 		&cmd_struct_subvolume_list,
+#if EXPERIMENTAL
+		&cmd_struct_subvolume_ls,
+#endif
 		&cmd_struct_subvolume_snapshot,
 		&cmd_struct_subvolume_get_default,
 		&cmd_struct_subvolume_set_default,

@@ -27,12 +27,14 @@
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/ctree.h"
+#include "libbtrfsutil/btrfsutil.h"
 #include "common/defs.h"
 #include "common/rbtree-utils.h"
 #include "common/help.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "common/string-table.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "ioctl.h"
@@ -1642,3 +1644,118 @@ out:
 	return !!ret;
 }
 DEFINE_SIMPLE_COMMAND(subvolume_list, "list");
+
+static const char * const cmd_subvolume_ls_usage[] = {
+	"btrfs subvolume ls [options] <path>",
+	"New interface for subvolume listing.",
+	"New interface for subvolume listing.",
+	NULL
+};
+
+static int cmd_subvolume_ls(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int fd = -1;
+	int ret = -1;
+	char *subvol;
+	DIR *dirstream = NULL;
+	struct btrfs_util_subvolume_iterator *iter;
+	enum btrfs_util_error err;
+	struct string_table *tab = NULL;
+	unsigned int row;
+	int i;
+	enum {
+		C_SUBVOLID, C_GENERATION, C_FLAGS, C_PATH,
+		C_COLUMN_COUNT
+	};
+
+	optind = 0;
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
+		goto out;
+
+	subvol = argv[optind];
+	fd = btrfs_open_dir(subvol, &dirstream, 1);
+	if (fd < 0) {
+		ret = -1;
+		error("can't access '%s'", subvol);
+		goto out;
+	}
+
+	pr_verbose(LOG_DEBUG, "Create iterator\n");
+	err = btrfs_util_create_subvolume_iterator_fd(fd, 0, 0, &iter);
+	if (err) {
+		error_btrfs_util(err);
+		goto out;
+	}
+
+	tab = table_create(C_COLUMN_COUNT, 20);
+	if (!tab) {
+		error("not enough memory");
+		goto out;
+	}
+	tab->hrows = 2;
+	row = tab->hrows;
+	table_printf(tab, C_SUBVOLID, 0, "<Subvolid");
+	table_printf(tab, C_GENERATION, 0, "<Generation");
+	table_printf(tab, C_FLAGS, 0, "<Flags");
+	table_printf(tab, C_PATH, 0, "<Path");
+	for (i = 0; i < tab->ncols; i++)
+		table_printf(tab, i, 1, "*-");
+
+	while (1) {
+		struct btrfs_util_subvolume_info subvol;
+		char *path;
+		char str_flags[16] = { 0 };
+
+		err = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvol);
+		if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
+			table_dump(tab);
+			goto out;
+		} else if (err) {
+			error_btrfs_util(err);
+			btrfs_util_destroy_subvolume_iterator(iter);
+			goto out;
+		}
+		if (!uuid_is_null(subvol.parent_uuid))
+			str_flags[0] = 's';
+		else
+			str_flags[0] = 'u';
+		if (subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)
+			str_flags[1] = 'r';
+		else
+			str_flags[1] = 'w';
+		if (!uuid_is_null(subvol.received_uuid))
+			str_flags[2] = 'R';
+		table_printf(tab, C_SUBVOLID, row, ">%llu", subvol.id);
+		table_printf(tab, C_GENERATION, row, ">%llu", subvol.generation);
+		table_printf(tab, C_FLAGS, row, ">%s", str_flags);
+		table_printf(tab, C_PATH, row, "<%s", path);
+		free(path);
+		row++;
+		if (row >= tab->nrows)
+			break;
+	}
+	btrfs_util_destroy_subvolume_iterator(iter);
+	table_dump(tab);
+
+out:
+	table_free(tab);
+	close_file_or_dir(fd, dirstream);
+	return !!ret;
+}
+DEFINE_SIMPLE_COMMAND(subvolume_ls, "ls");

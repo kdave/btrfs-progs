@@ -131,6 +131,7 @@ extern const char * const generic_cmd_help_usage[];
 
 DECLARE_COMMAND(subvolume);
 DECLARE_COMMAND(subvolume_list);
+DECLARE_COMMAND(subvolume_ls);
 DECLARE_COMMAND(filesystem);
 DECLARE_COMMAND(filesystem_du);
 DECLARE_COMMAND(filesystem_usage);
