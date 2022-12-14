@@ -1,6 +1,6 @@
 A swapfile is file-backed memory that the system uses to temporarily offload
 the RAM.  It is supported since kernel 5.0. Use ``swapon(8)`` to activate the
-swapfile. There are some limitations of the implementation in BTRFS and linux
+swapfile. There are some limitations of the implementation in BTRFS and Linux
 swap subsystem:
 
 * filesystem - must be only single device

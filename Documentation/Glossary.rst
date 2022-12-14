@@ -19,7 +19,7 @@ balance
 	again. It is primarily intended to rebalance the data in the filesystem
 	across the *devices* when a device is added or removed. A balance
 	will regenerate missing copies for the redundant *RAID* levels, if a
-	device has failed. As of linux kernel 3.3, a balance operation can be
+	device has failed. As of Linux kernel 3.3, a balance operation can be
 	made selective about which parts of the filesystem are rewritten.
 
 barrier

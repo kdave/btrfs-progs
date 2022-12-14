@@ -163,7 +163,7 @@ fd
     ignored
 name
     name of the subvolume, although the buffer can be almost 4k, the file
-    size is limited by linux VFS to 255 characters and must not contain a slash
+    size is limited by Linux VFS to 255 characters and must not contain a slash
     ('/')
 
 BTRFS_IOC_SUBVOL_CREATE_V2
@@ -190,7 +190,7 @@ qgroup_inherit
     ...
 name
     name of the subvolume, although the buffer can be almost 4k, the file size
-    is limited by linux VFS to 255 characters and must not contain a slash ('/')
+    is limited by Linux VFS to 255 characters and must not contain a slash ('/')
 devid
     ...
 

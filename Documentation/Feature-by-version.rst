@@ -384,10 +384,10 @@ features see [[Status]] page.
 
 5.17 - send and relocation
         Send and relocation (balance, device remove, shrink, block group
-        reclaim) can now work in parallel
+        reclaim) can now work in parallel.
 
 5.17 - device add vs balance
-        It is possible to add a device with paused balance
+        It is possible to add a device with paused balance.
 
         .. note::
            Since kernel 5.17.7 and btrfs-progs 5.17.1
@@ -414,11 +414,116 @@ features see [[Status]] page.
         the VFS limitation to reflink files on separate subvolume mounts of the
         same filesystem has been removed
 
+5.18 - syslog error messages with filesystem state
+        Messages are printed with a one letter tag ("state: X") that denotes in
+        which state the filesystem was at this point:
+
+        * A - transaction aborted (permanent)
+        * E - filesystem error (permanent)
+        * M - remount in progress (transient)
+        * R - device replace in progress (transient)
+        * C - checksum checks disabled by mount option (rescue=ignoredatacsums)
+        * L - log tree replay did not complete due to some error
+
+5.18 - tree-checker verifies transaction id pre-write
+        Metadata buffer to be written gets an extra check if the stored
+        transaction number matches the current state of the filesystem.
+
 5.19 - subpage support pages > 4KiB
         Metadata node size is supported regardless of the CPU page size
-        (minimum size is 4KiB), data sectorsize is supported <= page size.
+        (minimum size is 4KiB), data sector size is supported <= page size.
         Additionally subpage also supports RAID56.
 
 5.19 - per-type background threshold for reclaim
         Add sysfs tunable for background reclaim threshold for all block group
         types (data, metadata, system).
+
+5.19 - automatically repair device number mismatch
+        Device information is storead in two places, the number in the super
+        block and items in the device tree. When this is goes out of sync, e.g.
+        by device removal short before unmount, the next mount could fail.
+        The b-tree is an authoritative information an can be used to override
+        the stale value in the superblock.
+
+5.19 - defrag can convert inline files to regular ones
+        The logic has been changed so that inline files are considered for
+        defragmentation even if the mount option max_inline would prevent that.
+        No defragmentation might happen but the inlined files are not skipped.
+
+5.19 - explicit minimum zone size is 4MiB
+        Set the minimum limit of zone on zoned devices to 4MiB. Real devices
+        zones are much larger, this is for emulated devices.
+
+5.19 - sysfs tunable for automatic block group reclaim
+        Add possibility to set a threshold to automatically reclaim block groups
+        also in non-zoned mode. By default completely empty block groups are
+        reclaimed automatically but the threshold can be tuned in
+        /sys/fs/btrfs/FSID/allocation/PROFILE/bg_reclaim_threshold .
+
+5.19 - tree-checker verifies metadata block ownership
+        Additional check done by tree-checker to verify relationship between a
+        tree block and it's tree root owner.
+
+6.x
+---
+
+6.0 - send protocol v2
+        Send protocol update that adds new commands and extends existing
+        functionality to write large data chunks. Compressed (and encrypted)
+        extents can be optionally emitted and transfered as-is without the need
+        to recompress (or reencrypt) on the receiving side.
+
+6.0 - sysfs exports commit stats
+        The file /sys/fs/btrfs/FSID/commit_stats shows number of commits and
+        various time related statistics.
+
+6.0 - sysfs exports chunk sizes
+        Chunk size value can be read from
+        /sys/fs/btrfs/FSID/allocation/PROFILE/chunk_size .
+
+6.0 - sysfs shows zoned mode among features
+        The zoned mode has been supported since 5.10 and adding functionality.
+        Now it's advertised among features.
+
+6.0 - checksum implementation is logged at mount time
+        When a filesystem is mounted the implementation backing the checksums
+        is logged. The information is also accessible in
+        /sys/fs/btrfs/FSID/checksum .
+
+6.1 - sysfs support to temporarily skip exact qgroup accounting
+        Allow user override of qgroup accounting and make it temporarily out
+        of date e.g. in case when there are several subvolumes deleted and the
+        qgroup numbers need to be updated at some cost, an update after that
+        can amortize the costs.
+
+6.1 - scrub also repairs superblock
+        An improvement to scrub in case the superblock is detected to be
+        corrupted, the repair happens immediately. Previously it was delayed
+        until the next transaction commit for performance reasons that would
+        store an updated and correct copy eventually.
+
+6.1 - block group tree
+        An incompatible change that has to be enabled at mkfs time. Add a new
+        b-tree item that stores information about block groups in a compact way
+        that significantly improves mount time that's usually long due to
+        fragmentation and scatterd b-tree items tracking the individual block
+        groups. Requires and also enables the free-space-tree and no-holes
+        features.
+
+6.1 - discard stats available in sysfs
+        The directory '/sys/fs/btrfs/FSID/discard' exports statistics and
+        tunables related to discard.
+
+6.1 - additional qgroup stats in sysfs
+        The overall status of qgroups are exported in
+        /sys/sys/fs/btrfs/FSID/qgroups/ .
+
+6.1 - check that subperblock is unchnaged at thaw time
+        Do full check of super block once a filesystem is thawed. This namely
+        happens when system resumes from suspend or hibernation. Accidental
+        change by other operating systems will be detected.
+
+6.2 - discard=async on by default
+        Devices that support trim/discard will enable the asynchronous discard
+        for the whole filesystem.
+
