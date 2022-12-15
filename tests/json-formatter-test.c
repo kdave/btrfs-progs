@@ -66,12 +66,38 @@ void test1()
 	fmt_end(&fctx);
 }
 
+/* Escaped strings */
+void test2_escape()
+{
+	static const struct rowspec rows1[] = {
+		{ .key = "devid", .fmt = "%llu", .out_text = "devid", .out_json = "devid" },
+		{ .key = "path1", .fmt = "str", .out_text = "path1", .out_json = "path1" },
+		{ .key = "path2", .fmt = "str", .out_text = "path2", .out_json = "path2" },
+		ROWSPEC_END
+	};
+	struct format_ctx fctx;
+	char control_chars[] = { [0] = '.', [0x20] = 0 };
+	int i;
+
+	for (i = 1; i < 0x20; i++)
+		control_chars[i] = i;
+
+	fmt_start(&fctx, rows1, 32, 0);
+	fmt_print_start_group(&fctx, "device-info", JSON_TYPE_MAP);
+	fmt_print(&fctx, "devid", 1);
+	fmt_print(&fctx, "path1", "/fun\ny/p\th/\b/\\/\f\"quo\rte\"");
+	fmt_print(&fctx, "path2", control_chars);
+	fmt_print_end_group(&fctx, NULL);
+	fmt_end(&fctx);
+}
+
 int main(int argc, char **argv)
 {
 	int testno;
 	static void (*tests[])() = {
 		test_simple_empty,
 		test1,
+		test2_escape,
 	};
 
 	btrfs_config_init();
