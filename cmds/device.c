@@ -556,7 +556,7 @@ static DEFINE_SIMPLE_COMMAND(device_ready, "ready");
 
 static const struct rowspec device_stats_rowspec[] = {
 	{ .key = "device", .fmt = "str", .out_text = "device", .out_json = "device" },
-	{ .key = "devid", .fmt = "%u", .out_text = "devid", .out_json = "devid" },
+	{ .key = "devid", .fmt = "%llu", .out_text = "devid", .out_json = "devid" },
 	{ .key = "write_io_errs", .fmt = "%llu", .out_text = "write_io_errs", .out_json = "write_io_errs" },
 	{ .key = "read_io_errs", .fmt = "%llu", .out_text = "read_io_errs", .out_json = "read_io_errs" },
 	{ .key = "flush_io_errs", .fmt = "%llu", .out_text = "flush_io_errs", .out_json = "flush_io_errs" },
