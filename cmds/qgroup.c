@@ -1444,7 +1444,7 @@ static const struct rowspec qgroup_show_rowspec[] = {
 	{ .key = "max_exclusive", .fmt = "size", .out_json = "max_exclusive" },
 	/* Special value if limits not set. */
 	{ .key = "max_exclusive-none", .fmt = "%s", .out_json = "max_exclusive" },
-	{ .key = "path", .fmt = "%s", .out_json = "path" },
+	{ .key = "path", .fmt = "str", .out_json = "path" },
 	{ .key = "parents", .fmt = "list", .out_json = "parents" },
 	{ .key = "children", .fmt = "list", .out_json = "children" },
 	/* Workaround for printing qgroupid in the list as a plain value */
