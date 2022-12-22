@@ -73,21 +73,20 @@ media itself.
 
 * *Problem*: while the data are written atomically, the contents get changed
 * *Detection*: checksum mismatch on read
-* 'Repair*: use another copy or rebuild from multiple blocks using some
+* *Repair*: use another copy or rebuild from multiple blocks using some
   encoding scheme
 
 **Data get silently written to another offset (3)**
 
 This would be another serious problem as the filesystem has no information
 when it happens. For that reason the measures have to be done ahead of time.
-This problem is also commonly called 'ghost write'.
+This problem is also commonly called *ghost write*.
 
 The metadata blocks have the checksum embedded in the blocks, so a correct
 atomic write would not corrupt the checksum. It's likely that after reading
 such block the data inside would not be consistent with the rest. To rule that
 out there's embedded block number in the metadata block. It's the logical
 block number because this is what the logical structure expects and verifies.
-
 
 The following is based on information publicly available, user feedback,
 community discussions or bug report analyses. It's not complete and further
@@ -115,7 +114,7 @@ type of memory is not available in all cases. A memory test should be performed
 in case there's a visible bit flip pattern, though this may not detect a faulty
 memory module because the actual load of the system could be the factor making
 the problems appear. In recent years attacks on how the memory modules operate
-have been demonstrated ('rowhammer') achieving specific bits to be flipped.
+have been demonstrated (*rowhammer*) achieving specific bits to be flipped.
 While these were targeted, this shows that a series of reads or writes can
 affect unrelated parts of memory.
 
@@ -216,7 +215,7 @@ so there is some value in reducing them. Depending on the device class (high
 end/low end) the features like DUP block group profiles may affect the
 reliability in both ways:
 
-* *high end* are typically more reliable and using 'single' for data and
+* *high end* are typically more reliable and using *single* for data and
   metadata could be suitable to reduce device wear
 * *low end* could lack ability to identify errors so an additional redundancy
   at the filesystem level (checksums, *DUP*) could help

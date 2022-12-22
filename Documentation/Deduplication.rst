@@ -64,7 +64,7 @@ a source file, destination file and the range. The blocks from both files are
 compared for exact match before merging to the same range (i.e. there's no
 hash based comparison). Pages representing the extents in memory are locked
 prior to deduplication and prevent concurrent modification by buffered writes
-or mmaped writes. Blocks are compared byte by byte and not using any hash-based
+or mmapped writes. Blocks are compared byte by byte and not using any hash-based
 approach, i.e. the existing checksums are not used.
 
 Limitations, compatibility

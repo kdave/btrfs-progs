@@ -20,7 +20,7 @@ Type
 Profile
         A profile describes an allocation policy based on the redundancy/replication
         constraints in connection with the number of devices. The profile applies to
-        data and metadata block groups separately. Eg. *single*, *RAID1*.
+        data and metadata block groups separately. E.g. *single*, *RAID1*.
 
 RAID level
         Where applicable, the level refers to a profile that matches constraints of the

@@ -1,7 +1,7 @@
 maximum file name length
         255
 
-        This limit is imposed by Linux VFS, the strucutres of BTRFS could store
+        This limit is imposed by Linux VFS, the structures of BTRFS could store
         larger file names.
 
 maximum symlink target length

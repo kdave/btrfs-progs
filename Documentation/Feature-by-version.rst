@@ -19,7 +19,7 @@ features see [[Status]] page.
         Automatic repair of broken data from a good copy
 
 3.2 - root backups
-        Save a few previous versions of the most imporant tree roots at commit time, used by *-o recovery*
+        Save a few previous versions of the most important tree roots at commit time, used by *-o recovery*
 
 3.3 - integrity checker
         Optional infrastructure to verify integrity of written metadata blocks
@@ -57,14 +57,14 @@ features see [[Status]] page.
         .. note::
            Default since btrfs-progs 3.12
 
-3.7 - hole puching
+3.7 - hole punching
         Implement the FALLOC_FL_PUNCH_HOLE mode of *fallocate*
 
 3.8 - device replace
         Efficient replacement of existing device (add/remove in one go)
 
 3.9 - raid 5/6 *(incomplete)*
-        Basic support for RAD5/6 profiles, no crash resiliency, replace and scrub support
+        Basic support for RAID5/6 profiles, no crash resiliency, replace and scrub support
 
 3.9 - snapshot-aware defrag
         Defrag does not break links between shared extents (snapshots, reflinked files)
@@ -88,10 +88,10 @@ features see [[Status]] page.
 3.10 - qgroup rescan
         Sync qgroups with existing filesystem data
 
-3.12 - uuid tree
+3.12 - UUID tree
         A map of subvolume/UUID that vastly speeds up send/receive
 
-3.12 - out-of-bound dedup
+3.12 - out-of-bound deduplication
         Support for deduplicating extents on a given set of files.
 
 3.14 - no-holes
@@ -106,10 +106,10 @@ features see [[Status]] page.
 3.16 - search ioctl v2
         The extended SEARCH_TREE ioctl able to get more than a 4k data
 
-3.18 - auto blockgroup reclaim
-        Automatically remove blockgroups (aka. chunks) that become completely empty.
+3.18 - auto block group reclaim
+        Automatically remove block groups (aka. chunks) that become completely empty.
 
-3.19 - raid56: scrub, replace
+3.19 - RAID56: scrub, replace
         Scrub and device replace works on RAID56 filesystems.
 
 4.x
@@ -145,7 +145,7 @@ features see [[Status]] page.
            big-endian machines, x86* is ok
 
 4.5 - balance filter updates
-        Conversion to data/DUP profile possible through balance filters -- on single-device filesytem.
+        Conversion to data/DUP profile possible through balance filters -- on single-device filesystem.
 
         .. note::
            mkfs.btrfs allows creating DUP on single device in the non-mixed mode since 4.4
@@ -172,7 +172,7 @@ features see [[Status]] page.
         .. note::
            mkfs.btrfs allows creating DUP on multiple devices since 4.5.1
 
-4.12 - raid56: auto repair
+4.12 - RAID56: auto repair
         Scrub will attempt auto-repair (similar to raid1/raid10)
 
 4.13 - statx
@@ -189,7 +189,7 @@ features see [[Status]] page.
 
 4.14 - improved degraded mount
         Allow degraded mount based on the chunk constraints, not device number
-        constraints. Eg. when one device is missing but the remaining one holds
+        constraints. E.g. when one device is missing but the remaining one holds
         all *single* chunks.
 
 4.14 - *deprecated user transaction ioctl*
@@ -211,14 +211,14 @@ features see [[Status]] page.
         Debugging functionality to verify extent references. New mount option
         <i>ref-verify</i>, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
 
-4.15 - zlib level
-        Allow to set the zlib compression level via mount option, e.g. like
-        *compress=zlib:9*. The levels match the default zlib compression
+4.15 - ZLIB level
+        Allow to set the ZLIB compression level via mount option, e.g. like
+        *compress=zlib:9*. The levels match the default ZLIB compression
         levels. The default is 3.
 
 4.15 - v2 of LOGICAL_INO ioctl
         An enhanced version of ioctl that can translate logical extent offset
-        to inode numbers, "who owns this block". For certain usecases the V1
+        to inode numbers, "who owns this block". For certain use cases the V1
         performs bad and this is addressed by V2.
         [https://git.kernel.org/linus/d24a67b2d997c860a42516076f3315c2ad2d2884
         Read more.]
@@ -267,7 +267,7 @@ features see [[Status]] page.
         INO_LOOKUP ioctl.
 
 4.19 - defrag ro/rw
-        Allow to run defrag on files that are normally accesible for
+        Allow to run defrag on files that are normally accessible for
         read-write, but are currently opened in read-only mode.
 
 5.x
@@ -288,9 +288,9 @@ features see [[Status]] page.
         Unregister devices previously added by the scan ioctl, same effect as
         if the kernel module is reloaded.
 
-5.1 - zstd level
-        Allow to set the zstd compression level via mount option, e.g. like
-        *compress=zstd:9*. The levels match the default zstd compression
+5.1 - ZSTD level
+        Allow to set the ZSTD compression level via mount option, e.g. like
+        *compress=zstd:9*. The levels match the default ZSTD compression
         levels. The default is 3, maximum is 15.
 
 5.2 - pre-write checks
@@ -315,7 +315,7 @@ features see [[Status]] page.
 
 5.7 - faster balance cancel
         More cancellation points in balance that will shorten the time to stop
-        processing once <tt>btrfs balance cancel</tt> is called.
+        processing once ``btrfs balance cancel`` is called.
 
 5.7 - *removed flag BTRFS_SUBVOL_CREATE_ASYNC*
         Remove support of flag BTRFS_SUBVOL_CREATE_ASYNC from subvolume creation ioctl.
@@ -335,7 +335,7 @@ features see [[Status]] page.
 
 5.10 - exclusive ops in sysfs
         Export which filesystem exclusive operation is running (balance,
-        resize, device add/delete/relpace, ...)
+        resize, device add/delete/replace, ...)
 
 5.11 - remove *inode_cache*
         Remove inode number caching feature (mount -o inode_cache)
@@ -375,7 +375,7 @@ features see [[Status]] page.
         files. https://www.kernel.org/doc/html/latest/filesystems/fsverity.html
 
 5.15 - idmapped mount
-        Support mount with uid/gid mapped according to another namespace.
+        Support mount with UID/GID mapped according to another namespace.
         https://lwn.net/Articles/837566/
 
 5.16 - ZNS in zoned
@@ -393,7 +393,7 @@ features see [[Status]] page.
            Since kernel 5.17.7 and btrfs-progs 5.17.1
 
 5.17 - *no warning with flushoncommit*
-        Mounting with *-o flushoncommit* does not triggher the (harmless)
+        Mounting with *-o flushoncommit* does not trigger the (harmless)
         warning at each transaction commit
 
         .. note::
@@ -439,7 +439,7 @@ features see [[Status]] page.
         types (data, metadata, system).
 
 5.19 - automatically repair device number mismatch
-        Device information is storead in two places, the number in the super
+        Device information is stored in two places, the number in the super
         block and items in the device tree. When this is goes out of sync, e.g.
         by device removal short before unmount, the next mount could fail.
         The b-tree is an authoritative information an can be used to override
@@ -470,7 +470,7 @@ features see [[Status]] page.
 6.0 - send protocol v2
         Send protocol update that adds new commands and extends existing
         functionality to write large data chunks. Compressed (and encrypted)
-        extents can be optionally emitted and transfered as-is without the need
+        extents can be optionally emitted and transferred as-is without the need
         to recompress (or reencrypt) on the receiving side.
 
 6.0 - sysfs exports commit stats
@@ -506,7 +506,7 @@ features see [[Status]] page.
         An incompatible change that has to be enabled at mkfs time. Add a new
         b-tree item that stores information about block groups in a compact way
         that significantly improves mount time that's usually long due to
-        fragmentation and scatterd b-tree items tracking the individual block
+        fragmentation and scattered b-tree items tracking the individual block
         groups. Requires and also enables the free-space-tree and no-holes
         features.
 
@@ -518,7 +518,7 @@ features see [[Status]] page.
         The overall status of qgroups are exported in
         /sys/sys/fs/btrfs/FSID/qgroups/ .
 
-6.1 - check that subperblock is unchnaged at thaw time
+6.1 - check that subperblock is unchanged at thaw time
         Do full check of super block once a filesystem is thawed. This namely
         happens when system resumes from suspend or hibernation. Accidental
         change by other operating systems will be detected.

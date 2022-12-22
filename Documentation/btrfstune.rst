@@ -12,7 +12,7 @@ DESCRIPTION
 **btrfstune** can be used to enable, disable, or set various filesystem
 parameters. The filesystem must be unmounted.
 
-The common usecase is to enable features that were not enabled at mkfs time.
+The common use case is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
 https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the

@@ -20,11 +20,11 @@ ZLIB
         * levels: 1 to 9, mapped directly, default level is 3
         * good backward compatibility
 LZO
-        * faster compression and decompression than zlib, worse compression ratio, designed to be fast
+        * faster compression and decompression than ZLIB, worse compression ratio, designed to be fast
         * no levels
         * good backward compatibility
 ZSTD
-        * compression comparable to zlib with higher compression/decompression speeds and different ratio
+        * compression comparable to ZLIB with higher compression/decompression speeds and different ratio
         * levels: 1 to 15, mapped directly (higher levels are not available)
         * since 4.14, levels since 5.1
 

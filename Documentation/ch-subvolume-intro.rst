@@ -93,7 +93,7 @@ Case study: system root layouts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are two ways how the system root directory and subvolume layout could be
-organized. The interesting usecase for root is to allow rollbacks to previous
+organized. The interesting use case for root is to allow rollbacks to previous
 version, as one atomic step. If the entire filesystem hierarchy starting in "/"
 is in one subvolume, taking snapshot will encompass all files. This is easy for
 the snapshotting part but has undesirable consequences for rollback. For example,

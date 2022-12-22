@@ -258,7 +258,7 @@ extref
 raid56
         (kernel support since 3.9)
 
-        extended format for RAID5/6, also enabled if raid5 or raid6 block groups
+        extended format for RAID5/6, also enabled if RAID5 or RAID6 block groups
         are selected
 
 skinny-metadata

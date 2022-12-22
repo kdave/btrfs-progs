@@ -19,7 +19,7 @@ tools.  Currently covers:
 #. control device
 #. filesystems with multiple block group profiles
 #. seeding device
-#. raid56 status and recommended practices
+#. RAID56 status and recommended practices
 #. storage model, hardware considerations
 
 
@@ -129,10 +129,10 @@ raid1c34
 
         extended RAID1 mode with copies on 3 or 4 devices respectively
 
-raid56
+RAID56
         (since: 3.9)
 
-        the filesystem contains or contained a raid56 profile of block groups
+        the filesystem contains or contained a RAID56 profile of block groups
 
 rmdir_subvol
         (since: 4.18)
@@ -332,7 +332,7 @@ group profiles *RAID1*.
 Having just one profile is desired as this also clearly defines the profile of
 newly allocated block groups, otherwise this depends on internal allocation
 policy. When there are multiple profiles present, the order of selection is
-RAID6, RAID5, RAID10, RAID1, RAID0 as long as the device number constraints are
+RAID56, RAID10, RAID1, RAID0 as long as the device number constraints are
 satisfied.
 
 Commands that print the warning were chosen so they're brought to user
@@ -385,7 +385,7 @@ Missing/incomplete support
 
 When RAID56 is on the same filesystem with different raid profiles, the space
 reporting is inaccurate, e.g. **df**, **btrfs filesystem df** or **btrfs filesystem
-usage**. When there's only a one profile per block group type (e.g. raid5 for data)
+usage**. When there's only a one profile per block group type (e.g. RAID5 for data)
 the reporting is accurate.
 
 When scrub is started on a RAID56 filesystem, it's started on all devices that

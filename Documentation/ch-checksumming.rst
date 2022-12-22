@@ -1,5 +1,5 @@
 Data and metadata are checksummed by default, the checksum is calculated before
-write and verifed after reading the blocks from devices. The whole metadata
+write and verified after reading the blocks from devices. The whole metadata
 block has a checksum stored inline in the b-tree node header, each data block
 has a detached checksum stored in the checksum tree.
 

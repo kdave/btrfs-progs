@@ -72,10 +72,10 @@ patches to the mailing list instead. You can link to a branch in any git
 repository if the mails do not make it to the mailing list or for convenience.
 
 The development model of btrfs-progs shares a lot with the kernel model. The
-github way is different in some ways. We, the upstream community, expect that
-the patches meet some criteria (often lacking in github contributions):
+github.com way is different in some ways. We, the upstream community, expect that
+the patches meet some criteria (often lacking in github.com contributions):
 
-* proper **subject line**: eg. prefix with *btrfs-progs: subpart, ...* ,
+* proper **subject line**: e.g. prefix with *btrfs-progs: subpart, ...* ,
   descriptive yet not too long
 * proper **changelog**: the changelogs are often missing or lacking
   explanation *why* the change was made, or *how* is something broken,
@@ -84,7 +84,7 @@ the patches meet some criteria (often lacking in github contributions):
 * the **Signed-off-by** line: this document who authored the change, you can
   read more about the *The Developer's Certificate of Origin*
   `here (chapter 11) <https://www.kernel.org/doc/Documentation/SubmittingPatches>`_]
-* **one logical change** per patch: eg. not mixing bugfixes, cleanups,
+* **one logical change** per patch: e.g. not mixing bug fixes, cleanups,
   features etc., sometimes it's not clear and will be usually pointed out
   during reviews
 

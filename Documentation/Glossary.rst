@@ -83,7 +83,7 @@ copy-on-write
 	way. In COW filesystems, files tend to fragment as they are modified.
 	Copy-on-write is also used in the implementation of *snapshots* and
 	*reflink copies*. A copy-on-write filesystem is, in theory,
-	'always' consistent, provided the underlying hardware supports
+	*always* consistent, provided the underlying hardware supports
 	*barriers*.
 
 COW
@@ -142,8 +142,8 @@ fallocate
 	Command line tool in util-linux, and a syscall, that reserves space in
 	the filesystem for a file, without actually writing any file data to
 	the filesystem. First data write will turn the preallocated extents
-	into regular ones. See <code>man 1 fallocate</code> and <code>man 2
-	fallocate</code> for more details.
+        into regular ones. See *fallocate(1)* and *fallocate(2)* manual pages
+        for more details.
 
 filefrag
 	A tool to show the number of extents in a file, and hence the amount of
@@ -160,7 +160,7 @@ free space cache
 
 fsync
 	On Unix and Unix-like operating systems (of which Linux is the latter),
-	the ``lfsync()`` system call causes all buffered file
+	the ``fsync()`` system call causes all buffered file
 	descriptor related data changes to be flushed to the underlying block
 	device. When a file is modified on a modern operating system the
 	changes are generally not written to the disk immediately but rather
@@ -292,9 +292,8 @@ subvolume
 	a reference on the root of another subvolume. Each btrfs filesystem has
 	at least one subvolume, the *top-level subvolume*, which contains
 	everything else in the filesystem. Additional subvolumes can be created
-	and deleted with the *<code>btrfs</code>* tool. All subvolumes share
-	the same pool of free space in the filesystem. See also *default
-	subvolume*.
+        and deleted with the *btrfs<* tool. All subvolumes share the same pool
+        of free space in the filesystem. See also *default subvolume*.
 
 superblock
 	The *block* on the disk, at a fixed known location and of fixed size,

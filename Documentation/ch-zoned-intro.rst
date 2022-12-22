@@ -33,7 +33,7 @@ Incompatible features
 The main constraint of the zoned devices is lack of in-place update of the data.
 This is inherently incompatible with some features:
 
-* nodatacow - overwrite in-place, cannot create such files
+* NODATACOW - overwrite in-place, cannot create such files
 * fallocate - preallocating space for in-place first write
 * mixed-bg - unordered writes to data and metadata, fixing that means using
   separate data and metadata block groups

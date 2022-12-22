@@ -36,5 +36,5 @@ for larger code blocks.
 
 Each feature should be tracked in an issue with label **experimental** (list of
 active issues https://github.com/kdave/btrfs-progs/labels/experimental), with a
-description and a todo list items. Individual tasks can be tracked in other
+description and a TODO list items. Individual tasks can be tracked in other
 issues if needed.

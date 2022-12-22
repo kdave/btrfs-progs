@@ -22,7 +22,7 @@ by the option *--readonly*.
 .. warning::
    Do not use *--repair* unless you are advised to do so by a developer
    or an experienced user, and then only after having accepted that no *fsck*
-   successfully repair all types of filesystem corruption. Eg. some other software
+   successfully repair all types of filesystem corruption. E.g. some other software
    or hardware bugs can fatally damage a volume.
 
 The structural integrity check verifies if internal filesystem objects or
