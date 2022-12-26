@@ -35,6 +35,13 @@ both as **filesystem show** and as **filesystem sync**.
 If the command name is ambiguous, the list of conflicting options is
 printed.
 
+*Sizes*, both upon input and output,
+can be expressed in either SI or IEC-I units
+(see :doc:`numfmt(1)<numfmt>`) with the suffix `B` appended.
+All numbers will be formatted
+according to the rules of the `C` locale
+(ignoring the shell locale, see :doc:`locale(7)<locale-man7>`).
+
 For an overview of a given command use **btrfs command --help**
 or **btrfs [command...] --help --full** to print all available options.
 
