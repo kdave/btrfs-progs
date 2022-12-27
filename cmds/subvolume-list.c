@@ -870,14 +870,21 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
 				flags = btrfs_root_flags(ri);
-				if(sh.len <
-				   sizeof(struct btrfs_root_item)) {
+				if(sh.len >= sizeof(struct btrfs_root_item)) {
+					/*
+					 * The new full btrfs_root_item with
+					 * timestamp and UUID.
+					 */
 					otime = btrfs_stack_timespec_sec(&ri->otime);
 					ogen = btrfs_root_otransid(ri);
 					memcpy(uuid, ri->uuid, BTRFS_UUID_SIZE);
 					memcpy(puuid, ri->parent_uuid, BTRFS_UUID_SIZE);
 					memcpy(ruuid, ri->received_uuid, BTRFS_UUID_SIZE);
 				} else {
+					/*
+					 * The old v0 root item, which doesn't
+					 * have timestamp nor UUID.
+					 */
 					otime = 0;
 					ogen = 0;
 					memset(uuid, 0, BTRFS_UUID_SIZE);
