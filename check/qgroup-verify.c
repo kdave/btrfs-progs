@@ -49,10 +49,10 @@ struct qgroup_count;
 static struct qgroup_count *find_count(u64 qgroupid);
 
 struct qgroup_info {
-	u64 rfer;
-	u64 rfer_cmpr;
-	u64 excl;
-	u64 excl_cmpr;
+	u64 referenced;
+	u64 referenced_compressed;
+	u64 exclusive;
+	u64 exclusive_compressed;
 };
 
 struct qgroup_count {
@@ -481,12 +481,12 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 
 		nr_refs = group_get_cur_refcnt(count);
 		if (nr_refs) {
-			count->info.rfer += num_bytes;
-			count->info.rfer_cmpr += num_bytes;
+			count->info.referenced += num_bytes;
+			count->info.referenced_compressed += num_bytes;
 
 			if (nr_refs == nr_roots) {
-				count->info.excl += num_bytes;
-				count->info.excl_cmpr += num_bytes;
+				count->info.exclusive += num_bytes;
+				count->info.exclusive_compressed += num_bytes;
 			}
 		}
 #ifdef QGROUP_VERIFY_DEBUG
@@ -494,7 +494,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 		       " excl %llu, refs %llu, roots %llu\n", bytenr, num_bytes,
 		       btrfs_qgroup_level(count->qgroupid),
 		       btrfs_qgroup_subvolid(count->qgroupid),
-		       count->info.rfer, count->info.excl, nr_refs,
+		       count->info.referenced, count->info.exclusive, nr_refs,
 		       nr_roots);
 #endif
 	}
@@ -870,10 +870,12 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 		c->key = *key;
 
 		item = &c->diskinfo;
-		item->rfer = btrfs_qgroup_info_rfer(leaf, disk);
-		item->rfer_cmpr = btrfs_qgroup_info_rfer_cmpr(leaf, disk);
-		item->excl = btrfs_qgroup_info_excl(leaf, disk);
-		item->excl_cmpr = btrfs_qgroup_info_excl_cmpr(leaf, disk);
+		item->referenced = btrfs_qgroup_info_referenced(leaf, disk);
+		item->referenced_compressed =
+			btrfs_qgroup_info_referenced_compressed(leaf, disk);
+		item->exclusive = btrfs_qgroup_info_exclusive(leaf, disk);
+		item->exclusive_compressed =
+			btrfs_qgroup_info_exclusive_compressed(leaf, disk);
 		INIT_LIST_HEAD(&c->groups);
 		INIT_LIST_HEAD(&c->members);
 		INIT_LIST_HEAD(&c->bad_list);
@@ -1284,8 +1286,8 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 	int is_different;
 	struct qgroup_info *info = &count->info;
 	struct qgroup_info *disk = &count->diskinfo;
-	long long excl_diff = info->excl - disk->excl;
-	long long ref_diff = info->rfer - disk->rfer;
+	long long excl_diff = info->exclusive - disk->exclusive;
+	long long ref_diff = info->referenced - disk->referenced;
 
 	is_different = excl_diff || ref_diff;
 
@@ -1295,16 +1297,16 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 		       btrfs_qgroup_subvolid(count->qgroupid),
 		       is_different ? "are different" : "");
 
-		print_fields(info->rfer, info->rfer_cmpr,
+		print_fields(info->referenced, info->referenced_compressed,
 			     "our:", "referenced");
-		print_fields(disk->rfer, disk->rfer_cmpr,
+		print_fields(disk->referenced, disk->referenced_compressed,
 			     "disk:", "referenced");
 		if (ref_diff)
 			print_fields_signed(ref_diff, ref_diff,
 					    "diff:", "referenced");
-		print_fields(info->excl, info->excl_cmpr,
+		print_fields(info->exclusive, info->exclusive_compressed,
 			     "our:", "exclusive");
-		print_fields(disk->excl, disk->excl_cmpr,
+		print_fields(disk->exclusive, disk->exclusive_compressed,
 			     "disk:", "exclusive");
 		if (excl_diff)
 			print_fields_signed(excl_diff, excl_diff,
@@ -1386,8 +1388,8 @@ static bool is_bad_qgroup(struct qgroup_count *count)
 {
 	struct qgroup_info *info = &count->info;
 	struct qgroup_info *disk = &count->diskinfo;
-	s64 excl_diff = info->excl - disk->excl;
-	s64 ref_diff = info->rfer - disk->rfer;
+	s64 excl_diff = info->exclusive - disk->exclusive;
+	s64 ref_diff = info->referenced - disk->referenced;
 
 	return (excl_diff || ref_diff);
 }
@@ -1592,15 +1594,15 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	btrfs_set_qgroup_info_generation(path.nodes[0], info_item,
 					 trans->transid);
 
-	btrfs_set_qgroup_info_rfer(path.nodes[0], info_item,
-					 count->info.rfer);
-	btrfs_set_qgroup_info_rfer_cmpr(path.nodes[0], info_item,
-					    count->info.rfer_cmpr);
+	btrfs_set_qgroup_info_referenced(path.nodes[0], info_item,
+					 count->info.referenced);
+	btrfs_set_qgroup_info_referenced_compressed(path.nodes[0], info_item,
+					    count->info.referenced_compressed);
 
-	btrfs_set_qgroup_info_excl(path.nodes[0], info_item,
-					count->info.excl);
-	btrfs_set_qgroup_info_excl_cmpr(path.nodes[0], info_item,
-					   count->info.excl_cmpr);
+	btrfs_set_qgroup_info_exclusive(path.nodes[0], info_item,
+					count->info.exclusive);
+	btrfs_set_qgroup_info_exclusive_compressed(path.nodes[0], info_item,
+					   count->info.exclusive_compressed);
 
 	btrfs_mark_buffer_dirty(path.nodes[0]);
 

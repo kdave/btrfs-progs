@@ -1099,10 +1099,10 @@ struct btrfs_free_space_info {
 
 struct btrfs_qgroup_info_item {
 	__le64 generation;
-	__le64 rfer;
-	__le64 rfer_cmpr;
-	__le64 excl;
-	__le64 excl_cmpr;
+	__le64 referenced;
+	__le64 referenced_compressed;
+	__le64 exclusive;
+	__le64 exclusive_compressed;
 } __attribute__ ((__packed__));
 
 /* flags definition for qgroup limits */
@@ -1115,10 +1115,10 @@ struct btrfs_qgroup_info_item {
 
 struct btrfs_qgroup_limit_item {
 	__le64 flags;
-	__le64 max_rfer;
-	__le64 max_excl;
-	__le64 rsv_rfer;
-	__le64 rsv_excl;
+	__le64 max_referenced;
+	__le64 max_exclusive;
+	__le64 rsv_referenced;
+	__le64 rsv_exclusive;
 } __attribute__ ((__packed__));
 
 struct btrfs_space_info {
@@ -2450,47 +2450,48 @@ BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_rescan,
 /* btrfs_qgroup_info_item */
 BTRFS_SETGET_FUNCS(qgroup_info_generation, struct btrfs_qgroup_info_item,
 		   generation, 64);
-BTRFS_SETGET_FUNCS(qgroup_info_rfer, struct btrfs_qgroup_info_item,
-		   rfer, 64);
-BTRFS_SETGET_FUNCS(qgroup_info_rfer_cmpr,
-		   struct btrfs_qgroup_info_item, rfer_cmpr, 64);
-BTRFS_SETGET_FUNCS(qgroup_info_excl, struct btrfs_qgroup_info_item, excl, 64);
-BTRFS_SETGET_FUNCS(qgroup_info_excl_cmpr,
-		   struct btrfs_qgroup_info_item, excl_cmpr, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_referenced, struct btrfs_qgroup_info_item,
+		   referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_referenced_compressed,
+		   struct btrfs_qgroup_info_item, referenced_compressed, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_exclusive, struct btrfs_qgroup_info_item,
+		   exclusive, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_exclusive_compressed,
+		   struct btrfs_qgroup_info_item, exclusive_compressed, 64);
 
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_generation,
 			 struct btrfs_qgroup_info_item, generation, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_rfer,
-			 struct btrfs_qgroup_info_item, rfer, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_rfer_cmpr,
-		   struct btrfs_qgroup_info_item, rfer_cmpr, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_excl,
-			 struct btrfs_qgroup_info_item, excl, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_excl_cmpr,
-		   struct btrfs_qgroup_info_item, excl_cmpr, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_referenced,
+			 struct btrfs_qgroup_info_item, referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_referenced_compressed,
+		   struct btrfs_qgroup_info_item, referenced_compressed, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_exclusive,
+			 struct btrfs_qgroup_info_item, exclusive, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_exclusive_compressed,
+		   struct btrfs_qgroup_info_item, exclusive_compressed, 64);
 
 /* btrfs_qgroup_limit_item */
 BTRFS_SETGET_FUNCS(qgroup_limit_flags, struct btrfs_qgroup_limit_item,
 		   flags, 64);
-BTRFS_SETGET_FUNCS(qgroup_limit_max_rfer, struct btrfs_qgroup_limit_item,
-		   max_rfer, 64);
-BTRFS_SETGET_FUNCS(qgroup_limit_max_excl, struct btrfs_qgroup_limit_item,
-		   max_excl, 64);
-BTRFS_SETGET_FUNCS(qgroup_limit_rsv_rfer, struct btrfs_qgroup_limit_item,
-		   rsv_rfer, 64);
-BTRFS_SETGET_FUNCS(qgroup_limit_rsv_excl, struct btrfs_qgroup_limit_item,
-		   rsv_excl, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_max_referenced, struct btrfs_qgroup_limit_item,
+		   max_referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_max_exclusive, struct btrfs_qgroup_limit_item,
+		   max_exclusive, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_rsv_referenced, struct btrfs_qgroup_limit_item,
+		   rsv_referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_rsv_exclusive, struct btrfs_qgroup_limit_item,
+		   rsv_exclusive, 64);
 
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_flags,
 			 struct btrfs_qgroup_limit_item, flags, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_rfer,
-			 struct btrfs_qgroup_limit_item, max_rfer, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_excl,
-			 struct btrfs_qgroup_limit_item, max_excl, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_rfer,
-			 struct btrfs_qgroup_limit_item, rsv_rfer, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_excl,
-			 struct btrfs_qgroup_limit_item, rsv_excl, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_referenced,
+			 struct btrfs_qgroup_limit_item, max_referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_exclusive,
+			 struct btrfs_qgroup_limit_item, max_exclusive, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_referenced,
+			 struct btrfs_qgroup_limit_item, rsv_referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_exclusive,
+			 struct btrfs_qgroup_limit_item, rsv_exclusive, 64);
 
 /* btrfs_balance_item */
 BTRFS_SETGET_FUNCS(balance_item_flags, struct btrfs_balance_item, flags, 64);

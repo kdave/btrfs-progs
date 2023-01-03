@@ -1089,10 +1089,12 @@ static void print_qgroup_info(struct extent_buffer *eb, int slot)
 		"\t\treferenced %llu referenced_compressed %llu\n"
 		"\t\texclusive %llu exclusive_compressed %llu\n",
 		(unsigned long long)btrfs_qgroup_info_generation(eb, qg_info),
-		(unsigned long long)btrfs_qgroup_info_rfer(eb, qg_info),
-		(unsigned long long)btrfs_qgroup_info_rfer_cmpr(eb, qg_info),
-		(unsigned long long)btrfs_qgroup_info_excl(eb, qg_info),
-		(unsigned long long)btrfs_qgroup_info_excl_cmpr(eb, qg_info));
+		(unsigned long long)btrfs_qgroup_info_referenced(eb, qg_info),
+		(unsigned long long)btrfs_qgroup_info_referenced_compressed(eb,
+								       qg_info),
+		(unsigned long long)btrfs_qgroup_info_exclusive(eb, qg_info),
+		(unsigned long long)btrfs_qgroup_info_exclusive_compressed(eb,
+								      qg_info));
 }
 
 static void print_qgroup_limit(struct extent_buffer *eb, int slot)
@@ -1104,10 +1106,10 @@ static void print_qgroup_limit(struct extent_buffer *eb, int slot)
 		"\t\tmax_referenced %lld max_exclusive %lld\n"
 		"\t\trsv_referenced %lld rsv_exclusive %lld\n",
 		(unsigned long long)btrfs_qgroup_limit_flags(eb, qg_limit),
-		(long long)btrfs_qgroup_limit_max_rfer(eb, qg_limit),
-		(long long)btrfs_qgroup_limit_max_excl(eb, qg_limit),
-		(long long)btrfs_qgroup_limit_rsv_rfer(eb, qg_limit),
-		(long long)btrfs_qgroup_limit_rsv_excl(eb, qg_limit));
+		(long long)btrfs_qgroup_limit_max_referenced(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_max_exclusive(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_rsv_referenced(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_rsv_exclusive(eb, qg_limit));
 }
 
 static void print_persistent_item(struct extent_buffer *eb, void *ptr,

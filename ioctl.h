@@ -71,10 +71,10 @@ BUILD_ASSERT(sizeof(struct btrfs_ioctl_vol_args) == 4096);
 
 struct btrfs_qgroup_limit {
 	__u64	flags;
-	__u64	max_rfer;
-	__u64	max_excl;
-	__u64	rsv_rfer;
-	__u64	rsv_excl;
+	__u64	max_referenced;
+	__u64	max_exclusive;
+	__u64	rsv_referenced;
+	__u64	rsv_exclusive;
 };
 BUILD_ASSERT(sizeof(struct btrfs_qgroup_limit) == 40);
 

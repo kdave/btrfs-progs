@@ -343,10 +343,10 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = print_u64(qgroup->info.rfer, unit_mode, max_len);
+		len = print_u64(qgroup->info.referenced, unit_mode, max_len);
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = print_u64(qgroup->info.excl, unit_mode, max_len);
+		len = print_u64(qgroup->info.exclusive, unit_mode, max_len);
 		break;
 	case BTRFS_QGROUP_PARENT:
 		len = print_parent_column(qgroup);
@@ -354,14 +354,14 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
 		if (qgroup->limit.flags & BTRFS_QGROUP_LIMIT_MAX_RFER)
-			len = print_u64(qgroup->limit.max_rfer,
+			len = print_u64(qgroup->limit.max_referenced,
 					unit_mode, max_len);
 		else
 			len = printf("%*s", max_len, "none");
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
 		if (qgroup->limit.flags & BTRFS_QGROUP_LIMIT_MAX_EXCL)
-			len = print_u64(qgroup->limit.max_excl,
+			len = print_u64(qgroup->limit.max_exclusive,
 					unit_mode, max_len);
 		else
 			len = printf("%*s", max_len, "none");
@@ -504,9 +504,9 @@ static int comp_entry_with_rfer(struct btrfs_qgroup *entry1,
 {
 	int ret;
 
-	if (entry1->info.rfer > entry2->info.rfer)
+	if (entry1->info.referenced > entry2->info.referenced)
 		ret = 1;
-	else if (entry1->info.rfer < entry2->info.rfer)
+	else if (entry1->info.referenced < entry2->info.referenced)
 		ret = -1;
 	else
 		ret = 0;
@@ -520,9 +520,9 @@ static int comp_entry_with_excl(struct btrfs_qgroup *entry1,
 {
 	int ret;
 
-	if (entry1->info.excl > entry2->info.excl)
+	if (entry1->info.exclusive > entry2->info.exclusive)
 		ret = 1;
-	else if (entry1->info.excl < entry2->info.excl)
+	else if (entry1->info.exclusive < entry2->info.exclusive)
 		ret = -1;
 	else
 		ret = 0;
@@ -536,9 +536,9 @@ static int comp_entry_with_max_rfer(struct btrfs_qgroup *entry1,
 {
 	int ret;
 
-	if (entry1->limit.max_rfer > entry2->limit.max_rfer)
+	if (entry1->limit.max_referenced > entry2->limit.max_referenced)
 		ret = 1;
-	else if (entry1->limit.max_rfer < entry2->limit.max_rfer)
+	else if (entry1->limit.max_referenced < entry2->limit.max_referenced)
 		ret = -1;
 	else
 		ret = 0;
@@ -552,9 +552,9 @@ static int comp_entry_with_max_excl(struct btrfs_qgroup *entry1,
 {
 	int ret;
 
-	if (entry1->limit.max_excl > entry2->limit.max_excl)
+	if (entry1->limit.max_exclusive > entry2->limit.max_exclusive)
 		ret = 1;
-	else if (entry1->limit.max_excl < entry2->limit.max_excl)
+	else if (entry1->limit.max_exclusive < entry2->limit.max_exclusive)
 		ret = -1;
 	else
 		ret = 0;
@@ -807,10 +807,12 @@ static int update_qgroup_info(int fd, struct qgroup_lookup *qgroup_lookup, u64 q
 		return PTR_ERR(bq);
 
 	bq->info.generation = btrfs_stack_qgroup_info_generation(info);
-	bq->info.rfer = btrfs_stack_qgroup_info_rfer(info);
-	bq->info.rfer_cmpr = btrfs_stack_qgroup_info_rfer_cmpr(info);
-	bq->info.excl = btrfs_stack_qgroup_info_excl(info);
-	bq->info.excl_cmpr = btrfs_stack_qgroup_info_excl_cmpr(info);
+	bq->info.referenced = btrfs_stack_qgroup_info_referenced(info);
+	bq->info.referenced_compressed =
+			btrfs_stack_qgroup_info_referenced_compressed(info);
+	bq->info.exclusive = btrfs_stack_qgroup_info_exclusive(info);
+	bq->info.exclusive_compressed =
+			btrfs_stack_qgroup_info_exclusive_compressed(info);
 
 	return 0;
 }
@@ -826,10 +828,13 @@ static int update_qgroup_limit(int fd, struct qgroup_lookup *qgroup_lookup,
 		return PTR_ERR(bq);
 
 	bq->limit.flags = btrfs_stack_qgroup_limit_flags(limit);
-	bq->limit.max_rfer = btrfs_stack_qgroup_limit_max_rfer(limit);
-	bq->limit.max_excl = btrfs_stack_qgroup_limit_max_excl(limit);
-	bq->limit.rsv_rfer = btrfs_stack_qgroup_limit_rsv_rfer(limit);
-	bq->limit.rsv_excl = btrfs_stack_qgroup_limit_rsv_excl(limit);
+	bq->limit.max_referenced =
+			btrfs_stack_qgroup_limit_max_referenced(limit);
+	bq->limit.max_exclusive =
+			btrfs_stack_qgroup_limit_max_exclusive(limit);
+	bq->limit.rsv_referenced =
+			btrfs_stack_qgroup_limit_rsv_referenced(limit);
+	bq->limit.rsv_exclusive = btrfs_stack_qgroup_limit_rsv_exclusive(limit);
 
 	return 0;
 }
@@ -1122,23 +1127,23 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = strlen(pretty_size_mode(bq->info.rfer, unit_mode));
+		len = strlen(pretty_size_mode(bq->info.referenced, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = strlen(pretty_size_mode(bq->info.excl, unit_mode));
+		len = strlen(pretty_size_mode(bq->info.exclusive, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = strlen(pretty_size_mode(bq->limit.max_rfer,
+		len = strlen(pretty_size_mode(bq->limit.max_referenced,
 			     unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = strlen(pretty_size_mode(bq->limit.max_excl,
+		len = strlen(pretty_size_mode(bq->limit.max_exclusive,
 			     unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
@@ -1472,14 +1477,14 @@ static void print_all_qgroups_json(struct qgroup_lookup *qgroup_lookup)
 		fmt_print(&fctx, "qgroupid",
 				btrfs_qgroup_level(qgroup->qgroupid),
 				btrfs_qgroup_subvolid(qgroup->qgroupid));
-		fmt_print(&fctx, "referenced", qgroup->info.rfer);
+		fmt_print(&fctx, "referenced", qgroup->info.referenced);
 		if (qgroup->limit.flags & BTRFS_QGROUP_LIMIT_MAX_RFER)
-			fmt_print(&fctx, "max_referenced", qgroup->limit.max_rfer);
+			fmt_print(&fctx, "max_referenced", qgroup->limit.max_referenced);
 		else
 			fmt_print(&fctx, "max_referenced-none", "none");
-		fmt_print(&fctx, "exclusive", qgroup->info.excl);
+		fmt_print(&fctx, "exclusive", qgroup->info.exclusive);
 		if (qgroup->limit.flags & BTRFS_QGROUP_LIMIT_MAX_EXCL)
-			fmt_print(&fctx, "max_exclusive", qgroup->limit.max_excl);
+			fmt_print(&fctx, "max_exclusive", qgroup->limit.max_exclusive);
 		else
 			fmt_print(&fctx, "max_exclusive-none", "none");
 		fmt_print(&fctx, "path", qgroup->path ?: "");
@@ -2109,10 +2114,10 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 				  BTRFS_QGROUP_LIMIT_EXCL_CMPR;
 	if (exclusive) {
 		args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_EXCL;
-		args.lim.max_excl = size;
+		args.lim.max_exclusive = size;
 	} else {
 		args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_RFER;
-		args.lim.max_rfer = size;
+		args.lim.max_referenced = size;
 	}
 
 	if (argc - optind == 2) {

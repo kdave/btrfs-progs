@@ -1483,15 +1483,15 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	fflush(stdout);
 
 	pr_verbose(LOG_DEFAULT, "\t  Limit referenced:\t%s\n",
-			stats.limit.max_rfer == 0 ? "-" :
-			pretty_size_mode(stats.limit.max_rfer, unit_mode));
+			stats.limit.max_referenced == 0 ? "-" :
+			pretty_size_mode(stats.limit.max_referenced, unit_mode));
 	pr_verbose(LOG_DEFAULT, "\t  Limit exclusive:\t%s\n",
-			stats.limit.max_excl == 0 ? "-" :
-			pretty_size_mode(stats.limit.max_excl, unit_mode));
+			stats.limit.max_exclusive == 0 ? "-" :
+			pretty_size_mode(stats.limit.max_exclusive, unit_mode));
 	pr_verbose(LOG_DEFAULT, "\t  Usage referenced:\t%s\n",
-			pretty_size_mode(stats.info.rfer, unit_mode));
+			pretty_size_mode(stats.info.referenced, unit_mode));
 	pr_verbose(LOG_DEFAULT, "\t  Usage exclusive:\t%s\n",
-			pretty_size_mode(stats.info.excl, unit_mode));
+			pretty_size_mode(stats.info.exclusive, unit_mode));
 
 out:
 	free(subvol_path);
