@@ -1,5 +1,6 @@
 btrfs-progs-6.1 (2022-12-22)
 ----------------------------
+   * NOTE: this version breaks build of applications using ctree.h and qgroup items
    * filesystem df: add json output
    * qgroup show: add json output
    * new command: 'inspect-internal map-swapfile' to check swapfile and its
@@ -12,6 +13,13 @@ btrfs-progs-6.1 (2022-12-22)
       * synchronize some files with kernel versions
       * docs updates
       * build: use gnu11
+
+btrfs-progs-6.1.1 (2023-01-03)
+""""""""""""""""""""""""""""""
+   * subvol list: fix printing of UUID
+   * revert changes to ctree.h regarding qgroup items, breaks build of several
+     applications
+   * hide __init definition in kerncompat.h, may break build
 
 btrfs-progs-6.0 (2022-10-11)
 ----------------------------
