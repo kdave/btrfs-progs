@@ -568,7 +568,11 @@ struct work_struct {
 typedef struct wait_queue_head_s {
 } wait_queue_head_t;
 
+/*
+ * __init cannot be defined in kerncompat.h as it's still part of libbtrfs and
+ * the macro name is too generic and can break build.
 #define __init
+*/
 #define __cold
 
 #endif
