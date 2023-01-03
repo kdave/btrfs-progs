@@ -1,3 +1,6 @@
+BTRFS SPECIFIC MOUNT OPTIONS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 This section describes mount options specific to BTRFS.  For the generic mount
 options please refer to ``mount(8)`` manual page. The options are sorted alphabetically
 (discarding the *no* prefix).
