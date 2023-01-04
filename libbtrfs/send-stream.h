@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 #if BTRFS_FLAT_INCLUDES
-#include "kerncompat.h"
+#include "libbtrfs/kerncompat.h"
 #else
 #include <btrfs/kerncompat.h>
 #endif /* BTRFS_FLAT_INCLUDES */

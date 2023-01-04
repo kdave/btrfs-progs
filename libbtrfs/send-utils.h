@@ -20,7 +20,7 @@
 #define __BTRFS_SEND_UTILS_H__
 
 #if BTRFS_FLAT_INCLUDES
-#include "kerncompat.h"
+#include "libbtrfs/kerncompat.h"
 #include <stddef.h>
 #include "libbtrfs/ctree.h"
 #include "kernel-lib/rbtree_types.h"
