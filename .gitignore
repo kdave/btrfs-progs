@@ -3,7 +3,7 @@
 *.o.d
 
 /.cc-defines.h
-/version.h
+/libbtrfs/version.h
 /btrfs
 /btrfs.static
 /btrfs-map-logical
