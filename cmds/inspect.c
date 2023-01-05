@@ -692,6 +692,8 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_min_dev_size, "min-dev-size");
 
+#if EXPERIMENTAL
+
 static const char * const cmd_inspect_list_chunks_usage[] = {
 	"btrfs inspect-internal list-chunks [options] <path>",
 	"Show chunks (block groups) layout",
@@ -1113,6 +1115,8 @@ out_nomem:
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(inspect_list_chunks, "list-chunks");
+
+#endif
 
 static const char * const cmd_inspect_map_swapfile_usage[] = {
 	"btrfs inspect-internal map-swapfile <file>",
