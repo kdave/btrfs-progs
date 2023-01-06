@@ -11,6 +11,7 @@ tools.  Currently covers:
 #. filesystem features
 #. checksum algorithms
 #. compression
+#. sysfs interface
 #. filesystem exclusive operations
 #. filesystem limits
 #. bootloader support
@@ -190,6 +191,11 @@ COMPRESSION
 -----------
 
 .. include:: ch-compression.rst
+
+SYSFS INTERFACE
+---------------
+
+.. include:: ch-sysfs.rst
 
 FILESYSTEM EXCLUSIVE OPERATIONS
 -------------------------------
