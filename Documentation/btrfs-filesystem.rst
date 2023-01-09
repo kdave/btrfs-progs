@@ -190,7 +190,7 @@ label [<device>|<mountpoint>] [<newlabel>]
 
 mkswapfile [-s size] file
         Create a new file that's suitable and formatted as a swapfile. Default
-        size is 2GiB, minimum size is 40KiB.
+        size is 2GiB, fixed page size 4KiB, minimum size is 40KiB.
 
         A swapfile must be created in a specific way: NOCOW and preallocated.
         Subvolume containing a swapfile cannot be snapshotted and blocks of an
@@ -199,6 +199,10 @@ mkswapfile [-s size] file
         Swapfile creation can be achieved by standalone commands too. Activation
         needs to be done by command ``swapon(8)``. See also command ``btrfs
         inspect-internal map-swapfile`` and the :doc:`Swapfile feature<Swapfile>` description.
+
+        .. note::
+                The command is a simplified version of 'mkswap', if you want to set
+                label, page size, or other parameters please use 'mkswap' proper.
 
         ``Options``
 

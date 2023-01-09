@@ -1449,26 +1449,26 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
 };
 
 /*
- * Swap signature in the first 4KiB, v2:
+ * Swap signature in the first 4KiB, v2, no label:
  *
  * 00000400 .. = 01 00 00 00 ff ff 03 00  00 00 00 00 cb 70 8e 60
- *                                                    ^^^^^^^^^^^
- *                                                    uuid 4B
+ *                           ^^^^^^^^^^^              ^^^^^^^^^^^
+ *                           page count 4B            uuid 4B
  * 00000420 .. = 1d fb 4e ca be d4 3f 1f  6a 6b 0c 03 00 00 00 00
  *               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  *               uuid 8B
  * 00000ff0 .. = 00 00 00 00 00 00 53 57  41 50 53 50 41 43 45 32
  *                                  S  W   A  P  S  P  A  C  E  2
  */
-static int write_swap_signature(int fd)
+static int write_swap_signature(int fd, u32 page_count)
 {
 	int ret;
-	static unsigned char swap[4096] = {
+	static unsigned char swap[SZ_4K] = {
 		[0x400] = 0x01,
-		[0x404] = 0xff,
-		[0x405] = 0xff,
-		[0x406] = 0x03,
+		/* 0x404 .. 0x407 number of pages (little-endian) */
+		/* 0x408 .. 0x40b number of bad pages (unused) */
 		/* 0x40c .. 0x42b UUID */
+		/* Last bytes of the page */
 		[0xff6] = 'S',
 		[0xff7] = 'W',
 		[0xff8] = 'A',
@@ -1480,9 +1480,11 @@ static int write_swap_signature(int fd)
 		[0xffe] = 'E',
 		[0xfff] = '2',
 	};
+	u32 *pages = (u32 *)&swap[0x404];
 
+	*pages = cpu_to_le32(page_count);
 	uuid_generate(&swap[0x40c]);
-	ret = pwrite(fd, swap, 4096, 0);
+	ret = pwrite(fd, swap, SZ_4K, 0);
 
 	return ret;
 }
@@ -1494,6 +1496,7 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 	const char *fname;
 	unsigned long flags;
 	u64 size = SZ_2G;
+	u64 page_count;
 
 	optind = 0;
 	while (1) {
@@ -1545,7 +1548,22 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		ret = 1;
 		goto out;
 	}
-	pr_verbose(LOG_INFO, "fallocate to size %llu\n", size);
+	page_count = size / SZ_4K;
+	if (page_count <= 10) {
+		error("file too short");
+		ret = 1;
+		goto out;
+	}
+	/* First file page with header */
+	page_count--;
+	if (page_count > (u32)-1) {
+		error("file too big");
+		ret = 1;
+		goto out;
+	}
+	size = round_down(size, SZ_4K);
+	pr_verbose(LOG_INFO, "fallocate to size %llu, page size %u, %llu pages\n",
+			size, SZ_4K, page_count);
 	ret = fallocate(fd, 0, 0, size);
 	if (ret < 0) {
 		error("cannot fallocate file: %m");
@@ -1553,7 +1571,7 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		goto out;
 	}
 	pr_verbose(LOG_INFO, "write swap signature\n");
-	ret = write_swap_signature(fd);
+	ret = write_swap_signature(fd, page_count);
 	if (ret < 0) {
 		error("cannot write swap signature: %m");
 		ret = 1;
