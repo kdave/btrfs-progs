@@ -49,6 +49,7 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "cmds/commands.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
 #include "ioctl.h"
@@ -3030,20 +3031,32 @@ out:
 	return ret;
 }
 
+static const char * const image_usage[] = {
+	"btrfs-image [options] source target",
+	"Create or restore a filesystem image (metadata)",
+	"",
+	"Options:",
+	OPTLINE("-r", "restore metadump image"),
+	OPTLINE("-c value", "compression level (0 ~ 9)"),
+	OPTLINE("-t value", "number of threads (1 ~ 32)"),
+	OPTLINE("-o", "don't mess with the chunk tree when restoring"),
+	OPTLINE("-s", "sanitize file names, use once to just use garbage, use twice if you want crc collisions"),
+	OPTLINE("-w", "walk all trees instead of using extent tree, do this if your extent tree is broken"),
+	OPTLINE("-m", "restore for multiple devices"),
+	OPTLINE("-d", "also dump data, conflicts with -w"),
+	"",
+	"In the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).",
+	"In the restore mode, source is the dumped image and target is the btrfs device/file.",
+	NULL
+};
+
+static const struct cmd_struct image_cmd = {
+	.usagestr = image_usage
+};
+
 static void print_usage(int ret)
 {
-	printf("usage: btrfs-image [options] source target\n");
-	printf("\t-r      \trestore metadump image\n");
-	printf("\t-c value\tcompression level (0 ~ 9)\n");
-	printf("\t-t value\tnumber of threads (1 ~ 32)\n");
-	printf("\t-o      \tdon't mess with the chunk tree when restoring\n");
-	printf("\t-s      \tsanitize file names, use once to just use garbage, use twice if you want crc collisions\n");
-	printf("\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
-	printf("\t-m	   \trestore for multiple devices\n");
-	printf("\t-d	   \talso dump data, conflicts with -w\n");
-	printf("\n");
-	printf("\tIn the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).\n");
-	printf("\tIn the restore mode, source is the dumped image and target is the btrfs device/file.\n");
+	usage(&image_cmd);
 	exit(ret);
 }
 
