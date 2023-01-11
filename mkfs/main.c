@@ -53,6 +53,7 @@
 #include "common/box.h"
 #include "common/units.h"
 #include "common/string-utils.h"
+#include "cmds/commands.h"
 #include "check/qgroup-verify.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
@@ -408,36 +409,47 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static const char * const mkfs_usage[] = {
+	"mkfs.btrfs [options] <dev> [<dev...>]",
+	"Create a BTRFS filesystem on a device or multiple devices",
+	"",
+	"Options:",
+	"  allocation profiles:",
+	"\t-d|--data PROFILE           data profile, raid0, raid1, raid1c3, raid1c4, raid5, raid6, raid10, dup or single",
+	"\t-m|--metadata PROFILE       metadata profile, values like for data profile",
+	"\t-M|--mixed                  mix metadata and data together",
+	"  features:",
+	"\t--csum TYPE",
+	"\t--checksum TYPE             checksum algorithm to use, crc32c (default), xxhash, sha256, blake2",
+	"\t-n|--nodesize SIZE          size of btree nodes",
+	"\t-s|--sectorsize SIZE        data block size (may not be mountable by current kernel)",
+	"\t-O|--features LIST          comma separated list of filesystem features (use '-O list-all' to list features)",
+	"\t-R|--runtime-features LIST  comma separated list of runtime features (use '-R list-all' to list runtime features)",
+	"\t-L|--label LABEL            set the filesystem label",
+	"\t-U|--uuid UUID              specify the filesystem UUID (must be unique)",
+	"  creation:",
+	"\t-b|--byte-count SIZE        set size of each device to SIZE (filesystem size is sum of all device sizes)",
+	"\t-r|--rootdir DIR            copy files from DIR to the image root directory",
+	"\t--shrink                    (with --rootdir) shrink the filled filesystem to minimal size",
+	"\t-K|--nodiscard              do not perform whole device TRIM",
+	"\t-f|--force                  force overwrite of existing filesystem",
+	"  general:",
+	"\t-q|--quiet                  no messages except errors",
+	"\t-v|--verbose                increase verbosity level, default is 1",
+	"\t-V|--version                print the mkfs.btrfs version and exit",
+	"\t--help                      print this help and exit",
+	"  deprecated:",
+	"\t-l|--leafsize SIZE          removed in 6.0, use --nodesize",
+	NULL
+};
+
+static const struct cmd_struct mkfs_cmd = {
+	.usagestr = mkfs_usage
+};
+
 static void print_usage(int ret)
 {
-	printf("Usage: mkfs.btrfs [options] dev [ dev ... ]\n");
-	printf("Options:\n");
-	printf("  allocation profiles:\n");
-	printf("\t-d|--data PROFILE           data profile, raid0, raid1, raid1c3, raid1c4, raid5, raid6, raid10, dup or single\n");
-	printf("\t-m|--metadata PROFILE       metadata profile, values like for data profile\n");
-	printf("\t-M|--mixed                  mix metadata and data together\n");
-	printf("  features:\n");
-	printf("\t--csum TYPE\n");
-	printf("\t--checksum TYPE             checksum algorithm to use, crc32c (default), xxhash, sha256, blake2\n");
-	printf("\t-n|--nodesize SIZE          size of btree nodes\n");
-	printf("\t-s|--sectorsize SIZE        data block size (may not be mountable by current kernel)\n");
-	printf("\t-O|--features LIST          comma separated list of filesystem features (use '-O list-all' to list features)\n");
-	printf("\t-R|--runtime-features LIST  comma separated list of runtime features (use '-R list-all' to list runtime features)\n");
-	printf("\t-L|--label LABEL            set the filesystem label\n");
-	printf("\t-U|--uuid UUID              specify the filesystem UUID (must be unique)\n");
-	printf("  creation:\n");
-	printf("\t-b|--byte-count SIZE        set size of each device to SIZE (filesystem size is sum of all device sizes)\n");
-	printf("\t-r|--rootdir DIR            copy files from DIR to the image root directory\n");
-	printf("\t--shrink                    (with --rootdir) shrink the filled filesystem to minimal size\n");
-	printf("\t-K|--nodiscard              do not perform whole device TRIM\n");
-	printf("\t-f|--force                  force overwrite of existing filesystem\n");
-	printf("  general:\n");
-	printf("\t-q|--quiet                  no messages except errors\n");
-	printf("\t-v|--verbose                increase verbosity level, default is 1\n");
-	printf("\t-V|--version                print the mkfs.btrfs version and exit\n");
-	printf("\t--help                      print this help and exit\n");
-	printf("  deprecated:\n");
-	printf("\t-l|--leafsize SIZE          removed in 6.0, use --nodesize\n");
+	usage(&mkfs_cmd);
 	exit(ret);
 }
 
