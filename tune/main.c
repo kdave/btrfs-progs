@@ -36,6 +36,7 @@
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "cmds/commands.h"
 #include "tune/tune.h"
 
 static char *device;
@@ -59,31 +60,43 @@ static int set_super_incompat_flags(struct btrfs_root *root, u64 flags)
 	return ret;
 }
 
-static void print_usage(void)
-{
-	printf("usage: btrfstune [options] device\n");
-	printf("Tune settings of filesystem features on an unmounted device\n\n");
-	printf("Options:\n");
-	printf("  change feature status:\n");
-	printf("\t-r          enable extended inode refs (mkfs: extref, for hardlink limits)\n");
-	printf("\t-x          enable skinny metadata extent refs (mkfs: skinny-metadata)\n");
-	printf("\t-n          enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)\n");
-	printf("\t-S <0|1>    set/unset seeding status of a device\n");
-	printf("  uuid changes:\n");
-	printf("\t-u          rewrite fsid, use a random one\n");
-	printf("\t-U UUID     rewrite fsid to UUID\n");
-	printf("\t-m          change fsid in metadata_uuid to a random UUID\n");
-	printf("\t            (incompat change, more lightweight than -u|-U)\n");
-	printf("\t-M UUID     change fsid in metadata_uuid to UUID\n");
-	printf("  general:\n");
-	printf("\t-f          allow dangerous operations, make sure that you are aware of the dangers\n");
-	printf("\t--help      print this help\n");
+static const char * const tune_usage[] = {
+	"btrfstune [options] device",
+	"Tune settings of filesystem features on an unmounted device",
+	"",
+	"Options:",
+	"Change feature status:",
+	OPTLINE("-r", "enable extended inode refs (mkfs: extref, for hardlink limits)"),
+	OPTLINE("-x", "enable skinny metadata extent refs (mkfs: skinny-metadata)"),
+	OPTLINE("-n", "enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)"),
+	OPTLINE("-S <0|1>", "set/unset seeding status of a device"),
+	"",
+	"UUID changes:",
+	OPTLINE("-u", "rewrite fsid, use a random one"),
+	OPTLINE("-U UUID", "rewrite fsid to UUID"),
+	OPTLINE("-m", "change fsid in metadata_uuid to a random UUID incompat change, more lightweight than -u|-U)"),
+	OPTLINE("-M UUID", "change fsid in metadata_uuid to UUID"),
+	"",
+	"General:",
+	OPTLINE("-f", "allow dangerous operations, make sure that you are aware of the dangers"),
+	OPTLINE("--help", "print this help"),
 #if EXPERIMENTAL
-	printf("\nEXPERIMENTAL FEATURES:\n");
-	printf("  checksum changes:\n");
-	printf("\t--csum CSUM	switch checksum for data and metadata to CSUM\n");
-	printf("\t-b          enable block group tree (mkfs: block-group-tree, for less mount time)\n");
+	"",
+	"EXPERIMENTAL FEATURES:",
+	OPTLINE("--csum CSUM", "switch checksum for data and metadata to CSUM"),
+	OPTLINE("-b", "enable block group tree (mkfs: block-group-tree, for less mount time)"),
 #endif
+	NULL
+};
+
+static const struct cmd_struct tune_cmd = {
+	.usagestr = tune_usage
+};
+
+static void print_usage(int ret)
+{
+	usage(&tune_cmd);
+	exit(ret);
 }
 
 int BOX_MAIN(btrfstune)(int argc, char *argv[])
@@ -170,8 +183,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 #endif
 		case GETOPT_VAL_HELP:
 		default:
-			print_usage();
-			return c != GETOPT_VAL_HELP;
+			print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
 
@@ -187,7 +199,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
 	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree) {
 		error("at least one option should be specified");
-		print_usage();
+		print_usage(1);
 		return 1;
 	}
 
