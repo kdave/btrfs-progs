@@ -61,6 +61,19 @@ struct cmd_group;
 	"-g|--gbytes        show sizes in GiB, or GB with --si",		\
 	"-t|--tbytes        show sizes in TiB, or TB with --si"
 
+#define HELPINFO_OPTION			"\x01"
+#define HELPINFO_DESC			"\x02"
+/* Keep the line length below 100 chars. */
+#define HELPINFO_PREFIX_WIDTH		4
+#define HELPINFO_LISTING_WIDTH		8
+#define HELPINFO_OPTION_WIDTH		24
+#define HELPINFO_OPTION_MARGIN		2
+#define HELPINFO_DESC_PREFIX		(HELPINFO_PREFIX_WIDTH +	\
+					 HELPINFO_OPTION_WIDTH +	\
+					 HELPINFO_OPTION_MARGIN)
+#define HELPINFO_DESC_WIDTH		99 - HELPINFO_DESC_PREFIX
+#define OPTLINE(opt, text)		HELPINFO_OPTION opt HELPINFO_DESC text
+
 /*
  * Special marker in the help strings that will preemptively insert the global
  * options and then continue with the following text that possibly follows
