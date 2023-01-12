@@ -177,30 +177,29 @@ static int do_usage_one_command(const char * const *usagestr,
 				unsigned int flags, unsigned int cmd_flags,
 				FILE *outf)
 {
-	int pad = 4;
-	const char *prefix = "usage: ";
-	const char *pad_listing = "    ";
+	int pad = HELPINFO_PREFIX_WIDTH;
 
 	if (!usagestr || !*usagestr)
 		return -1;
 
 	if (flags & USAGE_LISTING)
-		prefix = pad_listing;
+		hpad(HELPINFO_PREFIX_WIDTH, outf);
+	else
+		fputs("usage: ", outf);
 
-	fputs(prefix, outf);
 	if (strchr(*usagestr, '\n') == NULL) {
 		fputs(*usagestr, outf);
 	} else {
 		const char *c = *usagestr;
-		const char *nprefix = "       ";
-
-		if (flags & USAGE_LISTING)
-			nprefix = pad_listing;
 
 		for (c = *usagestr; *c; c++) {
 			fputc(*c, outf);
-			if (*c == '\n')
-				fputs(nprefix, outf);
+			if (*c == '\n') {
+				if (flags & USAGE_LISTING)
+					hpad(HELPINFO_PREFIX_WIDTH, outf);
+				else
+					hpad(HELPINFO_LISTING_WIDTH, outf);
+			}
 		}
 	}
 	usagestr++;
@@ -213,11 +212,12 @@ static int do_usage_one_command(const char * const *usagestr,
 	fputc('\n', outf);
 
 	if (flags & USAGE_LISTING)
-		pad = 8;
+		pad = HELPINFO_LISTING_WIDTH;
 	else
 		fputc('\n', outf);
 
-	fprintf(outf, "%*s%s\n", pad, "", *usagestr++);
+	hpad(pad, outf);
+	fprintf(outf, "%s\n", *usagestr++);
 
 	/* a long (possibly multi-line) description (optional) */
 	if (!*usagestr || ((flags & USAGE_LONG) == 0))
@@ -225,8 +225,10 @@ static int do_usage_one_command(const char * const *usagestr,
 
 	if (**usagestr)
 		fputc('\n', outf);
-	while (*usagestr && **usagestr)
-		fprintf(outf, "%*s%s\n", pad, "", *usagestr++);
+	while (*usagestr && **usagestr) {
+		hpad(pad, outf);
+		fprintf(outf, "%s\n", *usagestr++);
+	}
 
 	/* options (optional) */
 	if (!*usagestr || ((flags & USAGE_OPTIONS) == 0))
@@ -247,8 +249,9 @@ static int do_usage_one_command(const char * const *usagestr,
 			 * We always support text, that's on by default for all
 			 * commands
 			 */
-			fprintf(outf, "%*s--format TYPE      where TYPE is: %s",
-					pad, "", output_formats[0].name);
+			hpad(pad, outf);
+			fprintf(outf, "--format TYPE      where TYPE is: %s",
+					 output_formats[0].name);
 			for (i = 1; i < ARRAY_SIZE(output_formats); i++) {
 				if (cmd_flags & output_formats[i].value)
 					fprintf(outf, ", %s",
@@ -275,7 +278,8 @@ static int do_usage_one_command(const char * const *usagestr,
 			format_text(text, outf);
 			fputc('\n', outf);
 		} else {
-			fprintf(outf, "%*s%s\n", pad, "", *usagestr);
+			hpad(pad, outf);
+			fprintf(outf, "%s\n", *usagestr);
 		}
 		usagestr++;
 	}
