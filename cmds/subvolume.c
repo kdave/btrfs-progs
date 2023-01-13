@@ -49,7 +49,10 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 {
 	size_t i;
 	enum btrfs_util_error err;
+	size_t done = 0;
 
+	pr_verbose(LOG_DEFAULT, "Waiting for %zu subvolume%s\n", count,
+			(count > 1 ? "s" : ""));
 	while (1) {
 		bool clean = true;
 
@@ -58,8 +61,9 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				continue;
 			err = btrfs_util_subvolume_info_fd(fd, ids[i], NULL);
 			if (err == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
-				pr_verbose(LOG_DEFAULT, "Subvolume id %" PRIu64 " is gone\n",
-				       ids[i]);
+				done++;
+				pr_verbose(LOG_DEFAULT, "Subvolume id %" PRIu64 " is gone (%zu/%zu)\n",
+				       ids[i], done, count);
 				ids[i] = 0;
 			} else if (err) {
 				error_btrfs_util(err);
