@@ -172,10 +172,10 @@ LIST OF IOCTLS
 * BTRFS_IOC_SPACE_INFO
 * BTRFS_IOC_START_SYNC
 * BTRFS_IOC_WAIT_SYNC
-* BTRFS_IOC_SNAP_CREATE_V2
+* BTRFS_IOC_SNAP_CREATE_V2 -- create a snapshot of a subvolume
 * BTRFS_IOC_SUBVOL_CREATE_V2 -- create a subvolume
-* BTRFS_IOC_SUBVOL_GETFLAGS
-* BTRFS_IOC_SUBVOL_SETFLAGS
+* BTRFS_IOC_SUBVOL_GETFLAGS -- get flags of a subvolume
+* BTRFS_IOC_SUBVOL_SETFLAGS -- set flags of a subvolume
 * BTRFS_IOC_SCRUB
 * BTRFS_IOC_SCRUB_CANCEL
 * BTRFS_IOC_SCRUB_PROGRESS
@@ -206,10 +206,10 @@ LIST OF IOCTLS
 * BTRFS_IOC_GET_SUPPORTED_FEATURES
 * BTRFS_IOC_RM_DEV_V2
 * BTRFS_IOC_LOGICAL_INO_V2
-* BTRFS_IOC_GET_SUBVOL_INFO
+* BTRFS_IOC_GET_SUBVOL_INFO -- get information about a subvolume
 * BTRFS_IOC_GET_SUBVOL_ROOTREF
 * BTRFS_IOC_INO_LOOKUP_USER
-* BTRFS_IOC_SNAP_DESTROY_V2
+* BTRFS_IOC_SNAP_DESTROY_V2 -- destroy a (snapshot or regular) subvolume
 
 DETAILED DESCRIPTION
 --------------------
@@ -232,6 +232,28 @@ name
     name of the subvolume, although the buffer can be almost 4k, the file
     size is limited by Linux VFS to 255 characters and must not contain a slash
     ('/')
+
+BTRFS_IOC_SNAP_CREATE_V2
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   obsoletes BTRFS_IOC_SNAP_CREATE
+
+Create a snapshot of a subvolume.
+
+ioctl fd
+    file descriptor of the directory inside which to create the new snapshot
+argument type
+    struct btrfs_ioctl_vol_args_v2
+fd
+    file descriptor of any directory inside the subvolume to snapshot
+transid
+    ignored
+flags
+    any subset of `BTRFS_SUBVOL_RDONLY` to make the new snapshot read-only, or
+    `BTRFS_SUBVOL_QGROUP_INHERIT` to apply the `qgroup_inherit` field
+name
+    the name, under the ioctl fd, for the new subvolume
 
 BTRFS_IOC_SUBVOL_CREATE_V2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,6 +282,65 @@ name
     is limited by Linux VFS to 255 characters and must not contain a slash ('/')
 devid
     ...
+
+BTRFS_IOC_SUBVOL_GETFLAGS
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Read the flags of a subvolume. The returned flags are either 0 or
+`BTRFS_SUBVOL_RDONLY`.
+
+ioctl fd
+    file descriptor of the subvolume to examine
+argument type
+    uint64_t
+
+BTRFS_IOC_SUBVOL_SETFLAGS
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Change the flags of a subvolume.
+
+ioctl fd
+    file descriptor of the subvolume to modify
+argument type
+    uint64_t, either 0 or `BTRFS_SUBVOL_RDONLY`
+
+BTRFS_IOC_GET_SUBVOL_INFO
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Get information about a subvolume.
+
+ioctl fd
+    file descriptor of the subvolume to examine
+argument type
+    struct btrfs_ioctl_get_subvol_info_args
+
+BTRFS_IOC_SNAP_DESTROY_V2
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Destroy a subvolume, which may or may not be a snapshot.
+
+ioctl fd
+    if `flags` does not include `BTRFS_SUBVOL_SPEC_BY_ID`, or if executing in a
+    non-root user namespace, file descriptor of the parent directory containing
+    the subvolume to delete; otherwise, file descriptor of any directory on the
+    same filesystem as the subvolume to delete, but not within the same
+    subvolume
+argument type
+    struct btrfs_ioctl_vol_args_v2
+fd
+    ignored
+transid
+    ignored
+flags
+    0 if the `name` field identifies the subvolume by name in the specified
+    directory, or `BTRFS_SUBVOL_SPEC_BY_ID` if the `subvolid` field specifies
+    the ID of the subvolume
+name
+    only if `flags` does not contain `BTRFS_SUBVOL_SPEC_BY_ID`, the name
+    (within the directory identified by `fd`) of the subvolume to delete
+subvolid
+    only if `flags` contains `BTRFS_SUBVOL_SPEC_BY_ID`, the subvolume ID of the
+    subvolume to delete
 
 AVAILABILITY
 ------------
