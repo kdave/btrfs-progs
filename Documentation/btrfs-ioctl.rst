@@ -41,7 +41,11 @@ DATA STRUCTURES AND DEFINITIONS
                    };
                    __u64 unused[4];
            };
-           char name[BTRFS_SUBVOL_NAME_MAX + 1];
+           union {
+               char name[BTRFS_SUBVOL_NAME_MAX + 1];
+               __u64 devid;
+               __u64 subvolid;
+            };
    };
 
 .. code-block::
