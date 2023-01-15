@@ -50,6 +50,63 @@ DATA STRUCTURES AND DEFINITIONS
 
 .. code-block::
 
+   struct btrfs_ioctl_get_subvol_info_args {
+        /* Id of this subvolume */
+        __u64 treeid;
+
+        /* Name of this subvolume, used to get the real name at mount point */
+        char name[BTRFS_VOL_NAME_MAX + 1];
+
+        /*
+         * Id of the subvolume which contains this subvolume.
+         * Zero for top-level subvolume or a deleted subvolume.
+         */
+        __u64 parent_id;
+
+        /*
+         * Inode number of the directory which contains this subvolume.
+         * Zero for top-level subvolume or a deleted subvolume
+         */
+        __u64 dirid;
+
+        /* Latest transaction id of this subvolume */
+        __u64 generation;
+
+        /* Flags of this subvolume */
+        __u64 flags;
+
+        /* UUID of this subvolume */
+        __u8 uuid[BTRFS_UUID_SIZE];
+
+        /*
+         * UUID of the subvolume of which this subvolume is a snapshot.
+         * All zero for a non-snapshot subvolume.
+         */
+        __u8 parent_uuid[BTRFS_UUID_SIZE];
+
+        /*
+         * UUID of the subvolume from which this subvolume was received.
+         * All zero for non-received subvolume.
+         */
+        __u8 received_uuid[BTRFS_UUID_SIZE];
+
+        /* Transaction id indicating when change/create/send/receive happened */
+        __u64 ctransid;
+        __u64 otransid;
+        __u64 stransid;
+        __u64 rtransid;
+        /* Time corresponding to c/o/s/rtransid */
+        struct btrfs_ioctl_timespec ctime;
+        struct btrfs_ioctl_timespec otime;
+        struct btrfs_ioctl_timespec stime;
+        struct btrfs_ioctl_timespec rtime;
+
+        /* Must be zero */
+        __u64 reserved[8];
+   };
+
+.. code-block::
+
    BTRFS_SUBVOL_NAME_MAX = 4039
    BTRFS_PATH_NAME_MAX = 4087
 
