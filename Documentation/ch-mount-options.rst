@@ -89,8 +89,19 @@ check_int, check_int_data, check_int_print_mask=<value>
         for more information.
 
 clear_cache
-        Force clearing and rebuilding of the disk space cache if something
-        has gone wrong. See also: *space_cache*.
+        Force clearing and rebuilding of the free space cache if something
+        has gone wrong.
+
+        For free space cache *v1*, this only clears (and, unless *nospace_cache* is
+        used, rebuilds) the free space cache for block groups that are modified while
+        the filesystem is mounted with that option. To actually clear an entire free
+        space cache *v1*, see ``btrfs check --clear-space-cache v1``.
+
+        For free space cache *v2*, this clears the entire free space cache.
+        To do so without requiring to mounting the filesystem, see
+         ``btrfs check --clear-space-cache v2``.
+
+        See also: *space_cache*.
 
 commit=<seconds>
         (since: 3.12, default: 30)
@@ -351,7 +362,8 @@ space_cache, space_cache=<version>, nospace_cache
         implementation, which adds a new b-tree called the free space tree, addresses
         this issue. Once enabled, the *v2* space cache will always be used and cannot
         be disabled unless it is cleared. Use *clear_cache,space_cache=v1* or
-        *clear_cache,nospace_cache* to do so. If *v2* is enabled, kernels without *v2*
+        *clear_cache,nospace_cache* to do so. If *v2* is enabled, and *v1* space
+        cache will be cleared (at the first mount) and kernels without *v2*
         support will only be able to mount the filesystem in read-only mode.
 
         The :doc:`btrfs-check(8)<btrfs-check>` and `:doc:`mkfs.btrfs(8)<mkfs.btrfs>` commands have full *v2* free space
