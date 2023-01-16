@@ -28,6 +28,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <uuid/uuid.h>
+#include <blkid/blkid.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/list_sort.h"
 #include "kernel-lib/rbtree.h"
@@ -1346,6 +1347,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		exit(1);
 	}
 	if (opt_zoned) {
+		const int blkid_version =  blkid_get_library_version(NULL, NULL);
+
 		if (source_dir_set) {
 			error("the option -r and zoned mode are incompatible");
 			exit(1);
@@ -1360,6 +1363,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			error("cannot enable RAID5/6 in zoned mode");
 			exit(1);
 		}
+
+		if (blkid_version < 2380)
+			warning("libblkid < 2.38 does not support zoned mode's superblock location, update recommended");
 	}
 
 	if (btrfs_check_nodesize(nodesize, sectorsize, &features))
