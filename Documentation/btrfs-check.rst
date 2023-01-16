@@ -79,17 +79,9 @@ SAFE OR ADVISORY OPTIONS
         superblock is damaged.
 
 --clear-space-cache v1|v2
-        completely wipe all free space cache of given type
+        completely remove the free space cache of the given version
 
-        For free space cache *v1*, the *clear_cache* kernel mount option only rebuilds
-        the free space cache for block groups that are modified while the filesystem is
-        mounted with that option. Thus, using this option with *v1* makes it possible
-        to actually clear the entire free space cache.
-
-        For free space cache *v2*, the *clear_cache* kernel mount option destroys
-        the entire free space cache. This option, with *v2* provides an alternative
-        method of clearing the free space cache that doesn't require mounting the
-        filesystem.
+        See also the *clear_cache* mount option.
 
 --clear-ino-cache
         remove leftover items pertaining to the deprecated inode map feature
