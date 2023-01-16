@@ -18,8 +18,6 @@ import pathlib
 
 # -- Project information -----------------------------------------------------
 project = 'BTRFS'
-# TODO: get from date
-copyright = '2022'
 
 version = pathlib.Path("../VERSION").read_text().strip('v\n')
 
