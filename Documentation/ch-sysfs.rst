@@ -29,7 +29,7 @@ Files in `/sys/fs/btrfs/<UUID>/` directory are:
 bg_reclaim_threshold
         (RW, since: 5.19)
 
-        Used space percentage to start auto block group claim.
+        Used space percentage of total device space to start auto block group claim.
         Mostly for zoned devices.
 
 checksum
@@ -116,6 +116,15 @@ global_rsv_size
 
         Space info accounting for the 3 chunk types.
         Mostly for debug purposes.
+
+Files in `/sys/fs/btrfs/<UUID>/allocations/{data,metadata,system}` directory are:
+
+bg_reclaim_threshold
+        (RW, since: 5.19)
+
+        Reclaimable space percentage of block group's size (excluding
+        permanently unusable space) to reclaim the block group.
+        Can be used on regular or zoned devices.
 
 Files in `/sys/fs/btrfs/<UUID>/devinfo/<DEVID>` directory are:
 
