@@ -18,7 +18,12 @@
 #define __BTRFS_TUNE_H__
 
 struct btrfs_root;
+struct btrfs_fs_info;
 
 int update_seeding_flag(struct btrfs_root *root, const char *device, int set_flag, int force);
+
+int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
+				 uuid_t fsid_ret, uuid_t chunk_id_ret);
+int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str);
 
 #endif
