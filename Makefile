@@ -234,8 +234,9 @@ convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  mkfs/common.o
 mkfs_objects = mkfs/main.o mkfs/common.o mkfs/rootdir.o
 image_objects = image/main.o image/sanitize.o
+tune_objects = tune/main.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
-	      $(mkfs_objects) $(image_objects) $(libbtrfsutil_objects)
+	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
 udev_rules = 64-btrfs-dm.rules 64-btrfs-zoned.rules
 
@@ -301,11 +302,11 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 # built-in sources into "busybox", all files that contain the main function and
 # are not compiled standalone
 progs_box_main = btrfs.o mkfs/main.o image/main.o convert/main.o \
-		 btrfstune.o
+		 tune/main.o
 
-progs_box_all_objects = $(mkfs_objects) $(image_objects) $(convert_objects)
+progs_box_all_objects = $(mkfs_objects) $(image_objects) $(convert_objects) $(tune_objects)
 progs_box_all_static_objects = $(static_mkfs_objects) $(static_image_objects) \
-			       $(static_convert_objects)
+			       $(static_convert_objects) $(static_tune_objects)
 
 progs_box_objects = $(filter-out %/main.o, $(progs_box_all_objects)) \
 		    $(patsubst %.o, %.box.o, $(progs_box_main))
@@ -379,6 +380,7 @@ static_libbtrfsutil_objects = $(patsubst %.o, %.static.o, $(libbtrfsutil_objects
 static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
 static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
 static_image_objects = $(patsubst %.o, %.static.o, $(image_objects))
+static_tune_objects = $(patsubst %.o, %.static.o, $(tune_objects))
 
 libs_shared = libbtrfs.so.0.1 libbtrfsutil.so.$(libbtrfsutil_version)
 lib_links = libbtrfs.so.0 libbtrfs.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so
@@ -654,11 +656,11 @@ mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_ob
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfstune: btrfstune.o $(objects) libbtrfsutil.a
+btrfstune: $(tune_objects) $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects)
+btrfstune.static: $(static_tune_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
@@ -783,21 +785,21 @@ tags: FORCE
 	@echo "    [TAGS]   $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
-		cmds/*.[ch] common/*.[ch] \
+		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
 		libbtrfsutil/*.[ch]
 
 etags: FORCE
 	@echo "    [ETAGS]   $(ETAGS_CMD)"
 	$(Q)$(ETAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
-		cmds/*.[ch] common/*.[ch] \
+		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
 		libbtrfsutil/*.[ch]
 
 cscope: FORCE
 	@echo "    [CSCOPE] $(CSCOPE_CMD)"
 	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] check/*.[ch] \
 		kernel-lib/*.[ch] kernel-shared/*.[ch] libbtrfsutil/*.[ch] \
-		cmds/*.[ch] common/*.[ch] \
+		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
 		> cscope.files
 	$(Q)$(CSCOPE_CMD)
 
@@ -813,6 +815,7 @@ clean: $(CLEANDIRS)
 		mkfs/*.o mkfs/.deps/*.o.d check/*.o check/.deps/*.o.d \
 		cmds/*.o cmds/.deps/*.o.d common/*.o common/.deps/*.o.d \
 		crypto/*.o crypto/.deps/*.o.d \
+		tune/*.o tune/.deps/*.o.d \
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
