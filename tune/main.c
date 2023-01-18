@@ -41,50 +41,11 @@
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "tune/tune.h"
 #include "ioctl.h"
 
 static char *device;
 static int force = 0;
-
-static int update_seeding_flag(struct btrfs_root *root, int set_flag)
-{
-	struct btrfs_trans_handle *trans;
-	struct btrfs_super_block *disk_super;
-	u64 super_flags;
-	int ret;
-
-	disk_super = root->fs_info->super_copy;
-	super_flags = btrfs_super_flags(disk_super);
-	if (set_flag) {
-		if (super_flags & BTRFS_SUPER_FLAG_SEEDING) {
-			if (force)
-				return 0;
-			else
-				warning("seeding flag is already set on %s",
-						device);
-			return 1;
-		}
-		if (btrfs_super_log_root(disk_super)) {
-			error("filesystem with dirty log detected, not setting seed flag");
-			return 1;
-		}
-		super_flags |= BTRFS_SUPER_FLAG_SEEDING;
-	} else {
-		if (!(super_flags & BTRFS_SUPER_FLAG_SEEDING)) {
-			warning("seeding flag is not set on %s", device);
-			return 1;
-		}
-		super_flags &= ~BTRFS_SUPER_FLAG_SEEDING;
-		warning("seeding flag cleared on %s", device);
-	}
-
-	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(IS_ERR(trans));
-	btrfs_set_super_flags(disk_super, super_flags);
-	ret = btrfs_commit_transaction(trans, root);
-
-	return ret;
-}
 
 /*
  * Return 0 for no unfinished fsid change.
@@ -1111,7 +1072,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			}
 		}
 
-		ret = update_seeding_flag(root, seeding_value);
+		ret = update_seeding_flag(root, device, seeding_value, force);
 		if (!ret)
 			success++;
 		total++;
