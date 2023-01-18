@@ -126,6 +126,12 @@ bg_reclaim_threshold
         permanently unusable space) to reclaim the block group.
         Can be used on regular or zoned devices.
 
+chunk_size
+        (RW, since: 6.0)
+
+        Shows the chunk size. Can be changed for data and metadata.
+        Cannot be set for zoned devices.
+
 Files in `/sys/fs/btrfs/<UUID>/devinfo/<DEVID>` directory are:
 
 error_stats:
