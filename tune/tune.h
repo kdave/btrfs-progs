@@ -25,5 +25,6 @@ int update_seeding_flag(struct btrfs_root *root, const char *device, int set_fla
 int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
 				 uuid_t fsid_ret, uuid_t chunk_id_ret);
 int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str);
+int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string);
 
 #endif
