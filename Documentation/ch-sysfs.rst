@@ -75,7 +75,7 @@ metadata_uuid
         Shows the metadata uuid of the mounted filesystem.
         Check `metadata_uuid` feature for more details.
 
-nodeisze
+nodesize
         (RO, since: 3.14)
 
         Show the nodesize of the mounted filesystem.
