@@ -27,4 +27,6 @@ int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
 int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str);
 int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string);
 
+int convert_to_bg_tree(struct btrfs_fs_info *fs_info);
+
 #endif
