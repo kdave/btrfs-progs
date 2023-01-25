@@ -25,6 +25,15 @@ btrfs-progs-6.1.2 (2023-01-05)
 """"""""""""""""""""""""""""""
    * revert libbtrfs changes to v6.0.2, fix remaining build problems
 
+btrfs-progs-6.1.3 (2023-01-25)
+""""""""""""""""""""""""""""""
+   * fi mkswapfile: fix setting size
+   * mkfs: check zoned support of libblkid
+   * check: improve error messages for mismatched references
+   * other:
+      * pass CFLAGS to static build
+      * documentation updates
+
 btrfs-progs-6.0 (2022-10-11)
 ----------------------------
    * fi usage: in tabular output, print total size and slack size
