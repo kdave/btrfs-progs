@@ -2758,6 +2758,7 @@ u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
 		      BTRFS_BLOCK_GROUP_PROFILE_MASK;
 
 	chunk_len = btrfs_chunk_length(leaf, chunk);
+	stripe_len = chunk_len;
 
 	switch (profile) {
 	case 0: /* Single profile */
@@ -2765,7 +2766,7 @@ u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
 	case BTRFS_BLOCK_GROUP_RAID1C3:
 	case BTRFS_BLOCK_GROUP_RAID1C4:
 	case BTRFS_BLOCK_GROUP_DUP:
-		stripe_len = chunk_len;
+		/* The default value is already fine. */
 		break;
 	case BTRFS_BLOCK_GROUP_RAID0:
 		stripe_len = chunk_len / num_stripes;

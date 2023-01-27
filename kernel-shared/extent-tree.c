@@ -3308,7 +3308,7 @@ out:
 
 static u64 get_dev_extent_len(struct map_lookup *map)
 {
-	int div;
+	int div = 1;
 
 	switch (map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
 	case 0: /* Single */
@@ -3316,7 +3316,7 @@ static u64 get_dev_extent_len(struct map_lookup *map)
 	case BTRFS_BLOCK_GROUP_RAID1:
 	case BTRFS_BLOCK_GROUP_RAID1C3:
 	case BTRFS_BLOCK_GROUP_RAID1C4:
-		div = 1;
+		/* The default value can already handle it. */
 		break;
 	case BTRFS_BLOCK_GROUP_RAID5:
 	case BTRFS_BLOCK_GROUP_RAID6:
