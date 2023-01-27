@@ -826,7 +826,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	int i;
 	u64 *alloc_offsets = NULL;
 	u64 last_alloc = 0;
-	u32 num_sequential = 0, num_conventional = 0;
+	u32 num_conventional = 0;
 
 	if (!btrfs_is_zoned(fs_info))
 		return 0;
@@ -870,9 +870,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		}
 
 		is_sequential = btrfs_dev_is_sequential(device, physical);
-		if (is_sequential)
-			num_sequential++;
-		else
+		if (!is_sequential)
 			num_conventional++;
 
 		if (!is_sequential) {

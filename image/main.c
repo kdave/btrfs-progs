@@ -2244,7 +2244,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	struct meta_cluster_header *header;
 	struct meta_cluster_item *item = NULL;
 	u32 i, nritems;
-	u64 bytenr = 0;
 	u8 *buffer;
 	int ret;
 
@@ -2266,7 +2265,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		return -EIO;
 	}
 
-	bytenr += IMAGE_BLOCK_SIZE;
 	mdres->compress_method = header->compress;
 	nritems = le32_to_cpu(header->nritems);
 	for (i = 0; i < nritems; i++) {
@@ -2274,7 +2272,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 		if (le64_to_cpu(item->bytenr) == BTRFS_SUPER_INFO_OFFSET)
 			break;
-		bytenr += le32_to_cpu(item->size);
 		if (fseek(mdres->in, le32_to_cpu(item->size), SEEK_CUR)) {
 			error("seek failed: %m");
 			return -EIO;

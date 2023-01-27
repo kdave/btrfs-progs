@@ -1171,7 +1171,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	int ioprio_class = IOPRIO_CLASS_IDLE;
 	int ioprio_classdata = 0;
 	int n_start = 0;
-	int n_skip = 0;
 	int n_resume = 0;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
@@ -1337,7 +1336,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			sp[i].scrub_args.start = last_scrub->p.last_physical;
 			sp[i].resumed = last_scrub;
 		} else if (resume) {
-			++n_skip;
 			sp[i].skip = 1;
 			sp[i].resumed = last_scrub;
 			continue;

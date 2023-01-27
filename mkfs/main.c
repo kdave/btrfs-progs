@@ -490,7 +490,6 @@ static void list_all_devices(struct btrfs_root *root)
 	struct btrfs_fs_devices *fs_devices;
 	struct btrfs_device *device;
 	int number_of_devices = 0;
-	u64 total_block_count = 0;
 
 	fs_devices = root->fs_info->fs_devices;
 
@@ -500,8 +499,6 @@ static void list_all_devices(struct btrfs_root *root)
 	list_sort(NULL, &fs_devices->devices, _cmp_device_by_id);
 
 	printf("Number of devices:  %d\n", number_of_devices);
-	/* printf("Total devices size: %10s\n", */
-		/* pretty_size(total_block_count)); */
 	printf("Devices:\n");
 	printf("   ID        SIZE  PATH\n");
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
@@ -509,7 +506,6 @@ static void list_all_devices(struct btrfs_root *root)
 			device->devid,
 			pretty_size(device->total_bytes),
 			device->name);
-		total_block_count += device->total_bytes;
 	}
 
 	printf("\n");
