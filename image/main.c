@@ -93,11 +93,6 @@ struct metadump_struct {
 	struct btrfs_root *root;
 	FILE *out;
 
-	union {
-		struct meta_cluster cluster;
-		char meta_cluster_bytes[IMAGE_BLOCK_SIZE];
-	};
-
 	pthread_t threads[MAX_WORKER_THREADS];
 	size_t num_threads;
 	pthread_mutex_t mutex;
@@ -120,6 +115,11 @@ struct metadump_struct {
 	enum sanitize_mode sanitize_names;
 
 	int error;
+
+	union {
+		struct meta_cluster cluster;
+		char meta_cluster_bytes[IMAGE_BLOCK_SIZE];
+	};
 };
 
 struct mdrestore_struct {
