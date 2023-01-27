@@ -74,7 +74,7 @@ static void print_escaped(const char *str)
 		case '"':
 		case '\\':
 			putchar('\\');
-			/* fallthrough */
+			fallthrough;
 		default:
 			putchar(*str);
 		}

@@ -1432,7 +1432,7 @@ static int restore_one_work(struct mdrestore_struct *mdres,
 			switch (ret) {
 			case Z_NEED_DICT:
 				ret = Z_DATA_ERROR;
-				__attribute__ ((fallthrough));
+				fallthrough;
 			case Z_DATA_ERROR:
 			case Z_MEM_ERROR:
 				goto out;

@@ -796,7 +796,7 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 			fprintf(stream, "FIRST_CHUNK_TREE");
 			break;
 		}
-		/* fall-thru */
+		fallthrough;
 	default:
 		fprintf(stream, "%llu", (unsigned long long)objectid);
 	}

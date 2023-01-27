@@ -184,22 +184,22 @@ u64 parse_size_from_string(const char *s)
 		switch (c) {
 		case 'e':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 'p':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 't':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 'g':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 'm':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 'k':
 			mult *= 1024;
-			/* fallthrough */
+			fallthrough;
 		case 'b':
 			break;
 		default:

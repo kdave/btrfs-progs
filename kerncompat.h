@@ -227,6 +227,16 @@ static inline int mutex_is_locked(struct mutex *m)
 #define __attribute_const__	__attribute__((__const__))
 #endif
 
+/* To silence compilers (like clang) that don't understand fallthrough comments. */
+
+#if defined __has_attribute
+# if __has_attribute(__fallthrough__)
+#  define fallthrough			__attribute__((__fallthrough__))
+# endif
+#else
+# define fallthrough			do {} while (0)  /* fallthrough */
+#endif
+
 /**
  * __set_bit - Set a bit in memory
  * @nr: the bit to set

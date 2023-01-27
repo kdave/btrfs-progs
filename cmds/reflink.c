@@ -120,7 +120,7 @@ static int cmd_reflink_clone(const struct cmd_struct *cmd, int argc, char **argv
 		switch (c) {
 		case 's':
 			same_file = true;
-			/* fallthrough */
+			fallthrough;
 		case 'r':
 			range = malloc(sizeof(struct reflink_range));
 			if (!range) {

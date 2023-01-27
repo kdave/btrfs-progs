@@ -89,15 +89,15 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 	case UNITS_TBYTES:
 		base *= mult;
 		num_divs++;
-		/* fallthrough */
+		fallthrough;
 	case UNITS_GBYTES:
 		base *= mult;
 		num_divs++;
-		/* fallthrough */
+		fallthrough;
 	case UNITS_MBYTES:
 		base *= mult;
 		num_divs++;
-		/* fallthrough */
+		fallthrough;
 	case UNITS_KBYTES:
 		num_divs++;
 		break;
