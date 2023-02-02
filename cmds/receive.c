@@ -1080,6 +1080,15 @@ static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 			return -EIO;
 		}
 	}
+
+	/*
+	 * Zero out the unused part of the output buffer.
+	 * At least with zstd 1.5.2, the decompression can leave some garbage
+	 * at/beyond the offset out_buf.pos.
+	 */
+	if (out_buf.pos < out_buf.size)
+		memset(unencoded_buf + out_buf.pos, 0, out_buf.size - out_buf.pos);
+
 	return 0;
 }
 #endif
