@@ -1117,11 +1117,11 @@ next:
 		path.slots[0]++;
 	}
 
-	if (restore_metadata) {
+	if (restore_metadata || get_xattrs) {
 		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, in_dir);
 		fd = open(path_name, O_RDONLY);
 		if (fd < 0) {
-			error("failed to access '%s' to restore metadata: %m",
+			error("failed to access '%s' to restore metadata/xattrs: %m",
 					path_name);
 			if (!ignore_errors) {
 				ret = -1;
@@ -1132,7 +1132,21 @@ next:
 			 * Set owner/mode/time on the directory as well
 			 */
 			key->type = BTRFS_INODE_ITEM_KEY;
-			ret = copy_metadata(root, fd, key);
+			if (restore_metadata) {
+				ret = copy_metadata(root, fd, key);
+				if (ret && !ignore_errors) {
+					close(fd);
+					goto out;
+				}
+			}
+
+			/* Also set xattrs on the directory. */
+			if (get_xattrs) {
+				ret = set_file_xattrs(root, key->objectid, fd, path_name);
+				if (ret) {
+					error("failed to set xattrs on %s: %m", path_name);
+				}
+			}
 			close(fd);
 			if (ret && !ignore_errors)
 				goto out;
