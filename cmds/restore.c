@@ -1117,7 +1117,7 @@ next:
 		path.slots[0]++;
 	}
 
-	if (restore_metadata || get_xattrs) {
+	if ((restore_metadata || get_xattrs) && !dry_run) {
 		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, in_dir);
 		fd = open(path_name, O_RDONLY);
 		if (fd < 0) {
