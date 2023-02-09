@@ -131,6 +131,7 @@ CRYPTO_OBJECTS =
 
 ifeq ($(shell uname -m),x86_64)
 crypto_blake2b_sse2_cflags = -msse2
+crypto_blake2b_sse41_cflags = -msse4.1
 endif
 
 LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
@@ -351,7 +352,8 @@ btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 cmds_restore_cflags = -DCOMPRESSION_LZO=$(COMPRESSION_LZO) -DCOMPRESSION_ZSTD=$(COMPRESSION_ZSTD)
 
 ifeq ($(CRYPTOPROVIDER_BUILTIN),1)
-CRYPTO_OBJECTS = crypto/sha224-256.o crypto/blake2b-ref.o crypto/blake2b-sse2.o
+CRYPTO_OBJECTS = crypto/sha224-256.o crypto/blake2b-ref.o crypto/blake2b-sse2.o \
+		 crypto/blake2b-sse41.o
 CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
