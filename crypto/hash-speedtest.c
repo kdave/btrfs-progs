@@ -29,6 +29,7 @@
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
 #include "common/messages.h"
+#include "common/cpu-utils.h"
 
 #ifdef __x86_64__
 static const int cycles_supported = 1;
@@ -181,15 +182,25 @@ int main(int argc, char **argv) {
 		int digest_size;
 		u64 cycles;
 		u64 time;
+		unsigned long cpu_flag;
 	} contestants[] = {
 		{ .name = "NULL-NOP", .digest = hash_null_nop, .digest_size = 32 },
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
 		{ .name = "CRC32C", .digest = hash_crc32c, .digest_size = 4 },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256", .digest = hash_sha256, .digest_size = 32 },
-		{ .name = "BLAKE2", .digest = hash_blake2b, .digest_size = 32 },
+		{ .name = "BLAKE2-ref", .digest = hash_blake2b, .digest_size = 32 },
+		{ .name = "BLAKE2-SSE2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_SSE2 },
+		{ .name = "BLAKE2-SSE41", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_SSE41 },
+		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_AVX2 },
 	};
 	int units = UNITS_CYCLES;
+
+	cpu_detect_flags();
+	cpu_print_flags();
 
 	optind = 0;
 	while (1) {
@@ -250,9 +261,14 @@ int main(int argc, char **argv) {
 		u64 tstart, tend;
 		u64 total = 0;
 
+		if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
+			printf("%12s: no CPU support\n", c->name);
+			continue;
+		}
 		printf("%12s: ", c->name);
 		fflush(stdout);
 
+		cpu_set_level(c->cpu_flag);
 		tstart = get_time();
 		start = get_cycles(units);
 		for (iter = 0; iter < iterations; iter++) {
@@ -264,6 +280,7 @@ int main(int argc, char **argv) {
 		tend = get_time();
 		c->cycles = end - start;
 		c->time = tend - tstart;
+		cpu_reset_level();
 
 		if (units == UNITS_CYCLES || units == UNITS_PERF)
 			total = c->cycles;
