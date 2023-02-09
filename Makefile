@@ -172,6 +172,7 @@ objects = \
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\
 	kernel-shared/zoned.o	\
+	common/cpu-utils.o	\
 	common/device-scan.o	\
 	common/device-utils.o	\
 	common/extent-cache.o	\
