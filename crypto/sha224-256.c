@@ -43,6 +43,8 @@
 #include "crypto/sha.h"
 #include "crypto/sha-private.h"
 
+#include "common/cpu-utils.h"
+
 /* Define the SHA shift, rotate left, and rotate right macros */
 #define SHA256_SHR(bits,word)      ((word) >> (bits))
 #define SHA256_ROTL(bits,word)                         \
@@ -207,6 +209,8 @@ int SHA256Reset(SHA256Context *context)
   return SHA224_256Reset(context, SHA256_H0);
 }
 
+void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);
+
 /*
  * SHA256Input
  *
@@ -240,8 +244,19 @@ int SHA256Input(SHA256Context *context, const uint8_t *message_array,
             *message_array;
 
     if ((SHA224_256AddLength(context, 8) == shaSuccess) &&
-      (context->Message_Block_Index == SHA256_Message_Block_Size))
-      SHA224_256ProcessMessageBlock(context);
+      (context->Message_Block_Index == SHA256_Message_Block_Size)) {
+#if HAVE_CFLAG_msha
+        /* Do the runtime check only if compiler supports the instructions */
+        if (cpu_has_feature(CPU_FLAG_SHA)) {
+          sha256_process_x86(context->Intermediate_Hash, context->Message_Block, SHA256_Message_Block_Size);
+          context->Message_Block_Index = 0;
+        } else {
+          SHA224_256ProcessMessageBlock(context);
+        }
+#else
+        SHA224_256ProcessMessageBlock(context);
+#endif
+    }
 
     message_array++;
   }
