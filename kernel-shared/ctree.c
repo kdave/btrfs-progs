@@ -275,6 +275,10 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 		}
 		fs_info->block_group_root = new_root;
 		break;
+
+	case BTRFS_CSUM_TREE_TMP_OBJECTID:
+		fs_info->csum_tree_tmp = new_root;
+		break;
 	/*
 	 * Essential trees can't be created by this function, yet.
 	 * As we expect such skeleton exists, or a lot of functions like

@@ -29,6 +29,6 @@ int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string);
 
 int convert_to_bg_tree(struct btrfs_fs_info *fs_info);
 
-int rewrite_checksums(struct btrfs_root *root, int csum_type);
+int rewrite_checksums(struct btrfs_fs_info *fs_info, int csum_type);
 
 #endif

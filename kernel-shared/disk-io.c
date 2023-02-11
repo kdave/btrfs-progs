@@ -479,6 +479,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	if (trans && !btrfs_buffer_uptodate(eb, trans->transid))
 		BUG();
 
+	btrfs_clear_header_flag(eb, BTRFS_HEADER_FLAG_CSUM_NEW);
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	csum_tree_block(fs_info, eb, 0);
 

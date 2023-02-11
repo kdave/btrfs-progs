@@ -317,6 +317,10 @@ static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 
 #define BTRFS_HEADER_FLAG_WRITTEN		(1ULL << 0)
 #define BTRFS_HEADER_FLAG_RELOC			(1ULL << 1)
+
+/* Temporary flag not on-disk for blocks that have changed csum already */
+#define BTRFS_HEADER_FLAG_CSUM_NEW     		(1ULL << 16)
+
 #define BTRFS_SUPER_FLAG_SEEDING		(1ULL << 32)
 #define BTRFS_SUPER_FLAG_METADUMP		(1ULL << 33)
 #define BTRFS_SUPER_FLAG_METADUMP_V2		(1ULL << 34)
@@ -1208,6 +1212,9 @@ struct btrfs_fs_info {
 	/* the log root tree is a directory of all the other log roots */
 	struct btrfs_root *log_root_tree;
 
+	/* When switching csums */
+	struct btrfs_root *csum_tree_tmp;
+
 	struct cache_tree extent_cache;
 	u64 max_cache_size;
 	u64 cache_size;
@@ -1499,10 +1506,19 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
  *
  * Existing items:
  *
- * - balance status item
+ * - balance status item (objectid -4)
  *   (BTRFS_BALANCE_OBJECTID, BTRFS_TEMPORARY_ITEM_KEY, 0)
+ *
+ * - second csum tree for conversion (objecitd
  */
 #define BTRFS_TEMPORARY_ITEM_KEY	248
+
+/*
+ * Temporary value
+ *
+ * root tree pointer of checksum tree with new checksum type
+ */
+#define BTRFS_CSUM_TREE_TMP_OBJECTID	13ULL
 
 /*
  * Obsolete name, see BTRFS_PERSISTENT_ITEM_KEY

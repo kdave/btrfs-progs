@@ -1137,6 +1137,9 @@ static void print_temporary_item(struct extent_buffer *eb, void *ptr,
 	case BTRFS_BALANCE_OBJECTID:
 		print_balance_item(eb, ptr);
 		break;
+	case BTRFS_CSUM_TREE_TMP_OBJECTID:
+		printf("\t\tcsum tree tmp root %llu\n", offset);
+		break;
 	default:
 		printf("\t\tunknown temporary item objectid %llu\n", objectid);
 	}
