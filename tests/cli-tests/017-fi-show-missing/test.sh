@@ -23,7 +23,7 @@ run_check $SUDO_HELPER mv "$dev2" /dev/loop-non-existent
 run_check $SUDO_HELPER mount -o degraded $dev1 $TEST_MNT
 
 if ! run_check_stdout $SUDO_HELPER "$TOP/btrfs" filesystem show "$TEST_MNT" | \
-	grep -q "$dev2 MISSING"; then
+	grep -q -e "devid[[:space:]]\+2.*MISSING"; then
 
 	_fail "didn't find exact missing device"
 fi
