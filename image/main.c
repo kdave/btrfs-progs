@@ -3052,8 +3052,7 @@ static const struct cmd_struct image_cmd = {
 
 static void print_usage(int ret)
 {
-	usage(&image_cmd);
-	exit(ret);
+	usage(&image_cmd, ret);
 }
 
 int BOX_MAIN(image)(int argc, char *argv[])

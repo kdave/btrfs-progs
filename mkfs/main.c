@@ -449,8 +449,7 @@ static const struct cmd_struct mkfs_cmd = {
 
 static void print_usage(int ret)
 {
-	usage(&mkfs_cmd);
-	exit(ret);
+	usage(&mkfs_cmd, ret);
 }
 
 static int zero_output_file(int out_fd, u64 size)

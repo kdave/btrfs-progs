@@ -1645,7 +1645,7 @@ out:
 	if (comparer_set)
 		free(comparer_set);
 	if (uerr)
-		usage(cmd);
+		usage(cmd, 1);
 	return !!ret;
 }
 DEFINE_SIMPLE_COMMAND(subvolume_list, "list");

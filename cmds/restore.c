@@ -1481,9 +1481,9 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (!list_roots && check_argc_min(argc - optind, 2))
-		usage(cmd);
+		usage(cmd, 1);
 	else if (list_roots && check_argc_min(argc - optind, 1))
-		usage(cmd);
+		usage(cmd, 1);
 
 	if (fs_location && root_objectid) {
 		error("can't use -f and -r at the same time");

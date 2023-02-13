@@ -1299,7 +1299,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	if (by_rootid && by_uuid) {
 		error(
 		"options --rootid and --uuid cannot be used at the same time");
-		usage(cmd);
+		usage(cmd, 1);
 	}
 
 	fullpath = realpath(argv[optind], NULL);

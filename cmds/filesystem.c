@@ -752,7 +752,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 	if (argc > optind) {
 		search = argv[optind];
 		if (*search == 0)
-			usage(cmd);
+			usage(cmd, 1);
 		type = check_arg_type(search);
 
 		/*

@@ -10075,7 +10075,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				break;
 			case '?':
 			case 'h':
-				usage(cmd);
+				usage(cmd, 0);
 			case GETOPT_VAL_REPAIR:
 				printf("enabling repair mode\n");
 				opt_check_repair = 1;
@@ -10130,7 +10130,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd);
+		usage(cmd, 1);
 
 	if (g_task_ctx.progress_enabled) {
 		g_task_ctx.tp = TASK_NOTHING;

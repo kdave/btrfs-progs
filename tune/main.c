@@ -95,8 +95,7 @@ static const struct cmd_struct tune_cmd = {
 
 static void print_usage(int ret)
 {
-	usage(&tune_cmd);
-	exit(ret);
+	usage(&tune_cmd, ret);
 }
 
 int BOX_MAIN(btrfstune)(int argc, char *argv[])

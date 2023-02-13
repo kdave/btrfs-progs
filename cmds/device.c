@@ -440,10 +440,10 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 	devstart = optind;
 
 	if (all && forget)
-		usage(cmd);
+		usage(cmd, 1);
 
 	if (all && check_argc_max(argc - optind, 1))
-		usage(cmd);
+		usage(cmd, 1);
 
 	if (all || argc - optind == 0) {
 		if (forget) {
