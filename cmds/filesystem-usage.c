@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <limits.h>
+#include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
@@ -38,6 +39,7 @@
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "common/messages.h"
+#include "common/path-utils.h"
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
 
@@ -700,14 +702,35 @@ out:
 	return ret;
 }
 
-static int device_is_seed(const char *dev_path, const u8 *mnt_fsid)
+static int device_is_seed(int fd, const char *dev_path, u64 devid, const u8 *mnt_fsid)
 {
+	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
+	char fsid_path[PATH_MAX];
+	char devid_str[20];
 	u8 fsid[BTRFS_UUID_SIZE];
-	int ret;
+	int ret = -1;
+	int sysfs_fd;
 
-	ret = dev_to_fsid(dev_path, fsid);
-	if (ret)
+	snprintf(devid_str, 20, "%llu", devid);
+	/* devinfo/<devid>/fsid */
+	ret = path_cat3_out(fsid_path, "devinfo", devid_str, "fsid");
+	if (ret < 0)
 		return ret;
+
+	/* /sys/fs/btrfs/<fsid>/devinfo/<devid>/fsid */
+	sysfs_fd = sysfs_open_fsid_file(fd, fsid_path);
+	if (sysfs_fd >= 0) {
+		sysfs_read_file(sysfs_fd, fsid_str, BTRFS_UUID_UNPARSED_SIZE);
+		fsid_str[BTRFS_UUID_UNPARSED_SIZE - 1] = 0;
+		ret = uuid_parse(fsid_str, fsid);
+		close(sysfs_fd);
+	}
+
+	if (ret) {
+		ret = dev_to_fsid(dev_path, fsid);
+		if (ret)
+			return ret;
+	}
 
 	if (memcmp(mnt_fsid, fsid, BTRFS_FSID_SIZE) != 0)
 		return 0;
@@ -762,13 +785,14 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 		}
 
 		/*
-		 * Skip seed device by checking device's fsid (requires root).
-		 * And we will skip only if dev_to_fsid is successful and dev
+		 * Skip seed device by checking device's fsid (requires root if
+		 * kernel is not patched to provide fsid from the sysfs).
+		 * And we will skip only if device_is_seed is successful and dev
 		 * is a seed device.
 		 * Ignore any other error including -EACCES, which is seen when
 		 * a non-root process calls dev_to_fsid(path)->open(path).
 		 */
-		ret = device_is_seed((const char *)dev_info.path, fi_args.fsid);
+		ret = device_is_seed(fd, (const char *)dev_info.path, i, fi_args.fsid);
 		if (!ret)
 			continue;
 
