@@ -700,6 +700,21 @@ out:
 	return ret;
 }
 
+static int device_is_seed(const char *dev_path, const u8 *mnt_fsid)
+{
+	u8 fsid[BTRFS_UUID_SIZE];
+	int ret;
+
+	ret = dev_to_fsid(dev_path, fsid);
+	if (ret)
+		return ret;
+
+	if (memcmp(mnt_fsid, fsid, BTRFS_FSID_SIZE) != 0)
+		return 0;
+
+	return -1;
+}
+
 /*
  *  This function loads the device_info structure and put them in an array
  */
@@ -710,7 +725,6 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args dev_info;
 	struct device_info *info;
-	u8 fsid[BTRFS_UUID_SIZE];
 
 	*devcount_ret = 0;
 	*devinfo_ret = NULL;
@@ -754,8 +768,8 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 		 * Ignore any other error including -EACCES, which is seen when
 		 * a non-root process calls dev_to_fsid(path)->open(path).
 		 */
-		ret = dev_to_fsid((const char *)dev_info.path, fsid);
-		if (!ret && memcmp(fi_args.fsid, fsid, BTRFS_FSID_SIZE) != 0)
+		ret = device_is_seed((const char *)dev_info.path, fi_args.fsid);
+		if (!ret)
 			continue;
 
 		info[ndevs].devid = dev_info.devid;
