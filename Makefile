@@ -697,7 +697,7 @@ quick-test: quick-test.o $(objects) libbtrfsutil.a $(libs_shared)
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 ioctl-test.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
-	@echo "    [CC]   $@"
+	@echo "    [CC]     $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
 ioctl-test-32.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
@@ -709,7 +709,7 @@ ioctl-test-64.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 
 ioctl-test: ioctl-test.o
-	@echo "    [LD]   $@"
+	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 	@echo "   ?[PAHOLE] $@.pahole"
 	-$(Q)pahole $@ > $@.pahole
