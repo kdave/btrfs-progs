@@ -20,6 +20,7 @@
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
 #include "common/messages.h"
+#include "common/cpu-utils.h"
 
 struct hash_testvec {
 	const char *plaintext;
@@ -32,6 +33,7 @@ struct hash_testspec {
 	int digest_size;
 	const struct hash_testvec *testvec;
 	size_t count;
+	unsigned long cpu_flag;
 	int (*hash)(const u8 *buf, size_t length, u8 *out);
 };
 
@@ -432,24 +434,56 @@ static const struct hash_testspec test_spec[] = {
 		.digest_size = 4,
 		.testvec = crc32c_tv,
 		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = 0,
 		.hash = hash_crc32c
 	}, {
 		.name = "xxhash64",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,
 		.count = ARRAY_SIZE(xxhash64_tv),
+		.cpu_flag = 0,
 		.hash = hash_xxhash
 	}, {
-		.name = "sha256",
+		.name = "sha256-ref",
 		.digest_size = 32,
 		.testvec = sha256_tv,
 		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = 0,
 		.hash = hash_sha256
 	}, {
-		.name = "blake2b",
+		.name = "sha256-ni",
+		.digest_size = 32,
+		.testvec = sha256_tv,
+		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = CPU_FLAG_SHA,
+		.hash = hash_sha256
+	}, {
+		.name = "blake2b-ref",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = 0,
+		.hash = hash_blake2b
+	}, {
+		.name = "blake2b-sse2",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_SSE2,
+		.hash = hash_blake2b
+	}, {
+		.name = "blake2b-sse41",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_SSE41,
+		.hash = hash_blake2b
+	}, {
+		.name = "blake2b-avx2",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_AVX2,
 		.hash = hash_blake2b
 	}
 };
@@ -463,7 +497,14 @@ int test_hash(const struct hash_testspec *spec)
 		const struct hash_testvec *vec = &spec->testvec[i];
 		u8 csum[CRYPTO_HASH_SIZE_MAX];
 
+		if (spec->cpu_flag != 0 && !cpu_has_feature(spec->cpu_flag)) {
+			printf("%s skipped, no CPU support\n", spec->name);
+			continue;
+		}
+
+		cpu_set_level(spec->cpu_flag);
 		ret = spec->hash((const u8 *)vec->plaintext, vec->psize, csum);
+		cpu_reset_level();
 		if (ret < 0) {
 			error("hash %s = %d", spec->name, ret);
 			return 1;
@@ -490,6 +531,9 @@ int test_hash(const struct hash_testspec *spec)
 
 int main(int argc, char **argv) {
 	int i;
+
+	cpu_detect_flags();
+	cpu_print_flags();
 
 	for (i = 0; i < ARRAY_SIZE(test_spec); i++) {
 		printf("TEST: name=%s vectors=%zd\n", test_spec[i].name,
