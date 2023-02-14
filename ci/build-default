@@ -8,7 +8,10 @@ fi
 
 set -e
 
+jobs=`grep -c ^processor /proc/cpuinfo`
+
 ./autogen.sh
 ./configure "$@"
 echo "D=$D"
-make
+make -j $jobs
+make hash-speedtest hash-vectest ioctl-test json-formatter-test string-table-test
