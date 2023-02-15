@@ -78,7 +78,7 @@ static int change_buffer_header_uuid(struct extent_buffer *eb, uuid_t new_fsid)
 	return ret;
 }
 
-static int change_extents_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
+static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {
 	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_path path;
@@ -159,7 +159,7 @@ static int change_device_uuid(struct extent_buffer *eb, int slot,
 	return ret;
 }
 
-static int change_devices_uuid(struct btrfs_root *root, uuid_t new_fsid)
+static int change_chunk_tree_uuid(struct btrfs_root *root, uuid_t new_fsid)
 {
 	struct btrfs_path path;
 	struct btrfs_key key = {0, 0, 0};
@@ -275,16 +275,16 @@ int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 		goto out;
 
 	/* Change extents first */
-	pr_verbose(LOG_DEFAULT, "Change fsid in extents\n");
-	ret = change_extents_uuid(fs_info, new_fsid);
+	pr_verbose(LOG_DEFAULT, "Change fsid in extent tree\n");
+	ret = change_extent_tree_uuid(fs_info, new_fsid);
 	if (ret < 0) {
 		error("failed to change UUID of metadata: %d", ret);
 		goto out;
 	}
 
 	/* Then devices */
-	pr_verbose(LOG_DEFAULT, "Change fsid on devices\n");
-	ret = change_devices_uuid(fs_info->chunk_root, new_fsid);
+	pr_verbose(LOG_DEFAULT, "Change fsid in chunk tree\n");
+	ret = change_chunk_tree_uuid(fs_info->chunk_root, new_fsid);
 	if (ret < 0) {
 		error("failed to change UUID of devices: %d", ret);
 		goto out;

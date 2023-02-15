@@ -88,7 +88,7 @@ iterate_bgs:
 		}
 		ce = prev_cache_extent(ce);
 		if (!ce) {
-			error("no more block group before bytenr %llu",
+			error("no more block groups before bytenr %llu",
 			      fs_info->last_converted_bg_bytenr);
 			ret = -ENOENT;
 			goto error;

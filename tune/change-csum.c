@@ -62,7 +62,7 @@ out:
 	return ret;
 }
 
-static int change_extents_csum(struct btrfs_fs_info *fs_info, int csum_type)
+static int change_extent_tree_csum(struct btrfs_fs_info *fs_info, int csum_type)
 {
 	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_path path;
@@ -123,7 +123,7 @@ out:
 	return ret;
 }
 
-static int change_devices_csum(struct btrfs_root *root, int csum_type)
+static int change_chunk_tree_csum(struct btrfs_root *root, int csum_type)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_path path;
@@ -275,9 +275,13 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 
 	/* FIXME: Sanity checks */
 	if (0) {
-		error("UUID rewrite in progress, cannot change fsid");
+		error("UUID rewrite in progress, cannot change csum");
 		return 1;
 	}
+
+	pr_verbose(LOG_DEFAULT, "Change csum from %s to %s\n",
+			btrfs_super_csum_name(fs_info->csum_type),
+			btrfs_super_csum_name(csum_type));
 
 	fs_info->force_csum_type = csum_type;
 
@@ -291,8 +295,8 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 		return ret;
 
 	/* Change extents first */
-	pr_verbose(LOG_DEFAULT, "Change fsid in extents\n");
-	ret = change_extents_csum(fs_info, csum_type);
+	pr_verbose(LOG_DEFAULT, "Change csum in extent tree\n");
+	ret = change_extent_tree_csum(fs_info, csum_type);
 	if (ret < 0) {
 		error("failed to change csum of metadata: %d", ret);
 		goto out;
@@ -300,7 +304,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 
 	/* Then devices */
 	pr_verbose(LOG_DEFAULT, "Change csum in chunk tree\n");
-	ret = change_devices_csum(fs_info->chunk_root, csum_type);
+	ret = change_chunk_tree_csum(fs_info->chunk_root, csum_type);
 	if (ret < 0) {
 		error("failed to change UUID of devices: %d", ret);
 		goto out;
@@ -312,7 +316,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 	if (ret < 0)
 		goto out;
 
-	/* Last, change fsid in super */
+	/* Last, change csum in super */
 	ret = write_all_supers(fs_info);
 	if (ret < 0)
 		goto out;

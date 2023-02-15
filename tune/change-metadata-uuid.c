@@ -46,7 +46,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
 	}
 
 	if (check_unfinished_fsid_change(root->fs_info, unused1, unused2)) {
-		error("UUID rewrite in progress, cannot change fsid");
+		error("UUID rewrite in progress, cannot change metadata_uuid");
 		return 1;
 	}
 
@@ -110,4 +110,3 @@ int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
 
 	return btrfs_commit_transaction(trans, root);
 }
-

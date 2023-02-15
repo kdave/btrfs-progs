@@ -179,8 +179,6 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 				"Switching checksums is experimental, do not use for valuable data!");
 			ctree_flags |= OPEN_CTREE_SKIP_CSUM_CHECK;
 			csum_type = parse_csum_type(optarg);
-			pr_verbose(LOG_DEFAULT, "Switch csum to %s\n",
-					btrfs_super_csum_name(csum_type));
 			break;
 #endif
 		case GETOPT_VAL_HELP:
