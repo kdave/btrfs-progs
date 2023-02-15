@@ -140,7 +140,7 @@ iterate_bgs:
 		error_msg(ERROR_MSG_COMMIT_TRANS, "final transaction: %m");
 		return ret;
 	}
-	printf("Converted the filesystem to block group tree feature\n");
+	pr_verbose(LOG_DEFAULT, "Converted the filesystem to block group tree feature\n");
 	return 0;
 error:
 	btrfs_abort_transaction(trans, ret);

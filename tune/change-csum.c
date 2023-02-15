@@ -102,7 +102,6 @@ static int change_extents_csum(struct btrfs_fs_info *fs_info, int csum_type)
 			goto out;
 		}
 		/* Only rewrite block */
-		/* printf("CSUM: start %llu\n", eb->start); */
 		ret = write_tree_block(NULL, fs_info, eb);
 		free_extent_buffer(eb);
 		if (ret < 0) {
@@ -196,8 +195,9 @@ static int fill_csum_tree_from_extent(struct btrfs_fs_info *fs_info)
 
 	trans = btrfs_start_transaction(extent_root, 1);
 	if (trans == NULL) {
-		/* fixme */
-		printf("cannot start transaction\n");
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return -EINVAL;
 	}
 
@@ -282,7 +282,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 	fs_info->force_csum_type = csum_type;
 
 	/* Step 1 sets the in progress flag, no other change to the sb */
-	printf("Set superblock flag CHANGING_CSUM\n");
+	pr_verbose(LOG_DEFAULT, "Set superblock flag CHANGING_CSUM\n");
 	trans = btrfs_start_transaction(root, 1);
 	super_flags |= BTRFS_SUPER_FLAG_CHANGING_CSUM;
 	btrfs_set_super_flags(disk_super, super_flags);
@@ -291,7 +291,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 		return ret;
 
 	/* Change extents first */
-	printf("Change fsid in extents\n");
+	pr_verbose(LOG_DEFAULT, "Change fsid in extents\n");
 	ret = change_extents_csum(fs_info, csum_type);
 	if (ret < 0) {
 		error("failed to change csum of metadata: %d", ret);
@@ -299,7 +299,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 	}
 
 	/* Then devices */
-	printf("Change csum in chunk tree\n");
+	pr_verbose(LOG_DEFAULT, "Change csum in chunk tree\n");
 	ret = change_devices_csum(fs_info->chunk_root, csum_type);
 	if (ret < 0) {
 		error("failed to change UUID of devices: %d", ret);
@@ -307,7 +307,7 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 	}
 
 	/* DATA */
-	printf("Change csum of data blocks\n");
+	pr_verbose(LOG_DEFAULT, "Change csum of data blocks\n");
 	ret = fill_csum_tree_from_extent(fs_info);
 	if (ret < 0)
 		goto out;
@@ -318,13 +318,13 @@ int rewrite_checksums(struct btrfs_root *root, int csum_type)
 		goto out;
 
 	/* All checksums done, drop the flag, super block csum will get updated */
-	printf("Clear superblock flag CHANGING_CSUM\n");
+	pr_verbose(LOG_DEFAULT, "Clear superblock flag CHANGING_CSUM\n");
 	super_flags = btrfs_super_flags(fs_info->super_copy);
 	super_flags &= ~BTRFS_SUPER_FLAG_CHANGING_CSUM;
 	btrfs_set_super_flags(fs_info->super_copy, super_flags);
 	btrfs_set_super_csum_type(disk_super, csum_type);
 	ret = write_all_supers(fs_info);
-	printf("Checksum change finished\n");
+	pr_verbose(LOG_DEFAULT, "Checksum change finished\n");
 out:
 	/* check errors */
 

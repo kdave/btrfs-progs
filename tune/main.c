@@ -116,6 +116,8 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	u64 super_flags = 0;
 	int fd = -1;
 
+	btrfs_config_init();
+
 	while(1) {
 		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
@@ -177,7 +179,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 				"Switching checksums is experimental, do not use for valuable data!");
 			ctree_flags |= OPEN_CTREE_SKIP_CSUM_CHECK;
 			csum_type = parse_csum_type(optarg);
-			printf("Switch csum to %s\n",
+			pr_verbose(LOG_DEFAULT, "Switch csum to %s\n",
 					btrfs_super_csum_name(csum_type));
 			break;
 #endif
@@ -294,7 +296,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
 	if (csum_type != -1) {
 		/* TODO: check conflicting flags */
-		printf("Proceed to switch checksums\n");
+		pr_verbose(LOG_DEFAULT, "Proceed to switch checksums\n");
 		ret = rewrite_checksums(root, csum_type);
 	}
 
