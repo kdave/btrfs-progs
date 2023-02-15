@@ -38,7 +38,6 @@ AC_CONFIG_SRCDIR([btrfs.c])
 AC_PREFIX_DEFAULT([/usr/local])
 
 AC_PROG_CC
-BTRFS_DETECT_CSTD
 AC_CANONICAL_HOST
 AC_C_CONST
 AC_C_VOLATILE
@@ -47,6 +46,9 @@ AC_C_BIGENDIAN
 AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
 AC_SUBST([HAVE_CFLAG_msha])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
+
+AX_CHECK_COMPILE_FLAG([-std=gnu11], [],
+	[AC_MSG_ERROR([std=gnu11 compiler required])])
 
 AC_SYS_LARGEFILE
 

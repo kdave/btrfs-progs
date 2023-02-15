@@ -88,7 +88,7 @@ ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough)
 
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
-	 $(CSTD) \
+	 -std=gnu11 \
 	 -include config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
@@ -107,7 +107,7 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 $(EXTRA_CFLAGS)
 
 LIBBTRFSUTIL_CFLAGS = $(SUBST_CFLAGS) \
-		      $(CSTD) \
+		      -std=gnu11 \
 		      -D_GNU_SOURCE \
 		      -fPIC \
 		      -fvisibility=hidden \
@@ -415,7 +415,6 @@ ifdef C
 			grep -v __SIZE_TYPE__ > $(check_defs))
 	check = $(CHECKER)
 	check_echo = echo
-	CSTD = -std=gnu11
 else
 	check = true
 	check_echo = true
