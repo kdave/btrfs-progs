@@ -29,6 +29,7 @@
 	__ ## name ## _SEQ = __ ## name ## _BIT
 
 enum cpu_feature {
+	ENUM_CPU_BIT(CPU_FLAG_NONE),
 	ENUM_CPU_BIT(CPU_FLAG_SSE2),
 	ENUM_CPU_BIT(CPU_FLAG_SSSE3),
 	ENUM_CPU_BIT(CPU_FLAG_SSE41),

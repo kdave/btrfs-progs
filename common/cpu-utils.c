@@ -18,8 +18,8 @@
 #include <stdbool.h>
 #include "common/cpu-utils.h"
 
-unsigned long __cpu_flags = 0;
-unsigned long __cpu_flags_orig = 0;
+unsigned long __cpu_flags = CPU_FLAG_NONE;
+unsigned long __cpu_flags_orig = CPU_FLAG_NONE;
 
 #ifdef __x86_64__
 /*
@@ -69,6 +69,7 @@ void cpu_detect_flags(void)
 	unsigned int a, b, c, d;
 
 	__builtin_cpu_init();
+	__cpu_flags = CPU_FLAG_NONE;
 	if (__builtin_cpu_supports("sse2"))
 		__cpu_flags |= CPU_FLAG_SSE2;
 	if (__builtin_cpu_supports("ssse3"))
@@ -95,7 +96,7 @@ void cpu_set_level(unsigned long topbit)
 	if (topbit)
 		__cpu_flags &= (topbit << 1) - 1;
 	else
-		__cpu_flags = 0;
+		__cpu_flags = CPU_FLAG_NONE;
 }
 
 void cpu_reset_level(void)
