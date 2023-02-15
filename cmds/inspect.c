@@ -16,11 +16,11 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <linux/fs.h>
 #include <linux/magic.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
