@@ -3,7 +3,7 @@
 
 urlbase="https://github.com/kdave/btrfs-progs/archive"
 branch=${1:-devel}
-fname=${branch}.tar.gz
+fname="${branch}.tar.gz"
 url="${urlbase}/${fname}"
 
 shift
@@ -18,5 +18,5 @@ else
 	wget "$url" -O "$fname"
 fi
 tar xf "$fname"
-cd btrfs-progs-$branch
+cd "btrfs-progs-$branch"
 ci/build-default "$@"

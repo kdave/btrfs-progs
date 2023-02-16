@@ -1,6 +1,6 @@
 #!/bin/sh
 # Usage: $0 [branch]
-# Create source tarball from HEAD or given branch and build it in musl CI
+# Create source tarball from HEAD or given branch and build it in openSUSE Leap 15.3 CI
 # environment
 
 HERE=`pwd`

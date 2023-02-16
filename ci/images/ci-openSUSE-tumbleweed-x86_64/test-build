@@ -4,7 +4,7 @@
 urlbase="https://github.com/kdave/btrfs-progs/archive"
 branch=${1:-devel}
 fname="${branch}.tar.gz"
-url="$urlbase/$fname"
+url="${urlbase}/${fname}"
 
 shift
 
