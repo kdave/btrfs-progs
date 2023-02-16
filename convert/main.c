@@ -99,10 +99,11 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
-#include "crypto/crc32c.h"
+#include "crypto/hash.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
+#include "common/cpu-utils.h"
 #include "common/messages.h"
 #include "common/task-utils.h"
 #include "common/path-utils.h"
@@ -1834,7 +1835,8 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	u32 copy_fsid = 0;
 	char fsid[BTRFS_UUID_UNPARSED_SIZE] = {0};
 
-	crc32c_optimization_init();
+	cpu_detect_flags();
+	hash_init_accel();
 	btrfs_assert_feature_buf_size();
 	printf("btrfs-convert from %s\n\n", PACKAGE_STRING);
 

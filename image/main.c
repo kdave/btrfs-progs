@@ -40,8 +40,10 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
 #include "crypto/crc32c.h"
+#include "crypto/hash.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "common/cpu-utils.h"
 #include "common/box.h"
 #include "common/utils.h"
 #include "common/extent-cache.h"
@@ -494,9 +496,6 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	md->pending_start = (u64)-1;
 	md->compress_level = compress_level;
 	md->sanitize_names = sanitize_names;
-	if (sanitize_names == SANITIZE_COLLISIONS)
-		crc32c_optimization_init();
-
 	md->name_tree.rb_node = NULL;
 	md->num_threads = num_threads;
 	pthread_cond_init(&md->cond, NULL);
@@ -3073,6 +3072,9 @@ int BOX_MAIN(image)(int argc, char *argv[])
 	bool dump_data = false;
 	int usage_error = 0;
 	FILE *out;
+
+	cpu_detect_flags();
+	hash_init_accel();
 
 	while (1) {
 		static const struct option long_options[] = {

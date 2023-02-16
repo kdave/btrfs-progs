@@ -22,7 +22,8 @@
 #include <stdbool.h>
 #include <strings.h>
 #include "kernel-shared/volumes.h"
-#include "crypto/crc32c.h"
+#include "crypto/hash.h"
+#include "common/cpu-utils.h"
 #include "common/utils.h"
 #include "common/string-utils.h"
 #include "common/help.h"
@@ -403,9 +404,8 @@ int main(int argc, char **argv)
 	cmd = parse_command_token(argv[0], &btrfs_cmd_group);
 
 	handle_help_options_next_level(cmd, argc, argv);
-
-	crc32c_optimization_init();
-
+	cpu_detect_flags();
+	hash_init_accel();
 	fixup_argv0(argv, cmd->token);
 
 	ret = cmd_execute(cmd, argc, argv);

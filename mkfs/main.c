@@ -38,10 +38,11 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/zoned.h"
-#include "crypto/crc32c.h"
+#include "crypto/hash.h"
 #include "common/defs.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "common/cpu-utils.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
@@ -1034,7 +1035,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *source_dir = NULL;
 	bool source_dir_set = false;
 
-	crc32c_optimization_init();
+	cpu_detect_flags();
+	hash_init_accel();
 	btrfs_config_init();
 	btrfs_assert_feature_buf_size();
 

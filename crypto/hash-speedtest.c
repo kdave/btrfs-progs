@@ -203,6 +203,7 @@ int main(int argc, char **argv) {
 
 	cpu_detect_flags();
 	cpu_print_flags();
+	hash_init_accel();
 
 	optind = 0;
 	while (1) {
@@ -248,7 +249,6 @@ int main(int argc, char **argv) {
 			iterations = 1;
 	}
 
-	crc32c_optimization_init();
 	memset(buf, 0, 4096);
 
 	printf("Block size:     %d\n", blocksize);

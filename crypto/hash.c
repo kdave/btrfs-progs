@@ -20,6 +20,11 @@
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
 
+void hash_init_accel(void)
+{
+	crc32c_optimization_init();
+}
+
 /*
  * Default builtin implementations
  */
