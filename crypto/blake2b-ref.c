@@ -224,21 +224,25 @@ void blake2b_compress_sse2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKB
 void blake2b_compress_sse41( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
 void blake2b_compress_avx2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
 
-static void blake2b_compress( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] )
+static void (*blake2b_compress)( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] ) = blake2b_compress_ref;
+
+void blake2_init_accel(void)
 {
+	if (0);
 #if HAVE_AVX2
-	if (cpu_has_feature(CPU_FLAG_AVX2))
-		return blake2b_compress_avx2(S, block);
+	else if (cpu_has_feature(CPU_FLAG_AVX2))
+		blake2b_compress = blake2b_compress_avx2;
 #endif
 #if HAVE_SSE41
-	if (cpu_has_feature(CPU_FLAG_SSE41))
-		return blake2b_compress_sse41(S, block);
+	else if (cpu_has_feature(CPU_FLAG_SSE41))
+		blake2b_compress = blake2b_compress_sse41;
 #endif
 #if HAVE_SSE2
-	if (cpu_has_feature(CPU_FLAG_SSE2))
-		return blake2b_compress_sse2(S, block);
+	else if (cpu_has_feature(CPU_FLAG_SSE2))
+		blake2b_compress = blake2b_compress_sse2;
 #endif
-	return blake2b_compress_ref(S, block);
+	else
+		blake2b_compress = blake2b_compress_ref;
 }
 
 int blake2b_update( blake2b_state *S, const void *pin, size_t inlen )

@@ -23,6 +23,12 @@
 void hash_init_accel(void)
 {
 	crc32c_optimization_init();
+	blake2_init_accel();
+}
+
+void hash_init_blake2(void)
+{
+	blake2_init_accel();
 }
 
 /*
