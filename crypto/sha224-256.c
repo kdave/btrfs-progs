@@ -95,6 +95,29 @@ static uint32_t SHA256_H0[SHA256HashSize/4] = {
   0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19
 };
 
+static void (*sha256_process_message_block)(SHA256Context *context) = SHA224_256ProcessMessageBlock;
+
+#ifdef __SHA__
+void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);
+
+static void sha256_process_x86_dispatch(SHA256Context *context)
+{
+	/* Compiler and CPU support SHA extension. */
+	sha256_process_x86(context->Intermediate_Hash, context->Message_Block, SHA256_Message_Block_Size);
+	context->Message_Block_Index = 0;
+}
+#endif
+
+void sha256_init_accel(void)
+{
+#ifdef __SHA__
+	if (cpu_has_feature(CPU_FLAG_SHA))
+		sha256_process_message_block = sha256_process_x86_dispatch;
+	else
+#endif
+		sha256_process_message_block = SHA224_256ProcessMessageBlock;
+}
+
 /*
  * SHA224Reset
  *
@@ -209,8 +232,6 @@ int SHA256Reset(SHA256Context *context)
   return SHA224_256Reset(context, SHA256_H0);
 }
 
-void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);
-
 /*
  * SHA256Input
  *
@@ -245,17 +266,7 @@ int SHA256Input(SHA256Context *context, const uint8_t *message_array,
 
     if ((SHA224_256AddLength(context, 8) == shaSuccess) &&
       (context->Message_Block_Index == SHA256_Message_Block_Size)) {
-#if HAVE_CFLAG_msha
-        /* Do the runtime check only if compiler supports the instructions */
-        if (cpu_has_feature(CPU_FLAG_SHA)) {
-          sha256_process_x86(context->Intermediate_Hash, context->Message_Block, SHA256_Message_Block_Size);
-          context->Message_Block_Index = 0;
-        } else {
-          SHA224_256ProcessMessageBlock(context);
-        }
-#else
-        SHA224_256ProcessMessageBlock(context);
-#endif
+      sha256_process_message_block(context);
     }
 
     message_array++;

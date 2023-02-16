@@ -209,4 +209,6 @@ extern int hmacFinalBits(HMACContext *context, uint8_t bits,
 extern int hmacResult(HMACContext *context,
                       uint8_t digest[USHAMaxHashSize]);
 
+void sha256_init_accel(void);
+
 #endif /* _SHA_H_ */
