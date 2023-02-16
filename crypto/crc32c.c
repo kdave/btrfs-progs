@@ -10,6 +10,7 @@
 
 #include <inttypes.h>
 #include "crypto/crc32c.h"
+#include "common/cpu-utils.h"
 
 uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length);
 static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_t length) = __crc32c_le;
@@ -33,9 +34,6 @@ static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_
 #define REX_PRE
 #define SCALE_F 4
 #endif
-
-static int crc32c_probed = 0;
-static int crc32c_intel_available = 0;
 
 static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
 					uint32_t length)
@@ -78,45 +76,20 @@ static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t l
 	return crc;
 }
 
-static void do_cpuid(unsigned int *eax, unsigned int *ebx, unsigned int *ecx,
-		     unsigned int *edx)
+void crc32c_init_accel(void)
 {
-	int id = *eax;
-
-	asm("movl %4, %%eax;"
-	    "cpuid;"
-	    "movl %%eax, %0;"
-	    "movl %%ebx, %1;"
-	    "movl %%ecx, %2;"
-	    "movl %%edx, %3;"
-		: "=r" (*eax), "=r" (*ebx), "=r" (*ecx), "=r" (*edx)
-		: "r" (id)
-		: "eax", "ebx", "ecx", "edx");
-}
-
-static void crc32c_intel_probe(void)
-{
-	if (!crc32c_probed) {
-		unsigned int eax, ebx, ecx, edx;
-
-		eax = 1;
-
-		do_cpuid(&eax, &ebx, &ecx, &edx);
-		crc32c_intel_available = (ecx & (1 << 20)) != 0;
-		crc32c_probed = 1;
-	}
-}
-
-void crc32c_optimization_init(void)
-{
-	crc32c_intel_probe();
-	if (crc32c_intel_available)
+	/* CRC32 is in SSE4.2 */
+	if (cpu_has_feature(CPU_FLAG_SSE42))
 		crc_function = crc32c_intel;
+	else
+		crc_function = __crc32c_le;
 }
+
 #else
 
-void crc32c_optimization_init(void)
+void crc32c_init_accel(void)
 {
+	crc_function = __crc32c_le;
 }
 
 #endif /* __x86_64__ */

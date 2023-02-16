@@ -22,9 +22,14 @@
 
 void hash_init_accel(void)
 {
-	crc32c_optimization_init();
+	crc32c_init_accel();
 	blake2_init_accel();
 	sha256_init_accel();
+}
+
+void hash_init_crc32c(void)
+{
+	crc32c_init_accel();
 }
 
 void hash_init_blake2(void)

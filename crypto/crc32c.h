@@ -22,7 +22,7 @@
 #include <inttypes.h>
 
 uint32_t crc32c_le(uint32_t seed, unsigned char const *data, uint32_t length);
-void crc32c_optimization_init(void);
+void crc32c_init_accel(void);
 
 #define crc32c(seed, data, length) crc32c_le(seed, (unsigned char const *)data, length)
 
