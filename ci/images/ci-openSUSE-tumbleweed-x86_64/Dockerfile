@@ -27,7 +27,7 @@ RUN zypper install -y --no-recommends glibc-devel-static libblkid-devel-static \
 
 RUN zypper install -y --no-recommends libgcrypt-devel libsodium-devel libkcapi-devel \
 	   libbotan-devel libopenssl-3-devel
-RUN zypper install -y --no-recommends gcc14
+RUN zypper install -y --no-recommends gcc15
 
 COPY ./test-build .
 COPY ./run-tests .
