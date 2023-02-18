@@ -26,6 +26,8 @@ RUN zypper install -y --no-recommends glibc-devel-static libblkid-devel-static \
 	    libcom_err-devel-static libext2fs-devel-static libuuid-devel-static \
 	    libzstd-devel-static lzo-devel-static zlib-devel-static
 
+RUN zypper install -y --no-recommends gcc13
+
 COPY ./test-build .
 COPY ./run-tests .
 COPY ./devel.tar.gz .

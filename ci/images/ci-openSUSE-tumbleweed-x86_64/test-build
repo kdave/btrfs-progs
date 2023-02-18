@@ -8,6 +8,11 @@ url="${urlbase}/${fname}"
 
 shift
 
+for i in gcc gcc-nm cc cpp gcc-ar gcc-ranlib lto-dump; do
+	ln -sf /usr/bin/${i}-13 /usr/bin/${i}
+done
+gcc --version
+
 echo "btrfs-progs build test of branch ${branch}"
 cd /tmp
 if [ -f "$fname" -a -s "$fname" ]; then
