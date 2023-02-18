@@ -227,7 +227,7 @@ libbtrfs_objects = \
 		kernel-lib/rbtree.o	\
 		libbtrfs/send-stream.o	\
 		libbtrfs/send-utils.o	\
-		crypto/crc32c.o
+		libbtrfs/crc32c.o
 
 libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h libbtrfs/send.h kernel-lib/rbtree.h \
 	       kernel-lib/list.h kernel-lib/rbtree_types.h libbtrfs/kerncompat.h \
