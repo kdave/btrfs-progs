@@ -314,14 +314,15 @@ static void print_find_root_result(struct cache_tree *result,
 	}
 }
 
-static const char * btrfs_find_root_usage[] = {
+static const char * const btrfs_find_root_usage[] = {
 	"btrfs-find-usage [options] <device>",
 	"Attempt to find tree roots on the device",
 	"",
-	"  -a              search through all metadata even if the root has been found",
-	"  -o OBJECTID     filter by the tree's object id",
-	"  -l LEVEL        filter by tree level, (default: 0)",
-	"  -g GENERATION   filter by tree generation",
+	OPTLINE("-a", "search through all metadata even if the root has been found"),
+	OPTLINE("-o OBJECTID", "filter by the tree's object id"),
+	OPTLINE("-l LEVEL", "filter by tree level, (default: 0)"),
+	OPTLINE("-g GENERATION", "filter by tree generation"),
+	NULL
 };
 
 static const struct cmd_struct btrfs_find_root_cmd = {
@@ -366,10 +367,10 @@ int main(int argc, char **argv)
 			filter.level = arg_strtou64(optarg);
 			break;
 		case GETOPT_VAL_HELP:
-			usage_command(&btrfs_find_root_cmd, 0, 0);
+			usage(&btrfs_find_root_cmd, 0);
 			return 0;
 		default:
-			usage_unknown_option(&btrfs_find_root_cmd, argv);
+			usage(&btrfs_find_root_cmd, 1);
 		}
 	}
 
