@@ -1,4 +1,4 @@
-Btrfs-progs [![coverity status](https://scan.coverity.com/projects/617/badge.svg)](https://scan.coverity.com/projects/btrfs-progs)
+Btrfs-progs
 ===========
 
 Userspace utilities to manage btrfs filesystems.
