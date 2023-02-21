@@ -88,6 +88,8 @@ DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation) \
 ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough) \
 			$(call cc-option, -Wmissing-prototypes)
 
+ASFLAGS =
+
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
 	 -std=gnu11 \
@@ -383,6 +385,14 @@ CRYPTO_OBJECTS = crypto/sha224-256.o crypto/blake2b-ref.o crypto/blake2b-sse2.o 
 CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
+ifeq ($(TARGET_CPU),x86_64)
+# FIXME: linkage is broken on musl for some reason
+ifeq ($(HAVE_GLIBC),1)
+CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
+ASFLAGS += -fPIC
+endif
+endif
+
 CHECKER_FLAGS += $(btrfs_convert_cflags)
 
 # collect values of the variables above
@@ -450,6 +460,13 @@ endif
 		-MT $($(dir $@).deps/$(notdir $@):.o.d=.static.o) \
 		-MT $(dir $@).deps/$(notdir $@) $(CFLAGS) $<
 
+.S.o:
+	@echo "    [AS]     $@"
+	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
+
+%.static.o: %.S
+	@echo "    [AS]     $@"
+	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
 #
 # Pick from per-file variables, btrfs_*_cflags
 #

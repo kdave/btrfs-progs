@@ -40,6 +40,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 
 AC_PROG_CC
 AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
@@ -78,6 +79,9 @@ AC_CHECK_FUNCS([openat], [],
 AC_CHECK_FUNCS([reallocarray])
 
 AC_CHECK_FUNCS([clock_gettime])
+
+AX_CHECK_DEFINE([features.h],[__GLIBC__],[HAVE_GLIBC=1],[HAVE_GLIBC=0])
+AC_SUBST([HAVE_GLIBC])
 
 AX_GCC_BUILTIN([__builtin_add_overflow])
 AX_GCC_BUILTIN([__builtin_sub_overflow])
