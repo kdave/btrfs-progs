@@ -113,6 +113,7 @@
 #include "common/device-scan.h"
 #include "common/box.h"
 #include "common/open-utils.h"
+#include "cmds/commands.h"
 #include "check/repair.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
@@ -1793,28 +1794,44 @@ free_mem:
 	return ret;
 }
 
-static void print_usage(void)
-{
-	printf("usage: btrfs-convert [options] device\n");
-	printf("options:\n");
-	printf("\t-d|--no-datasum        disable data checksum, sets NODATASUM\n");
-	printf("\t-i|--no-xattr          ignore xattrs and ACLs\n");
-	printf("\t-n|--no-inline         disable inlining of small files to metadata\n");
-	printf("\t--csum TYPE\n");
-	printf("\t--checksum TYPE        checksum algorithm to use (default: crc32c)\n");
-	printf("\t-N|--nodesize SIZE     set filesystem metadata nodesize\n");
-	printf("\t-r|--rollback          roll back to the original filesystem\n");
-	printf("\t-l|--label LABEL       set filesystem label\n");
-	printf("\t-L|--copy-label        use label from converted filesystem\n");
-	printf("\t--uuid SPEC            new, copy or user-defined conforming UUID\n");
-	printf("\t-p|--progress          show converting progress (default)\n");
-	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
-	printf("\t--no-progress          show only overview, not the detailed progress\n");
-	printf("\n");
-	printf("Supported filesystems:\n");
-	printf("\text2/3/4: %s\n", BTRFSCONVERT_EXT2 ? "yes" : "no");
-	printf("\treiserfs: %s\n", BTRFSCONVERT_REISERFS ? "yes" : "no");
-}
+static const char * const convert_usage[] = {
+	"btrfs-convert [options] device",
+	"In-place conversion from other filesystems to BTRFS",
+	"",
+	"Options:",
+	OPTLINE("-d|--no-datasum", "disable data checksum, sets NODATASUM"),
+	OPTLINE("-i|--no-xattr", "ignore xattrs and ACLs"),
+	OPTLINE("-n|--no-inline", "disable inlining of small files to metadata"),
+	OPTLINE("--csum TYPE", ""),
+	OPTLINE("--checksum TYPE", "checksum algorithm to use (default: crc32c)"),
+	OPTLINE("-N|--nodesize SIZE", "set filesystem metadata nodesize"),
+	OPTLINE("-r|--rollback", "roll back to the original filesystem"),
+	OPTLINE("-l|--label LABEL", "set filesystem label"),
+	OPTLINE("-L|--copy-label", "use label from converted filesystem"),
+	OPTLINE("--uuid SPEC", "new, copy or user-defined conforming UUID"),
+	OPTLINE("-p|--progress", "show converting progress (default)"),
+	OPTLINE("-O|--features LIST", "comma separated list of filesystem features"),
+	OPTLINE("--no-progress", "show only overview, not the detailed progress"),
+	"",
+	"Supported filesystems:",
+	"\text2/3/4: "
+#if BTRFSCONVERT_EXT2
+	"yes",
+#else
+	"no",
+#endif
+	"\treiserfs: "
+#if BTRFSCONVERT_REISERFS
+	"yes",
+#else
+	"no",
+#endif
+	NULL
+};
+
+static const struct cmd_struct convert_cmd = {
+	.usagestr = convert_usage
+};
 
 int BOX_MAIN(convert)(int argc, char *argv[])
 {
@@ -1954,13 +1971,12 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				break;
 			case GETOPT_VAL_HELP:
 			default:
-				print_usage();
-				return c != GETOPT_VAL_HELP;
+				usage(&convert_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
 	set_argv0(argv);
 	if (check_argc_exact(argc - optind, 1)) {
-		print_usage();
+		usage(&convert_cmd, 1);
 		return 1;
 	}
 
@@ -1971,7 +1987,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	}
 
 	if (usage_error) {
-		print_usage();
+		usage(&convert_cmd, 1);
 		return 1;
 	}
 
