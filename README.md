@@ -120,10 +120,6 @@ References
 ----------
 
 * [Documentation](https://btrfs.readthedocs.io)
-* [wiki/Developer's FAQ](https://btrfs.wiki.kernel.org/index.php/Developer's_FAQ)
-* [wiki/Getting started](https://btrfs.wiki.kernel.org/index.php/Getting_started)
-* [wiki/TODO](https://btrfs.wiki.kernel.org/index.php/Project_ideas#Userspace_tools_projects)
-* [Btrfs-progs changelogs](https://btrfs.wiki.kernel.org/index.php/Changelog#By_version_.28btrfs-progs.29)
-* [wiki/FAQ](https://btrfs.wiki.kernel.org/index.php/FAQ)
-* [Wiki with more information](https://btrfs.wiki.kernel.org)
-
+* [Manual pages](https://btrfs.readthedocs.io/en/latest/man-index.html)
+* [Changes -- brfs-progs](https://btrfs.readthedocs.io/en/latest/CHANGES.html)
+* [Features by kernel version](https://btrfs.readthedocs.io/en/latest/Feature-by-version.html)
