@@ -89,7 +89,7 @@ ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough)
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
 	 -std=gnu11 \
-	 -include config.h \
+	 -include include/config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
@@ -97,6 +97,7 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 -Wall \
 	 -Wunused-but-set-parameter \
 	 -I$(TOPDIR) \
+	 -I$(TOPDIR)/include \
 	 $(CRYPTO_CFLAGS) \
 	 -DCOMPRESSION_LZO=$(COMPRESSION_LZO) \
 	 -DCOMPRESSION_ZSTD=$(COMPRESSION_ZSTD) \
@@ -695,15 +696,15 @@ quick-test: quick-test.o $(objects) libbtrfsutil.a $(libs_shared)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-ioctl-test.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
+ioctl-test.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-ioctl-test-32.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
+ioctl-test-32.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC32]   $@"
 	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
 
-ioctl-test-64.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
+ioctl-test-64.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC64]   $@"
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 
@@ -852,7 +853,7 @@ clean-gen:
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags TAGS \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
-		config.log config.h config.h.in~ aclocal.m4 \
+		config.log include/config.h include/config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
 
 clean-dep:

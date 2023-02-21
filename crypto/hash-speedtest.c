@@ -14,7 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include "../kerncompat.h"
+#include "kerncompat.h"
 #include <time.h>
 #include <getopt.h>
 #include <unistd.h>

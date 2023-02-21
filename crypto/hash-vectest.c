@@ -14,7 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include "../kerncompat.h"
+#include "kerncompat.h"
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/sha.h"
