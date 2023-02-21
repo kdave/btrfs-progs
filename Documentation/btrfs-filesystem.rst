@@ -210,6 +210,10 @@ mkswapfile [-s size] file
                 Create swapfile of a given size SIZE (accepting k/m/g/e/p
                 suffix).
 
+        -U|--uuid UUID
+                specify UUID to use, or a special value: clear (all zeros), random,
+                time (time-based random)
+
 resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         Resize a mounted filesystem identified by *path*. A particular device
         can be resized by specifying a *devid*.

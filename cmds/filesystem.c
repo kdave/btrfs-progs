@@ -1442,6 +1442,7 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
         "size is 2GiB, minimum size is 40KiB.",
 	"",
 	"s|--size SIZE      create file of SIZE (accepting k/m/g/e/p suffix)",
+	"-U|--uuid UUID     specify UUID to use, or a special value: clear (all zeros), random, time (time-based random)",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
@@ -1460,7 +1461,7 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
  * 00000ff0 .. = 00 00 00 00 00 00 53 57  41 50 53 50 41 43 45 32
  *                                  S  W   A  P  S  P  A  C  E  2
  */
-static int write_swap_signature(int fd, u32 page_count)
+static int write_swap_signature(int fd, u32 page_count, const uuid_t uuid)
 {
 	int ret;
 	static unsigned char swap[SZ_4K] = {
@@ -1483,7 +1484,7 @@ static int write_swap_signature(int fd, u32 page_count)
 	u32 *pages = (u32 *)&swap[0x404];
 
 	*pages = cpu_to_le32(page_count);
-	uuid_generate(&swap[0x40c]);
+	memcpy(&swap[0x40c], uuid, 16);
 	ret = pwrite(fd, swap, SZ_4K, 0);
 
 	return ret;
@@ -1497,16 +1498,19 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 	unsigned long flags;
 	u64 size = SZ_2G;
 	u64 page_count;
+	uuid_t uuid;
 
+	uuid_generate(uuid);
 	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
 			{ "size", required_argument, NULL, 's' },
+			{ "uuid", required_argument, NULL, 'U' },
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "s:", long_options, NULL);
+		c = getopt_long(argc, argv, "s:U:", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -1517,6 +1521,21 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 			if (size < 40 * SZ_1K) {
 				error("swapfile needs to be at least 40 KiB");
 				return 1;
+			}
+			break;
+		case 'U':
+			if (strcmp(optarg, "clear") == 0) {
+				uuid_clear(uuid);
+			} else if (strcmp(optarg, "random") == 0) {
+				uuid_generate(uuid);
+			} else if (strcmp(optarg, "time") == 0) {
+				uuid_generate_time(uuid);
+			} else {
+				ret = uuid_parse(optarg, uuid);
+				if (ret == -1) {
+					error("UUID not recognized: %s", optarg);
+					return 1;
+				}
 			}
 			break;
 		default:
@@ -1571,7 +1590,7 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		goto out;
 	}
 	pr_verbose(LOG_INFO, "write swap signature\n");
-	ret = write_swap_signature(fd, page_count);
+	ret = write_swap_signature(fd, page_count, uuid);
 	if (ret < 0) {
 		error("cannot write swap signature: %m");
 		ret = 1;
