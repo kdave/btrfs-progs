@@ -34,6 +34,7 @@
 #include "common/help.h"
 #include "common/extent-cache.h"
 #include "common/string-utils.h"
+#include "cmds/commands.h"
 
 #define BUFFER_SIZE SZ_64K
 
@@ -198,16 +199,20 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 	return ret;
 }
 
-__attribute__((noreturn))
-static void print_usage(void)
-{
-	printf("usage: btrfs-map-logical [options] device\n");
-	printf("\t-l Logical extent to map\n");
-	printf("\t-c Copy of the extent to read (usually 1 or 2)\n");
-	printf("\t-o Output file to hold the extent\n");
-	printf("\t-b Number of bytes to read\n");
-	exit(1);
-}
+static const char * const map_logical_usage[] = {
+	"btrfs-map-logical [options] device",
+	"Map logical addres on a device",
+	"",
+	OPTLINE("-l OFFSET", "logical extent to map"),
+	OPTLINE("-c COPY", "copy of the extent to read (usually 1 or 2)"),
+	OPTLINE("-o FILE", "output file to hold the extent"),
+	OPTLINE("-b BYTES", "number of bytes to read"),
+	NULL
+};
+
+static const struct cmd_struct map_logical_cmd = {
+	.usagestr = map_logical_usage
+};
 
 int main(int argc, char **argv)
 {
@@ -252,14 +257,14 @@ int main(int argc, char **argv)
 				output_file = strdup(optarg);
 				break;
 			default:
-				print_usage();
+				usage(&map_logical_cmd, 1);
 		}
 	}
 	set_argv0(argv);
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 	if (logical == 0)
-		print_usage();
+		usage(&map_logical_cmd, 1);
 
 	dev = argv[optind];
 
