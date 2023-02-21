@@ -13,9 +13,9 @@ This repository hosts following utilities and also documentation:
 
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.readthedocs.io/en/latest/btrfs.html))
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html))
-* all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs.rst#standalone-tools))
+* all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://btrfs.readthedocs.io/en/latest/btrfs.html#standalone-tools))
 * **libbtrfsutil** (LGPL v2.1) &mdash; C and python 3 bindings, see [libbtrfsutil/README.md](libbtrfsutil/README.md) for more
-* manual pages and documentation source published at [btrfs.readthedocs.io](https://btrfs.rtfd.io)
+* manual pages and documentation source published at [btrfs.readthedocs.io](https://btrfs.readthedocs.io) (RTD)
 
 See [INSTALL](INSTALL) for build instructions and [tests/README.md](tests/README.md) for
 testing information.
@@ -30,7 +30,7 @@ queued.
 
 The release tags are signed with a GPG key ID `F2B4 1200 C54E FB30 380C  1756 C565 D5F9 D76D 583B`,
 release tarballs are hosted at [kernel.org](https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/).
-See file [CHANGES](CHANGES) or [changelogs on wiki](https://btrfs.wiki.kernel.org/index.php/Changelog#By_version_.28btrfs-progs.29).
+See file [CHANGES](CHANGES) or [changelogs on RTD](https://btrfs.readthedocs.io/en/latest/CHANGES.html).
 
 Reporting bugs
 --------------
@@ -44,26 +44,18 @@ preference:
   subscribe), beware that the mail might get overlooked in other traffic
 * IRC (irc.libera.chat #btrfs) -- good for discussions eg. if a bug is already
   known, but reports could miss developers' attention
-* [bugzilla.kernel.org](https://bugzilla.kernel.org) -- (requires
-  registration), set the product to Filesystems and component Btrfs, please put
-  'btrfs-progs' into the subject so it's clear that it's not a kernel bug
-  report
+* please don't use https://bugzilla.kernel.org for btrfs-progs bugs
 
 
 Development
 -----------
 
-The patch submissions, development or general discussions take place at
-*linux-btrfs@vger.kernel.org* mailinglist, subsciption is not required to post.
-
-The GitHub pull requests will not be accepted directly, the preferred way is to
-send patches to the mailinglist instead. You can link to a branch in any git
-repository if the mails do not make it to the mailinglist or just for
-convenience (makes it easier to test).
+The development takes place in the mailing list (*linux-btrfs@vger.kernel.org*)
+or at github (issues, pull requests). Changes should be split to logical parts
+if possible, documentation may be included in the same patch as to code or
+separately.
 
 The development model of btrfs-progs shares a lot with the kernel model. The
-github way is different in some ways. We, the upstream community, expect that
-the patches meet some criteria (often lacking in github contributions):
 
 * **one logical change per patch**: eg. not mixing bugfixes, cleanups, features
   etc., sometimes it's not clear and will be usually pointed out during reviews
@@ -73,8 +65,9 @@ the patches meet some criteria (often lacking in github contributions):
   the change was made, or _how_ is something broken, _what_ are user-visible
   effects of the bug or the fix, _how_ does an improvement help or the intended
   _usecase_
-* the **Signed-off-by** line: this documents who authored the change, you can read
-  more about the
+* the **Signed-off-by** line is not mandatory for less significant changes
+  (typos, documentation) but is desired as this documents who authored the
+  change, you can read more about the
   [The Developer's Certificate of Origin (chapter 11)](https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin)
   * if you are not used to the signed-off style, your contributions won't be
     rejected just because of it's missing, the _Author:_ tag will be added as a
@@ -102,18 +95,18 @@ OK, patches could be sent to me directly and not required to be also in the
 mailinglist. Pointing out typos via IRC also works, although might get
 accidentally lost in the noise.
 
-Documents are written in [RST](https://en.wikipedia.org/wiki/ReStructuredText)
-and built by sphinx.
+Documentation sources are written in
+[RST](https://en.wikipedia.org/wiki/ReStructuredText) and built by sphinx.
 
 Third-party sources
 -------------------
 
 Build dependencies are listed in [INSTALL](INSTALL). Implementation of checksum/hash
 functions is provided by copies of the respective sources to avoid adding
-dependencies that would make deployments in rescure or limited environments
-harder. The implementations are portable and not optimized for speed nor
-accelerated. Optionally it's possible to use libgcrypt, libsodium or libkcapi
-implementations.
+dependencies that would make deployments in rescue or limited environments
+harder. The implementations are portable and there are optimized versions for
+some architectures.  Optionally it's possible to use libgcrypt, libsodium or
+libkcapi implementations.
 
 * CRC32C: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/
 * XXHASH: https://github.com/Cyan4973/xxHash
@@ -121,7 +114,7 @@ implementations.
 * BLAKE2: https://github.com/BLAKE2/BLAKE2
 
 Some other code is borrowed from kernel, eg. the raid5 tables or data structure
-implementation.
+implementation (list, rb-tree).
 
 References
 ----------
