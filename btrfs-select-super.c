@@ -29,13 +29,19 @@
 #include "common/open-utils.h"
 #include "common/messages.h"
 #include "common/string-utils.h"
+#include "cmds/commands.h"
 
-static void print_usage(void)
-{
-	printf("usage: btrfs-select-super -s number dev\n");
-	printf("\t-s super   copy of superblock to overwrite the primary one (values: 1, 2)\n");
-	exit(1);
-}
+static const char * const select_super_usage[] = {
+	"btrfs-select-super -s number dev",
+	"Overwrite primary superblock by selected copy",
+	""
+	OPTLINE("-s super", "copy of superblock to overwrite the primary one (values: 1, 2)"),
+	NULL
+};
+
+static const struct cmd_struct select_super_cmd = {
+	.usagestr = select_super_usage
+};
 
 int main(int argc, char **argv)
 {
@@ -60,7 +66,7 @@ int main(int argc, char **argv)
 				bytenr = btrfs_sb_offset(((int)num));
 				break;
 			default:
-				print_usage();
+				usage(&select_super_cmd, 1);
 		}
 	}
 	set_argv0(argv);
@@ -69,7 +75,7 @@ int main(int argc, char **argv)
 
 	if (bytenr == 0) {
 		error("please select the super copy with -s");
-		print_usage();
+		usage(&select_super_cmd, 1);
 	}
 
 	if((ret = check_mounted(argv[optind])) < 0) {
