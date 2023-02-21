@@ -447,11 +447,6 @@ static const struct cmd_struct mkfs_cmd = {
 	.usagestr = mkfs_usage
 };
 
-static void print_usage(int ret)
-{
-	usage(&mkfs_cmd, ret);
-}
-
 static int zero_output_file(int out_fd, u64 size)
 {
 	int loop_num;
@@ -1202,7 +1197,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 			case GETOPT_VAL_HELP:
 			default:
-				print_usage(c != GETOPT_VAL_HELP);
+				usage(&mkfs_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
 
@@ -1223,7 +1218,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	saved_optind = optind;
 	device_count = argc - optind;
 	if (device_count == 0)
-		print_usage(1);
+		usage(&mkfs_cmd, 1);
 
 	opt_zoned = !!(features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
 

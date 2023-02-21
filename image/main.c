@@ -3050,11 +3050,6 @@ static const struct cmd_struct image_cmd = {
 	.usagestr = image_usage
 };
 
-static void print_usage(int ret)
-{
-	usage(&image_cmd, ret);
-}
-
 int BOX_MAIN(image)(int argc, char *argv[])
 {
 	char *source;
@@ -3125,13 +3120,13 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			break;
 		case GETOPT_VAL_HELP:
 		default:
-			print_usage(c != GETOPT_VAL_HELP);
+			usage(&image_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
 
 	set_argv0(argv);
 	if (check_argc_min(argc - optind, 2))
-		print_usage(1);
+		usage(&image_cmd, 1);
 
 	dev_cnt = argc - optind - 1;
 
@@ -3139,7 +3134,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 	if (dump_data) {
 		error(
 "data dump feature is experimental and is not configured in this build");
-		print_usage(1);
+		usage(&image_cmd, 1);
 	}
 #endif
 	if (create) {
@@ -3170,7 +3165,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 	}
 
 	if (usage_error)
-		print_usage(1);
+		usage(&image_cmd, 1);
 
 	source = argv[optind];
 	target = argv[optind + 1];

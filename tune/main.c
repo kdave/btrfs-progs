@@ -93,11 +93,6 @@ static const struct cmd_struct tune_cmd = {
 	.usagestr = tune_usage
 };
 
-static void print_usage(int ret)
-{
-	usage(&tune_cmd, ret);
-}
-
 int BOX_MAIN(btrfstune)(int argc, char *argv[])
 {
 	struct btrfs_root *root;
@@ -182,7 +177,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 #endif
 		case GETOPT_VAL_HELP:
 		default:
-			print_usage(c != GETOPT_VAL_HELP);
+			usage(&tune_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
 
@@ -198,7 +193,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
 	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree) {
 		error("at least one option should be specified");
-		print_usage(1);
+		usage(&tune_cmd, 1);
 		return 1;
 	}
 
