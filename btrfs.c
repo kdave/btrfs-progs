@@ -176,8 +176,8 @@ static const char * const cmd_help_usage[] = {
 	"btrfs help [--full] [--box]",
 	"Display help information",
 	"",
-	"--full     display detailed help on every command",
-	"--box      show list of built-in tools (busybox style)",
+	OPTLINE("--full", "display detailed help on every command"),
+	OPTLINE("--box", "show list of built-in tools (busybox style)"),
 	NULL
 };
 
