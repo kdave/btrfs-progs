@@ -17,12 +17,12 @@
  */
 
 #if BTRFS_FLAT_INCLUDES
-#include "kerncompat.h"
+#include "libbtrfs/kerncompat.h"
 #include "libbtrfs/version.h"
+#include "libbtrfs/ioctl.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
-#include "ioctl.h"
 #include "kernel-shared/send.h"
 #include "common/send-stream.h"
 #include "common/send-utils.h"
