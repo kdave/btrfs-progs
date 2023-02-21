@@ -33,6 +33,7 @@
 #include "common/extent-cache.h"
 #include "common/messages.h"
 #include "common/string-utils.h"
+#include "cmds/commands.h"
 
 #define FIELD_BUF_LEN 80
 
@@ -81,54 +82,43 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 	return 0;
 }
 
-static void print_usage(int ret)
-{
-	printf("usage: btrfs-corrupt-block [options] device\n");
-	printf("\n");
-	printf("Corrupt data structures on a btrfs filesystem. For testing only!\n");
-	printf("\n");
-	printf("    -l EXTENT\n");
-	printf("    --logical EXTENT       logical extent to be corrupted\n");
-	printf("    -c COPY\n");
-	printf("    --copy COPY            copy of the extent to be corrupted (usually 1 or 2, default: 0)\n");
-	printf("    -b COUNT\n");
-	printf("    --bytes COUNT          number of bytes to be corrupted\n");
-	printf("    -e\n");
-	printf("    --extent-record        corrupt the extent\n");
-	printf("    -E\n");
-	printf("    --extent-tree          corrupt the whole extent tree\n");
-	printf("    -u\n");
-	printf("    --chunk-record         corrupt the given chunk\n");
-	printf("    -U\n");
-	printf("    --chunk-tree           corrupt the whole whole chunk tree\n");
-	printf("    -i INODE\n");
-	printf("    --inode INODE          inode number to corrupt (must also specify the field to corrupt)\n");
-	printf("    -x EXTENT\n");
-	printf("    --file-extent EXTENT   file extent item to corrupt (must also specify -i for the inode and -f for the field to corrupt)\n");
-	printf("    -m BLOCK\n");
-	printf("    --metadata-block BLOCK\n");
-	printf("                           metadata block to corrupt (must also specify -f for the field to corrupt)\n");
-	printf("    -k\n");
-	printf("    --keys                 corrupt block keys (set by --logical)\n");
-	printf("    -K <u64,u8,u64>\n");
-	printf("    --key <u64,u8,u64>     corrupt the given key (must also specify -f for the field and optionally -r for the root)\n");
-	printf("    -f FIELD\n");
-	printf("    --field FIELD          field name in the item to corrupt\n");
-	printf("    -I\n");
-	printf("    --item                 corrupt an item corresponding to the passed key triplet (must also specify the field, or a (bytes, offset, value) tuple to corrupt and root for the item)\n");
-	printf("    -D\n");
-	printf("    --dir-item             corrupt a dir item corresponding to the passed key triplet, must also specify a field\n");
-	printf("    -d\n");
-	printf("    --delete               delete item corresponding to passed key triplet\n");
-	printf("    -r\n");
-	printf("    --root                 operate on this root\n");
-	printf("    -C BYTENR\n");
-	printf("    --csum BYTENR          delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
-	printf("    --block-group OFFSET   corrupt the given block group\n");
-	printf("    --value VALUE          value to use for corrupting item data\n");
-	printf("    --offset OFFSET        offset to use for corrupting item data\n");
-	exit(ret);
-}
+static const char * const corrupt_block_usage[] = {
+	"btrfs-corrupt-block [options] device",
+	"Corrupt data structures on a btrfs filesystem. For testing only!",
+	"",
+	OPTLINE("-l|--logical EXTENT", "logical extent to be corrupted"),
+	OPTLINE("-c|--copy COPY", "copy of the extent to be corrupted (usually 1 or 2, default: 0)"),
+	OPTLINE("-b|--bytes COUNT", "number of bytes to be corrupted"),
+	OPTLINE("-e|--extent-record", "corrupt the extent"),
+	OPTLINE("-E|--extent-tree", "corrupt the whole extent tree"),
+	OPTLINE("-u|--chunk-record", "corrupt the given chunk"),
+	OPTLINE("-U|--chunk-tree", "corrupt the whole whole chunk tree"),
+	OPTLINE("-i|--inode INODE", "inode number to corrupt (must also specify the field to corrupt)"),
+	OPTLINE("-x|--file-extent EXTENT",
+			"file extent item to corrupt (must also specify -i for the inode and -f for the field to corrupt)"),
+	OPTLINE("-m|--metadata-block BLOCK",
+			"metadata block to corrupt (must also specify -f for the field to corrupt)"),
+	OPTLINE("-k|--keys"," corrupt block keys (set by --logical)"),
+	OPTLINE("-K|--key <u64,u8,u64>",
+		"corrupt the given key (must also specify -f for the field and optionally -r for the root)"),
+	OPTLINE("-f|--field FIELD", "field name in the item to corrupt"),
+	OPTLINE("-I|--item", "corrupt an item corresponding to the passed key triplet "
+		"(must also specify the field, or a (bytes, offset, value) tuple to corrupt and root for the item)"),
+	OPTLINE("-D|--dir-item",
+		"corrupt a dir item corresponding to the passed key triplet, must also specify a field"),
+	OPTLINE("-d|--delete", "delete item corresponding to passed key triplet"),
+	OPTLINE("-r|--root", "operate on this root"),
+	OPTLINE("-C|--csum BYTENR", "delete a csum for the specified bytenr.  When used "
+		"with -b it'll delete that many bytes, otherwise it's just sectorsize"),
+	OPTLINE("--block-group OFFSET", "corrupt the given block group"),
+	OPTLINE("--value VALUE", "value to use for corrupting item data"),
+	OPTLINE("--offset OFFSET", "offset to use for corrupting item data"),
+	NULL
+};
+
+static const struct cmd_struct corrupt_block_cmd = {
+	.usagestr = corrupt_block_usage
+};
 
 static void corrupt_keys(struct btrfs_trans_handle *trans,
 			 struct btrfs_fs_info *fs_info,
@@ -1267,7 +1257,7 @@ static void parse_key(u64 *objectid, u8 *type, u64 *offset)
 	int ret = sscanf(optarg, "%llu,%hhu,%llu", objectid, type, offset);
 	if (ret != 3) {
 	        error("error parsing key '%s': %d", optarg, errno);
-	        print_usage(1);
+		usage(&corrupt_block_cmd, 1);
 	}
 }
 
@@ -1285,7 +1275,7 @@ static struct btrfs_root *open_root(struct btrfs_fs_info *fs_info,
 	root = btrfs_read_fs_root(fs_info, &root_key);
 	if (IS_ERR(root)) {
 		error("couldn't find root %llu", root_objectid);
-		print_usage(1);
+		usage(&corrupt_block_cmd, 1);
 	}
 
 	return root;
@@ -1429,7 +1419,7 @@ int main(int argc, char **argv)
 				break;
 			case GETOPT_VAL_HELP:
 			default:
-				print_usage(c != GETOPT_VAL_HELP);
+				usage(&corrupt_block_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
 	set_argv0(argv);
@@ -1452,7 +1442,7 @@ int main(int argc, char **argv)
 		struct btrfs_trans_handle *trans;
 
 		if (logical == (u64)-1)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
 		ret = corrupt_extent(trans, root, logical);
@@ -1477,7 +1467,7 @@ int main(int argc, char **argv)
 		int del;
 
 		if (logical == (u64)-1)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		del = rand_range(3);
 		path = btrfs_alloc_path();
 		if (!path) {
@@ -1514,7 +1504,7 @@ int main(int argc, char **argv)
 		struct btrfs_trans_handle *trans;
 
 		if (*field == 0)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
@@ -1530,14 +1520,14 @@ int main(int argc, char **argv)
 	}
 	if (metadata_block) {
 		if (*field == 0)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		ret = corrupt_metadata_block(root->fs_info, metadata_block,
 					     field);
 		goto out_close;
 	}
 	if (corrupt_di) {
 		if (!key.objectid || *field == 0)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		ret = corrupt_dir_item(target_root, &key, field);
 		goto out_close;
 	}
@@ -1547,9 +1537,9 @@ int main(int argc, char **argv)
 	}
 	if (corrupt_item) {
 		if (!key.objectid)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		if (!root_objectid)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 
 		if (*field != 0)
 			ret = corrupt_btrfs_item(target_root, &key, field);
@@ -1560,26 +1550,26 @@ int main(int argc, char **argv)
 						      bogus_offset, bytes,
 						      bogus_value);
 		else
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		goto out_close;
 	}
 	if (delete) {
 		if (!key.objectid)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 
 		ret = delete_item(target_root, &key);
 		goto out_close;
 	}
 	if (should_corrupt_key) {
 		if (*field == 0)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 
 		ret = corrupt_key(target_root, &key, field);
 		goto out_close;
 	}
 	if (block_group) {
 		if (*field == 0)
-			print_usage(1);
+			usage(&corrupt_block_cmd, 1);
 		ret = corrupt_block_group(root, block_group, field);
 		goto out_close;
 	}
@@ -1588,10 +1578,10 @@ int main(int argc, char **argv)
 	 * inode and we're screwed.
 	 */
 	if (file_extent != (u64)-1)
-		print_usage(1);
+		usage(&corrupt_block_cmd, 1);
 
 	if (logical == (u64)-1)
-		print_usage(1);
+		usage(&corrupt_block_cmd, 1);
 
 	if (bytes == 0)
 		bytes = root->fs_info->sectorsize;
