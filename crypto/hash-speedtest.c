@@ -191,6 +191,8 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_SSE42 },
+		{ .name = "CRC32C-PCL", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_CRC32C_PCL },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
@@ -282,7 +284,7 @@ int main(int argc, char **argv) {
 		u64 total = 0;
 
 		if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
-			printf("%12s: no CPU support\n", c->name);
+			printf("%14s: no CPU support\n", c->name);
 			continue;
 		}
 		/* Backend not compiled in */
