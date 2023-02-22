@@ -1202,7 +1202,7 @@ static const char * const cmd_filesystem_usage_usage[] = {
 	"Show detailed information about internal filesystem usage .",
 	"",
 	HELPINFO_UNITS_SHORT_LONG,
-	"-T                 show data in tabular format",
+	OPTLINE("-T", "show data in tabular format"),
 	NULL
 };
 
