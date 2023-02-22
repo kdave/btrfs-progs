@@ -44,9 +44,9 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
 	"Recover the chunk tree by scanning the devices one by one.",
 	"",
-	"-y     Assume an answer of `yes' to all questions",
-	"-h     Help",
-	"-v     deprecated, alias for global -v option",
+	OPTLINE("-y", "assume an answer of `yes' to all questions"),
+	OPTLINE("-h", "help"),
+	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -112,8 +112,8 @@ static const char * const cmd_rescue_super_recover_usage[] = {
 	"btrfs rescue super-recover [options] <device>",
 	"Recover bad superblocks from good copies",
 	"",
-	"-y     Assume an answer of `yes' to all questions",
-	"-v     deprecated, alias for global -v option",
+	OPTLINE("-y", "assume an answer of `yes' to all questions"),
+	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
