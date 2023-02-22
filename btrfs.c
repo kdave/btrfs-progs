@@ -32,7 +32,21 @@
 #include "cmds/commands.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
-	"btrfs [--help] [--version] [--format <format>] [-v|--verbose] [-q|--quiet] [--log=level] <group> [<group>...] <command> [<args>]",
+	/*
+	 * The main command group is the only one that takes options so this
+	 * needs the newlines and manual formatting.
+	 */
+	"btrfs [global] <group> [<group>...] <command> [<args>]\n"
+	"\n"
+	"Global options:\n"
+	"  --format <format> if supported, print subcommand output in that format (text, json)\n"
+	"  -v|--verbose      increase verbosity of the subcommand\n"
+	"  -q|--quiet        print only errors\n"
+	"  --log <level>     set log level (default, info, verbose, debug, quiet)\n"
+	"\n"
+	"Options for the main command only:\n"
+	"  --help            print condensed help for all subcommands\n"
+	"  --version         print version string",
 	NULL
 };
 
