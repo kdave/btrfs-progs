@@ -18,8 +18,6 @@ SUBCOMMAND
 ----------
 
 dump-super [options] <device> [device...]
-        (replaces the standalone tool **btrfs-show-super**)
-
         Show btrfs superblock information stored on given devices in textual form.
         By default the first superblock is printed, more details about all copies or
         additional backup data can be printed.
@@ -62,8 +60,6 @@ dump-super [options] <device> [device...]
                 *--force*
 
 dump-tree [options] <device> [device...]
-        (replaces the standalone tool **btrfs-debug-tree**)
-
         Dump tree structures from a given device in textual form, expand keys to human
         readable equivalents where possible.
         This is useful for analyzing filesystem state or inconsistencies and has

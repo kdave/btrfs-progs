@@ -150,17 +150,6 @@ btrfs-select-super
 btrfs-find-root
         rescue helper to find tree roots in a filesystem
 
-Deprecated and obsolete tools:
-
-btrfs-debug-tree
-        moved to **btrfs inspect-internal dump-tree**. Removed from
-        source distribution.
-btrfs-show-super
-        moved to **btrfs inspect-internal dump-super**, standalone
-        removed.
-btrfs-zero-log
-        moved to **btrfs rescue zero-log**, standalone removed.
-
 For space-constrained environments, it's possible to build a single binary with
 functionality of several standalone tools. This is following the concept of
 busybox where the file name selects the functionality. This works for symlinks
