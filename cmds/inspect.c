@@ -94,7 +94,7 @@ static const char * const cmd_inspect_inode_resolve_usage[] = {
 	"btrfs inspect-internal inode-resolve [-v] <inode> <path>",
 	"Get file system paths for the given inode",
 	"",
-	"-v   deprecated, alias for global -v option",
+	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -140,14 +140,13 @@ static const char * const cmd_inspect_logical_resolve_usage[] = {
 	"btrfs inspect-internal logical-resolve [-Pvo] [-s bufsize] <logical> <path>",
 	"Get file system paths for the given logical address",
 	"",
-	"-P          skip the path resolving and print the inodes instead",
-	"-o          ignore offsets when matching references (requires v2 ioctl",
-	"            support in the kernel 4.15+)",
-	"-s bufsize  set inode container's size. This is used to increase inode",
-	"            container's size in case it is not enough to read all the ",
-	"            resolved results. The max value one can set is 64k with the",
-	"            v1 ioctl. Sizes over 64k will use the v2 ioctl (kernel 4.15+)",
-	"-v          deprecated, alias for global -v option",
+	OPTLINE("-P", "skip the path resolving and print the inodes instead"),
+	OPTLINE("-o", "ignore offsets when matching references (requires v2 ioctl support in the kernel 4.15+)"),
+	OPTLINE("-s bufsize", "set inode container's size. This is used to increase inode "
+		"container's size in case it is not enough to read all the "
+		"resolved results. The max value one can set is 64k with the "
+		"v1 ioctl. Sizes over 64k will use the v2 ioctl (kernel 4.15+)"),
+	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -403,7 +402,7 @@ static const char* const cmd_inspect_min_dev_size_usage[] = {
 	"Get the minimum size the device can be shrunk to",
 	"",
 	"The device id 1 is used by default.",
-	"--id DEVID   specify the device id to query",
+	OPTLINE("--id DEVID", "specify the device id to query"),
 	NULL
 };
 
@@ -700,12 +699,11 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"Show chunks (block groups) layout for all devices",
 	"",
 	HELPINFO_UNITS_LONG,
-	"--sort=MODE        sort by the physical or logical chunk start",
-	"                   MODE is one of pstart or lstart (default: pstart)",
-	"--usage            show usage per block group (note: this can be slow)",
-	"--no-usage         don't show usage per block group",
-	"--empty            show empty space between block groups",
-	"--no-empty         do not show empty space between block groups",
+	OPTLINE("--sort MODE", "sort by the physical or logical chunk start MODE is one of pstart or lstart (default: pstart)"),
+	OPTLINE("--usage", "show usage per block group (note: this can be slow)"),
+	OPTLINE("--no-usage", "don't show usage per block group"),
+	OPTLINE("--empty", "show empty space between block groups"),
+	OPTLINE("--no-empty", "do not show empty space between block groups"),
 	NULL
 };
 
@@ -1126,7 +1124,7 @@ static const char * const cmd_inspect_map_swapfile_usage[] = {
 	"Use the value of resume offset for /sys/power/resume_offset, this depends on the",
 	"page size that's detected on this system.",
 	"",
-	"-r|--resume-offset   print only the value of resume_offset",
+	OPTLINE("-r|--resume-offset", "print only the value of resume_offset"),
 	NULL
 };
 

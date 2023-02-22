@@ -434,7 +434,7 @@ static const char * const cmd_inspect_tree_stats_usage[] = {
 	"btrfs inspect-internal tree-stats [options] <device>",
 	"Print various stats for trees",
 	"",
-	"-b		raw numbers in bytes",
+	OPTLINE("-b", "raw numbers in bytes"),
 	NULL
 };
 

@@ -60,18 +60,17 @@ static const char * const cmd_inspect_dump_super_usage[] = {
 	"btrfs inspect-internal dump-super [options] device [device...]",
 	"Dump superblock from a device in a textual form",
 	"",
-	"-f|--full             print full superblock information, backup roots etc.",
-	"-a|--all              print information about all superblocks",
-	"-s|--super <super>    specify which copy to print out (values: 0, 1, 2)",
-	"-F|--force            attempt to dump superblocks with bad magic",
-	"--bytenr <offset>     specify alternate superblock offset",
+	OPTLINE("-f|--full", "print full superblock information, backup roots etc."),
+	OPTLINE("-a|--all", "print information about all superblocks"),
+	OPTLINE("-s|--super <super>", "specify which copy to print out (values: 0, 1, 2)"),
+	OPTLINE("-F|--force", "attempt to dump superblocks with bad magic"),
+	OPTLINE("--bytenr <offset>", "specify alternate superblock offset"),
 	"",
 	"Deprecated syntax:",
-	"-s <bytenr>           specify alternate superblock offset, values other than 0, 1, 2",
-	"                      will be interpreted as --bytenr for backward compatibility,",
-	"                      option renamed for consistency with other tools (eg. check)",
-	"-i <super>            specify which copy to print out (values: 0, 1, 2), now moved",
-	"                      to -s|--super",
+	OPTLINE("-s <bytenr>", "specify alternate superblock offset, values other than 0, 1, 2 "
+		"will be interpreted as --bytenr for backward compatibility, "
+		"option renamed for consistency with other tools (eg. check)"),
+	OPTLINE("-i <super>", "specify which copy to print out (values: 0, 1, 2), now moved to --super"),
 	NULL
 };
 
