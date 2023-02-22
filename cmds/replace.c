@@ -105,18 +105,17 @@ static const char *const cmd_replace_start_usage[] = {
 	"from the system, you have to use the <devid> parameter format.",
 	"The <targetdev> needs to be same size or larger than the <srcdev>.",
 	"",
-	"-r     only read from <srcdev> if no other zero-defect mirror exists",
-	"       (enable this if your drive has lots of read errors, the access",
-	"       would be very slow)",
-	"-f     force using and overwriting <targetdev> even if it looks like",
-	"       containing a valid btrfs filesystem. A valid filesystem is",
-	"       assumed if a btrfs superblock is found which contains a",
-	"       correct checksum. Devices which are currently mounted are",
-	"       never allowed to be used as the <targetdev>",
-	"-B     do not background",
-	"--enqueue       wait if there's another exclusive operation running,",
-	"                otherwise continue",
-	"-K|--nodiscard  do not perform whole device TRIM",
+	OPTLINE("-r", "only read from <srcdev> if no other zero-defect mirror exists "
+		"(enable this if your drive has lots of read errors, the access "
+		"would be very slow)"),
+	OPTLINE("-f", "force using and overwriting <targetdev> even if it looks like "
+		"containing a valid btrfs filesystem. A valid filesystem is "
+		"assumed if a btrfs superblock is found which contains a "
+		"correct checksum. Devices which are currently mounted are "
+		"never allowed to be used as the <targetdev>"),
+	OPTLINE("-B", "do not background"),
+	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
+	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	NULL
 };
 
@@ -369,8 +368,7 @@ static const char *const cmd_replace_status_usage[] = {
 	"btrfs replace status [-1] <mount_point>",
 	"Print status and progress information of a running device replace operation",
 	"",
-	"-1     print once instead of print continuously until the replace",
-	"       operation finishes (or is canceled)",
+	OPTLINE("-1", "print once instead of print continuously until the replace operation finishes (or is canceled)"),
 	NULL
 };
 
