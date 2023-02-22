@@ -1856,8 +1856,8 @@ static const char * const cmd_qgroup_assign_usage[] = {
 	"must be higher than SRC. The quota accounting will be inconsistent",
 	"until the next rescan.",
 	"",
-	"--rescan       schedule quota rescan if needed",
-	"--no-rescan    don't schedule quota rescan",
+	OPTLINE("--rescan", "schedule quota rescan if needed"),
+	OPTLINE("--no-rescan", "don't schedule quota rescan"),
 	NULL
 };
 
@@ -1874,8 +1874,8 @@ static const char * const cmd_qgroup_remove_usage[] = {
 	"Remove the relation between SRC and DST qgroups. The quota accounting",
 	"will be inconsistent until the next rescan.",
 	"",
-	"--rescan       schedule quota rescan if needed",
-	"--no-rescan    don't schedule quota rescan",
+	OPTLINE("--rescan", "schedule quota rescan if needed"),
+	OPTLINE("--no-rescan", "don't schedule quota rescan"),
 	NULL
 };
 
@@ -1924,20 +1924,18 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"List subvolume quota groups.",
 	"List subvolume quota groups, accounted size, limits and path.",
 	"",
-	"-p             print parent qgroup id",
-	"-c             print child qgroup id",
-	"-r             print limit of referenced size of qgroup",
-	"-e             print limit of exclusive size of qgroup",
-	"-F             list all qgroups which impact the given path",
-	"               (including ancestral qgroups)",
-	"-f             list all qgroups which impact the given path",
-	"               (excluding ancestral qgroups)",
+	OPTLINE("-p", "print parent qgroup id"),
+	OPTLINE("-c", "print child qgroup id"),
+	OPTLINE("-r", "print limit of referenced size of qgroup"),
+	OPTLINE("-e", "print limit of exclusive size of qgroup"),
+	OPTLINE("-F", "list all qgroups which impact the given path (including ancestral qgroups)"),
+	OPTLINE("-f", "list all qgroups which impact the given path (excluding ancestral qgroups)"),
 	HELPINFO_UNITS_LONG,
-	"--sort=qgroupid,rfer,excl,max_rfer,max_excl,path",
-	"               list qgroups sorted by specified items",
-	"               you can use '+' or '-' in front of each item.",
-	"               (+:ascending, -:descending, ascending default)",
-	"--sync         force sync of the filesystem before getting info",
+	OPTLINE("--sort=qgroupid,rfer,excl,max_rfer,max_excl,path",
+		"list qgroups sorted by specified items "
+		"you can use '+' or '-' in front of each item. "
+		"(+:ascending, -:descending, ascending default)"),
+	OPTLINE("--sync", "force sync of the filesystem before getting info"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
 	NULL
@@ -2065,9 +2063,8 @@ static const char * const cmd_qgroup_limit_usage[] = {
 	"btrfs qgroup limit [options] <size>|none [<qgroupid>] <path>",
 	"Set the limits a subvolume quota group.",
 	"",
-	"-c   limit amount of data after compression. This is the default,",
-	"     it is currently not possible to turn off this option.",
-	"-e   limit space exclusively assigned to this qgroup",
+	OPTLINE("-c", "limit amount of data after compression. This is the default, it is currently not possible to turn off this option"),
+	OPTLINE("-e", "limit space exclusively assigned to this qgroup"),
 	NULL
 };
 
