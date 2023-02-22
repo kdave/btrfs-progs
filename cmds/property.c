@@ -582,8 +582,7 @@ static const char * const cmd_property_get_usage[] = {
 	"Possible values for type are: inode, subvol, filesystem, device.",
 	"They can be abbreviated to the first letter, i/s/f/d",
 	"",
-	"-t <TYPE>       list properties for the given object type (inode, subvol,",
-	"                filesystem, device)",
+	OPTLINE("-t <TYPE>", "list properties for the given object type (inode, subvol, filesystem, device)"),
 	NULL
 };
 
@@ -614,9 +613,8 @@ static const char * const cmd_property_set_usage[] = {
 	"Set a property on a btrfs object where object is a path to file or",
 	"directory and can also represent the filesystem or device based on the type",
 	"",
-	"-t <TYPE>       list properties for the given object type (inode, subvol,",
-	"                filesystem, device)",
-	"-f              force the change, could potentially break something\n",
+	OPTLINE("-t <TYPE>", "list properties for the given object type (inode, subvol, filesystem, device)"),
+	OPTLINE("-f", "force the change, could potentially break something"),
 	NULL
 };
 
@@ -646,8 +644,7 @@ static const char * const cmd_property_list_usage[] = {
 	"See the help of 'btrfs property get' for a description of",
 	"objects and object types.",
 	"",
-	"-t <TYPE>       list properties for the given object type (inode, subvol,",
-	"                filesystem, device)",
+	OPTLINE("-t <TYPE>", "list properties for the given object type (inode, subvol, filesystem, device)"),
 	NULL
 };
 
