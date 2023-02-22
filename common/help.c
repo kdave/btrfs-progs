@@ -250,7 +250,9 @@ static int do_usage_one_command(const char * const *usagestr,
 			 * commands
 			 */
 			hpad(pad, outf);
-			fprintf(outf, "--format TYPE      where TYPE is: %s",
+			fprintf(outf, "%-*s  where TYPE is: %s",
+					HELPINFO_OPTION_WIDTH,
+					"--format TYPE",
 					 output_formats[0].name);
 			for (i = 1; i < ARRAY_SIZE(output_formats); i++) {
 				if (cmd_flags & output_formats[i].value)
