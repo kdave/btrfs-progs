@@ -32,7 +32,7 @@
 #include "cmds/commands.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
-	"btrfs [--help] [--version] [--format <format>] [-v|--verbose] [-q|--quiet] <group> [<group>...] <command> [<args>]",
+	"btrfs [--help] [--version] [--format <format>] [-v|--verbose] [-q|--quiet] [--log=level] <group> [<group>...] <command> [<args>]",
 	NULL
 };
 
@@ -238,6 +238,23 @@ static void handle_output_format(const char *format)
 	}
 }
 
+static void handle_log_level(const char *level) {
+	if (strcasecmp(level, "default") == 0) {
+		bconf.verbose = LOG_DEFAULT;
+	} else if (strcasecmp(level, "info") == 0) {
+		bconf.verbose = LOG_INFO;
+	} else if (strcasecmp(level, "verbose") == 0) {
+		bconf.verbose = LOG_VERBOSE;
+	} else if (strcasecmp(level, "debug") == 0) {
+		bconf.verbose = LOG_DEBUG;
+	} else if (strcasecmp(level, "quiet") == 0) {
+		bconf.verbose = BTRFS_BCONF_QUIET;
+	} else {
+		error("unrecognized log level: %s", level);
+		exit(1);
+	}
+}
+
 /*
  * Parse global options, between binary name and first non-option argument
  * after processing all valid options (including those with arguments).
@@ -246,7 +263,7 @@ static void handle_output_format(const char *format)
  */
 static int handle_global_options(int argc, char **argv)
 {
-	enum { OPT_HELP = 256, OPT_VERSION, OPT_FULL, OPT_FORMAT };
+	enum { OPT_HELP = 256, OPT_VERSION, OPT_FULL, OPT_FORMAT, OPT_LOG };
 	static const struct option long_options[] = {
 		{ "help", no_argument, NULL, OPT_HELP },
 		{ "version", no_argument, NULL, OPT_VERSION },
@@ -254,6 +271,7 @@ static int handle_global_options(int argc, char **argv)
 		{ "full", no_argument, NULL, OPT_FULL },
 		{ "verbose", no_argument, NULL, 'v' },
 		{ "quiet", no_argument, NULL, 'q' },
+		{ "log", required_argument, NULL, OPT_LOG },
 		{ NULL, 0, NULL, 0}
 	};
 	int shift;
@@ -275,6 +293,9 @@ static int handle_global_options(int argc, char **argv)
 		case OPT_FULL: break;
 		case OPT_FORMAT:
 			handle_output_format(optarg);
+			break;
+		case OPT_LOG:
+			handle_log_level(optarg);
 			break;
 		case 'v':
 			bconf_be_verbose();
