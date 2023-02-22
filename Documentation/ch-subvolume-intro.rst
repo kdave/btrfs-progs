@@ -152,7 +152,7 @@ directories in the target snapshot preserve their original inode numbers.
 
 .. note::
    Inode number is not a filesystem-wide unique identifier, some applications
-   assume that. Please user pair *subvolumeid:inodenumber* for that purpose.
+   assume that. Please use pair *subvolumeid:inodenumber* for that purpose.
 
 Performance
 -----------
