@@ -109,9 +109,9 @@ static const char * const cmd_quota_rescan_usage[] = {
 	"btrfs quota rescan [-sw] <path>",
 	"Trash all qgroup numbers and scan the metadata again with the current config.",
 	"",
-	"-s|--status         show status of a running rescan operation",
-	"-w|--wait           start rescan and wait for it to finish (can be already in progress)",
-	"-W|--wait-norescan  wait for rescan to finish without starting it",
+	OPTLINE("-s|--status", "show status of a running rescan operation"),
+	OPTLINE("-w|--wait", "start rescan and wait for it to finish (can be already in progress)"),
+	OPTLINE("-W|--wait-norescan", "wait for rescan to finish without starting it"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
