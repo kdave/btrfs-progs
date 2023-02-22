@@ -52,10 +52,9 @@ static const char * const cmd_device_add_usage[] = {
 	"btrfs device add [options] <device> [<device>...] <path>",
 	"Add one or more devices to a mounted filesystem.",
 	"",
-	"-K|--nodiscard    do not perform whole device TRIM on devices that report such capability",
-	"-f|--force        force overwrite existing filesystem on the disk",
-	"--enqueue         wait if there's another exclusive operation running,",
-	"                  otherwise continue",
+	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM on devices that report such capability"),
+	OPTLINE("-f|--force", "force overwrite existing filesystem on the disk"),
+	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
 	NULL
 };
 
@@ -335,8 +334,7 @@ static const char * const cmd_device_remove_usage[] = {
 	"Remove a device from a filesystem",
 	COMMON_USAGE_REMOVE_DELETE,
 	"",
-	"--enqueue         wait if there's another exclusive operation running,",
-	"                  otherwise continue",
+	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
 	NULL
 };
 
@@ -352,8 +350,7 @@ static const char * const cmd_device_delete_usage[] = {
 	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
 	COMMON_USAGE_REMOVE_DELETE,
 	"",
-	"--enqueue         wait if there's another exclusive operation running,",
-	"                  otherwise continue",
+	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
 	NULL
 };
 
@@ -397,9 +394,8 @@ static const char * const cmd_device_scan_usage[] = {
 	"The reverse is done by the forget option, such devices must be unmounted.",
 	"No argument will unregister all devices that are not part of a mounted filesystem.",
 	"",
-	" -d|--all-devices            enumerate and register all devices, use as a fallback",
-	"                             if blkid is not available",
-	" -u|--forget [<device>...]   unregister a given device or all stale devices if no path ",
+	OPTLINE("-d|--all-devices", "enumerate and register all devices, use as a fallback if blkid is not available"),
+	OPTLINE("-u|--forget [<device>...]", "unregister a given device or all stale devices if no path"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
@@ -571,9 +567,9 @@ static const char * const cmd_device_stats_usage[] = {
 	"Show device IO error statistics for all devices of the given filesystem",
 	"identified by PATH or DEVICE. The filesystem must be mounted.",
 	"",
-	"-c|--check             return non-zero if any stat counter is not zero",
-	"-z|--reset             show current stats and reset values to zero",
-	"-T                     show current stats in tabular format",
+	OPTLINE("-c|--check", "return non-zero if any stat counter is not zero"),
+	OPTLINE("-z|--reset", "show current stats and reset values to zero"),
+	OPTLINE("-T", "show current stats in tabular format"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
 	NULL
