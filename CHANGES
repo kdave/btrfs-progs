@@ -1,3 +1,15 @@
+btrfs-progs-6.2 (2023-02-28)
+----------------------------
+   * receive: fix a corruption when decompressing zstd extents
+   * subvol sync: print total number and deletion progress
+   * accelerated hash algorithm implementations in fallback mode on x86_64
+   * fi mkswapfile: new option --uuid
+   * new global option --log=level to set the verbosity level directly
+   * other:
+      * experimental: update checksum conversion (not usable yet)
+      * build actually requires -std=gnu11
+      * refactor help option formatting, auto wrap long lines
+
 btrfs-progs-6.1 (2022-12-22)
 ----------------------------
    * NOTE: this version breaks build of applications using ctree.h and qgroup items
