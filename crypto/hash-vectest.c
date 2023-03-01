@@ -35,6 +35,7 @@ struct hash_testspec {
 	size_t count;
 	unsigned long cpu_flag;
 	int (*hash)(const u8 *buf, size_t length, u8 *out);
+	int backend;
 };
 
 static const struct hash_testvec crc32c_tv[] = {
@@ -430,67 +431,128 @@ static const struct hash_testvec blake2b_256_tv[] = {
 
 static const struct hash_testspec test_spec[] = {
 	{
-		.name = "crc32c",
+		.name = "CRC32C-ref",
 		.digest_size = 4,
 		.testvec = crc32c_tv,
 		.count = ARRAY_SIZE(crc32c_tv),
-		.cpu_flag = 0,
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_crc32c,
+	}, {
+		.name = "CRC32C-NI",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_SSE42,
 		.hash = hash_crc32c
 	}, {
-		.name = "xxhash64",
+		.name = "XXHASH",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,
 		.count = ARRAY_SIZE(xxhash64_tv),
-		.cpu_flag = 0,
+		.cpu_flag = CPU_FLAG_NONE,
 		.hash = hash_xxhash
 	}, {
-		.name = "sha256-ref",
+		.name = "SHA256-ref",
 		.digest_size = 32,
 		.testvec = sha256_tv,
 		.count = ARRAY_SIZE(sha256_tv),
-		.cpu_flag = 0,
+		.cpu_flag = CPU_FLAG_NONE,
 		.hash = hash_sha256
 	}, {
-		.name = "sha256-ni",
+		.name = "SHA256-gcrypt",
+		.digest_size = 32,
+		.testvec = sha256_tv,
+		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_sha256,
+		.backend = CRYPTOPROVIDER_LIBGCRYPT + 1
+	}, {
+		.name = "SHA256-sodium",
+		.digest_size = 32,
+		.testvec = sha256_tv,
+		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_sha256,
+		.backend = CRYPTOPROVIDER_LIBSODIUM + 1
+	}, {
+		.name = "SHA256-kcapi",
+		.digest_size = 32,
+		.testvec = sha256_tv,
+		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_sha256,
+		.backend = CRYPTOPROVIDER_LIBKCAPI + 1
+	}, {
+		.name = "SHA256-NI",
 		.digest_size = 32,
 		.testvec = sha256_tv,
 		.count = ARRAY_SIZE(sha256_tv),
 		.cpu_flag = CPU_FLAG_SHA,
-		.hash = hash_sha256
+		.hash = hash_sha256,
+		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "blake2b-ref",
+		.name = "BLAKE2-ref",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
-		.cpu_flag = 0,
-		.hash = hash_blake2b
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "blake2b-sse2",
+		.name = "BLAKE2-gcrypt",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_LIBGCRYPT + 1
+	}, {
+		.name = "BLAKE2-sodium",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_LIBSODIUM + 1
+	}, {
+		.name = "BLAKE2-kcapi",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_LIBKCAPI + 1
+	}, {
+		.name = "BLAKE2-SSE2",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
 		.cpu_flag = CPU_FLAG_SSE2,
-		.hash = hash_blake2b
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "blake2b-sse41",
+		.name = "BLAKE2-SSE41",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
 		.cpu_flag = CPU_FLAG_SSE41,
-		.hash = hash_blake2b
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "blake2b-avx2",
+		.name = "BLAKE2-AVX2",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
 		.cpu_flag = CPU_FLAG_AVX2,
-		.hash = hash_blake2b
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}
 };
 
 int test_hash(const struct hash_testspec *spec)
 {
 	int i;
+	bool header = false;
 
 	for (i = 0; i < spec->count; i++) {
 		int ret;
@@ -501,8 +563,19 @@ int test_hash(const struct hash_testspec *spec)
 			printf("%s skipped, no CPU support\n", spec->name);
 			continue;
 		}
+		/* Backend not compiled in */
+		if (spec->backend == 1)
+			continue;
 
-		cpu_set_level(spec->cpu_flag);
+		if (!header) {
+			printf("TEST: name=%s vectors=%zd\n", spec->name, spec->count);
+			header = true;
+		}
+
+		if (spec->cpu_flag) {
+			cpu_set_level(spec->cpu_flag);
+			hash_init_accel();
+		}
 		ret = spec->hash((const u8 *)vec->plaintext, vec->psize, csum);
 		cpu_reset_level();
 		if (ret < 0) {
@@ -534,12 +607,11 @@ int main(int argc, char **argv) {
 
 	cpu_detect_flags();
 	cpu_print_flags();
+	hash_init_accel();
 
-	for (i = 0; i < ARRAY_SIZE(test_spec); i++) {
-		printf("TEST: name=%s vectors=%zd\n", test_spec[i].name,
-				test_spec[i].count);
+	printf("Implementation: %s\n", CRYPTOPROVIDER);
+	for (i = 0; i < ARRAY_SIZE(test_spec); i++)
 		test_hash(&test_spec[i]);
-	}
 
 	return 0;
 }
