@@ -1,7 +1,7 @@
 #!/bin/sh
-# Usage: $0 [branch]
+# Usage: $0 [branch] [configure options]
 # Create source tarball from HEAD or given branch and build it in openSUSE Tumbleweed CI
-# environment
+# environment. Configure options follow branch name that can be empty.
 
 HERE=`pwd`
 if [ -f "configure.ac" ]; then
@@ -16,6 +16,7 @@ fi
 
 CIIMAGEDIR=ci/images/ci-openSUSE-tumbleweed-x86_64
 BRANCH=${1:-HEAD}
+shift
 HASH=$(git log -1 --format='%h %s' "$BRANCH")
 
 echo "CI: Generate archive from $BRANCH ($HASH)"
@@ -28,4 +29,4 @@ gzip --force --best devel.tar
 cd "$CIIMAGEDIR"
 cp "$SOURCEDIR/devel.tar.gz" .
 ./docker-build
-./docker-run -- ./test-build devel --disable-documentation --disable-backtrace --disable-libudev
+./docker-run -- ./test-build devel --disable-documentation "$@"
