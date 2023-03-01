@@ -236,29 +236,38 @@ AC_ARG_WITH([crypto],
 cryptoprovider=
 cryptoproviderversion=
 CRYPTOPROVIDER_BUILTIN=0
+CRYPTOPROVIDER_LIBGCRYPT=0
+CRYPTOPROVIDER_LIBSODIUM=0
+CRYPTOPROVIDER_LIBKCAPI=0
 if test "$with_crypto" = "builtin"; then
 	cryptoprovider="builtin"
 	CRYPTOPROVIDER_BUILTIN=1
-	AC_DEFINE([CRYPTOPROVIDER_BUILTIN],[1],[Use builtin implementation])
 elif test "$with_crypto" = "libgcrypt"; then
 	cryptoprovider="libgcrypt"
 	PKG_CHECK_MODULES(GCRYPT, [libgcrypt >= 1.8.0])
-	AC_DEFINE([CRYPTOPROVIDER_LIBGCRYPT],[1],[Use libcrypt])
+	CRYPTOPROVIDER_LIBGCRYPT=1
 	cryptoproviderversion=`${PKG_CONFIG} libgcrypt --version`
 elif test "$with_crypto" = "libsodium"; then
 	cryptoprovider="libsodium"
 	PKG_CHECK_MODULES(SODIUM, [libsodium >= 1.0.4])
-	AC_DEFINE([CRYPTOPROVIDER_LIBSODIUM],[1],[Use libsodium])
+	CRYPTOPROVIDER_LIBSODIUM=1
 	cryptoproviderversion=`${PKG_CONFIG} libsodium --version`
 elif test "$with_crypto" = "libkcapi"; then
 	cryptoprovider="libkcapi"
 	PKG_CHECK_MODULES(KCAPI, [libkcapi >= 1.0.0])
-	AC_DEFINE([CRYPTOPROVIDER_LIBKCAPI],[1],[Use libkcapi])
+	CRYPTOPROVIDER_LIBKCAPI=1
 	cryptoproviderversion=`${PKG_CONFIG} libkcapi --version`
 else
 	AC_MSG_ERROR([unrecognized crypto provider: $with_crypto])
 fi
 AC_SUBST([CRYPTOPROVIDER_BUILTIN])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_BUILTIN],[$CRYPTOPROVIDER_BUILTIN],[Use builtin implementation])
+AC_SUBST([CRYPTOPROVIDER_LIBGCRYPT])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_LIBGCRYPT],[$CRYPTOPROVIDER_LIBGCRYPT],[Use libcrypt])
+AC_SUBST([CRYPTOPROVIDER_LIBSODIUM])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_LIBSODIUM],[$CRYPTOPROVIDER_LIBSODIUM],[Use libsodium])
+AC_SUBST([CRYPTOPROVIDER_LIBKCAPI])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_LIBKCAPI],[$CRYPTOPROVIDER_LIBKCAPI],[Use libkcapi])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER],["$cryptoprovider"],[Crypto implementation source name])
 
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
