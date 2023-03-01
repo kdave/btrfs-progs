@@ -19,6 +19,7 @@ RUN zypper install -y --no-recommends udev device-mapper acl attr xz
 
 # For debugging
 RUN zypper install -y --no-recommends less vim
+RUN zypper install -y --no-recommends libsodium-devel
 
 COPY ./test-build .
 COPY ./run-tests .
