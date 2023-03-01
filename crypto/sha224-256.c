@@ -97,7 +97,7 @@ static uint32_t SHA256_H0[SHA256HashSize/4] = {
 
 static void (*sha256_process_message_block)(SHA256Context *context) = SHA224_256ProcessMessageBlock;
 
-#ifdef __SHA__
+#if HAVE_CFLAG_msha == 1
 void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);
 
 static void sha256_process_x86_dispatch(SHA256Context *context)
@@ -110,7 +110,7 @@ static void sha256_process_x86_dispatch(SHA256Context *context)
 
 void sha256_init_accel(void)
 {
-#ifdef __SHA__
+#if HAVE_CFLAG_msha == 1
 	if (cpu_has_feature(CPU_FLAG_SHA))
 		sha256_process_message_block = sha256_process_x86_dispatch;
 	else

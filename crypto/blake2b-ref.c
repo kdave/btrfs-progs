@@ -229,15 +229,15 @@ static void (*blake2b_compress)( blake2b_state *S, const uint8_t block[BLAKE2B_B
 void blake2_init_accel(void)
 {
 	if (0);
-#if HAVE_AVX2
+#if HAVE_CFLAG_mavx2 == 1
 	else if (cpu_has_feature(CPU_FLAG_AVX2))
 		blake2b_compress = blake2b_compress_avx2;
 #endif
-#if HAVE_SSE41
+#if HAVE_CFLAG_msse41 == 1
 	else if (cpu_has_feature(CPU_FLAG_SSE41))
 		blake2b_compress = blake2b_compress_sse41;
 #endif
-#if HAVE_SSE2
+#if HAVE_CFLAG_msse2 == 1
 	else if (cpu_has_feature(CPU_FLAG_SSE2))
 		blake2b_compress = blake2b_compress_sse2;
 #endif

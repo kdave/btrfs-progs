@@ -130,13 +130,17 @@ LIBBTRFSUTIL_LDFLAGS = $(SUBST_LDFLAGS) \
 # Default implementation
 CRYPTO_OBJECTS =
 
-ifeq ($(shell uname -m),x86_64)
+ifeq ($(HAVE_CFLAG_msse2),1)
 crypto_blake2b_sse2_cflags = -msse2
+endif
+ifeq ($(HAVE_CFLAG_msse41),1)
 crypto_blake2b_sse41_cflags = -msse4.1
+endif
+ifeq ($(HAVE_CFLAG_mavx2),1)
 crypto_blake2b_avx2_cflags = -mavx2
+endif
 ifeq ($(HAVE_CFLAG_msha),1)
 crypto_sha256_x86_cflags = -msse4.1 -msha
-endif
 endif
 
 LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)

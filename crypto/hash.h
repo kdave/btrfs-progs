@@ -28,7 +28,5 @@ int hash_blake2b(const u8 *buf, size_t length, u8 *out);
 
 void hash_init_accel(void);
 void hash_init_crc32c(void);
-void hash_init_blake2(void);
-void hash_init_sha256(void);
 
 #endif

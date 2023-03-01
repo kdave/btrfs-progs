@@ -183,27 +183,26 @@ int main(int argc, char **argv) {
 		u64 cycles;
 		u64 time;
 		unsigned long cpu_flag;
-		void (*init_accel)(void);
 	} contestants[] = {
 		{ .name = "NULL-NOP", .digest = hash_null_nop, .digest_size = 32 },
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
 		{ .name = "CRC32C-ref", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_NONE, .init_accel = hash_init_crc32c },
+		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_SSE42, .init_accel = hash_init_crc32c },
+		  .cpu_flag = CPU_FLAG_SSE42 },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_NONE, .init_accel = hash_init_sha256 },
+		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "SHA256-NI", .digest = hash_sha256, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SHA, .init_accel = hash_init_sha256 },
+		  .cpu_flag = CPU_FLAG_SHA },
 		{ .name = "BLAKE2-ref", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_NONE, .init_accel = hash_init_blake2 },
+		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "BLAKE2-SSE2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE2, .init_accel = hash_init_blake2 },
+		  .cpu_flag = CPU_FLAG_SSE2 },
 		{ .name = "BLAKE2-SSE41", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE41, .init_accel = hash_init_blake2 },
+		  .cpu_flag = CPU_FLAG_SSE41 },
 		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_AVX2, .init_accel = hash_init_blake2 },
+		  .cpu_flag = CPU_FLAG_AVX2 },
 	};
 	int units = UNITS_CYCLES;
 
@@ -278,7 +277,7 @@ int main(int argc, char **argv) {
 
 		if (c->cpu_flag) {
 			cpu_set_level(c->cpu_flag);
-			c->init_accel();
+			hash_init_accel();
 		}
 		tstart = get_time();
 		start = get_cycles(units);

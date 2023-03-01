@@ -43,6 +43,18 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
 
+AX_CHECK_COMPILE_FLAG([-msse2], [HAVE_CFLAG_msse2=1], [HAVE_CFLAG_msse2=0])
+AC_SUBST([HAVE_CFLAG_msse2])
+AC_DEFINE_UNQUOTED([HAVE_CFLAG_msse2], [$HAVE_CFLAG_msse2], [Compiler supports -msse2])
+
+AX_CHECK_COMPILE_FLAG([-msse4.1], [HAVE_CFLAG_msse41=1], [HAVE_CFLAG_msse41=0])
+AC_SUBST([HAVE_CFLAG_msse41])
+AC_DEFINE_UNQUOTED([HAVE_CFLAG_msse41], [$HAVE_CFLAG_msse41], [Compiler supports -msse4.1])
+
+AX_CHECK_COMPILE_FLAG([-mavx2], [HAVE_CFLAG_mavx2=1], [HAVE_CFLAG_mavx2=0])
+AC_SUBST([HAVE_CFLAG_mavx2])
+AC_DEFINE_UNQUOTED([HAVE_CFLAG_mavx2], [$HAVE_CFLAG_mavx2], [Compiler supports -mavx2])
+
 AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
 AC_SUBST([HAVE_CFLAG_msha])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])

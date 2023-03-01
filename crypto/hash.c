@@ -20,26 +20,9 @@
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
 
-void hash_init_accel(void)
-{
-	crc32c_init_accel();
-	blake2_init_accel();
-	sha256_init_accel();
-}
-
 void hash_init_crc32c(void)
 {
 	crc32c_init_accel();
-}
-
-void hash_init_blake2(void)
-{
-	blake2_init_accel();
-}
-
-void hash_init_sha256(void)
-{
-	sha256_init_accel();
 }
 
 /*
@@ -70,6 +53,13 @@ int hash_xxhash(const u8 *buf, size_t length, u8 *out)
  */
 #if CRYPTOPROVIDER_BUILTIN == 1
 
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+	blake2_init_accel();
+	sha256_init_accel();
+}
+
 int hash_sha256(const u8 *buf, size_t len, u8 *out)
 {
 	SHA256Context context;
@@ -98,6 +88,11 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 
 #include <gcrypt.h>
 
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+}
+
 int hash_sha256(const u8 *buf, size_t len, u8 *out)
 {
 	gcry_md_hash_buffer(GCRY_MD_SHA256, out, buf, len);
@@ -117,6 +112,11 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 #include <sodium/crypto_hash_sha256.h>
 #include <sodium/crypto_generichash_blake2b.h>
 
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+}
+
 int hash_sha256(const u8 *buf, size_t len, u8 *out)
 {
 	return crypto_hash_sha256(out, buf, len);
@@ -133,6 +133,11 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 #if CRYPTOPROVIDER_LIBKCAPI == 1
 
 #include <kcapi.h>
+
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+}
 
 int hash_sha256(const u8 *buf, size_t len, u8 *out)
 {
