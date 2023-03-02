@@ -249,6 +249,11 @@ fi
 AC_SUBST([CRYPTOPROVIDER_BUILTIN])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER],["$cryptoprovider"],[Crypto implementation source name])
 
+AC_ARG_ENABLE([x86accel],
+        AS_HELP_STRING([--enable-x86accel], [enable X86-specific builtin crypto acceleration (requires SSE2/SSE4.1/AVX)]))
+AS_IF([test "x$enable_x86accel" = xyes], [CRYPTOPROVIDER_BUILTIN_X86ACCEL=1], [CRYPTOPROVIDER_BUILTIN_X86ACCEL=0])
+AC_SUBST(CRYPTOPROVIDER_BUILTIN_X86ACCEL)
+
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
 		[AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [1],
                            [Define to 1 if kernel headers do not define FIEMAP_EXTENT_SHARED])
