@@ -10,6 +10,11 @@ btrfs-progs-6.2 (2023-02-28)
       * build actually requires -std=gnu11
       * refactor help option formatting, auto wrap long lines
 
+btrfs-progs-6.2.1 (2023-02-03)
+""""""""""""""""""""""""""""""
+   * fix build with crypto libraries
+   * CI images updated, build tests extended
+
 btrfs-progs-6.1 (2022-12-22)
 ----------------------------
    * NOTE: this version breaks build of applications using ctree.h and qgroup items
