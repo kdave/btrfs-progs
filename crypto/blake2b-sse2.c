@@ -23,6 +23,9 @@
 #ifdef HAVE_SSE2
 
 #include <emmintrin.h>
+#if defined(HAVE_SSSE3)
+#include <tmmintrin.h>
+#endif
 #if defined(HAVE_XOP)
 #include <x86intrin.h>
 #endif
