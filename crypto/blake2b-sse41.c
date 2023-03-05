@@ -34,6 +34,7 @@
 #include <x86intrin.h>
 #endif
 
+#include "blake2b-load-sse41.h"
 #include "blake2b-round.h"
 
 static const uint64_t blake2b_IV[8] =

@@ -136,12 +136,6 @@
 
 #endif
 
-#if defined(HAVE_SSE41)
-#include "blake2b-load-sse41.h"
-#else
-#include "blake2b-load-sse2.h"
-#endif
-
 #define ROUND(r) \
   LOAD_MSG_ ##r ##_1(b0, b1); \
   G1(row1l,row2l,row3l,row4l,row1h,row2h,row3h,row4h,b0,b1); \
