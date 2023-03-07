@@ -26,7 +26,7 @@ check_result() {
 
 	ret=$1
 
-	str="RESULT of target($target) conf($conf): "
+	str="RESULT of target($target) conf($conf) CFLAGS($CFLAGS): "
 	case $ret in
 		0) str="$str OK";;
 		*) str="$str FAIL";;
@@ -39,11 +39,17 @@ $str"
 buildme() {
 	make clean-all
 
-	./autogen.sh && configure "$conf" || die "configure not working with: $@"
+	./autogen.sh && CFLAGS="$CFLAGS" configure "$conf" || die "configure not working with: $@"
 	$make clean
 	$make $opts $target
 	check_result "$?"
 	echo "VERDICT: $verdict"
+}
+
+buildme_cflags() {
+	CFLAGS="$1"
+	buildme
+	CFLAGS=''
 }
 
 build_make_targets() {
@@ -85,6 +91,8 @@ jobs=16
 opts="-j${jobs} $@"
 verdict=
 target=
+export CLFAGS
+CFLAGS=
 
 conf=
 build_make_targets
@@ -121,6 +129,13 @@ build_make_targets
 
 conf='--with-crypto=libkcapi'
 build_make_targets
+
+# Old architectures
+conf='--with-crypto=builtin'
+buildme_cflags '-march=core2'
+
+conf='--with-crypto=builtin'
+buildme_cflags '-march=x86-64-v3'
 
 # debugging builds, just the default targets
 target='D=1'
