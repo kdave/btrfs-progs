@@ -648,16 +648,6 @@ static int print_device_stat_tabular(struct string_table *table, int row,
 	char *canonical_path = path_canonicalize(path);
 	int j;
 	int err = 0;
-	static const struct {
-		const char name[32];
-		enum btrfs_dev_stat_values stat_idx;
-	} dev_stats[] = {
-		{ "write_io_errs", BTRFS_DEV_STAT_WRITE_ERRS },
-		{ "read_io_errs", BTRFS_DEV_STAT_READ_ERRS },
-		{ "flush_io_errs", BTRFS_DEV_STAT_FLUSH_ERRS },
-		{ "corruption_errs", BTRFS_DEV_STAT_CORRUPTION_ERRS },
-		{ "generation_errs", BTRFS_DEV_STAT_GENERATION_ERRS },
-	};
 
 	/* Skip header + --- line */
 	row += 2;
@@ -677,20 +667,14 @@ static int print_device_stat_tabular(struct string_table *table, int row,
 	table_printf(table, 1, row, ">%s", canonical_path);
 	free(canonical_path);
 
-	for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
-		enum btrfs_dev_stat_values stat_idx = dev_stats[j].stat_idx;
+	table_printf(table, 2, row, ">%llu", args->values[BTRFS_DEV_STAT_WRITE_ERRS]);
+	table_printf(table, 3, row, ">%llu", args->values[BTRFS_DEV_STAT_READ_ERRS]);
+	table_printf(table, 4, row, ">%llu", args->values[BTRFS_DEV_STAT_FLUSH_ERRS]);
+	table_printf(table, 5, row, ">%llu", args->values[BTRFS_DEV_STAT_CORRUPTION_ERRS]);
+	table_printf(table, 6, row, ">%llu", args->values[BTRFS_DEV_STAT_GENERATION_ERRS]);
 
-		/* We got fewer items than we know */
-		if (args->nr_items < stat_idx + 1)
-			continue;
-
-		table_printf(table, 2, row, ">%llu", args->values[stat_idx]);
-		table_printf(table, 3, row, ">%llu", args->values[stat_idx]);
-		table_printf(table, 4, row, ">%llu", args->values[stat_idx]);
-		table_printf(table, 5, row, ">%llu", args->values[stat_idx]);
-		table_printf(table, 6, row, ">%llu", args->values[stat_idx]);
-
-		if (check && (args->values[stat_idx] > 0))
+	for (j = 0; j < BTRFS_DEV_STAT_VALUES_MAX; j++) {
+		if (check && (args->values[j] > 0))
 			err |= 64;
 	}
 
