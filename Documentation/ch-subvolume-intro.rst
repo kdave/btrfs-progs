@@ -134,8 +134,8 @@ may change in the future.
 Mounting a read-write snapshot as read-only is possible and will not change the
 *ro* property and flag of the subvolume.
 
-The name of the mounted subvolume is stored in file ``/proc/self/mounts`` in the
-4th column:
+The name of the mounted subvolume is stored in file ``/proc/self/mountinfo`` in
+the 4th column:
 
 .. code-block::
 
