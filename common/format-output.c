@@ -347,10 +347,14 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 	} else if (strcmp(row->fmt, "list") == 0) {
 	} else if (strcmp(row->fmt, "map") == 0) {
 	} else if (strcmp(row->fmt, "qgroupid") == 0) {
-		const u64 level = va_arg(args, u64);
+		/*
+		 * Level is u16 but promoted to int when it's a vararg, callers
+		 * should add explicit cast.
+		 */
+		const int level = va_arg(args, int);
 		const u64 id = va_arg(args, u64);
 
-		printf("%llu/%llu", level, id);
+		printf("%hu/%llu", level, id);
 	} else if (strcmp(row->fmt, "size-or-none") == 0) {
 		const u64 size = va_arg(args, u64);
 		const unsigned int unit_mode = va_arg(args, unsigned int);

@@ -1475,7 +1475,7 @@ static void print_all_qgroups_json(struct qgroup_lookup *qgroup_lookup)
 		fmt_print_start_group(&fctx, NULL, JSON_TYPE_MAP);
 
 		fmt_print(&fctx, "qgroupid",
-				btrfs_qgroup_level(qgroup->qgroupid),
+				(int)btrfs_qgroup_level(qgroup->qgroupid),
 				btrfs_qgroup_subvolid(qgroup->qgroupid));
 		fmt_print(&fctx, "referenced", qgroup->info.referenced);
 		if (qgroup->limit.flags & BTRFS_QGROUP_LIMIT_MAX_RFER)
