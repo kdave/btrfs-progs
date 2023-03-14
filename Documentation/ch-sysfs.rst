@@ -13,6 +13,7 @@ features/                      All supported features               3.14+
 <UUID>/devinfo/<DEVID>/        Btrfs specific info for each device  5.6+
 <UUID>/qgroups/                Global qgroup info                   5.9+
 <UUID>/qgroups/<LEVEL>_<ID>/   Info for each qgroup                 5.9+
+<UUID>/discard/                Discard stats and tunables           6.1+
 =============================  ===================================  ========
 
 For `/sys/fs/btrfs/features/` directory, each file means a supported feature
@@ -247,3 +248,49 @@ rsv_meta_prealloc
         (RO, since: 5.9)
 
         Shows the reserved bytes for preallocated metadata.
+
+Files in `/sys/fs/btrfs/<UUID>/discard/` directory are:
+
+discardable_bytes
+        (RO, since: 6.1)
+
+        Shows amount of bytes that can be discarded in the async discard and
+        nodiscard mode.
+
+discardable_extents
+        (RO, since: 6.1)
+
+        Shows number of extents to be discarded in the async discard and
+        nodiscard mode.
+
+discard_bitmap_bytes
+        (RO, since: 6.1)
+
+        Shows amount of discarded bytes from data tracked as bitmaps.
+
+discard_extent_bytes
+        (RO, since: 6.1)
+
+        Shows amount of discarded extents from data tracked as bitmaps.
+
+discard_bytes_saved
+        (RO, since: 6.1)
+
+        Shows the amount of bytes that were reallocated without being discarded.
+
+kbps_limit
+        (RW, since: 6.1)
+
+        Tunable limit of kilobytes per second issued as discard IO in the async
+        discard mode.
+
+iops_limit
+        (RW, since: 6.1)
+
+        Tunable limit of number of discard IO operations to be issued in the
+        async discard mode.
+
+max_discard_size
+        (RW, since: 6.1)
+
+        Tunable limit for size of one IO discard request.
