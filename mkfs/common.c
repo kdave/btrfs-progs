@@ -1084,8 +1084,11 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 	ret = test_status_for_mkfs(file, force_overwrite);
 	if (ret)
 		return 1;
-	/* check if the device is busy */
-	fd = open(file, O_RDWR|O_EXCL);
+	/*
+	 * Check if the device is busy. Open it in read-only mode to avoid triggering
+	 * udev events.
+	 */
+	fd = open(file, O_RDONLY | O_EXCL);
 	if (fd < 0) {
 		error("unable to open %s: %m", file);
 		return 1;

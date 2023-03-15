@@ -72,6 +72,7 @@ static bool opt_zoned = true;
 static int opt_oflags = O_RDWR;
 
 struct prepare_device_progress {
+	int fd;
 	char *file;
 	u64 dev_block_count;
 	u64 block_count;
@@ -965,23 +966,21 @@ fail:
 static void *prepare_one_device(void *ctx)
 {
 	struct prepare_device_progress *prepare_ctx = ctx;
-	int fd;
 
-	fd = open(prepare_ctx->file, opt_oflags);
-	if (fd < 0) {
+	prepare_ctx->fd = open(prepare_ctx->file, opt_oflags);
+	if (prepare_ctx->fd < 0) {
 		error("unable to open %s: %m", prepare_ctx->file);
 		prepare_ctx->ret = -errno;
 		return NULL;
 	}
-	prepare_ctx->ret = btrfs_prepare_device(fd, prepare_ctx->file,
+	prepare_ctx->ret = btrfs_prepare_device(prepare_ctx->fd,
+				prepare_ctx->file,
 				&prepare_ctx->dev_block_count,
 				prepare_ctx->block_count,
 				(bconf.verbose ? PREP_DEVICE_VERBOSE : 0) |
 				(opt_zero_end ? PREP_DEVICE_ZERO_END : 0) |
 				(opt_discard ? PREP_DEVICE_DISCARD : 0) |
 				(opt_zoned ? PREP_DEVICE_ZONED : 0));
-	close(fd);
-
 	return NULL;
 }
 
@@ -992,7 +991,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_trans_handle *trans;
 	struct open_ctree_flags ocf = { 0 };
-	int fd = -1;
 	int ret = 0;
 	int close_ret;
 	int i;
@@ -1245,8 +1243,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	while (device_count-- > 0) {
+	for (i = 0; i < device_count; i++) {
 		file = argv[optind++];
+
 		if (source_dir_set && path_exists(file) == 0)
 			ret = 0;
 		else if (path_is_block_device(file) == 1)
@@ -1392,6 +1391,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (source_dir_set) {
 		int oflags = O_RDWR;
 		struct stat statbuf;
+		int fd;
 
 		if (path_exists(file) == 0)
 			oflags |= O_CREAT;
@@ -1522,12 +1522,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	device_count--;
-	fd = open(file, opt_oflags);
-	if (fd < 0) {
-		error("unable to open %s: %m", file);
-		goto error;
-	}
 	dev_block_count = prepare_ctx[0].dev_block_count;
 	if (block_count && block_count > dev_block_count) {
 		error("%s is smaller than requested size, expected %llu, found %llu",
@@ -1568,7 +1562,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	else
 		mkfs_cfg.zone_size = 0;
 
-	ret = make_btrfs(fd, &mkfs_cfg);
+	ret = make_btrfs(prepare_ctx[0].fd, &mkfs_cfg);
 	if (ret) {
 		errno = -ret;
 		error("error during mkfs: %m");
@@ -1582,8 +1576,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		error("open ctree failed");
 		goto error;
 	}
-	close(fd);
-	fd = -1;
+
 	root = fs_info->fs_root;
 
 	ret = create_metadata_block_groups(root, mixed, &allocation);
@@ -1636,36 +1629,28 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (device_count == 0)
 		goto raid_groups;
 
-	while (device_count-- > 0) {
-		int dev_index = argc - saved_optind - device_count - 1;
-		file = argv[optind++];
-
-		fd = open(file, opt_oflags);
-		if (fd < 0) {
-			error("unable to open %s: %m", file);
-			goto error;
-		}
-		ret = btrfs_device_already_in_root(root, fd,
+	for (i = 1; i < device_count; i++) {
+		ret = btrfs_device_already_in_root(root, prepare_ctx[i].fd,
 						   BTRFS_SUPER_INFO_OFFSET);
 		if (ret) {
 			error("skipping duplicate device %s in the filesystem",
 				file);
-			close(fd);
 			continue;
 		}
-		dev_block_count = prepare_ctx[dev_index].dev_block_count;
+		dev_block_count = prepare_ctx[i].dev_block_count;
 
-		if (prepare_ctx[dev_index].ret) {
-			errno = -prepare_ctx[dev_index].ret;
-			error("unable to prepare device %s: %m",
-					prepare_ctx[dev_index].file);
+		if (prepare_ctx[i].ret) {
+			errno = -prepare_ctx[i].ret;
+			error("unable to prepare device %s: %m", prepare_ctx[i].file);
 			goto error;
 		}
 
-		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
+		ret = btrfs_add_to_fsid(trans, root, prepare_ctx[i].fd,
+					prepare_ctx[i].file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
 		if (ret) {
-			error("unable to add %s to filesystem: %d", file, ret);
+			error("unable to add %s to filesystem: %d",
+			      prepare_ctx[i].file, ret);
 			goto error;
 		}
 		if (bconf.verbose >= 2) {
@@ -1839,6 +1824,10 @@ out:
 	}
 
 	btrfs_close_all_devices();
+	if (prepare_ctx) {
+		for (i = 0; i < device_count; i++)
+			close(prepare_ctx[i].fd);
+	}
 	free(t_prepare);
 	free(prepare_ctx);
 	free(label);
@@ -1847,9 +1836,10 @@ out:
 	return !!ret;
 
 error:
-	if (fd > 0)
-		close(fd);
-
+	if (prepare_ctx) {
+		for (i = 0; i < device_count; i++)
+			close(prepare_ctx[i].fd);
+	}
 	free(t_prepare);
 	free(prepare_ctx);
 	free(label);
