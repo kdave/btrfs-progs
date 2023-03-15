@@ -726,7 +726,7 @@ static int device_is_seed(int fd, const char *dev_path, u64 devid, const u8 *mnt
 		close(sysfs_fd);
 	}
 
-	if (ret) {
+	if (ret || sysfs_fd < 0) {
 		ret = dev_to_fsid(dev_path, fsid);
 		if (ret)
 			return ret;
