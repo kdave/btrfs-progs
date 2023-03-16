@@ -47,7 +47,7 @@ Since version 6.1 it's possible to create the swapfile in a single command
 
 .. code-block:: bash
 
-        # btrfs filesystem mkswapfile swapfile
+        # btrfs filesystem mkswapfile --size 2G swapfile
         # swapon swapfile
 
 Please note that the UUID returned by the *mkswap* utility identifies the swap
