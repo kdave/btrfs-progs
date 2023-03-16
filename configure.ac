@@ -1,10 +1,10 @@
 AC_INIT([btrfs-progs],
 	m4_flatten(m4_include([VERSION])),
 	[linux-btrfs@vger.kernel.org],,
-	[http://btrfs.wiki.kernel.org])
+	[https://btrfs.readthedocs.io])
 
 if test "x$PACKAGE_URL" = "x"; then
-	AC_DEFINE([PACKAGE_URL], ["http://btrfs.wiki.kernel.org"], [URL])
+	AC_DEFINE([PACKAGE_URL], ["https://btrfs.readthedocs.io"], [URL])
 fi
 
 dnl Package version

@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: libbtrfsutil
 Description: libbtrfsutil library
 Version: @BTRFS_VERSION_PLAIN@
-URL: http://btrfs.wiki.kernel.org
+URL: https://btrfs.readthedocs.io
 Cflags: -I${includedir}
 Libs: -L${libdir} -lbtrfsutil
