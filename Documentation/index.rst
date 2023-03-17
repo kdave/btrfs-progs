@@ -14,6 +14,7 @@ Welcome to BTRFS documentation!
    Hardware
    CHANGES
    Feature-by-version
+   Kernel-by-version
    Glossary
    INSTALL
 
@@ -63,4 +64,3 @@ Welcome to BTRFS documentation!
    btrfs-ioctl
    DocConventions
    dev-send-stream
-   Kernel-by-version
