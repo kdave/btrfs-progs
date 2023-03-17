@@ -64,3 +64,5 @@ Welcome to BTRFS documentation!
    btrfs-ioctl
    DocConventions
    dev-send-stream
+   dev-btrees
+   dev-btrfs-design
