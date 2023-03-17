@@ -8,6 +8,7 @@ Welcome to BTRFS documentation!
    :caption: Overview
 
    Introduction
+   Status
    man-index
    Administration
    Hardware
