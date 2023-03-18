@@ -1789,7 +1789,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 	struct btrfs_key key;
 	int item;
 
-	buf = malloc(sizeof(*buf) + sizeof(*sb));
+	buf = alloc_dummy_extent_buffer(NULL, 0, BTRFS_SUPER_INFO_SIZE);
 	if (!buf) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		return;
@@ -1860,13 +1860,13 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 	}
 
 out:
-	free(buf);
+	free_extent_buffer(buf);
 	return;
 
 out_short_read:
 	error("sys_array too short to read %u bytes at offset %u",
 			len, cur_offset);
-	free(buf);
+	free_extent_buffer(buf);
 }
 
 static int empty_backup(struct btrfs_root_backup *backup)
