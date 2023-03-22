@@ -1,0 +1,26 @@
+# Testing workflow for CI developments, reacts to push of branch 'devel-ci'
+name: Testing CI build
+run-name: Testing CI
+on:
+  push:
+    branches:
+      - devel-ci
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: uname -a
+      - run: sudo modprobe btrfs
+      - run: cat /proc/filesystems
+      - run: gcc --version
+      - run: df -HT
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev
+      - name: Configure
+        run: ./autogen.sh && ./configure
+      - name: Make
+        run: make V=1
+      - name: Musl build
+        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+      - name: Tests cli
+        run: echo sudo make TEST_LOG=dump test-cli

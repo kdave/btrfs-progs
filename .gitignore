@@ -71,6 +71,7 @@
 /cscope.po.out
 .*
 !.editorconfig
+!.github
 
 /ci/images/*/devel.tar.gz
 
