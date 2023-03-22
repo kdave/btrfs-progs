@@ -22,7 +22,7 @@ count=10
 declare -a devices
 declare -a names
 
-run_check $SUDO_HELPER "$nullb" setup
+run_mayfail $SUDO_HELPER "$nullb" setup
 if [ $? != 0 ]; then
 	_not_run "cannot setup nullb environment for zoned devices"
 fi
