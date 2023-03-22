@@ -21,14 +21,14 @@ and a formerly private ioctl number could become available on the VFS level.
 DATA STRUCTURES AND DEFINITIONS
 -------------------------------
 
-.. code-block::
+.. code-block:: c
 
    struct btrfs_ioctl_vol_args {
            __s64 fd;
            char name[BTRFS_PATH_NAME_MAX + 1];
    };
 
-.. code-block::
+.. code-block:: c
 
    struct btrfs_ioctl_vol_args_v2 {
            __s64 fd;
@@ -48,7 +48,7 @@ DATA STRUCTURES AND DEFINITIONS
             };
    };
 
-.. code-block::
+.. code-block:: c
 
    struct btrfs_ioctl_get_subvol_info_args {
         /* Id of this subvolume */
@@ -105,10 +105,17 @@ DATA STRUCTURES AND DEFINITIONS
         __u64 reserved[8];
    };
 
-.. code-block::
+.. list-table::
+   :header-rows: 1
 
-   BTRFS_SUBVOL_NAME_MAX = 4039
-   BTRFS_PATH_NAME_MAX = 4087
+   * - Constant name
+     - Value
+   * - BTRFS_UUID_SIZE
+     - 16
+   * - BTRFS_SUBVOL_NAME_MAX
+     - 4039
+   * - BTRFS_PATH_NAME_MAX
+     - 4087
 
 OVERVIEW
 --------
@@ -119,7 +126,7 @@ point, it could be the filesystem or a directory inside the filesystem.
 
 An ioctl can be used in the following schematic way:
 
-.. code-block::
+.. code-block:: c
 
    struct btrfs_ioctl_args args;
 
@@ -222,66 +229,76 @@ BTRFS_IOC_SUBVOL_CREATE
 
 *(since: 3.0, obsoleted: 4.0)* Create a subvolume.
 
-ioctl fd
-    file descriptor of the parent directory of the new subvolume
-argument type
-    struct btrfs_ioctl_vol_args
-fd
-    ignored
-name
-    name of the subvolume, although the buffer can be almost 4k, the file
-    size is limited by Linux VFS to 255 characters and must not contain a slash
-    ('/')
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the parent directory of the new subvolume
+   * - ioctl args
+     - struct btrfs_ioctl_vol_args
+   * - args.fd
+     - ignored
+   * - args.name
+     - name of the subvolume, although the buffer can be almost 4k, the file
+       size is limited by Linux VFS to 255 characters and must not contain a slash
+       ('/')
 
 BTRFS_IOC_SNAP_CREATE_V2
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-   obsoletes BTRFS_IOC_SNAP_CREATE
-
 Create a snapshot of a subvolume.
 
-ioctl fd
-    file descriptor of the directory inside which to create the new snapshot
-argument type
-    struct btrfs_ioctl_vol_args_v2
-fd
-    file descriptor of any directory inside the subvolume to snapshot
-transid
-    ignored
-flags
-    any subset of `BTRFS_SUBVOL_RDONLY` to make the new snapshot read-only, or
-    `BTRFS_SUBVOL_QGROUP_INHERIT` to apply the `qgroup_inherit` field
-name
-    the name, under the ioctl fd, for the new subvolume
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the directory inside which to create the new snapshot
+   * - ioctl args
+     - struct btrfs_ioctl_vol_args_v2
+   * - args.fd
+     - file descriptor of any directory inside the subvolume to snapshot
+   * - args.transid
+     - ignored
+   * - args.flags
+     - any subset of `BTRFS_SUBVOL_RDONLY` to make the new snapshot read-only,
+       or `BTRFS_SUBVOL_QGROUP_INHERIT` to apply the `qgroup_inherit` field
+   * - name
+     - the name, under the ioctl fd, for the new subvolume
 
 BTRFS_IOC_SUBVOL_CREATE_V2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-   obsoletes BTRFS_IOC_SUBVOL_CREATE
-
 *(since: 3.6)* Create a subvolume, qgroup inheritance can be specified.
 
-ioctl fd
-    file descriptor of the parent directory of the new subvolume
-argument type
-    struct btrfs_ioctl_vol_args_v2
-fd
-    ignored
-transid
-    ignored
-flags
-    ignored
-size
-    ...
-qgroup_inherit
-    ...
-name
-    name of the subvolume, although the buffer can be almost 4k, the file size
-    is limited by Linux VFS to 255 characters and must not contain a slash ('/')
-devid
-    ...
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the parent directory of the new subvolume
+   * - ioctl args
+     - struct btrfs_ioctl_vol_args_v2
+   * - args.fd
+     - ignored
+   * - args.transid
+     - ignored
+   * - args.flags
+     - ignored
+   * - args.size
+     - ...
+   * - args.qgroup_inherit
+     - ...
+   * - name
+     - name of the subvolume, although the buffer can be almost 4k, the file
+       size is limited by Linux VFS to 255 characters and must not contain a
+       slash ('/')
+   * - devid
+     - ...
 
 BTRFS_IOC_SUBVOL_GETFLAGS
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -289,58 +306,78 @@ BTRFS_IOC_SUBVOL_GETFLAGS
 Read the flags of a subvolume. The returned flags are either 0 or
 `BTRFS_SUBVOL_RDONLY`.
 
-ioctl fd
-    file descriptor of the subvolume to examine
-argument type
-    uint64_t
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to examine
+   * - ioctl args
+     - uint64_t
 
 BTRFS_IOC_SUBVOL_SETFLAGS
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Change the flags of a subvolume.
 
-ioctl fd
-    file descriptor of the subvolume to modify
-argument type
-    uint64_t, either 0 or `BTRFS_SUBVOL_RDONLY`
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to modify
+   * - ioctl args
+     - uint64_t, either 0 or `BTRFS_SUBVOL_RDONLY`
 
 BTRFS_IOC_GET_SUBVOL_INFO
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Get information about a subvolume.
 
-ioctl fd
-    file descriptor of the subvolume to examine
-argument type
-    struct btrfs_ioctl_get_subvol_info_args
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to examine
+   * - ioctl args
+     - struct btrfs_ioctl_get_subvol_info_args
 
 BTRFS_IOC_SNAP_DESTROY_V2
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Destroy a subvolume, which may or may not be a snapshot.
 
-ioctl fd
-    if `flags` does not include `BTRFS_SUBVOL_SPEC_BY_ID`, or if executing in a
-    non-root user namespace, file descriptor of the parent directory containing
-    the subvolume to delete; otherwise, file descriptor of any directory on the
-    same filesystem as the subvolume to delete, but not within the same
-    subvolume
-argument type
-    struct btrfs_ioctl_vol_args_v2
-fd
-    ignored
-transid
-    ignored
-flags
-    0 if the `name` field identifies the subvolume by name in the specified
-    directory, or `BTRFS_SUBVOL_SPEC_BY_ID` if the `subvolid` field specifies
-    the ID of the subvolume
-name
-    only if `flags` does not contain `BTRFS_SUBVOL_SPEC_BY_ID`, the name
-    (within the directory identified by `fd`) of the subvolume to delete
-subvolid
-    only if `flags` contains `BTRFS_SUBVOL_SPEC_BY_ID`, the subvolume ID of the
-    subvolume to delete
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - if `flags` does not include `BTRFS_SUBVOL_SPEC_BY_ID`, or if executing
+       in a non-root user namespace, file descriptor of the parent directory
+       containing the subvolume to delete; otherwise, file descriptor of any
+       directory on the same filesystem as the subvolume to delete, but not
+       within the same subvolume
+   * - ioctl args
+     - struct btrfs_ioctl_vol_args_v2
+   * - args.fd
+     - ignored
+   * - args.transid
+     - ignored
+   * - args.flags
+     - 0 if the `name` field identifies the subvolume by name in the specified
+       directory, or `BTRFS_SUBVOL_SPEC_BY_ID` if the `subvolid` field
+       specifies the ID of the subvolume
+   * - args.name
+     - only if `flags` does not contain `BTRFS_SUBVOL_SPEC_BY_ID`, the name
+       (within the directory identified by `fd`) of the subvolume to delete
+   * - args.subvolid
+     - only if `flags` contains `BTRFS_SUBVOL_SPEC_BY_ID`, the subvolume ID of
+       the subvolume to delete
 
 AVAILABILITY
 ------------
