@@ -903,10 +903,19 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	return btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 }
 
-static int ext2_is_special_inode(ext2_ino_t ino)
+static bool ext2_is_special_inode(ext2_filsys ext2_fs, ext2_ino_t ino)
 {
 	if (ino < EXT2_GOOD_OLD_FIRST_INO && ino != EXT2_ROOT_INO)
 		return 1;
+#ifdef EXT4_FEATURE_COMPAT_ORPHAN_FILE
+	/*
+	 * If we have COMPAT_ORPHAN_FILE feature, we have a special inode
+	 * recording all the orphan files.  We need to skip such special inode.
+	 */
+	if (ext2_fs->super->s_feature_compat & EXT4_FEATURE_COMPAT_ORPHAN_FILE &&
+	    ino == ext2_fs->super->s_orphan_file_inum)
+		return 1;
+#endif
 	return 0;
 }
 
@@ -940,7 +949,7 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		/* no more inodes */
 		if (ext2_ino == 0)
 			break;
-		if (ext2_is_special_inode(ext2_ino))
+		if (ext2_is_special_inode(ext2_fs, ext2_ino))
 			continue;
 		objectid = ext2_ino + INO_OFFSET;
 		ret = ext2_copy_single_inode(trans, root,
