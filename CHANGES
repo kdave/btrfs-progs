@@ -15,6 +15,22 @@ btrfs-progs-6.2.1 (2023-02-03)
    * fix build with crypto libraries
    * CI images updated, build tests extended
 
+btrfs-progs-6.2.2 (2023-03-25)
+""""""""""""""""""""""""""""""
+   * fix build on old x86 architectures with builtin crypto
+   * device stats: fix printing wrong values in tabular output
+   * qgroup show: fix qgroup id formatting in json output
+   * restore: fix restoring xattrs on directories
+   * restore: don't modify metadata in dry-run mode
+   * balance: fix some cases wrongly parsed as old syntax
+   * balance: warn when deprecated syntax is used
+   * seeding: fall back to old way if sysfs device fsid is not available
+   * convert: handle orphan file ext4 feature
+   * other:
+      * sync ioctl definitions
+      * enable github CI
+      * update documentation
+
 btrfs-progs-6.1 (2022-12-22)
 ----------------------------
    * NOTE: this version breaks build of applications using ctree.h and qgroup items
