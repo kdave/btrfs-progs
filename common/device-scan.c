@@ -76,7 +76,7 @@ int check_arg_type(const char *input)
 		if (path_is_block_device(path) == 1)
 			return BTRFS_ARG_BLKDEV;
 
-		if (path_is_mount_point(path) == 1)
+		if (path_is_a_mount_point(path) == 1)
 			return BTRFS_ARG_MNTPOINT;
 
 		if (path_is_reg_file(path))
