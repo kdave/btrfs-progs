@@ -871,7 +871,7 @@ static int cmd_balance(const struct cmd_struct *cmd, int argc, char **argv)
 	 * Exclude all valid subcommands from being potentially confused as path
 	 * for the obsolete syntax: btrfs balance <path>
 	 */
-	if (argc >= 2) {
+	if (argc == 2) {
 		for (int i = 0; balance_cmd_group.commands[i] != NULL; i++) {
 			if (strcmp(argv[1], balance_cmd_group.commands[i]->token) == 0) {
 				old_syntax = false;
