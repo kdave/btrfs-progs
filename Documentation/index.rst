@@ -57,6 +57,7 @@ Welcome to BTRFS documentation!
    :maxdepth: 1
    :caption: Developer documentation
 
+   dev/Development-notes
    dev/Experimental
    dev/dev-btrees
    dev/dev-btrfs-design
