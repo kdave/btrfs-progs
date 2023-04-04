@@ -76,42 +76,118 @@ though this is not strictly necessary.
 Version 1
 ^^^^^^^^^
 
-- BTRFS_SEND_A_UNSPEC (0) - invalid
-- BTRFS_SEND_A_UUID (1) - uuid
-- BTRFS_SEND_A_CTRANSID (2) - u64
-- BTRFS_SEND_A_INO (3) - u64
-- BTRFS_SEND_A_SIZE (4) - u64
-- BTRFS_SEND_A_MODE (5) - u64
-- BTRFS_SEND_A_UID (6) - u64
-- BTRFS_SEND_A_GID (7) - u64
-- BTRFS_SEND_A_RDEV (8) - u64
-- BTRFS_SEND_A_CTIME (9) - timespec
-- BTRFS_SEND_A_MTIME (10) - timespec
-- BTRFS_SEND_A_ATIME (11) - timespec
-- BTRFS_SEND_A_OTIME (12) - timespec
-- BTRFS_SEND_A_XATTR_NAME (13) - string
-- BTRFS_SEND_A_XATTR_DATA (14) - data
-- BTRFS_SEND_A_PATH (15) - string
-- BTRFS_SEND_A_PATH_TO (16) - string
-- BTRFS_SEND_A_PATH_LINK (17) - string
-- BTRFS_SEND_A_FILE_OFFSET (18) - u64
-- BTRFS_SEND_A_DATA (19) - data
-- BTRFS_SEND_A_CLONE_UUID (20) - uuid
-- BTRFS_SEND_A_CLONE_CTRANSID (21) - u64
-- BTRFS_SEND_A_CLONE_PATH (22) - string
-- BTRFS_SEND_A_CLONE_OFFSET (23) - u64
-- BTRFS_SEND_A_CLONE_LEN (24) - u64
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Number
+     - Type
+   * - BTRFS_SEND_A_UNSPEC
+     - 0
+     - invalid
+   * - BTRFS_SEND_A_UUID
+     - 1
+     - uuid
+   * - BTRFS_SEND_A_CTRANSID
+     - 2
+     - u64
+   * - BTRFS_SEND_A_INO
+     - 3
+     - u64
+   * - BTRFS_SEND_A_SIZE
+     - 4
+     - u64
+   * - BTRFS_SEND_A_MODE
+     - 5
+     - u64
+   * - BTRFS_SEND_A_UID
+     - 6
+     - u64
+   * - BTRFS_SEND_A_GID
+     - 7
+     - u64
+   * - BTRFS_SEND_A_RDEV
+     - 8
+     - u64
+   * - BTRFS_SEND_A_CTIME
+     - 9
+     - timespec
+   * - BTRFS_SEND_A_MTIME
+     - 10
+     - timespec
+   * - BTRFS_SEND_A_ATIME
+     - 11
+     - timespec
+   * - BTRFS_SEND_A_OTIME
+     - 12
+     - timespec
+   * - BTRFS_SEND_A_XATTR_NAME
+     - 13
+     - string
+   * - BTRFS_SEND_A_XATTR_DATA
+     - 14
+     - data
+   * - BTRFS_SEND_A_PATH
+     - 15
+     - string
+   * - BTRFS_SEND_A_PATH_TO
+     - 16
+     - string
+   * - BTRFS_SEND_A_PATH_LINK
+     - 17
+     - string
+   * - BTRFS_SEND_A_FILE_OFFSET
+     - 18
+     - u64
+   * - BTRFS_SEND_A_DATA
+     - 19
+     - data
+   * - BTRFS_SEND_A_CLONE_UUID
+     - 20
+     - uuid
+   * - BTRFS_SEND_A_CLONE_CTRANSID
+     - 21
+     - u64
+   * - BTRFS_SEND_A_CLONE_PATH
+     - 22
+     - string
+   * - BTRFS_SEND_A_CLONE_OFFSET
+     - 23
+     - u64
+   * - BTRFS_SEND_A_CLONE_LEN
+     - 24
+     - u64
 
 Version 2
 ^^^^^^^^^
 
-- BTRFS_SEND_A_FALLOCATE_MODE (25) - u32
-- BTRFS_SEND_A_FILEATTR (26) - u64
-- BTRFS_SEND_A_UNENCODED_FILE_LEN (27) - u64
-- BTRFS_SEND_A_UNENCODED_LEN (28) - u64
-- BTRFS_SEND_A_UNENCODED_OFFSET (29) - u64
-- BTRFS_SEND_A_COMPRESSION (30) - u32
-- BTRFS_SEND_A_ENCRYPTION (31) -  u32
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Number
+     - Type
+   * - BTRFS_SEND_A_FALLOCATE_MODE
+     - 25
+     - u32
+   * - BTRFS_SEND_A_FILEATTR
+     - 26
+     - u64
+   * - BTRFS_SEND_A_UNENCODED_FILE_LEN
+     - 27
+     - u64
+   * - BTRFS_SEND_A_UNENCODED_LEN
+     - 28
+     - u64
+   * - BTRFS_SEND_A_UNENCODED_OFFSET
+     - 29
+     - u64
+   * - BTRFS_SEND_A_COMPRESSION
+     - 30
+     - u32
+   * - BTRFS_SEND_A_ENCRYPTION
+     - 31
+     - u32
 
 Special cases
 -------------
@@ -142,36 +218,84 @@ Placeholder, invalid or ignored command.
 BTRFS_SEND_C_SUBVOL (1)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-- string path - relative path of the subvolume
-- uuid uuid - uuid of the sent subvolume
-- u64 ctransid - creation transaction
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative path of the subvolume
+   * - uuid
+     - uuid
+     - UUID of the sent subvolume
+   * - u64
+     - ctransid
+     - creation transaction
 
 BTRFS_SEND_C_SNAPSHOT (2)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Start of commands of a given snapshot.
 
-- string path - relative path of the subvolume
-- uuid uuid - uuid of the sent subvolume
-- u64 ctransid - creation transaction
-- uuid clone_uuid -
-- u64 clone_ctransid -
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative path of the subvolume
+   * - uuid
+     - uuid
+     - UUID of the sent subvolume
+   * - u64
+     - ctransid
+     - creation transaction
+   * - uuid
+     - clone_uuid
+     -
+   * - u64
+     - clone_ctransid
+     -
 
 BTRFS_SEND_C_MKFILE (3)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Create regular file. See also section Special cases.
 
-- string path - relative file path to create
-- u64 ino - inode number
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path to create
+   * - u64
+     - ino
+     - inode number
 
 BTRFS_SEND_C_MKDIR (4)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Create a directory.
 
-- string path - relative directory path to create
-- u64 ino - inode number
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative directory path to create
+   * - u64
+     - ino
+     - inode number
 
 File creation is done in two commands, the first one contains a special file name
 that is later renamed to the final name. (WHY)
@@ -181,130 +305,295 @@ BTRFS_SEND_C_MKNOD (5)
 
 Create a special file of type device node (mknod).
 
-- string path - relative file path to create
-- u64 ino - inode number
-- u64 mode - file mode parameter of mknod(2)
-- u64 rdev - rdev parameter of mknod(2)
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path to create
+   * - u64
+     - mode
+     - file mode parameter of mknod(2)
+   * - u64
+     - rdev
+     - rdev parameter of mknod(2)
 
 BTRFS_SEND_C_MKFIFO (6)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a special file of type fifo (mkfifo).
+Create a special file of type FIFO (mkfifo).
 
-- string path - relative file path to create
-- u64 ino - inode number
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path to create
+   * - u64
+     - ino
+     - inode number
 
 BTRFS_SEND_C_MKSOCK (7)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a special file of type socket (mknod S_IFSOCK).
 
-- string path - relative file path to create
-- u64 ino - inode number
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path to create
+   * - u64
+     - ino
+     - inode number
 
 BTRFS_SEND_C_SYMLINK (8)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a symlink.
 
-- string path - relative symlink path to create
-- u64 ino - inode number
-- string path_link - target of the symlink
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative symlink path to create
+   * - u64
+     - ino
+     - inode number
+   * - string
+     - path_link
+     - target of the symlink
 
 BTRFS_SEND_C_RENAME (9)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Rename file path.
 
-- string path - relative source file path
-- string path_to - relative target file path
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative source file path
+   * - string
+     - path_to
+     - relative target file path
 
 BTRFS_SEND_C_LINK (10)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Create a file hardlink.
 
-- string path - relative source file path
-- string path_link - relative target file path to link to
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative source file path
+   * - string
+     - path_link
+     - relative target file path to link to
 
 BTRFS_SEND_C_UNLINK (11)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Unlink file.
 
-- string path - relative file path
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
 
 BTRFS_SEND_C_RMDIR (12)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Remove directory.
 
-- string path - relative directory path
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative directory path
 
 BTRFS_SEND_C_SET_XATTR (13)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Set a value of extended attribute.
 
-- string path - relative file path
-- string xattr_name - name of the extended attribute
-- data xattr_data - value of the extended attribute
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - string
+     - xattr_name
+     - name of the extended attribute
+   * - data
+     - xattr_data
+     - value of the extended attribute
 
 BTRFS_SEND_C_REMOVE_XATTR (14)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Remove an extended attribute.
 
-- string path - relative file path
-- string xattr_name - name of the extended attribute
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - string
+     - xattr_name
+     - name of the extended attribute
 
 BTRFS_SEND_C_WRITE (15)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Write file data to a given file offset.
 
-- string path - relative file path
-- u64 - file offset where to write data
-- data - raw file data (variable length)
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - file_offset
+     - where to write data
+   * - data
+     - data
+     - raw file data (variable length)
 
 BTRFS_SEND_C_CLONE (16)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Clone extents from another file.
 
-- string path - relative file path
-- u64 file_offset - offset in the source file to clone from
-- u64 clone_len - length of cloned data
-- uuid clone_uuid -
-- u64 clone_ctransid -
-- string clone_path - clone target relative file path
-- u64 clone_offset - clone offset in the target file
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - file_offset
+     - offset in the source file to clone from
+   * - u64
+     - clone_len
+     - length of cloned data
+   * - uuid
+     - clone_uuid
+     -
+   * - u64
+     - clone_ctransid
+     -
+   * - string
+     - clone_path
+     - clone target relative file path
+   * - u64
+     - clone_offset
+     - clone offset in the target file
 
 BTRFS_SEND_C_TRUNCATE (17)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Truncate file to a given length.
 
-- string path - relative file path
-- u64 size - truncate to given size
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - size
+     - truncate to given size
 
 BTRFS_SEND_C_CHMOD (18)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Chmod a file or directory.
 
-- string path - relative file path
-- u64 mode - new mode
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - mode
+     - new mode
 
 BTRFS_SEND_C_CHOWN (19)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Change file owner (uid) and group (gid), specified by numeric id. The uid/gid
 must exist on the target filesystem, no mapping is done.
+  
+.. list-table::
+   :header-rows: 1
 
-- string path - relative file path
-- u64 uid - numeric used id
-- u64 gid - numeric group id
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - uid
+     - numeric used id
+   * - u64
+     - gid
+     - numeric group id
 
 BTRFS_SEND_C_UTIMES (20)
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -313,11 +602,27 @@ Change file atime and mtime, nanosecond precision. While the ctime is also sent
 it's not possible to change it using *utimensat*. The creation time is sent
 since protocol version 2 but cannot be changed on the target filesystem.
 
-- string path - relative file path
-- timespec atime - file atime
-- timespec mtime - file mtime
-- timespec ctime - file ctime
-- timespec otime - (since v2) file otime (creation time)
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - timespec
+     - atime
+     - file atime
+   * - timespec
+     - mtime
+     - file mtime
+   * - timespec
+     - ctime
+     - file ctime
+   * - timespec
+     - otime
+     - (since v2) file otime (creation time)
 
 BTRFS_SEND_C_END (21)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -331,9 +636,21 @@ BTRFS_SEND_C_UPDATE_EXTENT (22)
 When send is generated without data (BTRFS_SEND_FLAG_NO_FILE_DATA), this command
 informs about changed extent but does not send the actual data.
 
-- string path - relative file path
-- u64 file_offset - file offset where data were updated
-- u64 size - length of the data
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - file_offset
+     - file offset where data were updated
+   * - u64
+     - size
+     - length of the data
 
 Stream version 2
 ----------------
@@ -343,10 +660,24 @@ BTRFS_SEND_C_FALLOCATE (23)
 
 Change file extents to preallocated, punch hole or zero fill.
 
-- string path - relative file path
-- u32 fallocate_mode - which fallocate operation to do
-- u64 file_offset - file offset where to apply the operation
-- u64 size - length of the range
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u32
+     - fallocate_mode
+     - which fallocate operation to do
+   * - u64
+     - file_offset
+     - file offset where to apply the operation
+   * - u64
+     - size
+     - length of the range
 
 BTRFS_SEND_C_FILEATTR (24)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -364,11 +695,33 @@ File data encoded by the source filesystem and written directly to the target
 filesystem, without any other transformation. The data can be compressed or
 encrypted and the payload depends on presence of the TLVs.
 
-- string path - relative file path
-- u64 file_offset - file offset where to write the data
-- u64 unencoded_file_len -
-- u64 unencoded_len -
-- u64 unencoded_offset -
-- u32 compression - (optional) compression type
-- u32 encryption - (optional) encryption type
-- data data - encoded payload
+.. list-table::
+   :header-rows: 1
+
+   * - Type
+     - Name
+     - Description
+   * - string
+     - path
+     - relative file path
+   * - u64
+     - file_offset
+     - file offset where to write the data
+   * - u64
+     - unencoded_file_len
+     -
+   * - u64
+     - unencoded_len
+     -
+   * - u64
+     - unencoded_offset
+     -
+   * - u32
+     - compression
+     - (optional) compression type
+   * - u32
+     - encryption
+     - (optional) encryption type
+   * - data
+     - data
+     - encoded payload
