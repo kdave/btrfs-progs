@@ -58,6 +58,7 @@ Welcome to BTRFS documentation!
    :caption: Developer documentation
 
    dev/Development-notes
+   dev/Developer-s-FAQ
    dev/Experimental
    dev/dev-btrees
    dev/dev-btrfs-design
