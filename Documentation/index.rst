@@ -60,8 +60,9 @@ Welcome to BTRFS documentation!
    dev/Development-notes
    dev/Developer-s-FAQ
    dev/Experimental
-   dev/dev-btrees
    dev/dev-btrfs-design
+   dev/dev-btrees
+   dev/On-disk-format
    dev/dev-send-stream
    btrfs-ioctl
 
