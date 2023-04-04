@@ -55,14 +55,19 @@ Welcome to BTRFS documentation!
 
 .. toctree::
    :maxdepth: 1
+   :caption: Developer documentation
+
+   dev/Experimental
+   dev/dev-btrees
+   dev/dev-btrfs-design
+   dev/dev-send-stream
+   btrfs-ioctl
+
+.. toctree::
+   :maxdepth: 1
    :caption: TODO
 
    Quick-start
    Interoperability
    trouble-index
-   Experimental
-   btrfs-ioctl
    DocConventions
-   dev-send-stream
-   dev-btrees
-   dev-btrfs-design
