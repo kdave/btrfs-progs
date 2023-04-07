@@ -5,7 +5,7 @@ BTRFS is a modern copy on write (COW) filesystem for Linux aimed at
 implementing advanced features while also focusing on fault tolerance, repair
 and easy administration. Its main features and benefits are:
 
-* Snapshots which do not make the full copy of files
+* Snapshots which do not make a full copy of the files
 * Built-in volume management, support for software-based RAID 0, RAID 1, RAID 10 and others
 * Self-healing - checksums for data and metadata, automatic detection of silent data corruptions
 
