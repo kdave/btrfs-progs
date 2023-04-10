@@ -10,13 +10,13 @@ check_prereq mkfs.btrfs
 check_prereq btrfstune
 check_global_prereq losetup
 
+setup_root_helper
+
 setup_loopdevs 2
 prepare_loopdevs
 dev1=${loopdevs[1]}
 dev2=${loopdevs[2]}
 TEST_DEV=$dev1
-
-setup_root_helper
 
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$dev1"
 run_check $SUDO_HELPER "$TOP/btrfstune" -S 1 "$dev1"
@@ -32,8 +32,8 @@ sprouted_output=$(_mktemp btrfs-progs-sprouted-check-stdout.XXXXXX)
 
 # The false alerts are just warnings, so we need to save and filter
 # the output
-run_check_stdout "$TOP/btrfs" check "$dev1" >> "$seed_output"
-run_check_stdout "$TOP/btrfs" check "$dev2" >> "$sprouted_output"
+run_check_stdout $SUDO_HELPER "$TOP/btrfs" check "$dev1" >> "$seed_output"
+run_check_stdout $SUDO_HELPER "$TOP/btrfs" check "$dev2" >> "$sprouted_output"
 
 # There should be no warning for both seed and sprouted fs
 if grep -q "WARNING" "$seed_output"; then
