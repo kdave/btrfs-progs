@@ -10,13 +10,13 @@ check_prereq mkfs.btrfs
 check_global_prereq losetup
 check_global_prereq wipefs
 
+setup_root_helper
+
 setup_loopdevs 3
 prepare_loopdevs
 dev1=${loopdevs[1]}
 dev2=${loopdevs[2]}
 dev3=${loopdevs[3]}
-
-setup_root_helper
 
 # Run 1: victim is dev1
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m raid5 -d raid5 "${loopdevs[@]}"
