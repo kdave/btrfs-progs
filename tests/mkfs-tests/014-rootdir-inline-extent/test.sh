@@ -6,6 +6,7 @@ source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 
+setup_root_helper
 prepare_test_dev
 
 tmp=$(_mktemp_dir mkfs-rootdir)

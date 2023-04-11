@@ -6,6 +6,7 @@ source "$TEST_TOP/common"
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
+setup_root_helper
 prepare_test_dev 4G
 
 run_check_mkfs_test_dev
