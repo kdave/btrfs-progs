@@ -171,7 +171,6 @@ static const struct btrfs_feature mkfs_features[] = {
 		.desc		= "support zoned devices"
 	},
 #endif
-#if EXPERIMENTAL
 	{
 		.name		= "block-group-tree",
 		.compat_ro_flag	= BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
@@ -181,6 +180,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(default),
 		.desc		= "block group tree to reduce mount time"
 	},
+#if EXPERIMENTAL
 	{
 		.name		= "extent-tree-v2",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2,
@@ -222,7 +222,6 @@ static const struct btrfs_feature runtime_features[] = {
 		VERSION_TO_STRING2(default, 5,15),
 		.desc		= "free space tree (space_cache=v2)"
 	},
-#if EXPERIMENTAL
 	{
 		.name		= "block-group-tree",
 		.compat_ro_flag	= BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
@@ -232,7 +231,6 @@ static const struct btrfs_feature runtime_features[] = {
 		VERSION_NULL(default),
 		.desc		= "block group tree to reduce mount time"
 	},
-#endif
 	/* Keep this one last */
 	{
 		.name		= "list-all",

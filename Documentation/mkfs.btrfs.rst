@@ -284,6 +284,11 @@ free-space-tree
         Enable the free space tree (mount option *space_cache=v2*) for persisting the
         free space cache.
 
+block-group-tree
+        (kernel support since 6.1)
+
+        Enable the block group tree to greatly reduce mount time for large filesystems.
+
 BLOCK GROUPS, CHUNKS, RAID
 --------------------------
 

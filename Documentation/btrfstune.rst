@@ -24,8 +24,8 @@ means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs(5)<btrfs-man5>`
 OPTIONS
 -------
 
--b
-        (since kernel 6.1, needs experimental build of btrfs-progs)
+--enable-block-group-tree
+        (since kernel 6.1)
         Enable block group tree feature (greatly reduce mount time),
         enabled by mkfs feature *block-group-tree*.
 

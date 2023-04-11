@@ -70,6 +70,7 @@ static const char * const tune_usage[] = {
 	OPTLINE("-x", "enable skinny metadata extent refs (mkfs: skinny-metadata)"),
 	OPTLINE("-n", "enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)"),
 	OPTLINE("-S <0|1>", "set/unset seeding status of a device"),
+	OPTLINE("--enable-block-group-tree", "enable block group tree (mkfs: block-group-tree, for less mount time)"),
 	"",
 	"UUID changes:",
 	OPTLINE("-u", "rewrite fsid, use a random one"),
@@ -84,7 +85,6 @@ static const char * const tune_usage[] = {
 	"",
 	"EXPERIMENTAL FEATURES:",
 	OPTLINE("--csum CSUM", "switch checksum for data and metadata to CSUM"),
-	OPTLINE("-b", "enable block group tree (mkfs: block-group-tree, for less mount time)"),
 #endif
 	NULL
 };
@@ -113,27 +113,22 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	btrfs_config_init();
 
 	while(1) {
-		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST };
+		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST,
+		       GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ "enable-block-group-tree", no_argument, NULL,
+				GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE},
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
-#if EXPERIMENTAL
-		int c = getopt_long(argc, argv, "S:rxfuU:nmM:b", long_options, NULL);
-#else
 		int c = getopt_long(argc, argv, "S:rxfuU:nmM:", long_options, NULL);
-#endif
 
 		if (c < 0)
 			break;
 		switch(c) {
-		case 'b':
-			btrfs_warn_experimental("Feature: conversion to block-group-tree");
-			to_bg_tree = true;
-			break;
 		case 'S':
 			seeding_flag = 1;
 			seeding_value = arg_strtou64(optarg);
@@ -166,6 +161,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case 'm':
 			ctree_flags |= OPEN_CTREE_IGNORE_FSID_MISMATCH;
 			change_metadata_uuid = 1;
+			break;
+		case GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE:
+			to_bg_tree = true;
 			break;
 #if EXPERIMENTAL
 		case GETOPT_VAL_CSUM:

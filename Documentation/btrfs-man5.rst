@@ -66,6 +66,12 @@ big_metadata
         the filesystem uses *nodesize* for metadata blocks, this can be bigger than the
         page size
 
+block_group_tree
+        (since: 6.1)
+
+        block group item representation using a dedicated b-tree, this can greatly
+        reduce mount time for large filesystems
+
 compress_lzo
         (since: 2.6.38)
 
