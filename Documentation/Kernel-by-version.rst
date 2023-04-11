@@ -6,21 +6,274 @@ Summary of kernel changes for each version.
 6.x
 ---
 
-6.0 (incomplete)
-^^^^^^^^^^^^^^^^
+6.0 (Oct 2022)
+^^^^^^^^^^^^^^
 
-* Send protocol version 2
+- sysfs updates:
 
-6.1 (incomplete)
-^^^^^^^^^^^^^^^^
+  - export chunk size, in debug mode add tunable for setting its size
+  - show zoned among features (was only in debug mode)
+  - show commit stats (number, last/max/total duration)
+  - mixed_backref and big_metadata sysfs feature files removed, they've
+    been default for sufficiently long time, there are no known users and
+    mixed_backref could be confused with mixed_groups
 
-* scrub: fix superblock errors immediately and don't leave it up to the next commit
-* send: experimental support for fs-verity (send v3)
-* sysfs: export discards stats and tunables
-* sysfs: export qgroup global information about status
-* sysfs: allow to skip quota recalculation for subvolumes ('drop_subtree_threshold')
-* nowait mode for async writes
-* check super block after filesystem thaw (detect accidental changes from outside)
+- send protocol updated to version 2
+
+  - new commands:
+
+    - ability write larger data chunks than 64K
+    - send raw compressed extents (uses the encoded data ioctls), ie. no
+      decompression on send side, no compression needed on receive side
+      if supported
+    - send 'otime' (inode creation time) among other timestamps
+    - send file attributes (a.k.a file flags and xflags)
+  - this is first version bump, backward compatibility on send and
+    receive side is provided
+  - there are still some known and wanted commands that will be
+    implemented in the near future, another version bump will be needed,
+    however we want to minimize that to avoid causing usability issues
+
+- print checksum type and implementation at mount time
+- don't print some messages at mount (mentioned as people asked about
+  it), we want to print messages namely for new features so let's make
+  some space for that:
+
+  - big metadata - this has been supported for a long time and is not a feature
+    that's worth mentioning
+  - skinny metadata - same reason, set by default by mkfs
+
+Performance improvements:
+
+- reduced amount of reserved metadata for delayed items
+
+  - when inserted items can be batched into one leaf
+  - when deleting batched directory index items
+  - when deleting delayed items used for deletion
+  - overall improved count of files/sec, decreased subvolume lock
+    contention
+
+- metadata item access bounds checker micro-optimized, with a few
+  percent of improved runtime for metadata-heavy operations
+- increase direct io limit for read to 256 sectors, improved throughput
+  by 3x on sample workload
+
+Notable fixes:
+
+- raid56
+
+  - reduce parity writes, skip sectors of stripe when there are no data updates
+  - restore reading from stripe cache instead of triggering new read
+
+- refuse to replay log with unknown incompat read-only feature bit set
+- tree-checker verifies if extent items don't overlap
+- check that subvolume is writable when changing xattrs from security
+  namespace
+- fix space cache corruption and potential double allocations; this is
+  a rare bug but can be serious once it happens, stable backports and
+  analysis tool will be provided
+
+- zoned:
+
+  - fix page locking when COW fails in the middle of allocation
+  - improved tracking of active zones, ZNS drives may limit the number
+    and there are ENOSPC errors due to that limit and not actual lack of
+    space
+  - adjust maximum extent size for zone append so it does not cause late
+    ENOSPC due to underreservation
+
+- mirror reading error messages show the mirror number
+- don't fallback to buffered IO for NOWAIT direct IO writes, we don't
+  have the NOWAIT semantics for buffered io yet
+- send, fix sending link commands for existing file paths when there are
+  deleted and created hardlinks for same files
+- repair all mirrors for profiles with more than 1 copy (raid1c34)
+- fix repair of compressed extents, unify where error detection and
+  repair happen
+
+6.1 (Dec 2022)
+^^^^^^^^^^^^^^
+
+Performance:
+
+- outstanding FIEMAP speed improvements:
+
+  - algorithmic change how extents are enumerated leads to orders of
+    magnitude speed boost (uncached and cached)
+  - extent sharing check speedup (2.2x uncached, 3x cached)
+  - add more cancellation points, allowing to interrupt seeking in files
+    with large number of extents
+  - more efficient hole and data seeking (4x uncached, 1.3x cached)
+  - sample results:
+    256M, 32K extents:   4s ->  29ms  (~150x)
+    512M, 64K extents:  30s ->  59ms  (~550x)
+    1G,  128K extents: 225s -> 120ms (~1800x)
+
+- improved inode logging, especially for directories (on dbench workload
+  throughput +25%, max latency -21%)
+- improved buffered IO, remove redundant extent state tracking, lowering
+  memory consumption and avoiding rb tree traversal
+- add sysfs tunable to let qgroup temporarily skip exact accounting when
+  deleting snapshot, leading to a speedup but requiring a rescan after
+  that, will be used by snapper
+- support io_uring and buffered writes, until now it was just for direct
+  IO, with the no-wait semantics implemented in the buffered write path
+  it now works and leads to speed improvement in IOPS (2x), throughput
+  (2.2x), latency (depends, 2x to 150x)
+- small performance improvements when dropping and searching for extent
+  maps as well as when flushing delalloc in COW mode (throughput +5MB/s)
+
+User visible changes:
+
+- new incompatible feature block-group-tree adding a dedicated tree for
+  tracking block groups, this allows a much faster load during mount and
+  avoids seeking unlike when it's scattered in the extent tree items
+
+  - this reduces mount time for many-terabyte sized filesystems
+  - conversion tool will be provided so existing filesystem can also be
+    updated in place
+  - to reduce test matrix and feature combinations requires no-holes
+    and free-space-tree (mkfs defaults since 5.15)
+
+- improved reporting of super block corruption detected by scrub
+- scrub also tries to repair super block and does not wait until next
+  commit
+- discard stats and tunables are exported in sysfs
+  (/sys/fs/btrfs/FSID/discard)
+- qgroup status is exported in sysfs (/sys/sys/fs/btrfs/FSID/qgroups/)
+- verify that super block was not modified when thawing filesystem
+
+Fixes:
+
+- FIEMAP fixes:
+
+  - fix extent sharing status, does not depend on the cached status where merged
+  - flush delalloc so compressed extents are reported correctly
+
+- fix alignment of VMA for memory mapped files on THP
+- send: fix failures when processing inodes with no links (orphan files
+  and directories)
+- handle more corner cases for read-only compat feature verification
+- fix crash on raid0 filesystems created with <5.4 mkfs.btrfs that could
+  lead to division by zero
+
+Core:
+
+- preliminary support for fs-verity in send
+- more effective memory use in scrub for subpage where sector is smaller
+  than page
+- block group caching progress logic has been removed, load is now
+  synchronous
+- add no-wait semantics to several functions (tree search, nocow,
+  flushing, buffered write
+
+6.2 (Feb 2023)
+^^^^^^^^^^^^^^
+
+User visible features:
+
+- raid56 reliability vs performance trade off:
+
+  - fix destructive RMW for raid5 data (raid6 still needs work) - do full RMW
+    cycle for writes and verify all checksums before overwrite, this should
+    prevent rewriting potentially corrupted data without notice
+  - stripes are cached in memory which should reduce the performance impact but
+    still can hurt some workloads
+  - checksums are verified after repair again
+  - this is the last option without introducing additional features (write
+    intent bitmap, journal, another tree), the RMW cycle was supposed to be
+    avoided by the original implementation exactly for performance reasons but
+    that caused all the reliability problems
+
+- discard=async by default for devices that support it
+- implement emergency flush reserve to avoid almost all unnecessary transaction
+  aborts due to ENOSPC in cases where there are too many delayed refs or
+  delayed allocation
+- skip block group synchronization if there's no change in used bytes, can
+  reduce transaction commit count for some workloads
+- print more specific errors to system log when device scan ioctl fails
+
+Performance improvements:
+
+- fiemap and lseek:
+
+  - overall speedup due to skipping unnecessary or duplicate searches (-40% run time)
+  - cache some data structures and sharedness of extents (-30% run time)
+
+- send:
+
+  - faster backref resolution when finding clones
+  - cached leaf to root mapping for faster backref walking
+  - improved clone/sharing detection
+  - overall run time improvements (-70%)
+
+Fixes:
+
+- fix compat ro feature check at read-write remount
+- handle case when read-repair happens with ongoing device replace
+- reset defrag ioctl buffer on memory allocation error
+- fix potential crash in quota when rescan races with disable
+- fix qgroup accounting warning when rescan can be started at time with
+  temporarily disabled accounting
+- don't cache a single-device filesystem device to avoid cases when a
+  loop device is reformatted and the entry gets stale
+- limit number of send clones by maximum memory allocated
+
+6.3 (? 2023)
+^^^^^^^^^^^^
+
+Features:
+
+- block group allocation class heuristics:
+
+  - pack files by size (up to 128k, up to 8M, more) to avoid
+    fragmentation in block groups, assuming that file size and life time
+    is correlated, in particular this may help during balance
+  - with tracepoints and extensible in the future
+
+- sysfs export of per-device fsid in DEV_INFO ioctl to distinguish seeding
+  devices, needed for testing
+- print sysfs stats for the allocation classes
+
+Performance:
+
+- send: cache directory utimes and only emit the command when necessary
+
+  - speedup up to 10x
+  - smaller final stream produced (no redundant utimes commands issued),
+  - compatibility not affected
+
+- fiemap:
+
+  - skip backref checks for shared leaves
+  - speedup 3x on sample filesystem with all leaves shared (e.g. on
+    snapshots)
+
+- micro optimized b-tree key lookup, speedup in metadata operations
+  (sample benchmark: fs_mark +10% of files/sec)
+
+Core changes:
+
+- change where checksumming is done in the io path
+
+  - checksum and read repair does verification at lower layer
+  - cascaded cleanups and simplifications
+
+Fixes:
+
+- sysfs: make sure that a run-time change of a feature is correctly
+  tracked by the feature files
+- scrub: better reporting of tree block errors
+- fix calculation of unusable block group space reporting bogus values
+  due to 32/64b division
+- fix unnecessary increment of read error stat on write error
+- scan block devices in non-exclusive mode to avoid temporary mkfs
+  failures
+- fix fast checksum detection, this affects filesystems with non-crc32c
+  checksum, calculation would not be offloaded to worker threads (since 5.4)
+- restore thread_pool mount option behaviour for endio workers, the
+  new value for maximum active threads would not be set to the actual
+  work queues (since 6.0)
 
 5.x
 ---
@@ -418,6 +671,90 @@ Core:
 * remove readahead framework
 * error handling improvements
 * for other changes see the [https://git.kernel.org/linus/d601e58c5f2901783428bc1181e83ff783592b6b pull request]
+
+5.18 (May 2022)
+^^^^^^^^^^^^^^^
+
+- encoded read/write ioctls, allows user space to read or write raw data
+  directly to extents (now compressed, encrypted in the future), will be
+  used by send/receive v2 where it saves processing time
+- zoned mode now works with metadata DUP (the mkfs.btrfs default)
+- allow reflinks/deduplication from two different mounts of the same
+  filesystem
+- error message header updates:
+
+  - print error state: transaction abort, other error, log tree errors
+  - print transient filesystem state: remount, device replace, ignored
+    checksum verifications
+
+- tree-checker: verify the transaction id of the to-be-written dirty
+  extent buffer
+- fsync speedups
+
+  - directory logging speedups (up to -90% run time)
+  - avoid logging all directory changes during renames (up to -60% run
+    time)
+  - avoid inode logging during rename and link when possible (up to -60%
+    run time)
+  - prepare extents to be logged before locking a log tree path
+    (throughput +7%)
+  - stop copying old file extents when doing a full fsync ()
+  - improved logging of old extents after truncate
+
+- remove balance v1 ioctl, superseded by v2 in 2012
+
+Core, fixes:
+
+- continued extent tree v2 preparatory work
+
+  - disable features that won't work yet
+  - add wrappers and abstractions for new tree roots
+
+- prevent deleting subvolume with active swapfile
+- remove device count in superblock and its item in one transaction so
+  they cant't get out of sync
+- for subpage, force the free space v2 mount to avoid a warning and
+  make it easy to switch a filesystem on different page size systems
+- export sysfs status of exclusive operation 'balance paused', so the
+  user space tools can recognize it and allow adding a device with
+  paused balance
+
+5.19 (Jul 2022)
+^^^^^^^^^^^^^^^
+
+Features:
+
+- subpage:
+
+  - support on PAGE_SIZE > 4K (previously only 64K)
+  - make it work with raid56
+  - prevent remount with v1 space cache
+
+- repair super block num_devices automatically if it does not match
+  the number of device items
+- defrag can convert inline extents to regular extents, up to now inline
+  files were skipped but the setting of mount option max_inline could
+  affect the decision logic
+
+- zoned:
+
+  - minimal accepted zone size is explicitly set to 4MiB
+  - make zone reclaim less aggressive and don't reclaim if there are
+    enough free zones
+  - add per-profile sysfs tunable of the reclaim threshold
+
+- allow automatic block group reclaim for non-zoned filesystems, with
+  sysfs tunables
+- tree-checker: new check, compare extent buffer owner against owner
+  rootid
+
+Performance:
+
+- avoid blocking on space reservation when doing nowait direct io
+  writes, (+7% throughput for reads and writes)
+- NOCOW write throughput improvement due to refined locking (+3%)
+- send: reduce pressure to page cache by dropping extent pages right
+  after they're processed
 
 4.x
 ---
