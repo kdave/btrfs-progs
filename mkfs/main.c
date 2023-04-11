@@ -424,7 +424,6 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-n|--nodesize SIZE", "size of btree nodes"),
 	OPTLINE("-s|--sectorsize SIZE", "data block size (may not be mountable by current kernel)"),
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features (use '-O list-all' to list features)"),
-	OPTLINE("-R|--runtime-features LIST", "comma separated list of runtime features (use '-R list-all' to list runtime features)"),
 	OPTLINE("-L|--label LABEL", "set the filesystem label"),
 	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique)"),
 	"Creation:",
@@ -440,6 +439,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("--help", "print this help and exit"),
 	"Deprecated:",
 	OPTLINE("-l|--leafsize SIZE", "removed in 6.0, use --nodesize"),
+	OPTLINE("-R|--runtime-features LIST", "removed in 6.3, use -O|--features"),
 	NULL
 };
 
@@ -1140,6 +1140,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				char *orig = strdup(optarg);
 				char *tmp = orig;
 
+				warning("runtime features are deprecated, use -O|--features instead");
 				tmp = btrfs_parse_runtime_features(tmp,
 						&features);
 				if (tmp) {

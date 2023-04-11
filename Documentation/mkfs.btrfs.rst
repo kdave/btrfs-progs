@@ -161,18 +161,6 @@ OPTIONS
 
                 $ mkfs.btrfs -O list-all
 
--R|--runtime-features <feature1>[,<feature2>...]
-        A list of features that be can enabled at mkfs time, otherwise would have
-        to be turned on on a mounted filesystem.
-        To disable a feature, prefix it with *^*.
-
-        See section *RUNTIME FEATURES* for more details.  To see all available
-        runtime features that **mkfs.btrfs** supports run:
-
-        .. code-block:: bash
-
-                $ mkfs.btrfs -R list-all
-
 -f|--force
         Forcibly overwrite the block devices when an existing filesystem is detected.
         By default, **mkfs.btrfs** will utilize *libblkid* to check for any known
@@ -198,6 +186,11 @@ OPTIONS
 
 -l|--leafsize <size>
         Removed in 6.0, used to be alias for *--nodesize*.
+
+-R|--runtime-features <feature1>[,<feature2>...]
+        Removed in 6.3, was used to specify features not affecting on-disk format.
+        Now all such features are merged into `-O|--features` option. The option
+        -R will stay for backward compatibility.
 
 SIZE UNITS
 ----------
@@ -278,15 +271,6 @@ zoned
         zoned mode, data allocation and write friendly to zoned/SMR/ZBC/ZNS devices,
         see *ZONED MODE* in :doc:`btrfs(5)<btrfs-man5>`, the mode is automatically selected when
         a zoned device is detected
-
-
-RUNTIME FEATURES
-----------------
-
-Features that are typically enabled on a mounted filesystem, e.g. by a mount
-option or by an ioctl. Some of them can be enabled early, at mkfs time.  This
-applies to features that need to be enabled once and then the status is
-permanent, this does not replace mount options.
 
 quota
         (kernel support since 3.4)
