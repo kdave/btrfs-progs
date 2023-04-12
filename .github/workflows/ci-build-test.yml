@@ -1,0 +1,27 @@
+# Workflow for testing branch 'release-test'
+#
+# - all compatibility docker image build tests (no local build)
+
+name: CI image tests
+run-name: CI image tests
+on:
+  push:
+    branches:
+      - release-test
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: CI Centos7
+        run: ci/ci-build-centos7
+      - name: CI Centos8
+        run: ci/ci-build-centos8
+      - name: CI Leap 15.3
+        run: ci/ci-build-leap153
+      - name: CI Leap 15.4
+        run: ci/ci-build-leap154
+      - name: CI Musl
+        run: ci/ci-build-musl
+      - name: CI Tumbleweed
+        run: ci/ci-build-tumbleweed
