@@ -16,7 +16,9 @@ fi
 
 CIIMAGEDIR=ci/images/ci-musl-x86_64
 BRANCH=${1:-HEAD}
-shift
+if [ "$#" -ge 1 ]; then
+	shift
+fi
 HASH=$(git log -1 --format='%h %s' "$BRANCH")
 
 echo "CI: Generate archive from $BRANCH ($HASH)"
