@@ -16,7 +16,13 @@ done
 echo "ARGS: ${ARGS[@]}"
 echo "RUN : $@"
 
+# Running inside non-interactive terminal would fail
+tty=
+if [ -t 1 ]; then
+	tty=-it
+fi
+
 # Device mapper devices are not visible inside the environment if the /dev mount
 # is the default one (tmpfs instead of devtmpfs)
 # Mounts and loop device manipulation is required
-docker run --mount type=bind,source=/dev,target=/dev -it --privileged "${ARGS[@]}" "$prefix/$image" "$@"
+docker run --mount type=bind,source=/dev,target=/dev $tty --privileged "${ARGS[@]}" "$prefix/$image" "$@"
