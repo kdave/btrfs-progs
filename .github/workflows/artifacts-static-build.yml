@@ -1,0 +1,34 @@
+# Build static binaries (published as artifacts)
+# - btrfs.static - the main tool
+# - btrfs.box.static - all-in-one tool (functionality selected by file name)
+
+name: Static binaries
+run-name: Static binaries
+on:
+  push:
+    branches:
+      - release-test
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev
+      - name: Configure
+        run: ./autogen.sh && ./configure
+      - name: Make static
+        run: make V=1 static
+      - name: Make box.static
+        run: make V=1 btrfs.box.static
+      - name: Strip binaries
+        run: strip btrfs.static btrfs.box.static
+      - name: Save artifacts - btrfs.static
+        uses: actions/upload-artifact@v3
+        with:
+          name: btrfs.static
+          path: btrfs.static
+      - name: Save artifacts - btrfs.box.static
+        uses: actions/upload-artifact@v3
+        with:
+          name: btrfs.box.static
+          path: btrfs.box.static
