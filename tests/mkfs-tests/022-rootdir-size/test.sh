@@ -8,6 +8,7 @@
 source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
+
 prepare_test_dev
 
 tmp=$(_mktemp_dir mkfs-rootdir)

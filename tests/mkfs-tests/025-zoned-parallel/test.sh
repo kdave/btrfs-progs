@@ -5,12 +5,12 @@
 
 source "$TEST_TOP/common"
 
-setup_root_helper
-prepare_test_dev
-
 if ! check_min_kernel_version 5.12; then
 	_not_run "zoned tests need kernel 5.12 and newer"
 fi
+
+setup_root_helper
+prepare_test_dev
 
 nullb="$TEST_TOP/nullb"
 # Create 128M devices with 4M zones, 32 of them

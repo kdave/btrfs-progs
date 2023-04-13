@@ -4,8 +4,9 @@
 
 source "$TEST_TOP/common"
 
-setup_root_helper
 check_prereq btrfs
+
+setup_root_helper
 
 # redefine the one provided by common
 check_image() {

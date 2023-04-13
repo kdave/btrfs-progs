@@ -5,15 +5,14 @@ source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
-
-setup_root_helper
-prepare_test_dev
-
 # mknod can create FIFO/CHAR/BLOCK file but not SOCK.
 # No neat tool to create socket file, unless using python or similar.
 # So no SOCK is tested here
 check_global_prereq mknod
 check_global_prereq dd
+
+setup_root_helper
+prepare_test_dev
 
 tmp=$(_mktemp_dir mkfs-rootdir)
 

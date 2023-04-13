@@ -8,6 +8,9 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 
 setup_root_helper
+setup_loopdevs 4
+prepare_loopdevs
+dev1=${loopdevs[1]}
 
 test_get_info()
 {
@@ -50,10 +53,6 @@ test_mkfs_multi()
 	test_do_mkfs "$@" ${loopdevs[@]}
 	test_get_info
 }
-
-setup_loopdevs 4
-prepare_loopdevs
-dev1=${loopdevs[1]}
 
 test_mkfs_single
 test_mkfs_single  -d  single  -m  single
