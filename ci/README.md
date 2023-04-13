@@ -55,10 +55,6 @@ were experimenting with nested virtualization to run the tests on a current
 kernel not some old version provided by the hosted image. The tests took to
 long to fit in the free plan quota.
 
-**Travis CI**
-
-Disabled since version v5.12 (05/2021).
-
 ## Local
 
 The testsuite can be run directly from the git tree from the built sources, or
