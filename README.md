@@ -18,8 +18,8 @@ This repository hosts following utilities and also documentation:
 * **libbtrfsutil** (LGPL v2.1) &mdash; C and python 3 bindings, see [libbtrfsutil/README.md](libbtrfsutil/README.md) for more
 * manual pages and documentation source published at [btrfs.readthedocs.io](https://btrfs.readthedocs.io) (RTD)
 
-See [INSTALL](INSTALL) for build instructions and [tests/README.md](tests/README.md) for
-testing information.
+See [INSTALL](INSTALL) for build instructions, [tests/README.md](tests/README.md) for
+testing information and [ci/README.md](ci/README.md) for CI information.
 
 Release cycle
 -------------

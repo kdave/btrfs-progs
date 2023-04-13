@@ -19,18 +19,34 @@ eventually.
 
 ## Hosted
 
-No active hosted CI is currently set up, we're looking for one.
+Currently the CI is hosted on Github actions, running build and functional tests.
 
-Reuirements:
+Status: https://github.com/kdave/btrfs-progs/actions
 
-* recent kernel, latest stable if possible, 5.10 is minimum
+Tested branches:
+
+- devel - regularly pushed during development, basic build and functionality test
+- release-test - pushed before a release to verify more build targets (for backward
+  compatibility)
+- devel-ci - for testing and development of the CI itself
+
+References:
+
+- Documentation: https://docs.github.com/en/actions
+- Details about image package versions, updates: https://github.com/actions/runner-images
+
+### Requirements for hosted infrastructure
+
+In case migration to another hosted CI is needed:
+
+* recent kernel, latest stable if possible, 5.15 is minimum
 * ability to run commands as root
 * ability to create loop devices (losetup)
 * ability to mount and unmount filesystems
 * integration with github/gitlab repository to watch for updates
 * enough granted run time to finish the testsuite
 * (optional) run docker images
-* (nice to have) web gui with results, email notifications
+* (nice to have) web GUI with results, email notifications
 
 **Gitlab**
 
