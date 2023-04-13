@@ -7,10 +7,11 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"
 fi
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mkreiserfs
+
+setup_root_helper
+prepare_test_dev
 
 for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
 	convert_test reiserfs "$feature" "reiserfs 4k nodesize" 4096 mkreiserfs -b 4096

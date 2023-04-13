@@ -5,11 +5,12 @@
 source "$TEST_TOP/common"
 source "$TEST_TOP/common.convert"
 
-setup_root_helper
-prepare_test_dev 1G
 check_prereq btrfs-convert
 check_global_prereq mke2fs
 check_global_prereq fallocate
+
+setup_root_helper
+prepare_test_dev 1G
 
 convert_test_prep_fs ext4 mke2fs -t ext4 -b 4096
 

@@ -8,12 +8,13 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"
 fi
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mkreiserfs
 check_global_prereq chattr
 check_global_prereq lsattr
+
+setup_root_helper
+prepare_test_dev
 
 fail=0
 default_mkfs="mkreiserfs -b 4096"

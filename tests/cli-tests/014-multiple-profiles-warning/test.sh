@@ -21,6 +21,11 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 
 setup_root_helper
+setup_loopdevs 4
+prepare_loopdevs
+dev1=${loopdevs[1]}
+TEST_DEV=$dev1
+msg="Multiple block group profiles detected"
 
 test_run_commands() {
 	run_check "$TOP/btrfs" filesystem usage "$TEST_MNT"
@@ -57,12 +62,6 @@ test_run_commands() {
 		_fail "balance cancel does not warn"
 	fi
 }
-
-setup_loopdevs 4
-prepare_loopdevs
-dev1=${loopdevs[1]}
-TEST_DEV=$dev1
-msg="Multiple block group profiles detected"
 
 # Data and metadata
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d single -m single "${loopdevs[@]}"

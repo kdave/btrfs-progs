@@ -5,10 +5,11 @@
 source "$TEST_TOP/common"
 source "$TEST_TOP/common.convert"
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mke2fs
+
+setup_root_helper
+prepare_test_dev
 
 # convert_test_prep_fs() will create large enough file inside the test device,
 # that's good enough for us to test rollback failure.

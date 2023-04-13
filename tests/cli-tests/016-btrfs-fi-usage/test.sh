@@ -4,6 +4,7 @@
 source "$TEST_TOP/common"
 
 check_prereq btrfs
+
 setup_root_helper
 setup_loopdevs 4
 prepare_loopdevs

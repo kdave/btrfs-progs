@@ -13,11 +13,12 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"
 fi
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq md5sum
 check_global_prereq mkreiserfs
+
+setup_root_helper
+prepare_test_dev
 
 printf "%0.sa" {1..8192} > input
 printf "%0.sb" {1..8192} > input2

@@ -5,10 +5,11 @@
 source "$TEST_TOP/common"
 source "$TEST_TOP/common.convert"
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mke2fs
+
+setup_root_helper
+prepare_test_dev
 
 # simple wrapper for a convert test
 # $1: btrfs features, argument to -O

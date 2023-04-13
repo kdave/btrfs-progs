@@ -4,9 +4,10 @@
 source "$TEST_TOP/common"
 source "$TEST_TOP/common.convert"
 
-setup_root_helper
 check_prereq btrfs-convert
 check_global_prereq mke2fs
+
+setup_root_helper
 setup_loopdevs 1
 prepare_loopdevs
 # Convert helpers need the backing file, can't pass ${loopdevs[1]}

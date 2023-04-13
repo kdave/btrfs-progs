@@ -8,10 +8,11 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"
 fi
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mkreiserfs
+
+setup_root_helper
+prepare_test_dev
 
 # simple wrapper for a convert test
 # $1: btrfs features, argument to -O

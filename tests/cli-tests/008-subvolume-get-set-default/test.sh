@@ -1,6 +1,14 @@
 #!/bin/bash
 # test for "subvolume get-default/set-default"
 
+source "$TEST_TOP/common"
+
+check_prereq mkfs.btrfs
+check_prereq btrfs
+
+setup_root_helper
+prepare_test_dev
+
 check_default_id()
 {
 	id=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" subvolume get-default .) \
@@ -9,14 +17,6 @@ check_default_id()
 		_fail "subvolume get-default: default id is not $1, but $id"
 	fi
 }
-
-source "$TEST_TOP/common"
-
-check_prereq mkfs.btrfs
-check_prereq btrfs
-
-setup_root_helper
-prepare_test_dev
 
 run_check_mkfs_test_dev
 run_check_mount_test_dev

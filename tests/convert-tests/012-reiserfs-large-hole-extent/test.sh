@@ -12,10 +12,11 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"
 fi
 
-setup_root_helper
-prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mkreiserfs
+
+setup_root_helper
+prepare_test_dev
 
 default_mkfs="mkreiserfs -b 4096"
 convert_test_preamble '' 'large hole extent test' 16k "$default_mkfs"
