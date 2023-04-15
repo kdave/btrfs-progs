@@ -754,7 +754,7 @@ static int scan_one_device(void *dev_scan_struct)
 		if (is_super_block_address(bytenr))
 			bytenr += rc->sectorsize;
 
-		if (pread64(fd, buf->data, rc->nodesize, bytenr) <
+		if (pread(fd, buf->data, rc->nodesize, bytenr) <
 		    rc->nodesize)
 			break;
 
@@ -1874,7 +1874,7 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum,
 	data = malloc(len);
 	if (!data)
 		return -1;
-	ret = pread64(fd, data, len, start);
+	ret = pread(fd, data, len, start);
 	if (ret < 0 || ret != len) {
 		ret = -1;
 		goto out;

@@ -519,9 +519,9 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 	int excl;
 	sum_file_data_t sum_file_data = flags[FLAG_STRUCTURE] ?
 			sum_file_data_strict : sum_file_data_permissive;
-	struct stat64 dir_st;
+	struct stat dir_st;
 
-	if (fstat64(dirfd, &dir_st)) {
+	if (fstat(dirfd, &dir_st)) {
 		perror("fstat");
 		exit(-1);
 	}
@@ -552,7 +552,7 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 	}
 	qsort(namelist, entries, sizeof(*namelist), namecmp);
 	for (i = 0; i < entries; ++i) {
-		struct stat64 st;
+		struct stat st;
 		sum_t cs;
 		sum_t meta;
 		char *path;
@@ -572,7 +572,7 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 			perror("fchdir");
 			exit(-1);
 		}
-		ret = lstat64(namelist[i], &st);
+		ret = lstat(namelist[i], &st);
 		if (ret) {
 			fprintf(stderr, "stat failed for %s/%s: %m\n",
 				path_prefix, path);

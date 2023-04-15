@@ -150,9 +150,9 @@ int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices);
 #else
 
 #define sbread(fd, buf, offset) \
-	pread64(fd, buf, BTRFS_SUPER_INFO_SIZE, offset)
+	pread(fd, buf, BTRFS_SUPER_INFO_SIZE, offset)
 #define sbwrite(fd, buf, offset) \
-	pwrite64(fd, buf, BTRFS_SUPER_INFO_SIZE, offset)
+	pwrite(fd, buf, BTRFS_SUPER_INFO_SIZE, offset)
 
 static inline int btrfs_reset_dev_zone(int fd, struct blk_zone *zone)
 {

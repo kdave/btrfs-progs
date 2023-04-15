@@ -340,7 +340,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 			goto end;
 		}
 
-		ret_read = pread64(fd, buffer, st->st_size, bytes_read);
+		ret_read = pread(fd, buffer, st->st_size, bytes_read);
 		if (ret_read == -1) {
 			error("cannot read %s at offset %llu length %llu: %m",
 				path_name, bytes_read, (unsigned long long)st->st_size);
@@ -386,7 +386,7 @@ again:
 
 		memset(eb->data, 0, sectorsize);
 
-		ret_read = pread64(fd, eb->data, sectorsize, file_pos +
+		ret_read = pread(fd, eb->data, sectorsize, file_pos +
 				   bytes_read);
 		if (ret_read == -1) {
 			error("cannot read %s at offset %llu length %u: %m",
@@ -929,7 +929,7 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 	u64 new_size;
 	struct btrfs_device *device;
 	struct list_head *cur;
-	struct stat64 file_stat;
+	struct stat file_stat;
 	int nr_devs = 0;
 	int ret;
 
@@ -963,14 +963,14 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 		*new_size_ret = new_size;
 
 	if (shrink_file_size) {
-		ret = fstat64(device->fd, &file_stat);
+		ret = fstat(device->fd, &file_stat);
 		if (ret < 0) {
 			error("failed to stat devid %llu: %m", device->devid);
 			return ret;
 		}
 		if (!S_ISREG(file_stat.st_mode))
 			return ret;
-		ret = ftruncate64(device->fd, new_size);
+		ret = ftruncate(device->fd, new_size);
 		if (ret < 0) {
 			error("failed to truncate device file of devid %llu: %m",
 				device->devid);
