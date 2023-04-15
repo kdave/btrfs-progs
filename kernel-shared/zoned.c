@@ -194,7 +194,7 @@ static int sb_write_pointer(int fd, struct blk_zone *zones, u64 *wp_ret)
 			bytenr = ((zones[i].start + zones[i].len)
 				   << SECTOR_SHIFT) - BTRFS_SUPER_INFO_SIZE;
 
-			ret = pread64(fd, buf[i], BTRFS_SUPER_INFO_SIZE, bytenr);
+			ret = pread(fd, buf[i], BTRFS_SUPER_INFO_SIZE, bytenr);
 			if (ret != BTRFS_SUPER_INFO_SIZE)
 				return -EIO;
 			super[i] = (struct btrfs_super_block *)&buf[i];
@@ -515,8 +515,8 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	/* We can call pread/pwrite if 'fd' is non-zoned device/file */
 	if (zone_size_sector == 0) {
 		if (rw == READ)
-			return pread64(fd, buf, count, offset);
-		return pwrite64(fd, buf, count, offset);
+			return pread(fd, buf, count, offset);
+		return pwrite(fd, buf, count, offset);
 	}
 
 	ASSERT(IS_ALIGNED(zone_size_sector, sb_size_sector));

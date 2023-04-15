@@ -691,7 +691,7 @@ static int flush_pending(struct metadump_struct *md, int done)
 		if (start == BTRFS_SUPER_INFO_OFFSET) {
 			int fd = get_dev_fd(md->root);
 
-			ret = pread64(fd, async->buffer, size, start);
+			ret = pread(fd, async->buffer, size, start);
 			if (ret < size) {
 				free(async->buffer);
 				free(async);
@@ -1366,7 +1366,7 @@ static void write_backup_supers(int fd, u8 *buf)
 			break;
 		btrfs_set_super_bytenr(super, bytenr);
 		csum_block(buf, BTRFS_SUPER_INFO_SIZE);
-		ret = pwrite64(fd, buf, BTRFS_SUPER_INFO_SIZE, bytenr);
+		ret = pwrite(fd, buf, BTRFS_SUPER_INFO_SIZE, bytenr);
 		if (ret < BTRFS_SUPER_INFO_SIZE) {
 			if (ret < 0)
 				error(
@@ -1487,12 +1487,12 @@ static int restore_one_work(struct mdrestore_struct *mdres,
 				else
 					bytenr = logical;
 
-				ret = pwrite64(outfd, buffer + offset, chunk_size, bytenr);
+				ret = pwrite(outfd, buffer + offset, chunk_size, bytenr);
 				if (ret != chunk_size)
 					goto write_error;
 
 				if (physical_dup)
-					ret = pwrite64(outfd, buffer + offset,
+					ret = pwrite(outfd, buffer + offset,
 						       chunk_size, physical_dup);
 				if (ret != chunk_size)
 					goto write_error;
@@ -2451,7 +2451,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	}
 	if (S_ISREG(buf.st_mode)) {
 		/* Don't forget to enlarge the real file */
-		ret = ftruncate64(out_fd, dev_size);
+		ret = ftruncate(out_fd, dev_size);
 		if (ret < 0) {
 			error("failed to enlarge result image: %m");
 			return -errno;
@@ -2910,7 +2910,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 			goto out;
 		}
 		if (S_ISREG(st.st_mode) && st.st_size < dev_size) {
-			ret = ftruncate64(fileno(out), dev_size);
+			ret = ftruncate(fileno(out), dev_size);
 			if (ret < 0) {
 				error(
 		"failed to enlarge result image file from %llu to %llu: %m",
@@ -3007,7 +3007,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	memcpy(dev_item->fsid, fs_uuid, BTRFS_UUID_SIZE);
 	csum_block((u8 *)&disk_super, BTRFS_SUPER_INFO_SIZE);
 
-	ret = pwrite64(fp, &disk_super, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
+	ret = pwrite(fp, &disk_super, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		if (ret < 0) {
 			errno = ret;

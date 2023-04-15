@@ -461,14 +461,14 @@ static int zero_output_file(int out_fd, u64 size)
 	/* Only zero out the first 1M */
 	loop_num = SZ_1M / SZ_4K;
 	for (i = 0; i < loop_num; i++) {
-		written = pwrite64(out_fd, buf, SZ_4K, location);
+		written = pwrite(out_fd, buf, SZ_4K, location);
 		if (written != SZ_4K)
 			ret = -EIO;
 		location += SZ_4K;
 	}
 
 	/* Then enlarge the file to size */
-	written = pwrite64(out_fd, buf, 1, size - 1);
+	written = pwrite(out_fd, buf, 1, size - 1);
 	if (written < 1)
 		ret = -EIO;
 	return ret;
