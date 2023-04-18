@@ -71,6 +71,7 @@ static const char * const tune_usage[] = {
 	OPTLINE("-n", "enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)"),
 	OPTLINE("-S <0|1>", "set/unset seeding status of a device"),
 	OPTLINE("--enable-block-group-tree", "enable block group tree (mkfs: block-group-tree, for less mount time)"),
+	OPTLINE("--disable-block-group-tree", "disable block group tree (mkfs: ^block-group-tree)n"),
 	"",
 	"UUID changes:",
 	OPTLINE("-u", "rewrite fsid, use a random one"),
@@ -103,6 +104,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	u64 seeding_value = 0;
 	int random_fsid = 0;
 	int change_metadata_uuid = 0;
+	bool to_extent_tree = false;
 	bool to_bg_tree = false;
 	int csum_type = -1;
 	char *new_fsid_str = NULL;
@@ -114,11 +116,14 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
 	while(1) {
 		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST,
-		       GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE };
+		       GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE,
+		       GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ "enable-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE},
+			{ "disable-block-group-tree", no_argument, NULL,
+				GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE},
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
 #endif
@@ -165,6 +170,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE:
 			to_bg_tree = true;
 			break;
+		case GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE:
+			to_extent_tree = true;
+			break;
 #if EXPERIMENTAL
 		case GETOPT_VAL_CSUM:
 			btrfs_warn_experimental(
@@ -189,7 +197,8 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		return 1;
 	}
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
-	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree) {
+	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree &&
+	    !to_extent_tree) {
 		error("at least one option should be specified");
 		usage(&tune_cmd, 1);
 		return 1;
@@ -235,7 +244,12 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		return 1;
 	}
 
-	if (to_bg_tree) {
+ 	if (to_bg_tree) {
+		if (to_extent_tree) {
+			error("option --enable-block-group-tree conflicts with --disable-block-group-tree");
+			ret = 1;
+			goto out;
+		}
 		if (btrfs_fs_compat_ro(root->fs_info, BLOCK_GROUP_TREE)) {
 			error("the filesystem already has block group tree feature");
 			ret = 1;
@@ -249,6 +263,24 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		ret = convert_to_bg_tree(root->fs_info);
 		if (ret < 0) {
 			error("failed to convert the filesystem to block group tree feature");
+			goto out;
+		}
+		goto out;
+	}
+	if (to_extent_tree) {
+		if (to_bg_tree) {
+			error("option --enable-block-group-tree conflicts with --disable-block-group-tree");
+			ret = 1;
+			goto out;
+		}
+		if (!btrfs_fs_compat_ro(root->fs_info, BLOCK_GROUP_TREE)) {
+			error("filesystem doesn't have block-group-tree feature");
+			ret = 1;
+			goto out;
+		}
+		ret = convert_to_extent_tree(root->fs_info);
+		if (ret < 0) {
+			error("failed to convert the filesystem from block group tree feature");
 			goto out;
 		}
 		goto out;

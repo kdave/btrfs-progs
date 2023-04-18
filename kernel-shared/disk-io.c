@@ -2282,6 +2282,14 @@ int btrfs_set_buffer_uptodate(struct extent_buffer *eb)
 	return set_extent_buffer_uptodate(eb);
 }
 
+static bool is_global_root(struct btrfs_root *root)
+{
+	if (root->root_key.objectid == BTRFS_EXTENT_TREE_OBJECTID ||
+	    root->root_key.objectid == BTRFS_CSUM_TREE_OBJECTID ||
+	    root->root_key.objectid == BTRFS_FREE_SPACE_TREE_OBJECTID)
+		return true;
+	return false;
+}
 int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root)
 {
@@ -2300,7 +2308,8 @@ int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 	ret = btrfs_free_tree_block(trans, root, root->node, 0, 1);
 	if (ret)
 		return ret;
-	rb_erase(&root->rb_node, &fs_info->global_roots_tree);
+	if (is_global_root(root))
+		rb_erase(&root->rb_node, &fs_info->global_roots_tree);
 	free_extent_buffer(root->node);
 	free_extent_buffer(root->commit_root);
 	kfree(root);

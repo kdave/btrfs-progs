@@ -1551,8 +1551,14 @@ static int update_block_group_item(struct btrfs_trans_handle *trans,
 	 */
 	if (btrfs_super_flags(fs_info->super_copy) &
 	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE &&
-	    cache->start >= fs_info->last_converted_bg_bytenr)
-		root = fs_info->block_group_root;
+	    cache->start >= fs_info->last_converted_bg_bytenr) {
+		if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE))
+			/* Converting back to extent tree. */
+			root = btrfs_extent_root(fs_info, 0);
+		else
+			/* Convert to new bg tree.*/
+			root = fs_info->block_group_root;
+	}
 
 	key.objectid = cache->start;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
@@ -2741,6 +2747,56 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 	struct btrfs_key key = {0};
 	int ret;
 
+	/* Converting back to extent tree case. */
+	if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
+		struct btrfs_root *extent_root = btrfs_extent_root(fs_info, 0);
+
+		/* Load the first bg in bg tree. */
+		ret = btrfs_search_slot(NULL, bg_root, &key, &path, 0, 0);
+		if (ret < 0)
+			return ret;
+		ASSERT(ret > 0);
+		/* We should always be at the slot 0 of the first leaf. */
+		ASSERT(path.slots[0] == 0);
+
+		key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+
+		/* Empty bg tree, all converted, then grab the first bg. */
+		if (btrfs_header_nritems(path.nodes[0]) == 0) {
+			btrfs_release_path(&path);
+			ret = find_first_block_group(extent_root, &path, &key);
+			/* We should have at least one bg item in extent tree. */
+			ASSERT(ret == 0);
+
+			btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+			fs_info->last_converted_bg_bytenr = key.objectid;
+			goto out;
+		}
+		btrfs_release_path(&path);
+
+		/* Grab the last bg in extent tree as the last converted one. */
+		key.objectid = (u64)-1;
+		key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+		key.offset = (u64)-1;
+
+		ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
+		if (ret < 0)
+			goto out;
+		ASSERT(ret > 0);
+		ret = btrfs_previous_item(extent_root, &path, 0, BTRFS_BLOCK_GROUP_ITEM_KEY);
+		if (ret < 0)
+			goto out;
+
+		/* No converted bg item in extent tree.*/
+		if (ret > 0) {
+			ret = 0;
+			fs_info->last_converted_bg_bytenr = (u64)-1;
+			goto out;
+		}
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		fs_info->last_converted_bg_bytenr = key.objectid;
+		goto out;
+	}
 	/* Load the first bg in bg tree, that would be our last converted bg. */
 	ret = btrfs_search_slot(NULL, bg_root, &key, &path, 0, 0);
 	if (ret < 0)
@@ -2758,7 +2814,6 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	ASSERT(key.type == BTRFS_BLOCK_GROUP_ITEM_KEY);
 	fs_info->last_converted_bg_bytenr = key.objectid;
-
 out:
 	btrfs_release_path(&path);
 	return ret;
@@ -2881,12 +2936,19 @@ out:
 
 static int read_converting_block_groups(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_root *old_root = btrfs_extent_root(fs_info, 0);
-	struct btrfs_root *new_root = btrfs_block_group_root(fs_info);
+	struct btrfs_root *old_root;
+	struct btrfs_root *new_root;
 	int ret;
 
-	/* Currently we only support converting to bg tree feature. */
-	ASSERT(!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE));
+	if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
+		/* Converting back to extent tree. */
+		old_root = fs_info->block_group_root;
+		new_root = btrfs_extent_root(fs_info, 0);
+	} else {
+		/* Converting to block group tree. */
+		old_root = btrfs_extent_root(fs_info, 0);
+		new_root = fs_info->block_group_root;
+	}
 
 	ret = get_last_converted_bg(fs_info);
 	if (ret < 0) {
@@ -2994,8 +3056,15 @@ static int insert_block_group_item(struct btrfs_trans_handle *trans,
 	 */
 	if (btrfs_super_flags(fs_info->super_copy) &
 	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE &&
-	    block_group->start >= fs_info->last_converted_bg_bytenr)
-		root = fs_info->block_group_root;
+	    block_group->start >= fs_info->last_converted_bg_bytenr) {
+		if (btrfs_super_compat_ro_flags(fs_info->super_copy) &
+		    BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE)
+			/* Converting to extent tree, return extent root. */
+			root = btrfs_extent_root(fs_info, block_group->start);
+		else
+			/* Converting to bg tree, return bg root. */
+			root = fs_info->block_group_root;
+	}
 
 	return btrfs_insert_item(trans, root, &key, &bgi, sizeof(bgi));
 }
@@ -4041,11 +4110,6 @@ int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr)
 	ASSERT(old_root);
 	ASSERT(btrfs_super_flags(fs_info->super_copy) &
 	       BTRFS_SUPER_FLAG_CHANGING_BG_TREE);
-	/*
-	 * Only support converting to bg tree yet, thus the feature should not
-	 * be set.
-	 */
-	ASSERT(!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE));
 
 	bg = btrfs_lookup_block_group(fs_info, bytenr);
 	if (!bg) {

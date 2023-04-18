@@ -29,6 +29,12 @@ OPTIONS
         Enable block group tree feature (greatly reduce mount time),
         enabled by mkfs feature *block-group-tree*.
 
+--disable-block-group-tree
+        (since kernel 6.1)
+
+        Disable block group tree feature and convert the filesystem to extent
+        tree.
+
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
         Make sure that you are aware of the dangers.
