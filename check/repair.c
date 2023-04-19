@@ -27,6 +27,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/extent-cache.h"
 #include "check/repair.h"
 

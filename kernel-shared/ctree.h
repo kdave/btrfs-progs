@@ -185,17 +185,6 @@ struct btrfs_path {
 					sizeof(struct btrfs_item))
 #define BTRFS_MAX_EXTENT_SIZE		128UL * 1024 * 1024
 
-enum btrfs_tree_block_status {
-	BTRFS_TREE_BLOCK_CLEAN,
-	BTRFS_TREE_BLOCK_INVALID_NRITEMS,
-	BTRFS_TREE_BLOCK_INVALID_PARENT_KEY,
-	BTRFS_TREE_BLOCK_BAD_KEY_ORDER,
-	BTRFS_TREE_BLOCK_INVALID_LEVEL,
-	BTRFS_TREE_BLOCK_INVALID_FREE_SPACE,
-	BTRFS_TREE_BLOCK_INVALID_OFFSETS,
-	BTRFS_TREE_BLOCK_INVALID_BLOCKPTR,
-};
-
 /*
  * We don't want to overwrite 1M at the beginning of device, even though
  * there is our 1st superblock at 64k. Some possible reasons:
@@ -373,6 +362,7 @@ struct btrfs_fs_info {
 	unsigned int finalize_on_close:1;
 	unsigned int hide_names:1;
 	unsigned int allow_transid_mismatch:1;
+	unsigned int skip_leaf_item_checks:1;
 
 	int transaction_aborted;
 	int force_csum_type;
@@ -958,8 +948,6 @@ int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr);
 int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		int level, int slot);
-enum btrfs_tree_block_status __btrfs_check_node(struct extent_buffer *buf);
-enum btrfs_tree_block_status __btrfs_check_leaf(struct extent_buffer *buf);
 struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 				   struct extent_buffer *parent, int slot);
 int btrfs_previous_item(struct btrfs_root *root,

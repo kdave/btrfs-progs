@@ -31,6 +31,7 @@
 #include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/messages.h"
 #include "common/internal.h"
 #include "common/utils.h"

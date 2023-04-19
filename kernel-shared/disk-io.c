@@ -24,19 +24,20 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include "kerncompat.h"
+#include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
-#include "zoned.h"
+#include "kernel-shared/tree-checker.h"
+#include "kernel-shared/zoned.h"
+#include "kernel-shared/print-tree.h"
+#include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
-#include "kernel-shared/print-tree.h"
-#include "kernel-lib/bitops.h"
 #include "common/rbtree-utils.h"
 #include "common/device-scan.h"
 #include "common/device-utils.h"
-#include "crypto/hash.h"
 
 /* specified errno for check_tree_block */
 #define BTRFS_BAD_BYTENR		(-1)
@@ -1503,6 +1504,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 		fs_info->hide_names = 1;
 	if (flags & OPEN_CTREE_ALLOW_TRANSID_MISMATCH)
 		fs_info->allow_transid_mismatch = 1;
+	if (flags & OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS)
+		fs_info->skip_leaf_item_checks = 1;
 
 	if ((flags & OPEN_CTREE_RECOVER_SUPER)
 	     && (flags & OPEN_CTREE_TEMPORARY_SUPER)) {

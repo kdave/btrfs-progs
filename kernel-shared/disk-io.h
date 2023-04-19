@@ -98,6 +98,12 @@ enum btrfs_open_ctree_flags {
 	 * stored in the csum tree during conversion.
 	 */
 	OPEN_CTREE_SKIP_CSUM_CHECK	= (1U << 16),
+
+	/*
+	 * Allow certain commands like check/restore to ignore more structure
+	 * specific checks and only do the superficial checks.
+	 */
+	OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS	= (1U << 17),
 };
 
 /*

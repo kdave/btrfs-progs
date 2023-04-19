@@ -23,15 +23,16 @@
 #include <uuid/uuid.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "kernel-lib/raid56.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
-#include "zoned.h"
+#include "kernel-shared/tree-checker.h"
+#include "kernel-shared/zoned.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
-#include "kernel-lib/raid56.h"
 
 const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
 	[BTRFS_RAID_RAID10] = {
@@ -2084,101 +2085,6 @@ static struct btrfs_device *fill_missing_device(u64 devid)
 	device->devid = devid;
 	device->fd = -1;
 	return device;
-}
-
-/*
- * slot == -1: SYSTEM chunk
- * return -EIO on error, otherwise return 0
- */
-int btrfs_check_chunk_valid(struct extent_buffer *leaf,
-			    struct btrfs_chunk *chunk, u64 logical)
-{
-	struct btrfs_fs_info *fs_info = leaf->fs_info;
-	u64 length;
-	u64 stripe_len;
-	u16 num_stripes;
-	u16 sub_stripes;
-	u64 type;
-	u32 sectorsize = fs_info->sectorsize;
-	int min_devs;
-	int table_sub_stripes;
-
-	length = btrfs_chunk_length(leaf, chunk);
-	stripe_len = btrfs_chunk_stripe_len(leaf, chunk);
-	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
-	sub_stripes = btrfs_chunk_sub_stripes(leaf, chunk);
-	type = btrfs_chunk_type(leaf, chunk);
-
-	if (num_stripes == 0) {
-		error("invalid num_stripes, have %u expect non-zero",
-			num_stripes);
-		return -EUCLEAN;
-	}
-
-	/*
-	 * These valid checks may be insufficient to cover every corner cases.
-	 */
-	if (!IS_ALIGNED(logical, sectorsize)) {
-		error("invalid chunk logical %llu",  logical);
-		return -EIO;
-	}
-	if (btrfs_chunk_sector_size(leaf, chunk) != sectorsize) {
-		error("invalid chunk sectorsize %llu",
-		      (unsigned long long)btrfs_chunk_sector_size(leaf, chunk));
-		return -EIO;
-	}
-	if (!length || !IS_ALIGNED(length, sectorsize)) {
-		error("invalid chunk length %llu",  length);
-		return -EIO;
-	}
-	if (stripe_len != BTRFS_STRIPE_LEN) {
-		error("invalid chunk stripe length: %llu", stripe_len);
-		return -EIO;
-	}
-	if (type & ~(BTRFS_BLOCK_GROUP_TYPE_MASK |
-		     BTRFS_BLOCK_GROUP_PROFILE_MASK)) {
-		error("unrecognized chunk type: %llu",
-		      ~(BTRFS_BLOCK_GROUP_TYPE_MASK |
-			BTRFS_BLOCK_GROUP_PROFILE_MASK) & type);
-		return -EIO;
-	}
-	if (!(type & BTRFS_BLOCK_GROUP_TYPE_MASK)) {
-		error("missing chunk type flag: %llu", type);
-		return -EIO;
-	}
-	if (!(is_power_of_2(type & BTRFS_BLOCK_GROUP_PROFILE_MASK) ||
-	      (type & BTRFS_BLOCK_GROUP_PROFILE_MASK) == 0)) {
-		error("conflicting chunk type detected: %llu", type);
-		return -EIO;
-	}
-	if ((type & BTRFS_BLOCK_GROUP_PROFILE_MASK) &&
-	    !is_power_of_2(type & BTRFS_BLOCK_GROUP_PROFILE_MASK)) {
-		error("conflicting chunk profile detected: %llu", type);
-		return -EIO;
-	}
-
-	/*
-	 * Device number check against profile
-	 */
-	min_devs = btrfs_bg_type_to_devs_min(type);
-	table_sub_stripes = btrfs_bg_type_to_sub_stripes(type);
-	if ((type & BTRFS_BLOCK_GROUP_RAID10 && (sub_stripes != table_sub_stripes ||
-		  !IS_ALIGNED(num_stripes, sub_stripes))) ||
-	    (type & BTRFS_BLOCK_GROUP_RAID1 && num_stripes < min_devs) ||
-	    (type & BTRFS_BLOCK_GROUP_RAID1C3 && num_stripes < min_devs) ||
-	    (type & BTRFS_BLOCK_GROUP_RAID1C4 && num_stripes < min_devs) ||
-	    (type & BTRFS_BLOCK_GROUP_RAID5 && num_stripes < min_devs) ||
-	    (type & BTRFS_BLOCK_GROUP_RAID6 && num_stripes < min_devs) ||
-	    (type & BTRFS_BLOCK_GROUP_DUP && num_stripes > 2) ||
-	    ((type & BTRFS_BLOCK_GROUP_PROFILE_MASK) == 0 &&
-	     num_stripes != 1)) {
-		error("Invalid num_stripes:sub_stripes %u:%u for profile %llu",
-		      num_stripes, sub_stripes,
-		      type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
-		return -EIO;
-	}
-
-	return 0;
 }
 
 /*

@@ -187,6 +187,7 @@ objects = \
 	kernel-shared/print-tree.o	\
 	kernel-shared/root-tree.o	\
 	kernel-shared/transaction.o	\
+	kernel-shared/tree-checker.o	\
 	kernel-shared/ulist.o	\
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\

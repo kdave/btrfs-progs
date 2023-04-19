@@ -44,6 +44,7 @@
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
@@ -9999,7 +10000,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE |
-			       OPEN_CTREE_ALLOW_TRANSID_MISMATCH;
+			       OPEN_CTREE_ALLOW_TRANSID_MISMATCH |
+			       OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
 	int force = 0;
 
 	while(1) {

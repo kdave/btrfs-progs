@@ -16,17 +16,18 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kernel-lib/bitops.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
-#include "kernel-lib/bitops.h"
+#include "kernel-shared/tree-checker.h"
+#include "kernel-shared/volumes.h"
 #include "crypto/crc32c.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
-#include "kernel-lib/sizes.h"
-#include "kernel-shared/volumes.h"
 #include "check/repair.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -600,185 +601,6 @@ static inline unsigned int leaf_data_end(const struct extent_buffer *leaf)
 	if (nr == 0)
 		return BTRFS_LEAF_DATA_SIZE(leaf->fs_info);
 	return btrfs_item_offset(leaf, nr - 1);
-}
-
-static void generic_err(const struct extent_buffer *buf, int slot,
-			const char *fmt, ...)
-{
-	va_list args;
-
-	fprintf(stderr, "corrupt %s: root=%lld block=%llu slot=%d, ",
-		btrfs_header_level(buf) == 0 ? "leaf": "node",
-		btrfs_header_owner(buf), btrfs_header_bytenr(buf), slot);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fprintf(stderr, "\n");
-}
-
-enum btrfs_tree_block_status __btrfs_check_node(struct extent_buffer *node)
-{
-	struct btrfs_fs_info *fs_info = node->fs_info;
-	unsigned long nr = btrfs_header_nritems(node);
-	struct btrfs_key key, next_key;
-	int slot;
-	int level = btrfs_header_level(node);
-	u64 bytenr;
-	enum btrfs_tree_block_status ret = BTRFS_TREE_BLOCK_INVALID_NRITEMS;
-
-	if (level <= 0 || level >= BTRFS_MAX_LEVEL) {
-		generic_err(node, 0,
-			"invalid level for node, have %d expect [1, %d]",
-			level, BTRFS_MAX_LEVEL - 1);
-		ret = BTRFS_TREE_BLOCK_INVALID_LEVEL;
-		goto fail;
-	}
-	if (nr == 0 || nr > BTRFS_NODEPTRS_PER_BLOCK(fs_info)) {
-		generic_err(node, 0,
-"corrupt node: root=%llu block=%llu, nritems too %s, have %lu expect range [1,%u]",
-			   btrfs_header_owner(node), node->start,
-			   nr == 0 ? "small" : "large", nr,
-			   BTRFS_NODEPTRS_PER_BLOCK(fs_info));
-		ret = BTRFS_TREE_BLOCK_INVALID_NRITEMS;
-		goto fail;
-	}
-
-	for (slot = 0; slot < nr - 1; slot++) {
-		bytenr = btrfs_node_blockptr(node, slot);
-		btrfs_node_key_to_cpu(node, &key, slot);
-		btrfs_node_key_to_cpu(node, &next_key, slot + 1);
-
-		if (!bytenr) {
-			generic_err(node, slot,
-				"invalid NULL node pointer");
-			ret = BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
-			goto fail;
-		}
-		if (!IS_ALIGNED(bytenr, fs_info->sectorsize)) {
-			generic_err(node, slot,
-			"unaligned pointer, have %llu should be aligned to %u",
-				bytenr, fs_info->sectorsize);
-			ret = BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
-			goto fail;
-		}
-
-		if (btrfs_comp_cpu_keys(&key, &next_key) >= 0) {
-			generic_err(node, slot,
-	"bad key order, current (%llu %u %llu) next (%llu %u %llu)",
-				key.objectid, key.type, key.offset,
-				next_key.objectid, next_key.type,
-				next_key.offset);
-			ret = BTRFS_TREE_BLOCK_BAD_KEY_ORDER;
-			goto fail;
-		}
-	}
-	ret = BTRFS_TREE_BLOCK_CLEAN;
-fail:
-	return ret;
-}
-
-enum btrfs_tree_block_status __btrfs_check_leaf(struct extent_buffer *leaf)
-{
-	struct btrfs_fs_info *fs_info = leaf->fs_info;
-	/* No valid key type is 0, so all key should be larger than this key */
-	struct btrfs_key prev_key = {0, 0, 0};
-	struct btrfs_key key;
-	u32 nritems = btrfs_header_nritems(leaf);
-	int slot;
-	int ret;
-
-	if (btrfs_header_level(leaf) != 0) {
-		generic_err(leaf, 0,
-			"invalid level for leaf, have %d expect 0",
-			btrfs_header_level(leaf));
-		ret = BTRFS_TREE_BLOCK_INVALID_LEVEL;
-		goto fail;
-	}
-
-	if (nritems == 0)
-		return 0;
-
-	/*
-	 * Check the following things to make sure this is a good leaf, and
-	 * leaf users won't need to bother with similar sanity checks:
-	 *
-	 * 1) key ordering
-	 * 2) item offset and size
-	 *    No overlap, no hole, all inside the leaf.
-	 * 3) item content
-	 *    If possible, do comprehensive sanity check.
-	 *    NOTE: All checks must only rely on the item data itself.
-	 */
-	for (slot = 0; slot < nritems; slot++) {
-		u32 item_end_expected;
-		u64 item_data_end;
-
-		btrfs_item_key_to_cpu(leaf, &key, slot);
-
-		/* Make sure the keys are in the right order */
-		if (btrfs_comp_cpu_keys(&prev_key, &key) >= 0) {
-			generic_err(leaf, slot,
-	"bad key order, prev (%llu %u %llu) current (%llu %u %llu)",
-				prev_key.objectid, prev_key.type,
-				prev_key.offset, key.objectid, key.type,
-				key.offset);
-			ret = BTRFS_TREE_BLOCK_BAD_KEY_ORDER;
-			goto fail;
-		}
-
-		item_data_end = (u64)btrfs_item_offset(leaf, slot) +
-				btrfs_item_size(leaf, slot);
-		/*
-		 * Make sure the offset and ends are right, remember that the
-		 * item data starts at the end of the leaf and grows towards the
-		 * front.
-		 */
-		if (slot == 0)
-			item_end_expected = BTRFS_LEAF_DATA_SIZE(fs_info);
-		else
-			item_end_expected = btrfs_item_offset(leaf,
-								 slot - 1);
-		if (item_data_end != item_end_expected) {
-			generic_err(leaf, slot,
-				"unexpected item end, have %llu expect %u",
-				item_data_end, item_end_expected);
-			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
-			goto fail;
-		}
-
-		/*
-		 * Check to make sure that we don't point outside of the leaf,
-		 * just in case all the items are consistent to each other, but
-		 * all point outside of the leaf.
-		 */
-		if (item_data_end > BTRFS_LEAF_DATA_SIZE(fs_info)) {
-			generic_err(leaf, slot,
-			"slot end outside of leaf, have %llu expect range [0, %u]",
-				item_data_end, BTRFS_LEAF_DATA_SIZE(fs_info));
-			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
-			goto fail;
-		}
-
-		/* Also check if the item pointer overlaps with btrfs item. */
-		if (btrfs_item_ptr_offset(leaf, slot) <
-		    btrfs_item_nr_offset(leaf, slot) + sizeof(struct btrfs_item)) {
-			generic_err(leaf, slot,
-		"slot overlaps with its data, item end %lu data start %lu",
-				btrfs_item_nr_offset(leaf, slot) +
-				sizeof(struct btrfs_item),
-				btrfs_item_ptr_offset(leaf, slot));
-			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
-			goto fail;
-		}
-
-		prev_key.objectid = key.objectid;
-		prev_key.type = key.type;
-		prev_key.offset = key.offset;
-	}
-
-	ret = BTRFS_TREE_BLOCK_CLEAN;
-fail:
-	return ret;
 }
 
 static int noinline check_block(struct btrfs_fs_info *fs_info,

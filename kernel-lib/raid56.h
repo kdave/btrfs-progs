@@ -22,6 +22,8 @@
 #ifndef __BTRFS_PROGS_RAID56_H__
 #define __BTRFS_PROGS_RAID56_H__
 
+#include "kerncompat.h"
+
 void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);
 int raid5_gen_result(int nr_devs, size_t stripe_len, int dest, void **data);
 

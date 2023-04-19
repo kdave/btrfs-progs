@@ -85,6 +85,7 @@
 #define _RET_IP_ 0
 #define TASK_UNINTERRUPTIBLE 0
 #define SLAB_MEM_SPREAD 0
+#define ALLOW_ERROR_INJECTION(a, b)
 
 #ifndef ULONG_MAX
 #define ULONG_MAX       (~0UL)
@@ -416,6 +417,15 @@ do {					\
 		      (long)(__ret_warn_on));		\
 	__ret_warn_on;					\
 })
+
+#define WARN(c, msg...) ({				\
+	int __ret_warn_on = !!(c);			\
+	if (__ret_warn_on)				\
+		printf(msg);				\
+	__ret_warn_on;					\
+})
+
+#define IS_ENABLED(c) 0
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
