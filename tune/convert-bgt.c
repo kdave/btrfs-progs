@@ -236,7 +236,7 @@ iterate_bgs:
 	 * Remove block group tree, at this stage, the block group tree root
 	 * should be empty.
 	 */
-	ASSERT(btrfs_header_nritems(fs_info->block_group_root->node) == 0);
+	UASSERT(btrfs_header_nritems(fs_info->block_group_root->node) == 0);
 	ret = btrfs_delete_and_free_root(trans, fs_info->block_group_root);
 	if (ret < 0) {
 		errno = -ret;

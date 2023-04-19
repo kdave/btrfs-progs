@@ -1455,7 +1455,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 		goto out_devices;
 	}
 
-	ASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
+	UASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
@@ -1467,7 +1467,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	features = btrfs_super_incompat_flags(disk_super);
 
 	if (features & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
-		ASSERT(!memcmp(disk_super->metadata_uuid,
+		UASSERT(!memcmp(disk_super->metadata_uuid,
 			       fs_info->fs_devices->metadata_uuid,
 			       BTRFS_FSID_SIZE));
 
@@ -1869,7 +1869,7 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum,
 	int csum_size = 0;
 	u8 expected_csum[BTRFS_CSUM_SIZE];
 
-	ASSERT(0);
+	UASSERT(0);
 
 	data = malloc(len);
 	if (!data)

@@ -1167,7 +1167,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	if (ret)
 		goto fail;
 
-	ASSERT(cctx.total_bytes != 0);
+	UASSERT(cctx.total_bytes != 0);
 	blocksize = cctx.blocksize;
 	if (blocksize < 4096) {
 		error("block size is too small: %u < 4096", blocksize);

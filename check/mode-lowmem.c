@@ -833,7 +833,7 @@ static int find_dir_index(struct btrfs_root *root, u64 dirid, u64 location_id,
 	int slot;
 	int ret;
 
-	ASSERT(index_ret);
+	UASSERT(index_ret);
 
 	/* search from the last index */
 	key.objectid = dirid;
@@ -1029,7 +1029,7 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 		stage++;
 
 	/* stage must be smllarer than 3 */
-	ASSERT(stage < 3);
+	UASSERT(stage < 3);
 
 	trans = btrfs_start_transaction(root, 1);
 	if (stage == 2) {
@@ -1351,7 +1351,7 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 	int slot;
 	int ret;
 
-	ASSERT(index_ret);
+	UASSERT(index_ret);
 
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, key, &path, 0, 0);
@@ -1945,7 +1945,7 @@ recover:
 	recover_ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 
 	/* This really shouldn't happen, or we have a big problem */
-	ASSERT(recover_ret == 0);
+	UASSERT(recover_ret == 0);
 	return ret;
 }
 
@@ -2193,7 +2193,7 @@ static int __count_dir_isize(struct btrfs_root *root, u64 ino, int type,
 	int cur = 0;
 	int total = 0;
 
-	ASSERT(size_ret);
+	UASSERT(size_ret);
 	*size_ret = 0;
 
 	key.objectid = ino;
@@ -2247,7 +2247,7 @@ static int count_dir_isize(struct btrfs_root *root, u64 ino, u64 *size)
 	u64 index_size;
 	int ret;
 
-	ASSERT(size);
+	UASSERT(size);
 	ret = __count_dir_isize(root, ino, BTRFS_DIR_ITEM_KEY, &item_size);
 	if (ret)
 		goto out;
@@ -2451,7 +2451,7 @@ static int repair_inode_nlinks_lowmem(struct btrfs_root *root,
 	btrfs_item_key_to_cpu(path->nodes[0], &old_key, path->slots[0]);
 
 	if (name && namelen) {
-		ASSERT(namelen <= BTRFS_NAME_LEN);
+		UASSERT(namelen <= BTRFS_NAME_LEN);
 		memcpy(namebuf, name, namelen);
 		name_len = namelen;
 	} else {
@@ -2550,7 +2550,7 @@ static int repair_inode_gen_lowmem(struct btrfs_root *root,
 	}
 	transid = trans->transid;
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	ASSERT(key.type == BTRFS_INODE_ITEM_KEY);
+	UASSERT(key.type == BTRFS_INODE_ITEM_KEY);
 
 	btrfs_release_path(path);
 
@@ -4188,8 +4188,8 @@ static int repair_extent_item_generation(struct btrfs_path *path)
 	int ret;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	ASSERT(key.type == BTRFS_METADATA_ITEM_KEY ||
-	       key.type == BTRFS_EXTENT_ITEM_KEY);
+	UASSERT(key.type == BTRFS_METADATA_ITEM_KEY ||
+		key.type == BTRFS_EXTENT_ITEM_KEY);
 
 	get_extent_item_generation(key.objectid, &new_gen);
 	ret = avoid_extents_overwrite();

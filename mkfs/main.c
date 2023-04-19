@@ -272,7 +272,7 @@ static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *roo
 			goto out;
 		ret = 0;
 		btrfs_item_key_to_cpu(path.nodes[0], &found_key, 0);
-		ASSERT(btrfs_comp_cpu_keys(&key, &found_key) == 0);
+		UASSERT(btrfs_comp_cpu_keys(&key, &found_key) == 0);
 
 next:
 		ret = btrfs_next_leaf(root, &path);
@@ -782,7 +782,7 @@ static int create_uuid_tree(struct btrfs_trans_handle *trans)
 	};
 	int ret = 0;
 
-	ASSERT(fs_info->uuid_root == NULL);
+	UASSERT(fs_info->uuid_root == NULL);
 	root = btrfs_create_tree(trans, fs_info, &key);
 	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);

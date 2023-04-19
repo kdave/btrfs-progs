@@ -222,7 +222,7 @@ static void qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
 	int i;
 
-	ASSERT(0 <= column && column <= BTRFS_QGROUP_ALL);
+	UASSERT(0 <= column && column <= BTRFS_QGROUP_ALL);
 
 	if (column < BTRFS_QGROUP_ALL) {
 		btrfs_qgroup_columns[column].need_print = 1;
@@ -332,7 +332,7 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	int unit_mode = btrfs_qgroup_columns[column].unit_mode;
 	int max_len = btrfs_qgroup_columns[column].max_len;
 
-	ASSERT(0 <= column && column < BTRFS_QGROUP_ALL);
+	UASSERT(0 <= column && column < BTRFS_QGROUP_ALL);
 
 	switch (column) {
 
@@ -617,9 +617,9 @@ static int qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 	struct btrfs_qgroup_comparer_set *set = *comp_set;
 	int size;
 
-	ASSERT(set != NULL);
-	ASSERT(comparer < BTRFS_QGROUP_COMP_MAX);
-	ASSERT(set->ncomps <= set->total);
+	UASSERT(set != NULL);
+	UASSERT(comparer < BTRFS_QGROUP_COMP_MAX);
+	UASSERT(set->ncomps <= set->total);
 
 	if (set->ncomps == set->total) {
 		void *tmp;
@@ -641,7 +641,7 @@ static int qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 		*comp_set = set;
 	}
 
-	ASSERT(set->comps[set->ncomps].comp_func == NULL);
+	UASSERT(set->comps[set->ncomps].comp_func == NULL);
 
 	set->comps[set->ncomps].comp_func = all_comp_funcs[comparer];
 	set->comps[set->ncomps].is_descending = is_descending;
@@ -1014,9 +1014,9 @@ static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 	struct btrfs_qgroup_filter_set *set = *filter_set;
 	int size;
 
-	ASSERT(set != NULL);
-	ASSERT(filter < BTRFS_QGROUP_FILTER_MAX);
-	ASSERT(set->nfilters <= set->total);
+	UASSERT(set != NULL);
+	UASSERT(filter < BTRFS_QGROUP_FILTER_MAX);
+	UASSERT(set->nfilters <= set->total);
 
 	if (set->nfilters == set->total) {
 		void *tmp;
@@ -1038,7 +1038,7 @@ static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 		*filter_set = set;
 	}
 
-	ASSERT(set->filters[set->nfilters].filter_func == NULL);
+	UASSERT(set->filters[set->nfilters].filter_func == NULL);
 	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
 	set->filters[set->nfilters].data = data;
 	set->nfilters++;
@@ -1114,7 +1114,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	int len;
 	unsigned unit_mode = btrfs_qgroup_columns[column].unit_mode;
 
-	ASSERT(0 <= column && column < BTRFS_QGROUP_ALL);
+	UASSERT(0 <= column && column < BTRFS_QGROUP_ALL);
 
 	switch (column) {
 

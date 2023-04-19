@@ -383,15 +383,15 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 		size = info_ptr->size / (info_ptr->num_stripes - parities_count);
 
 		if (info_ptr->type & BTRFS_BLOCK_GROUP_DATA) {
-			ASSERT(l_data_ratio >= 0);
+			UASSERT(l_data_ratio >= 0);
 			*r_data_chunks += size;
 			*r_data_used += size * l_data_ratio;
 		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_METADATA) {
-			ASSERT(l_metadata_ratio >= 0);
+			UASSERT(l_metadata_ratio >= 0);
 			*r_metadata_chunks += size;
 			*r_metadata_used += size * l_metadata_ratio;
 		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_SYSTEM) {
-			ASSERT(l_system_ratio >= 0);
+			UASSERT(l_system_ratio >= 0);
 			*r_system_chunks += size;
 			*r_system_used += size * l_system_ratio;
 		}

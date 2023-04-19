@@ -224,8 +224,8 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 
 		iref = (struct btrfs_extent_inline_ref *)ptr;
 		type = btrfs_extent_inline_ref_type(path.nodes[0], iref);
-		ASSERT(type == BTRFS_EXTENT_DATA_REF_KEY ||
-		       type == BTRFS_SHARED_DATA_REF_KEY);
+		UASSERT(type == BTRFS_EXTENT_DATA_REF_KEY ||
+			type == BTRFS_SHARED_DATA_REF_KEY);
 
 		if (type == BTRFS_EXTENT_DATA_REF_KEY) {
 			struct btrfs_extent_data_ref *dref;
@@ -398,7 +398,7 @@ int insert_inode_item(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_timespec_sec(&ii.mtime, now);
 
 	ret = btrfs_insert_inode(trans, root, ino, &ii);
-	ASSERT(!ret);
+	UASSERT(!ret);
 
 	warning("root %llu inode %llu recreating inode item, this may "
 		"be incomplete, please check permissions and content after "
@@ -985,7 +985,7 @@ int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path)
 	int ret;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	ASSERT(key.type == BTRFS_INODE_ITEM_KEY);
+	UASSERT(key.type == BTRFS_INODE_ITEM_KEY);
 	if (root->objectid == BTRFS_ROOT_TREE_OBJECTID) {
 		/* In root tree we only have two possible imode */
 		if (key.objectid == BTRFS_ROOT_TREE_OBJECTID)
@@ -1033,7 +1033,7 @@ int check_repair_free_space_inode(struct btrfs_path *path)
 	int ret = 0;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	ASSERT(key.type == BTRFS_INODE_ITEM_KEY && is_fstree(key.objectid));
+	UASSERT(key.type == BTRFS_INODE_ITEM_KEY && is_fstree(key.objectid));
 	iitem = btrfs_item_ptr(path->nodes[0], path->slots[0],
 			       struct btrfs_inode_item);
 	mode = btrfs_inode_mode(path->nodes[0], iitem);
@@ -1607,7 +1607,7 @@ static int get_num_devs_in_chunk_tree(struct btrfs_fs_info *fs_info)
 		return ret;
 
 	/* We should be the first slot, and chunk tree should not be empty*/
-	ASSERT(path.slots[0] == 0 && btrfs_header_nritems(path.nodes[0]));
+	UASSERT(path.slots[0] == 0 && btrfs_header_nritems(path.nodes[0]));
 
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 

@@ -1399,7 +1399,7 @@ static int restore_one_work(struct mdrestore_struct *mdres,
 	int compress_method = mdres->compress_method;
 	int ret;
 
-	ASSERT(is_power_of_2(bufsize));
+	UASSERT(is_power_of_2(bufsize));
 
 	if (compress_method == COMPRESS_ZLIB) {
 		strm.zalloc = Z_NULL;

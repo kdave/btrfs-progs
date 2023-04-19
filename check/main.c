@@ -9680,14 +9680,14 @@ static int build_roots_info_cache(void)
 			rii->level = (u8)-1;
 			entry = &rii->cache_extent;
 			ret = insert_cache_extent(roots_info_cache, entry);
-			ASSERT(ret == 0);
+			UASSERT(ret == 0);
 		} else {
 			rii = container_of(entry, struct root_item_info,
 					   cache_extent);
 		}
 
-		ASSERT(rii->cache_extent.start == root_id);
-		ASSERT(rii->cache_extent.size == 1);
+		UASSERT(rii->cache_extent.start == root_id);
+		UASSERT(rii->cache_extent.size == 1);
 
 		if (level > rii->level || rii->level == (u8)-1) {
 			rii->level = level;
@@ -9726,8 +9726,8 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 	}
 
 	rii = container_of(entry, struct root_item_info, cache_extent);
-	ASSERT(rii->cache_extent.start == root_id);
-	ASSERT(rii->cache_extent.size == 1);
+	UASSERT(rii->cache_extent.start == root_id);
+	UASSERT(rii->cache_extent.size == 1);
 
 	if (rii->node_count != 1) {
 		fprintf(stderr,

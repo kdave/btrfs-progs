@@ -79,7 +79,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 	/* Unknown mode */
 	if (!base) {
 		internal_error("unknown unit base, mode %u", unit_mode);
-		ASSERT(0);
+		UASSERT(0);
 		return -1;
 	}
 
@@ -135,7 +135,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 	if (num_divs >= ARRAY_SIZE(unit_suffix_binary)) {
 		str[0] = '\0';
 		internal_error("unsupported unit suffix, index %d", num_divs);
-		ASSERT(0);
+		UASSERT(0);
 		return -1;
 	}
 

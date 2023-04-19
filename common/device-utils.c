@@ -539,7 +539,7 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 	int ret;
 	ssize_t ret_rw;
 
-	ASSERT(rw == READ || rw == WRITE);
+	UASSERT(rw == READ || rw == WRITE);
 
 	if (fstat(fd, &stat_buf) == -1) {
 		error("fstat failed: %m");
@@ -579,7 +579,7 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 	}
 
 	if (rw == WRITE) {
-		ASSERT(iosize == count);
+		UASSERT(iosize == count);
 		memcpy(bounce_buf, buf, count);
 		ret_rw = pwrite(fd, bounce_buf, iosize, offset);
 	} else {

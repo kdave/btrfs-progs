@@ -508,12 +508,12 @@ int truncate_free_ino_items(struct btrfs_root *root)
 			fi = btrfs_item_ptr(leaf, path.slots[0],
 					    struct btrfs_file_extent_item);
 			extent_type = btrfs_file_extent_type(leaf, fi);
-			ASSERT(extent_type == BTRFS_FILE_EXTENT_REG);
+			UASSERT(extent_type == BTRFS_FILE_EXTENT_REG);
 			extent_disk_bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 			extent_num_bytes = btrfs_file_extent_disk_num_bytes (leaf, fi);
 			extent_offset = found_key.offset -
 					btrfs_file_extent_offset(leaf, fi);
-			ASSERT(extent_offset == 0);
+			UASSERT(extent_offset == 0);
 			ret = btrfs_free_extent(trans, root, extent_disk_bytenr,
 						extent_num_bytes, 0, root->objectid,
 						BTRFS_FREE_INO_OBJECTID, 0);

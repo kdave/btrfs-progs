@@ -322,8 +322,8 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 		ret = btrfs_search_slot(trans, uuid_root, &key, &path, -1, 1);
 		if (ret < 0)
 			goto out;
-		ASSERT(ret > 0);
-		ASSERT(path.slots[0] == 0);
+		UASSERT(ret > 0);
+		UASSERT(path.slots[0] == 0);
 
 		nr = btrfs_header_nritems(path.nodes[0]);
 		if (nr == 0) {

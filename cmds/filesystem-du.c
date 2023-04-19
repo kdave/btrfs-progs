@@ -87,7 +87,7 @@ static int add_shared_extent(u64 start, u64 len, struct rb_root *root)
 {
 	struct shared_extent *sh;
 
-	ASSERT(len != 0);
+	UASSERT(len != 0);
 
 	sh = calloc(1, sizeof(*sh));
 	if (!sh)

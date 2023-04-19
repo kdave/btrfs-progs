@@ -40,6 +40,12 @@
 #define DO_ABORT_ON_ERROR	do { } while (0)
 #endif
 
+#ifndef BTRFS_DISABLE_BACKTRACE
+#define	UASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
+#else
+#define UASSERT(c) assert(c)
+#endif
+
 #define error(fmt, ...)							\
 	do {								\
 		PRINT_TRACE_ON_ERROR;					\

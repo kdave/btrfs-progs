@@ -519,7 +519,7 @@ time2string(char *buf, size_t s, __u64 t)
 	time_t t_time_t;
 
 	t_time_t = (time_t)t;
-	ASSERT((__u64)t_time_t == t);
+	UASSERT((__u64)t_time_t == t);
 	localtime_r(&t_time_t, &t_tm);
 	strftime(buf, s, "%e.%b %T", &t_tm);
 	return buf;
@@ -529,7 +529,7 @@ static char *
 progress2string(char *buf, size_t s, int progress_1000)
 {
 	snprintf(buf, s, "%d.%01d%%", progress_1000 / 10, progress_1000 % 10);
-	ASSERT(s > 0);
+	UASSERT(s > 0);
 	buf[s - 1] = '\0';
 	return buf;
 }
