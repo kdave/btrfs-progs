@@ -6,7 +6,7 @@
 # This test case verifies a special case when 'btrfs check' does not report
 # qgroup accounting difference as an error, thus no false alert for btrfs/166.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

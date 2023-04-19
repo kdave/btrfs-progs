@@ -3,7 +3,7 @@
 # Make sure "btrfs check" can handle degraded raid5.
 #
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

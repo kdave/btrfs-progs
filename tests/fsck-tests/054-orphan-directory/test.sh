@@ -9,7 +9,7 @@
 # btrfs_truncate_inode_items() and removing the orphan item at evict time, and
 # then rm -rf'ed a directory.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

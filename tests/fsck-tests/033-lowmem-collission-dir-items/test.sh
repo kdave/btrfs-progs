@@ -3,7 +3,7 @@
 # doesn't result in false positives. This test is specifically targeted at
 # lowmem mode.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

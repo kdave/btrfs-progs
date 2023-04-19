@@ -12,7 +12,7 @@
 #
 # So btrfs check should report such compressed extent without csum as error.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

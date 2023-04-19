@@ -4,7 +4,7 @@
 # in device item
 #
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 

@@ -3,7 +3,7 @@
 # with immutable/append attributes that are not possible to set by standard
 # syscall or ioctl so they're handled as corruption
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

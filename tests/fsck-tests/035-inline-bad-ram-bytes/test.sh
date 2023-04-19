@@ -4,7 +4,7 @@
 # This old regression could be caught by tree-check code.
 # This test case will check if btrfs check could detect and repair it.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

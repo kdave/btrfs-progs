@@ -1,7 +1,7 @@
 #!/bin/bash
 # check whether btrfsck can detect running qgroup rescan
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

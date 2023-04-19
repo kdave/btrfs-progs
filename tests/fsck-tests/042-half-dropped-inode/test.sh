@@ -23,7 +23,7 @@
 # - Sync the fs
 # - Replay the log
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

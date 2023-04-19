@@ -7,7 +7,7 @@
 #
 # Make sure btrfs check can at least detect such error
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

@@ -2,7 +2,7 @@
 # To check if "btrfs check" can detect metadata dump (restored by btrfs-image)
 # and ignore --check-data-csum option
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

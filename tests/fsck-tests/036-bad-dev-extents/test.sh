@@ -8,7 +8,7 @@
 # This test case contains hand crafted minimal image, to test if btrfs check
 # can detect and report such error.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

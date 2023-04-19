@@ -3,7 +3,7 @@
 # Make sure "btrfs check" won't report false alerts on sprouted filesystems
 #
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

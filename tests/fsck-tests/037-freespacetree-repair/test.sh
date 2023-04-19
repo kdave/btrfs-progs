@@ -6,7 +6,7 @@
 # Note: this needs a patched kernel to exercise extents and bitmaps
 # ff51bf02d107 ("btrfs: block-group: fix free-space bitmap threshold")
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev 256M

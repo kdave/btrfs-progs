@@ -1,7 +1,7 @@
 #!/bin/bash
 # confirm that clearing space cache works
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

@@ -4,7 +4,7 @@
 # deletion.  Orphan inode/root is not referenced and will have an orphan
 # item, which should not be reported as error.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

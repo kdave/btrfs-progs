@@ -20,7 +20,7 @@
 #   For both fs tree and data reloc tree.
 #   Special for its backref pointing to itself and its short life span.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

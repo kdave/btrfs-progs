@@ -31,7 +31,7 @@
 # mount /dev/sdb /mnt
 # umount /mnt
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 
