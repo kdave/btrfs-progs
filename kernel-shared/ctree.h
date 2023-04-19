@@ -849,7 +849,7 @@ struct btrfs_block_group *btrfs_lookup_block_group(struct btrfs_fs_info *info,
 struct btrfs_block_group *btrfs_lookup_first_block_group(struct
 						       btrfs_fs_info *info,
 						       u64 bytenr);
-struct extent_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
+struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 					struct btrfs_root *root,
 					u32 blocksize, u64 root_objectid,
 					struct btrfs_disk_key *key, int level,

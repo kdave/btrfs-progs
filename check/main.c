@@ -9096,7 +9096,7 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	if (!path)
 		return ERR_PTR(-ENOMEM);
 
-	c = btrfs_alloc_free_block(trans, gfs_info->tree_root,
+	c = btrfs_alloc_tree_block(trans, gfs_info->tree_root,
 				   gfs_info->nodesize, key->objectid,
 				   &disk_key, 0, 0, 0);
 	if (IS_ERR(c)) {
