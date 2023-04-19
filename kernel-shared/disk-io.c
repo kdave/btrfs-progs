@@ -370,9 +370,9 @@ int btrfs_read_extent_buffer(struct extent_buffer *eb, u64 parent_transid,
 			 * btrfs ins dump-tree.
 			 */
 			if (btrfs_header_level(eb))
-				ret = btrfs_check_node(eb);
+				ret = __btrfs_check_node(eb);
 			else
-				ret = btrfs_check_leaf(eb);
+				ret = __btrfs_check_leaf(eb);
 			if (!ret || candidate_mirror == mirror_num) {
 				btrfs_set_buffer_uptodate(eb);
 				return 0;

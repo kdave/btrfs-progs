@@ -958,8 +958,8 @@ int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr);
 int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		int level, int slot);
-enum btrfs_tree_block_status btrfs_check_node(struct extent_buffer *buf);
-enum btrfs_tree_block_status btrfs_check_leaf(struct extent_buffer *buf);
+enum btrfs_tree_block_status __btrfs_check_node(struct extent_buffer *buf);
+enum btrfs_tree_block_status __btrfs_check_leaf(struct extent_buffer *buf);
 struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 				   struct extent_buffer *parent, int slot);
 int btrfs_previous_item(struct btrfs_root *root,

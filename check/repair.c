@@ -311,9 +311,9 @@ enum btrfs_tree_block_status btrfs_check_block_for_repair(struct extent_buffer *
 	enum btrfs_tree_block_status status;
 
 	if (btrfs_is_leaf(eb))
-		status = btrfs_check_leaf(eb);
+		status = __btrfs_check_leaf(eb);
 	else
-		status = btrfs_check_node(eb);
+		status = __btrfs_check_node(eb);
 
 	if (status == BTRFS_TREE_BLOCK_CLEAN)
 		return status;
