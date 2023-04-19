@@ -335,7 +335,7 @@ skip_balance
         interrupted balance immediately after a volume is mounted.
 
 space_cache, space_cache=<version>, nospace_cache
-        (*nospace_cache* since: 3.2, *space_cache=v1* and *space_cache=v2* since 4.5, default: *space_cache=v1*)
+        (*nospace_cache* since: 3.2, *space_cache=v1* and *space_cache=v2* since 4.5, default: *space_cache=v2*)
 
         Options to control the free space cache. The free space cache greatly improves
         performance when reading block group free space into memory. However, managing
@@ -343,8 +343,9 @@ space_cache, space_cache=<version>, nospace_cache
         space.
 
         There are two implementations of the free space cache. The original
-        one, referred to as *v1*, is the safe default. The *v1* space cache can be
-        disabled at mount time with *nospace_cache* without clearing.
+        one, referred to as *v1*, used to be a safe default but has been
+        superseded by *v2*.  The *v1* space cache can be disabled at mount time
+        with *nospace_cache* without clearing.
 
         On very large filesystems (many terabytes) and certain workloads, the
         performance of the *v1* space cache may degrade drastically. The *v2*
@@ -353,12 +354,14 @@ space_cache, space_cache=<version>, nospace_cache
         be disabled unless it is cleared. Use *clear_cache,space_cache=v1* or
         *clear_cache,nospace_cache* to do so. If *v2* is enabled, kernels without *v2*
         support will only be able to mount the filesystem in read-only mode.
+        On an unmounted filesystem the caches (both versions) can be cleared by
+        "btrfs check --clear-space-cache".
 
         The :doc:`btrfs-check(8)<btrfs-check>` and `:doc:`mkfs.btrfs(8)<mkfs.btrfs>` commands have full *v2* free space
         cache support since v4.19.
 
         If a version is not explicitly specified, the default implementation will be
-        chosen, which is *v1*.
+        chosen, which is *v2*.
 
 ssd, ssd_spread, nossd, nossd_spread
         (default: SSD autodetected)
