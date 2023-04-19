@@ -611,8 +611,7 @@ static void generic_err(const struct extent_buffer *buf, int slot,
 	fprintf(stderr, "\n");
 }
 
-enum btrfs_tree_block_status
-btrfs_check_node(struct btrfs_key *parent_key, struct extent_buffer *node)
+enum btrfs_tree_block_status btrfs_check_node(struct extent_buffer *node)
 {
 	struct btrfs_fs_info *fs_info = node->fs_info;
 	unsigned long nr = btrfs_header_nritems(node);
@@ -673,8 +672,7 @@ fail:
 	return ret;
 }
 
-enum btrfs_tree_block_status
-btrfs_check_leaf(struct btrfs_key *parent_key, struct extent_buffer *leaf)
+enum btrfs_tree_block_status btrfs_check_leaf(struct extent_buffer *leaf)
 {
 	struct btrfs_fs_info *fs_info = leaf->fs_info;
 	/* No valid key type is 0, so all key should be larger than this key */
@@ -781,21 +779,14 @@ fail:
 static int noinline check_block(struct btrfs_fs_info *fs_info,
 				struct btrfs_path *path, int level)
 {
-	struct btrfs_key key;
-	struct btrfs_key *parent_key_ptr = NULL;
 	enum btrfs_tree_block_status ret;
 
 	if (path->skip_check_block)
 		return 0;
-	if (path->nodes[level + 1]) {
-		btrfs_node_key_to_cpu(path->nodes[level + 1], &key,
-				     path->slots[level + 1]);
-		parent_key_ptr = &key;
-	}
 	if (level == 0)
-		ret = btrfs_check_leaf(parent_key_ptr, path->nodes[0]);
+		ret = btrfs_check_leaf(path->nodes[0]);
 	else
-		ret = btrfs_check_node(parent_key_ptr, path->nodes[level]);
+		ret = btrfs_check_node(path->nodes[level]);
 	if (ret == BTRFS_TREE_BLOCK_CLEAN)
 		return 0;
 	return -EIO;
