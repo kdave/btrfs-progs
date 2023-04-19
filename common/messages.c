@@ -52,40 +52,6 @@ void __btrfs_error(const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
-__attribute__ ((format (printf, 2, 3)))
-int __btrfs_warning_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs(PREFIX_WARNING, stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
-
-__attribute__ ((format (printf, 2, 3)))
-int __btrfs_error_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs(PREFIX_ERROR, stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
-
 __attribute__ ((format (printf, 1, 2)))
 void internal_error(const char *fmt, ...)
 {
