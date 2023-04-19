@@ -29,6 +29,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/extent-io-tree.h"
+#include "kernel-shared/locking.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;
@@ -853,7 +854,8 @@ struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 					struct btrfs_root *root,
 					u32 blocksize, u64 root_objectid,
 					struct btrfs_disk_key *key, int level,
-					u64 hint, u64 empty_size);
+					u64 hint, u64 empty_size,
+					enum btrfs_lock_nesting nest);
 int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 			     struct btrfs_fs_info *fs_info, u64 bytenr,
 			     u64 offset, int metadata, u64 *refs, u64 *flags);

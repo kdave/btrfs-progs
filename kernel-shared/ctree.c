@@ -169,7 +169,8 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 		btrfs_node_key(buf, &disk_key, 0);
 	cow = btrfs_alloc_tree_block(trans, new_root, buf->len,
 				     new_root_objectid, &disk_key,
-				     level, buf->start, 0);
+				     level, buf->start, 0,
+				     BTRFS_NESTING_NORMAL);
 	if (IS_ERR(cow)) {
 		kfree(new_root);
 		return PTR_ERR(cow);
@@ -231,7 +232,8 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 	new_root->root_key.offset = 0;
 
 	node = btrfs_alloc_tree_block(trans, new_root, fs_info->nodesize,
-				      objectid, &disk_key, 0, 0, 0);
+				      objectid, &disk_key, 0, 0, 0,
+				      BTRFS_NESTING_NORMAL);
 	if (IS_ERR(node)) {
 		ret = PTR_ERR(node);
 		error("failed to create root node for tree %llu: %d (%m)",
@@ -463,7 +465,8 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 
 	cow = btrfs_alloc_tree_block(trans, root, buf->len,
 				     root->root_key.objectid, &disk_key,
-				     level, search_start, empty_size);
+				     level, search_start, empty_size,
+				     BTRFS_NESTING_NORMAL);
 	if (IS_ERR(cow))
 		return PTR_ERR(cow);
 
@@ -1734,7 +1737,8 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 
 	c = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
 				   root->root_key.objectid, &lower_key,
-				   level, root->node->start, 0);
+				   level, root->node->start, 0,
+				   BTRFS_NESTING_NORMAL);
 
 	if (IS_ERR(c))
 		return PTR_ERR(c);
@@ -1860,7 +1864,8 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	split = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
 					root->root_key.objectid,
-					&disk_key, level, c->start, 0);
+					&disk_key, level, c->start, 0,
+					BTRFS_NESTING_NORMAL);
 	if (IS_ERR(split))
 		return PTR_ERR(split);
 
@@ -2427,7 +2432,8 @@ again:
 
 	right = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
 					root->root_key.objectid,
-					&disk_key, 0, l->start, 0);
+					&disk_key, 0, l->start, 0,
+					BTRFS_NESTING_NORMAL);
 	if (IS_ERR(right)) {
 		BUG_ON(1);
 		return PTR_ERR(right);
