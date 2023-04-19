@@ -516,8 +516,9 @@ int truncate_free_ino_items(struct btrfs_root *root)
 			extent_offset = found_key.offset -
 					btrfs_file_extent_offset(leaf, fi);
 			UASSERT(extent_offset == 0);
-			ret = btrfs_free_extent(trans, root, extent_disk_bytenr,
-						extent_num_bytes, 0, root->objectid,
+			ret = btrfs_free_extent(trans, extent_disk_bytenr,
+						extent_num_bytes, 0,
+						root->objectid,
 						BTRFS_FREE_INO_OBJECTID, 0);
 			if (ret < 0) {
 				btrfs_abort_transaction(trans, ret);

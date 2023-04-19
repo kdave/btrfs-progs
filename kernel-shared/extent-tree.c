@@ -1241,11 +1241,10 @@ static int remove_extent_backref(struct btrfs_trans_handle *trans,
 }
 
 int btrfs_inc_extent_ref(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
 			 u64 bytenr, u64 num_bytes, u64 parent,
 			 u64 root_objectid, u64 owner, u64 offset)
 {
-	struct btrfs_root *extent_root = btrfs_extent_root(root->fs_info,
+	struct btrfs_root *extent_root = btrfs_extent_root(trans->fs_info,
 							   bytenr);
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
@@ -1466,7 +1465,6 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 	int level;
 	int ret = 0;
 	int (*process_func)(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root,
 			    u64, u64, u64, u64, u64, u64);
 
 	ref_root = btrfs_header_owner(buf);
@@ -1503,9 +1501,8 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 
 			num_bytes = btrfs_file_extent_disk_num_bytes(buf, fi);
 			key.offset -= btrfs_file_extent_offset(buf, fi);
-			ret = process_func(trans, root, bytenr, num_bytes,
-					   parent, ref_root, key.objectid,
-					   key.offset);
+			ret = process_func(trans, bytenr, num_bytes, parent,
+					   ref_root, key.objectid, key.offset);
 			if (ret) {
 				WARN_ON(1);
 				goto fail;
@@ -1513,8 +1510,8 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 		} else {
 			bytenr = btrfs_node_blockptr(buf, i);
 			num_bytes = root->fs_info->nodesize;
-			ret = process_func(trans, root, bytenr, num_bytes,
-					   parent, ref_root, level - 1, 0);
+			ret = process_func(trans, bytenr, num_bytes, parent,
+					   ref_root, level - 1, 0);
 			if (ret) {
 				WARN_ON(1);
 				goto fail;
@@ -2147,7 +2144,7 @@ int btrfs_free_tree_block(struct btrfs_trans_handle *trans,
 			  struct extent_buffer *buf,
 			  u64 parent, int last_ref)
 {
-	return btrfs_free_extent(trans, root, buf->start, buf->len, parent,
+	return btrfs_free_extent(trans, buf->start, buf->len, parent,
 				 root->root_key.objectid,
 				 btrfs_header_level(buf), 0);
 }
@@ -2157,13 +2154,12 @@ int btrfs_free_tree_block(struct btrfs_trans_handle *trans,
  */
 
 int btrfs_free_extent(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root,
 		      u64 bytenr, u64 num_bytes, u64 parent,
 		      u64 root_objectid, u64 owner, u64 offset)
 {
 	int ret;
 
-	WARN_ON(num_bytes < root->fs_info->sectorsize);
+	WARN_ON(num_bytes < trans->fs_info->sectorsize);
 	/*
 	 * tree log blocks never actually go into the extent allocation
 	 * tree, just update pinning info and exit early.
@@ -2578,8 +2574,8 @@ struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 
 	buf = btrfs_find_create_tree_block(root->fs_info, ins.objectid);
 	if (!buf) {
-		btrfs_free_extent(trans, root, ins.objectid, ins.offset,
-				  0, root->root_key.objectid, level, 0);
+		btrfs_free_extent(trans, ins.objectid, ins.offset, 0,
+				  root->root_key.objectid, level, 0);
 		BUG_ON(1);
 		return ERR_PTR(-ENOMEM);
 	}
@@ -3722,7 +3718,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_inode_nbytes(inode, nbytes);
 	btrfs_release_path(path);
 
-	ret = btrfs_inc_extent_ref(trans, root, extent_bytenr, extent_num_bytes,
+	ret = btrfs_inc_extent_ref(trans, extent_bytenr, extent_num_bytes,
 				   0, root->root_key.objectid, objectid,
 				   file_pos - extent_offset);
 	if (ret)

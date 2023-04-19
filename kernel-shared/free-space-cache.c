@@ -982,9 +982,8 @@ int btrfs_clear_free_space_cache(struct btrfs_trans_handle *trans,
 		disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
 		disk_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
 
-		ret = btrfs_free_extent(trans, tree_root, disk_bytenr,
-					disk_num_bytes, 0, tree_root->objectid,
-					ino, key.offset);
+		ret = btrfs_free_extent(trans, disk_bytenr, disk_num_bytes, 0,
+					tree_root->objectid, ino, key.offset);
 		if (ret < 0) {
 			error("failed to remove backref for disk bytenr %llu: %d",
 			      disk_bytenr, ret);

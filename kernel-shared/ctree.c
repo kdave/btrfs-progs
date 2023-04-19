@@ -491,8 +491,8 @@ static int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 		root->node = cow;
 		extent_buffer_get(cow);
 
-		btrfs_free_extent(trans, root, buf->start, buf->len,
-				  0, root->root_key.objectid, level, 0);
+		btrfs_free_extent(trans, buf->start, buf->len, 0,
+				  root->root_key.objectid, level, 0);
 		free_extent_buffer(buf);
 		add_root_to_dirty_list(root);
 	} else {
@@ -504,8 +504,8 @@ static int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 		btrfs_mark_buffer_dirty(parent);
 		WARN_ON(btrfs_header_generation(parent) != trans->transid);
 
-		btrfs_free_extent(trans, root, buf->start, buf->len,
-				  0, root->root_key.objectid, level, 0);
+		btrfs_free_extent(trans, buf->start, buf->len, 0,
+				  root->root_key.objectid, level, 0);
 	}
 	if (!list_empty(&buf->recow)) {
 		list_del_init(&buf->recow);
@@ -942,9 +942,8 @@ static int balance_level(struct btrfs_trans_handle *trans,
 
 		root_sub_used(root, mid->len);
 
-		ret = btrfs_free_extent(trans, root, mid->start, mid->len,
-					0, root->root_key.objectid,
-					level, 0);
+		ret = btrfs_free_extent(trans, mid->start, mid->len, 0,
+					root->root_key.objectid, level, 0);
 		/* once for the root ptr */
 		free_extent_buffer(mid);
 		return ret;
@@ -999,10 +998,9 @@ static int balance_level(struct btrfs_trans_handle *trans,
 				ret = wret;
 
 			root_sub_used(root, blocksize);
-			wret = btrfs_free_extent(trans, root, bytenr,
-						 blocksize, 0,
-						 root->root_key.objectid,
-						 level, 0);
+			wret = btrfs_free_extent(trans, bytenr, blocksize, 0,
+						 root->root_key.objectid, level,
+						 0);
 			if (wret)
 				ret = wret;
 		} else {
@@ -1047,9 +1045,8 @@ static int balance_level(struct btrfs_trans_handle *trans,
 			ret = wret;
 
 		root_sub_used(root, blocksize);
-		wret = btrfs_free_extent(trans, root, bytenr, blocksize,
-					 0, root->root_key.objectid,
-					 level, 0);
+		wret = btrfs_free_extent(trans, bytenr, blocksize, 0,
+					 root->root_key.objectid, level, 0);
 		if (wret)
 			ret = wret;
 	} else {
@@ -2956,8 +2953,8 @@ static noinline int btrfs_del_leaf(struct btrfs_trans_handle *trans,
 
 	root_sub_used(root, leaf->len);
 
-	ret = btrfs_free_extent(trans, root, leaf->start, leaf->len,
-				0, root->root_key.objectid, 0, 0);
+	ret = btrfs_free_extent(trans, leaf->start, leaf->len, 0,
+				root->root_key.objectid, 0, 0);
 	return ret;
 }
 

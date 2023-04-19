@@ -755,8 +755,8 @@ static int repair_tree_block_ref(struct btrfs_root *root,
 		parent = nrefs->bytenr[level + 1];
 
 	/* increase the ref */
-	ret = btrfs_inc_extent_ref(trans, extent_root, bytenr, node_size,
-			parent, root->objectid, level, 0);
+	ret = btrfs_inc_extent_ref(trans, bytenr, node_size, parent,
+				   root->objectid, level, 0);
 
 	nrefs->refs[level]++;
 out:
@@ -3335,7 +3335,7 @@ static int repair_extent_data_item(struct btrfs_root *root,
 		btrfs_release_path(&path);
 	}
 
-	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes, parent,
+	ret = btrfs_inc_extent_ref(trans, disk_bytenr, num_bytes, parent,
 				   root->objectid,
 		   parent ? BTRFS_FIRST_FREE_OBJECTID : fi_key.objectid,
 				   offset);
@@ -4132,8 +4132,8 @@ static int repair_extent_item(struct btrfs_path *path, u64 bytenr, u64
 		goto out;
 	}
 	/* delete the backref */
-	ret = btrfs_free_extent(trans, gfs_info->fs_root, bytenr,
-			num_bytes, parent, root_objectid, owner, offset);
+	ret = btrfs_free_extent(trans, bytenr, num_bytes, parent, root_objectid,
+				owner, offset);
 	if (!ret)
 		printf("Delete backref in extent [%llu %llu]\n",
 		       bytenr, num_bytes);

@@ -3586,7 +3586,7 @@ static int repair_btree(struct btrfs_root *root,
 		 * return value is not concerned.
 		 */
 		btrfs_release_path(&path);
-		ret = btrfs_free_extent(trans, root, offset,
+		ret = btrfs_free_extent(trans, offset,
 				gfs_info->nodesize, 0,
 				root->root_key.objectid, level - 1, 0);
 		cache = next_cache_extent(cache);
@@ -6861,9 +6861,8 @@ static int record_extent(struct btrfs_trans_handle *trans,
 			 * just makes the backref allocator create a data
 			 * backref
 			 */
-			ret = btrfs_inc_extent_ref(trans, extent_root,
-						   rec->start, rec->max_size,
-						   parent,
+			ret = btrfs_inc_extent_ref(trans, rec->start,
+						   rec->max_size, parent,
 						   dback->root,
 						   parent ?
 						   BTRFS_FIRST_FREE_OBJECTID :
@@ -6890,8 +6889,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 		else
 			parent = 0;
 
-		ret = btrfs_inc_extent_ref(trans, extent_root,
-					   rec->start, rec->max_size,
+		ret = btrfs_inc_extent_ref(trans, rec->start, rec->max_size,
 					   parent, tback->root, 0, 0);
 		fprintf(stderr,
 "adding new tree backref on start %llu len %llu parent %llu root %llu\n",
