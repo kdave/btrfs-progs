@@ -4,7 +4,7 @@
 # receiving, not the existing subvolume). This is a regression test for
 # "btrfs-progs: receive: don't lookup clone root for received subvolume".
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

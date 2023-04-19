@@ -4,7 +4,7 @@
 # tree leaf
 # Issue: #128
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

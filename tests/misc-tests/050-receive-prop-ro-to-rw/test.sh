@@ -1,7 +1,7 @@
 #!/bin/bash
 # Prevent changing subvolume ro->rw status with received_uuid set, unless forced
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

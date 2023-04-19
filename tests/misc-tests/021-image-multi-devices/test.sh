@@ -2,7 +2,7 @@
 # Test btrfs-image with multiple devices filesystem and verify that restoring
 # the created image works against a single device.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-image
 check_prereq mkfs.btrfs

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Check if mkfs runtime feature quota can handle --rootdir
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

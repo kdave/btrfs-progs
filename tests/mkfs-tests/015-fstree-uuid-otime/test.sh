@@ -1,7 +1,7 @@
 #!/bin/bash
 # verify that mkfs fills the uuid and otime for FS_TREE
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

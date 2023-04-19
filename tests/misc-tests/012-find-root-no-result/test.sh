@@ -3,7 +3,7 @@
 # recent fs or balanced fs, whose metadata chunk is the first chunk
 # and the only metadata chunk
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-find-root
 check_prereq btrfs-image

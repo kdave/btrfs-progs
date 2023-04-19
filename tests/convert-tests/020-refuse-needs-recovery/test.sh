@@ -2,7 +2,7 @@
 # Crafted image with needs_recovery incompat bit feature set, convert must
 # refuse to convert such image
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-convert
 check_prereq btrfs

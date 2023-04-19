@@ -2,7 +2,7 @@
 # Look for warning about read-write subvolume with received_uuid set, on a crafted
 # image
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

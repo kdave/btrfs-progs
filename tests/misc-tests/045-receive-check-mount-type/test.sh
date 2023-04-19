@@ -8,7 +8,7 @@
 # This is a regression test for
 # "btrfs-progs: receive: fix btrfs_mount_root substring bug"
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

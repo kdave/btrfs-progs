@@ -1,7 +1,7 @@
 #!/bin/bash
-# Run check on all images 
+# Run check on all images
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_image() {
 	run_check "$TOP/btrfs" check --readonly "$1"

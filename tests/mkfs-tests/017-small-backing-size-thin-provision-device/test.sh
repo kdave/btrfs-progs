@@ -2,7 +2,7 @@
 # mkfs.btrfs must fail on a thin provision device with very small backing size
 # and big virtual size.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_global_prereq udevadm

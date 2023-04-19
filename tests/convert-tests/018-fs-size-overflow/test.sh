@@ -3,8 +3,8 @@
 # That fs size could trigger a multiply overflow and screw up free space
 # calculation
 
-source "$TEST_TOP/common"
-source "$TEST_TOP/common.convert"
+source "$TEST_TOP/common" || exit
+source "$TEST_TOP/common.convert" || exit
 
 check_prereq btrfs-convert
 check_global_prereq mke2fs

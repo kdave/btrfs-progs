@@ -3,7 +3,7 @@
 # mountpoint and subvolume boundary, ie. only the first file should
 # appear in the list of processed files
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Check if block sizes smaller than 4k expectedly fail to convert
 
-source "$TEST_TOP/common"
-source "$TEST_TOP/common.convert"
+source "$TEST_TOP/common" || exit
+source "$TEST_TOP/common.convert" || exit
 
 check_prereq btrfs-convert
 check_global_prereq mke2fs

@@ -1,7 +1,7 @@
 #!/bin/bash
 # check that the toplevel subvolume is not listed as regular or deleted
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

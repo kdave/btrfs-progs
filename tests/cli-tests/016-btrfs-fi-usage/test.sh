@@ -1,7 +1,7 @@
 #!/bin/bash
 # Tests 'btrfs fi usage' reports correct space/ratio with various RAID profiles
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

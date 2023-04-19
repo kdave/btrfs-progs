@@ -2,7 +2,7 @@
 
 # iterate over all fuzzed images and run 'btrfs-image'
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-image
 

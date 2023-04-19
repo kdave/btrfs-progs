@@ -2,7 +2,7 @@
 # Verify that default subvolume specified as 0 will be resolved as the toplevel
 # one and not the containing subvolume of the given path
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

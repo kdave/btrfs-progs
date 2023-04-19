@@ -3,7 +3,7 @@
 # subvolume tree scenarios. This used to fail when a child subvolume was
 # mounted without the parent subvolume being accessible.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

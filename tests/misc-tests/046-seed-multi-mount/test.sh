@@ -1,7 +1,7 @@
 #!/bin/bash
 # Verify that a seeding device can be mounted several times
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-image
 check_prereq mkfs.btrfs

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Create a new multi-device filesystem and test that it can be mounted
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 setup_loopdevs 4

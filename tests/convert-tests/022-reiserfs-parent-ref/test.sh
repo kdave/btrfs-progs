@@ -1,8 +1,8 @@
 #!/bin/sh
 # Test that only toplevel directory self-reference is created
 
-source "$TEST_TOP/common"
-source "$TEST_TOP/common.convert"
+source "$TEST_TOP/common" || exit
+source "$TEST_TOP/common.convert" || exit
 
 setup_root_helper
 prepare_test_dev

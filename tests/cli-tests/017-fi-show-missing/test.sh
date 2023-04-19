@@ -3,7 +3,7 @@
 # Test that if a device is missing for a mounted filesystem, btrfs fi show will
 # show which device exactly is missing.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

@@ -1,7 +1,7 @@
 #!/bin/bash
 # test convert-thread-conflict
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-convert
 

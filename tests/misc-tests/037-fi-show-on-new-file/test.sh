@@ -1,7 +1,7 @@
 #!/bin/bash
 # test for 'filesystem show' on fresh local file
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

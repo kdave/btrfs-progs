@@ -1,7 +1,7 @@
 #!/bin/bash
 # test if the reported minimal size of mkfs.btrfs is valid
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

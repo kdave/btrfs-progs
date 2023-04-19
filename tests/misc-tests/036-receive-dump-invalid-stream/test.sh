@@ -4,7 +4,7 @@
 # The --dump option should follow the --max-errors and not loop indefinetelly
 # by default
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

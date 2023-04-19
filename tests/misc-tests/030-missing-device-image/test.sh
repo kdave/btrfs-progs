@@ -4,7 +4,7 @@
 # At least for RAID1, btrfs-image should be able to handle one missing device
 # without any problem
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-image
 check_prereq mkfs.btrfs

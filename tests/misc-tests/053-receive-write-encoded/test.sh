@@ -3,7 +3,7 @@
 # test that we can send and receive encoded writes for three modes of
 # transparent compression: zlib, lzo, and zstd.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

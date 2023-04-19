@@ -1,8 +1,8 @@
 #!/bin/bash
 # Check if the converted ext2 image is readonly
 
-source "$TEST_TOP/common"
-source "$TEST_TOP/common.convert"
+source "$TEST_TOP/common" || exit
+source "$TEST_TOP/common.convert" || exit
 
 check_prereq btrfs-convert
 check_global_prereq mke2fs

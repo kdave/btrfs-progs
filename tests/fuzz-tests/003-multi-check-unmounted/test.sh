@@ -3,7 +3,7 @@
 # iterate over all fuzzed images and run 'btrfs check', try various options to
 # get more code coverage
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

@@ -2,7 +2,7 @@
 # Test that receive determines the correct mount point path when there is
 # another mount point that matches the destination's path as a prefix.
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 # fix reverted in v4.20.2 due to reported breakage, the bug fixed by
 # "Btrfs-progs: fix mount point detection due to partial prefix match" is still

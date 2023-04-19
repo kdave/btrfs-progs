@@ -2,7 +2,7 @@
 # Verify that receive --dump escapes paths for rename, symlink and hardlink
 # when it's the "dest=" value
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

@@ -1,7 +1,7 @@
 #!/bin/bash
 # a long device name must pass the SSD test
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_dm_target_support linear

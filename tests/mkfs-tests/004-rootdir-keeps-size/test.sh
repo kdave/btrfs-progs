@@ -1,7 +1,7 @@
 #!/bin/bash
 # make sure that mkfs.btrfs --rootsize does not change size of the image
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 

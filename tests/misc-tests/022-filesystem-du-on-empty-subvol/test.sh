@@ -2,7 +2,7 @@
 #
 # btrfs fi du should handle empty subvolumes (with ino == 2)
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

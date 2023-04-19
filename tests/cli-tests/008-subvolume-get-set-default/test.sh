@@ -1,7 +1,7 @@
 #!/bin/bash
 # test for "subvolume get-default/set-default"
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

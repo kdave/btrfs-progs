@@ -3,7 +3,7 @@
 # Needs kernel modules: null_blk, configfs and at least 2G of free memory for
 # the devices
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 if ! check_min_kernel_version 5.12; then
 	_not_run "zoned tests need kernel 5.12 and newer"

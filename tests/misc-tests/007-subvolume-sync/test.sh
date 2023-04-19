@@ -4,7 +4,7 @@
 # - btrfs subvolume must not loop indefinitely
 # - btrfs subvolume return 0 in normal case
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

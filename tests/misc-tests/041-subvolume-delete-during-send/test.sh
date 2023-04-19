@@ -1,7 +1,7 @@
 #!/bin/bash
 # Detect if subvolume deletion fails when it's part of send
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

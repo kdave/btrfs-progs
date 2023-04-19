@@ -1,7 +1,7 @@
 #!/bin/bash
 # test if mkfs.btrfs will create file systems that overflow total_bytes
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

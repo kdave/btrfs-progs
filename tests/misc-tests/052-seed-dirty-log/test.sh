@@ -2,7 +2,7 @@
 #
 # Make sure btrfstune will not set seed flag when the fs has dirty log
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfstune
 

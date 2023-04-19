@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test that btrfs 'qgroup show' outputs the correct parent-child qgroup relation
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

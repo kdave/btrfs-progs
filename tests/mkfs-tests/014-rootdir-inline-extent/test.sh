@@ -2,7 +2,7 @@
 # Regression test for mkfs.btrfs --rootdir with inline file extents
 # For any large inline file extent, btrfs check could already report it
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 

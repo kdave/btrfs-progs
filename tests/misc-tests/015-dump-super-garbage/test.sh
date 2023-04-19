@@ -2,7 +2,7 @@
 #
 # let dump-super dump random data, must not crash
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # test all command line options of btrfstune
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfstune
 

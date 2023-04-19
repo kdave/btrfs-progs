@@ -2,7 +2,7 @@
 # check how deep does recursive 'fi du' go, currently it has to stop at
 # mountpoint and can continue to subvolumes
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

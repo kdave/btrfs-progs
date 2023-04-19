@@ -1,7 +1,7 @@
 #!/bin/bash
 # recognize partitioned loop devices
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 if ! losetup --help | grep -q 'partscan'; then
 	_not_run "losetup --partscan not available"

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Verify that btrfstune would reject fs with transid mismatch problems
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-image
 check_prereq btrfs

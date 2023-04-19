@@ -2,7 +2,7 @@
 # Verify that raid56 warning is printed before balance conversion when the
 # target profile is raid5 or raid6, but not other profiles
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

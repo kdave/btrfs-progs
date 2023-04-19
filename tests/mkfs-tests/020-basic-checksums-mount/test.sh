@@ -2,7 +2,7 @@
 #
 # Test creating images with all supported checksums followed by mount
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

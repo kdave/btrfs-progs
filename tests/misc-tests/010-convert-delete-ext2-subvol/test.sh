@@ -3,7 +3,7 @@
 # verify that convert rollback finds the ext2_subvolume intact and fails if it
 # was partially deleted
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs-convert
 check_prereq btrfs

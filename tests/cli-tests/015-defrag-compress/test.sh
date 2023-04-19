@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test parsing of option 'defrag -c'
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 setup_root_helper
 prepare_test_dev

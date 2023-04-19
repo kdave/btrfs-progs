@@ -6,7 +6,7 @@
 #
 # Note: sock type is skipped in this test
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

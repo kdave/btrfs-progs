@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test zstd compression support on a prebuilt btrfs image
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq btrfs
 check_global_prereq md5sum

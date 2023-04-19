@@ -2,7 +2,7 @@
 #
 # minimal test for the following syntax: btrfs send -p parent subvol1 subvol2
 
-source "$TEST_TOP/common"
+source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
