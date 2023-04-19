@@ -5329,8 +5329,7 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 	 * wrong onwer(3) out of chunk tree, to pass both chunk tree check
 	 * and owner<->key_type check.
 	 */
-	ret = btrfs_check_chunk_valid(gfs_info, eb, chunk, slot,
-				      key->offset);
+	ret = btrfs_check_chunk_valid(eb, chunk, key->offset);
 	if (ret < 0) {
 		error("chunk(%llu, %llu) is not valid, ignore it",
 		      key->offset, btrfs_chunk_length(eb, chunk));

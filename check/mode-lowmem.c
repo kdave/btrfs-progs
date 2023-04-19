@@ -4470,8 +4470,7 @@ static int check_dev_extent_item(struct extent_buffer *eb, int slot)
 
 	l = path.nodes[0];
 	chunk = btrfs_item_ptr(l, path.slots[0], struct btrfs_chunk);
-	ret = btrfs_check_chunk_valid(gfs_info, l, chunk, path.slots[0],
-				      chunk_key.offset);
+	ret = btrfs_check_chunk_valid(l, chunk, chunk_key.offset);
 	if (ret < 0)
 		goto out;
 
@@ -4702,8 +4701,7 @@ static int check_chunk_item(struct extent_buffer *eb, int slot)
 	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
 	length = btrfs_chunk_length(eb, chunk);
 	chunk_end = chunk_key.offset + length;
-	ret = btrfs_check_chunk_valid(gfs_info, eb, chunk, slot,
-				      chunk_key.offset);
+	ret = btrfs_check_chunk_valid(eb, chunk, chunk_key.offset);
 	if (ret < 0) {
 		error("chunk[%llu %llu) is invalid", chunk_key.offset,
 			chunk_end);
