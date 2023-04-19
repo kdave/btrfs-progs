@@ -389,6 +389,11 @@ static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)
 	return fs_info->zoned != 0;
 }
 
+static inline bool btrfs_is_testing(const struct btrfs_fs_info *fs_info)
+{
+	return false;
+}
+
 /*
  * The state of btrfs root
  */
