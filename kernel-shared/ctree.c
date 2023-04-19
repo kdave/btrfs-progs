@@ -419,9 +419,7 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 		if (new_flags != 0) {
-			ret = btrfs_set_disk_extent_flags(trans, buf->start,
-							  btrfs_header_level(buf),
-							  new_flags);
+			ret = btrfs_set_disk_extent_flags(trans, buf, new_flags);
 			BUG_ON(ret);
 		}
 	} else {

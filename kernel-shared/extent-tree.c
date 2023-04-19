@@ -1374,26 +1374,29 @@ out:
 	return ret;
 }
 
-int btrfs_set_disk_extent_flags(struct btrfs_trans_handle *trans, u64 bytenr,
-				int level, u64 flags)
+int btrfs_set_disk_extent_flags(struct btrfs_trans_handle *trans,
+				struct extent_buffer *eb, u64 flags)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, bytenr);
+	struct btrfs_root *extent_root;
 	struct btrfs_path *path;
 	int ret;
 	struct btrfs_key key;
 	struct extent_buffer *l;
 	struct btrfs_extent_item *item;
 	u32 item_size;
+	u64 bytenr = eb->start;
 	int skinny_metadata = btrfs_fs_incompat(fs_info, SKINNY_METADATA);
 
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
 
+	extent_root = btrfs_extent_root(fs_info, bytenr);
+
 	key.objectid = bytenr;
 	if (skinny_metadata) {
-		key.offset = level;
+		key.offset = btrfs_header_level(eb);
 		key.type = BTRFS_METADATA_ITEM_KEY;
 	} else {
 		key.offset = fs_info->nodesize;
