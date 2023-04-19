@@ -874,7 +874,9 @@ struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 		return NULL;
 
 	ret = read_tree_block(fs_info, btrfs_node_blockptr(parent, slot),
-		       btrfs_node_ptr_generation(parent, slot));
+			      btrfs_header_owner(parent),
+			      btrfs_node_ptr_generation(parent, slot),
+			      level - 1, NULL);
 	if (!extent_buffer_uptodate(ret))
 		return ERR_PTR(-EIO);
 

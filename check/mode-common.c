@@ -132,7 +132,7 @@ static int check_prealloc_shared_data_ref(u64 parent, u64 disk_bytenr)
 	int i;
 	int ret = 0;
 
-	eb = read_tree_block(gfs_info, parent, 0);
+	eb = read_tree_block(gfs_info, parent, 0, 0, 0, NULL);
 	if (!extent_buffer_uptodate(eb)) {
 		ret = -EIO;
 		goto out;
@@ -1127,7 +1127,7 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 	    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
 		struct extent_buffer *eb;
 
-		eb = read_tree_block(gfs_info, bytenr, 0);
+		eb = read_tree_block(gfs_info, bytenr, 0, 0, 0, NULL);
 		if (extent_buffer_uptodate(eb)) {
 			*gen_ret = btrfs_header_generation(eb);
 			ret = 0;

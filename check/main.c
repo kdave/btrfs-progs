@@ -1898,7 +1898,9 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (!next || !btrfs_buffer_uptodate(next, ptr_gen)) {
 			free_extent_buffer(next);
 			reada_walk_down(root, cur, path->slots[*level]);
-			next = read_tree_block(gfs_info, bytenr, ptr_gen);
+			next = read_tree_block(gfs_info, bytenr,
+					       btrfs_header_owner(cur), ptr_gen,
+					       *level - 1, NULL);
 			if (!extent_buffer_uptodate(next)) {
 				struct btrfs_key node_key;
 
@@ -6269,7 +6271,7 @@ static int run_next_block(struct btrfs_root *root,
 	}
 
 	/* fixme, get the real parent transid */
-	buf = read_tree_block(gfs_info, bytenr, gen);
+	buf = read_tree_block(gfs_info, bytenr, 0, gen, 0, NULL);
 	if (!extent_buffer_uptodate(buf)) {
 		record_bad_block_io(extent_cache, bytenr, size);
 		goto out;
@@ -8615,7 +8617,8 @@ static int deal_root_from_list(struct list_head *list,
 		rec = list_entry(list->next,
 				 struct root_item_record, list);
 		last = 0;
-		buf = read_tree_block(gfs_info, rec->bytenr, 0);
+		buf = read_tree_block(gfs_info, rec->bytenr, rec->objectid, 0,
+				      rec->level, NULL);
 		if (!extent_buffer_uptodate(buf)) {
 			free_extent_buffer(buf);
 			ret = -EIO;

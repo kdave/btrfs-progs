@@ -337,8 +337,9 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 	return 0;
 }
 
-struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-		u64 parent_transid)
+struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
+				      u64 owner_root, u64 parent_transid,
+				      int level, struct btrfs_key *first_key)
 {
 	int ret;
 	struct extent_buffer *eb;
@@ -510,7 +511,8 @@ static int read_root_node(struct btrfs_fs_info *fs_info,
 			  struct btrfs_root *root, u64 bytenr, u64 gen,
 			  int level)
 {
-	root->node = read_tree_block(fs_info, bytenr, gen);
+	root->node = read_tree_block(fs_info, bytenr, btrfs_root_id(root),
+				     gen, level, NULL);
 	if (!extent_buffer_uptodate(root->node))
 		goto err;
 	if (btrfs_header_level(root->node) != level) {

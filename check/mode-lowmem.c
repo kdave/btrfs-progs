@@ -3748,7 +3748,7 @@ static int query_tree_block_level(u64 bytenr)
 	btrfs_release_path(&path);
 
 	/* Get level from tree block as an alternative source */
-	eb = read_tree_block(gfs_info, bytenr, transid);
+	eb = read_tree_block(gfs_info, bytenr, 0, transid, 0, NULL);
 	if (!extent_buffer_uptodate(eb)) {
 		free_extent_buffer(eb);
 		return -EIO;
@@ -3800,7 +3800,7 @@ static int check_tree_block_backref(u64 root_id, u64 bytenr, int level)
 	}
 
 	/* Read out the tree block to get item/node key */
-	eb = read_tree_block(gfs_info, bytenr, 0);
+	eb = read_tree_block(gfs_info, bytenr, root_id, 0, 0, NULL);
 	if (!extent_buffer_uptodate(eb)) {
 		err |= REFERENCER_MISSING;
 		free_extent_buffer(eb);
@@ -3899,7 +3899,7 @@ static int check_shared_block_backref(u64 parent, u64 bytenr, int level)
 	int found_parent = 0;
 	int i;
 
-	eb = read_tree_block(gfs_info, parent, 0);
+	eb = read_tree_block(gfs_info, parent, 0, 0, 0, NULL);
 	if (!extent_buffer_uptodate(eb))
 		goto out;
 
@@ -4072,7 +4072,7 @@ static int check_shared_data_backref(u64 parent, u64 bytenr)
 	int found_parent = 0;
 	int i;
 
-	eb = read_tree_block(gfs_info, parent, 0);
+	eb = read_tree_block(gfs_info, parent, 0, 0, 0, NULL);
 	if (!extent_buffer_uptodate(eb))
 		goto out;
 
@@ -5046,7 +5046,9 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (!next || !btrfs_buffer_uptodate(next, ptr_gen)) {
 			free_extent_buffer(next);
 			reada_walk_down(root, cur, path->slots[*level]);
-			next = read_tree_block(gfs_info, bytenr, ptr_gen);
+			next = read_tree_block(gfs_info, bytenr,
+					       btrfs_header_owner(cur),
+					       ptr_gen, *level - 1, NULL);
 			if (!extent_buffer_uptodate(next)) {
 				struct btrfs_key node_key;
 

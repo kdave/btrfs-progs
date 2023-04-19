@@ -199,7 +199,7 @@ int btrfs_find_root_search(struct btrfs_fs_info *fs_info,
 		for (offset = chunk_offset;
 		     offset < chunk_offset + chunk_size;
 		     offset += nodesize) {
-			eb = read_tree_block(fs_info, offset, 0);
+			eb = read_tree_block(fs_info, offset, 0, 0, 0, NULL);
 			if (!eb || IS_ERR(eb))
 				continue;
 			ret = add_eb_to_result(eb, result, nodesize, filter,

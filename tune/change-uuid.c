@@ -111,7 +111,7 @@ static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsi
 			goto next;
 
 		bytenr = key.objectid;
-		eb = read_tree_block(fs_info, bytenr, 0);
+		eb = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
 		if (IS_ERR(eb)) {
 			error("failed to read tree block: %llu", bytenr);
 			ret = PTR_ERR(eb);

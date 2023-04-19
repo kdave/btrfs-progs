@@ -138,8 +138,9 @@ static inline u64 btrfs_sb_offset(int mirror)
 struct btrfs_device;
 
 int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror);
-struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-		u64 parent_transid);
+struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
+				      u64 owner_root, u64 parent_transid,
+				      int level, struct btrfs_key *first_key);
 
 void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			  u64 parent_transid);

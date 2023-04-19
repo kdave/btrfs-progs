@@ -720,7 +720,8 @@ static int travel_tree(struct btrfs_fs_info *info, struct btrfs_root *root,
 //	printf("travel_tree: bytenr: %llu\tnum_bytes: %llu\tref_parent: %llu\n",
 //	       bytenr, num_bytes, ref_parent);
 
-	eb = read_tree_block(info, bytenr, 0);
+	eb = read_tree_block(info, bytenr, btrfs_root_id(root), 0,
+			     0, NULL);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;
 

@@ -1260,7 +1260,8 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 			root_location = btrfs_super_root(fs_info->super_copy);
 		generation = btrfs_super_generation(fs_info->super_copy);
 		root->node = read_tree_block(fs_info, root_location,
-					     generation);
+					     btrfs_root_id(root), generation,
+					     0, NULL);
 		if (!extent_buffer_uptodate(root->node)) {
 			error("opening tree root failed");
 			close_ctree(root);
@@ -1527,7 +1528,8 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (fs_location != 0) {
 		free_extent_buffer(root->node);
-		root->node = read_tree_block(root->fs_info, fs_location, 0);
+		root->node = read_tree_block(root->fs_info, fs_location, 0, 0,
+					     0, NULL);
 		if (!extent_buffer_uptodate(root->node)) {
 			error("failed to read fs location");
 			ret = 1;

@@ -153,7 +153,9 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 		path->slots[level] = i;
 		if ((level - 1) > 0 || find_inline) {
 			tmp = read_tree_block(root->fs_info, cur_blocknr,
-					      btrfs_node_ptr_generation(b, i));
+					      btrfs_header_owner(b),
+					      btrfs_node_ptr_generation(b, i),
+					      level - 1, NULL);
 			if (!extent_buffer_uptodate(tmp)) {
 				error("failed to read blocknr %llu",
 					btrfs_node_blockptr(b, i));

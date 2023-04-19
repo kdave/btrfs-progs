@@ -108,7 +108,9 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 			 * in, but for now this doesn't actually use the root so
 			 * just pass in extent_root.
 			 */
-			tmp = read_tree_block(fs_info, bytenr, 0);
+			tmp = read_tree_block(fs_info, bytenr, key.objectid, 0,
+					      btrfs_disk_root_level(eb, ri),
+					      NULL);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
@@ -133,7 +135,9 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 				continue;
 			}
 
-			tmp = read_tree_block(fs_info, bytenr, 0);
+			tmp = read_tree_block(fs_info, bytenr,
+					      btrfs_header_owner(eb), 0,
+					      level - 1, NULL);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;

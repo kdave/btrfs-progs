@@ -1557,7 +1557,9 @@ static void dfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 
 	for (i = 0; i < nr; i++) {
 		next = read_tree_block(fs_info, btrfs_node_blockptr(root_eb, i),
-				btrfs_node_ptr_generation(root_eb, i));
+				       btrfs_header_owner(root_eb),
+				       btrfs_node_ptr_generation(root_eb, i),
+				       root_eb_level, NULL);
 		if (!extent_buffer_uptodate(next)) {
 			fprintf(stderr, "failed to read %llu in tree %llu\n",
 				btrfs_node_blockptr(root_eb, i),
