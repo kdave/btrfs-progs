@@ -129,14 +129,32 @@ static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
  * The slots array records the index of the item or block pointer
  * used while walking the tree.
  */
-enum { READA_NONE = 0, READA_BACK, READA_FORWARD };
+enum {
+	READA_NONE,
+	READA_BACK,
+	READA_FORWARD,
+	/*
+	 * Similar to READA_FORWARD but unlike it:
+	 *
+	 * 1) It will trigger readahead even for leaves that are not close to
+	 *    each other on disk;
+	 * 2) It also triggers readahead for nodes;
+	 * 3) During a search, even when a node or leaf is already in memory, it
+	 *    will still trigger readahead for other nodes and leaves that follow
+	 *    it.
+	 *
+	 * This is meant to be used only when we know we are iterating over the
+	 * entire tree or a very large part of it.
+	 */
+	READA_FORWARD_ALWAYS,
+};
+
 struct btrfs_path {
 	struct extent_buffer *nodes[BTRFS_MAX_LEVEL];
 	int slots[BTRFS_MAX_LEVEL];
-#if 0
 	/* The kernel locking scheme is not done in userspace. */
 	int locks[BTRFS_MAX_LEVEL];
-#endif
+
 	signed char reada;
 	/* keep some upper locks as we walk down */
 	u8 lowest_level;
@@ -145,8 +163,21 @@ struct btrfs_path {
 	 * set by btrfs_split_item, tells search_slot to keep all locks
 	 * and to force calls to keep space in the nodes
 	 */
-	u8 search_for_split;
-	u8 skip_check_block;
+	unsigned int search_for_split:1;
+	unsigned int keep_locks:1;
+	unsigned int skip_locking:1;
+	unsigned int search_commit_root:1;
+	unsigned int need_commit_sem:1;
+	unsigned int skip_release_on_error:1;
+	/*
+	 * Indicate that new item (btrfs_search_slot) is extending already
+	 * existing item and ins_len contains only the data size and not item
+	 * header (ie. sizeof(struct btrfs_item) is not included).
+	 */
+	unsigned int search_for_extension:1;
+	/* Stop search if any locks need to be taken (for read) */
+	unsigned int nowait:1;
+	unsigned int skip_check_block:1;
 };
 
 #define BTRFS_MAX_EXTENT_ITEM_SIZE(r) \
