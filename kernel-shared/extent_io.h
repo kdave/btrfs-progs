@@ -94,7 +94,7 @@ static inline int extent_buffer_uptodate(struct extent_buffer *eb)
 }
 
 struct extent_buffer *find_extent_buffer(struct btrfs_fs_info *fs_info,
-					 u64 bytenr, u32 blocksize);
+					 u64 bytenr);
 struct extent_buffer *find_first_extent_buffer(struct btrfs_fs_info *fs_info,
 					       u64 start);
 struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,

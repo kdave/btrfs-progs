@@ -210,14 +210,15 @@ void free_extent_buffer_stale(struct extent_buffer *eb)
 }
 
 struct extent_buffer *find_extent_buffer(struct btrfs_fs_info *fs_info,
-					 u64 bytenr, u32 blocksize)
+					 u64 bytenr)
 {
 	struct extent_buffer *eb = NULL;
 	struct cache_extent *cache;
 
-	cache = lookup_cache_extent(&fs_info->extent_cache, bytenr, blocksize);
+	cache = lookup_cache_extent(&fs_info->extent_cache, bytenr,
+				    fs_info->nodesize);
 	if (cache && cache->start == bytenr &&
-	    cache->size == blocksize) {
+	    cache->size == fs_info->nodesize) {
 		eb = container_of(cache, struct extent_buffer, cache_node);
 		list_move_tail(&eb->lru, &fs_info->lru);
 		eb->refs++;

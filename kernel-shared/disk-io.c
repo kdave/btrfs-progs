@@ -228,7 +228,7 @@ static int csum_tree_block(struct btrfs_fs_info *fs_info,
 struct extent_buffer *btrfs_find_tree_block(struct btrfs_fs_info *fs_info,
 					    u64 bytenr, u32 blocksize)
 {
-	return find_extent_buffer(fs_info, bytenr, blocksize);
+	return find_extent_buffer(fs_info, bytenr);
 }
 
 struct extent_buffer* btrfs_find_create_tree_block(
