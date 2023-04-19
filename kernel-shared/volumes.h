@@ -24,6 +24,7 @@
 #include "kernel-lib/sizes.h"
 
 #define BTRFS_STRIPE_LEN	SZ_64K
+#define BTRFS_STRIPE_LEN_SHIFT	(16)
 
 struct btrfs_device {
 	struct list_head dev_list;
