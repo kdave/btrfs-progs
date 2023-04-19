@@ -468,8 +468,9 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 		errno = -ret;
 		warning("unable to check mount status of: %m");
 	} else if (ret) {
-		warning("%s already mounted, results may be inaccurate",
-				argv[optind]);
+		warning("%s already mounted, tree-stats accesses the block devices directly, this may\n"
+			"\tresult in inaccurate numbers, various errors or it may crash if the filesystem\n"
+			"\tchanges unexpectedly, restart if needed or remount read-only", argv[optind]);
 	}
 
 	root = open_ctree(argv[optind], 0, 0);
