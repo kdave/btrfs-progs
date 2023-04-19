@@ -113,32 +113,32 @@ convert_test_perm() {
 
 	_assert_path "$1"
 	PERMTMP="$1"
-	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
+	FILES_LIST=$($SUDO_HELPER mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
 
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
 		count=1 status=noxfer >/dev/null 2>&1
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -fprint "$FILES_LIST"
 	# Fix directory entries order
-	sort "$FILES_LIST" -o "$FILES_LIST"
-	for file in `cat "$FILES_LIST"` ;do
+	$SUDO_HELPER sort "$FILES_LIST" -o "$FILES_LIST"
+	for file in `$SUDO_HELPER cat "$FILES_LIST"` ;do
 		run_check_stdout $SUDO_HELPER getfacl --absolute-names "$file" >> "$PERMTMP"
 	done
-	rm -- "$FILES_LIST"
+	$SUDO_HELPER rm -- "$FILES_LIST"
 }
 # list acls of files on $TEST_MNT
 # $1: path where the acls will be stored
 convert_test_acl() {
 	local ACLSTMP
 	ACLTMP="$1"
-	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
+	FILES_LIST=$($SUDO_HELPER mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
 
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT/acls" -type f -fprint "$FILES_LIST"
 	# Fix directory entries order
-	sort "$FILES_LIST" -o "$FILES_LIST"
-	for file in `cat "$FILES_LIST"`;do
+	$SUDO_HELPER sort "$FILES_LIST" -o "$FILES_LIST"
+	for file in `$SUDO_HELPER cat "$FILES_LIST"`;do
 		run_check_stdout $SUDO_HELPER getfattr --absolute-names -d "$file" >> "$ACLTMP"
 	done
-	rm -- "$FILES_LIST"
+	$SUDO_HELPER rm -- "$FILES_LIST"
 }
 
 # do conversion with given features and nodesize, fsck afterwards
