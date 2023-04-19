@@ -617,6 +617,12 @@ void copy_extent_buffer(const struct extent_buffer *dst,
 	memcpy((void *)dst->data + dst_offset, src->data + src_offset, len);
 }
 
+void copy_extent_buffer_full(const struct extent_buffer *dst,
+			     const struct extent_buffer *src)
+{
+	copy_extent_buffer(dst, src, 0, 0, src->len);
+}
+
 void memmove_extent_buffer(const struct extent_buffer *dst, unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len)
 {
@@ -633,4 +639,9 @@ int extent_buffer_test_bit(const struct extent_buffer *eb, unsigned long start,
 			   unsigned long nr)
 {
 	return le_test_bit(nr, (u8 *)eb->data + start);
+}
+
+void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *srcv)
+{
+	write_extent_buffer(eb, srcv, btrfs_header_fsid(), BTRFS_FSID_SIZE);
 }
