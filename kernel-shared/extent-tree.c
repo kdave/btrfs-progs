@@ -1374,8 +1374,8 @@ out:
 	return ret;
 }
 
-int btrfs_set_block_flags(struct btrfs_trans_handle *trans, u64 bytenr,
-			  int level, u64 flags)
+int btrfs_set_disk_extent_flags(struct btrfs_trans_handle *trans, u64 bytenr,
+				int level, u64 flags)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, bytenr);
