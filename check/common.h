@@ -147,7 +147,7 @@ u64 calc_stripe_length(u64 type, u64 length, int num_stripes);
 static inline void block_group_tree_init(struct block_group_tree *tree)
 {
 	cache_tree_init(&tree->tree);
-	extent_io_tree_init(&tree->pending_extents);
+	extent_io_tree_init(NULL, &tree->pending_extents, 0);
 	INIT_LIST_HEAD(&tree->block_groups);
 }
 

@@ -28,6 +28,7 @@
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/accessors.h"
+#include "kernel-shared/extent-io-tree.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;

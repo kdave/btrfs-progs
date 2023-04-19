@@ -1099,7 +1099,7 @@ static int block_group_free_all_extent(struct btrfs_trans_handle *trans,
 
 	if (list_empty(&cache->dirty_list))
 		list_add_tail(&cache->dirty_list, &trans->dirty_bgs);
-	set_extent_dirty(&info->free_space_cache, start, end);
+	set_extent_dirty(&info->free_space_cache, start, end, GFP_NOFS);
 
 	cache->used = 0;
 

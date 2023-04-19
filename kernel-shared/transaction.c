@@ -142,7 +142,7 @@ int __commit_transaction(struct btrfs_trans_handle *trans,
 	while(1) {
 again:
 		ret = find_first_extent_bit(tree, 0, &start, &end,
-					    EXTENT_DIRTY);
+					    EXTENT_DIRTY, NULL);
 		if (ret)
 			break;
 
@@ -174,7 +174,8 @@ cleanup:
 	while (1) {
 		int find_ret;
 
-		find_ret = find_first_extent_bit(tree, 0, &start, &end, EXTENT_DIRTY);
+		find_ret = find_first_extent_bit(tree, 0, &start, &end,
+						 EXTENT_DIRTY, NULL);
 
 		if (find_ret)
 			break;

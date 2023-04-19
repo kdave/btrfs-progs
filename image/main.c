@@ -475,7 +475,7 @@ static void metadump_destroy(struct metadump_struct *md, int num_threads)
 		free(name->sub);
 		free(name);
 	}
-	extent_io_tree_cleanup(&md->seen);
+	extent_io_tree_release(&md->seen);
 }
 
 static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
@@ -491,7 +491,7 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	memset(md, 0, sizeof(*md));
 	INIT_LIST_HEAD(&md->list);
 	INIT_LIST_HEAD(&md->ordered);
-	extent_io_tree_init(&md->seen);
+	extent_io_tree_init(NULL, &md->seen, 0);
 	md->root = root;
 	md->out = out;
 	md->pending_start = (u64)-1;
@@ -784,11 +784,12 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 
 	bytenr = btrfs_header_bytenr(eb);
 	if (test_range_bit(&metadump->seen, bytenr,
-			   bytenr + fs_info->nodesize - 1, EXTENT_DIRTY, 1))
+			   bytenr + fs_info->nodesize - 1, EXTENT_DIRTY, 1,
+			   NULL))
 		return 0;
 
 	set_extent_dirty(&metadump->seen, bytenr,
-			 bytenr + fs_info->nodesize - 1);
+			 bytenr + fs_info->nodesize - 1, GFP_NOFS);
 
 	ret = add_extent(btrfs_header_bytenr(eb), fs_info->nodesize,
 			 metadump, 0);

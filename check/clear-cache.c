@@ -311,7 +311,7 @@ static int verify_space_cache(struct btrfs_root *root,
 
 	while (start < bg_end) {
 		ret = find_first_extent_bit(used, cache->start, &start, &end,
-					    EXTENT_DIRTY);
+					    EXTENT_DIRTY, NULL);
 		if (ret || start >= bg_end) {
 			ret = 0;
 			break;
@@ -323,7 +323,7 @@ static int verify_space_cache(struct btrfs_root *root,
 				return ret;
 		}
 		end = min(end, bg_end - 1);
-		clear_extent_dirty(used, start, end);
+		clear_extent_dirty(used, start, end, NULL);
 		start = end + 1;
 		last_end = start;
 	}
@@ -351,7 +351,7 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 	int ret;
 	int error = 0;
 
-	extent_io_tree_init(&used);
+	extent_io_tree_init(fs_info, &used, 0);
 	ret = btrfs_mark_used_blocks(fs_info, &used);
 	if (ret)
 		return ret;
@@ -407,7 +407,7 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 			error++;
 		}
 	}
-	extent_io_tree_cleanup(&used);
+	extent_io_tree_release(&used);
 	return error ? -EINVAL : 0;
 }
 

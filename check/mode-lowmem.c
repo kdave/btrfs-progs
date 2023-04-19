@@ -260,12 +260,12 @@ static int modify_block_group_cache(struct btrfs_block_group *block_group, int c
 
 	if (cache && !block_group->cached) {
 		block_group->cached = 1;
-		clear_extent_dirty(free_space_cache, start, end - 1);
+		clear_extent_dirty(free_space_cache, start, end - 1, NULL);
 	}
 
 	if (!cache && block_group->cached) {
 		block_group->cached = 0;
-		clear_extent_dirty(free_space_cache, start, end - 1);
+		clear_extent_dirty(free_space_cache, start, end - 1, NULL);
 	}
 	return 0;
 }

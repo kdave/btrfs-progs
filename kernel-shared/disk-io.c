@@ -866,10 +866,10 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 		goto free_all;
 
 	extent_buffer_init_cache(fs_info);
-	extent_io_tree_init(&fs_info->dirty_buffers);
-	extent_io_tree_init(&fs_info->free_space_cache);
-	extent_io_tree_init(&fs_info->pinned_extents);
-	extent_io_tree_init(&fs_info->extent_ins);
+	extent_io_tree_init(fs_info, &fs_info->dirty_buffers, 0);
+	extent_io_tree_init(fs_info, &fs_info->free_space_cache, 0);
+	extent_io_tree_init(fs_info, &fs_info->pinned_extents, 0);
+	extent_io_tree_init(fs_info, &fs_info->extent_ins, 0);
 
 	fs_info->block_group_cache_tree = RB_ROOT;
 	fs_info->excluded_extents = NULL;
@@ -1350,11 +1350,11 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 		free_extent_buffer(eb);
 	}
 	free_mapping_cache_tree(&fs_info->mapping_tree.cache_tree);
-	extent_io_tree_cleanup(&fs_info->dirty_buffers);
+	extent_io_tree_release(&fs_info->dirty_buffers);
 	extent_buffer_free_cache(fs_info);
-	extent_io_tree_cleanup(&fs_info->free_space_cache);
-	extent_io_tree_cleanup(&fs_info->pinned_extents);
-	extent_io_tree_cleanup(&fs_info->extent_ins);
+	extent_io_tree_release(&fs_info->free_space_cache);
+	extent_io_tree_release(&fs_info->pinned_extents);
+	extent_io_tree_release(&fs_info->extent_ins);
 }
 
 int btrfs_scan_fs_devices(int fd, const char *path,

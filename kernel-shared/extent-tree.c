@@ -74,7 +74,7 @@ static int remove_sb_from_cache(struct btrfs_root *root,
 		BUG_ON(ret);
 		while (nr--) {
 			clear_extent_dirty(free_space_cache, logical[nr],
-				logical[nr] + stripe_len - 1);
+				logical[nr] + stripe_len - 1, NULL);
 		}
 		kfree(logical);
 	}
@@ -142,7 +142,7 @@ static int cache_block_group(struct btrfs_root *root,
 			if (key.objectid > last) {
 				hole_size = key.objectid - last;
 				set_extent_dirty(free_space_cache, last,
-						 last + hole_size - 1);
+						 last + hole_size - 1, GFP_NOFS);
 			}
 			if (key.type == BTRFS_METADATA_ITEM_KEY)
 				last = key.objectid + root->fs_info->nodesize;
@@ -155,7 +155,8 @@ next:
 
 	if (block_group->start + block_group->length > last) {
 		hole_size = block_group->start + block_group->length - last;
-		set_extent_dirty(free_space_cache, last, last + hole_size - 1);
+		set_extent_dirty(free_space_cache, last, last + hole_size - 1,
+				 GFP_NOFS);
 	}
 	remove_sb_from_cache(root, block_group);
 	block_group->cached = 1;
@@ -295,7 +296,8 @@ again:
 
 	while(1) {
 		ret = find_first_extent_bit(&root->fs_info->free_space_cache,
-					    last, &start, &end, EXTENT_DIRTY);
+					    last, &start, &end, EXTENT_DIRTY,
+					    NULL);
 		if (ret) {
 			goto new_group;
 		}
@@ -1803,7 +1805,8 @@ static int update_block_group(struct btrfs_trans_handle *trans, u64 bytenr,
 			cache->space_info->bytes_used -= num_bytes;
 			if (mark_free) {
 				set_extent_dirty(&info->free_space_cache,
-						bytenr, bytenr + num_bytes - 1);
+						bytenr, bytenr + num_bytes - 1,
+						GFP_NOFS);
 			}
 		}
 		cache->used = old_val;
@@ -1821,10 +1824,10 @@ static int update_pinned_extents(struct btrfs_fs_info *fs_info,
 
 	if (pin) {
 		set_extent_dirty(&fs_info->pinned_extents,
-				bytenr, bytenr + num - 1);
+				bytenr, bytenr + num - 1, GFP_NOFS);
 	} else {
 		clear_extent_dirty(&fs_info->pinned_extents,
-				bytenr, bytenr + num - 1);
+				bytenr, bytenr + num - 1, NULL);
 	}
 	while (num > 0) {
 		cache = btrfs_lookup_block_group(fs_info, bytenr);
@@ -1861,13 +1864,13 @@ void btrfs_finish_extent_commit(struct btrfs_trans_handle *trans)
 
 	while(1) {
 		ret = find_first_extent_bit(pinned_extents, 0, &start, &end,
-					    EXTENT_DIRTY);
+					    EXTENT_DIRTY, NULL);
 		if (ret)
 			break;
 		update_pinned_extents(trans->fs_info, start, end + 1 - start,
 				      0);
-		clear_extent_dirty(pinned_extents, start, end);
-		set_extent_dirty(free_space_cache, start, end);
+		clear_extent_dirty(pinned_extents, start, end, NULL);
+		set_extent_dirty(free_space_cache, start, end, GFP_NOFS);
 	}
 }
 
@@ -2254,20 +2257,23 @@ check_failed:
 	}
 
 	if (test_range_bit(&info->extent_ins, ins->objectid,
-			   ins->objectid + num_bytes -1, EXTENT_LOCKED, 0)) {
+			   ins->objectid + num_bytes -1, EXTENT_LOCKED, 0,
+			   NULL)) {
 		search_start = ins->objectid + num_bytes;
 		goto new_group;
 	}
 
 	if (test_range_bit(&info->pinned_extents, ins->objectid,
-			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0)) {
+			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0,
+			   NULL)) {
 		search_start = ins->objectid + num_bytes;
 		goto new_group;
 	}
 
 	if (info->excluded_extents &&
 	    test_range_bit(info->excluded_extents, ins->objectid,
-			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0)) {
+			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0,
+			   NULL)) {
 		search_start = ins->objectid + num_bytes;
 		goto new_group;
 	}
@@ -2377,7 +2383,8 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		return ret;
 	clear_extent_dirty(&info->free_space_cache,
-			   ins->objectid, ins->objectid + ins->offset - 1);
+			   ins->objectid, ins->objectid + ins->offset - 1,
+			   NULL);
 	return ret;
 }
 
@@ -2418,7 +2425,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	if (ref->root == BTRFS_EXTENT_TREE_OBJECTID) {
 		ret = find_first_extent_bit(&trans->fs_info->extent_ins,
 					    node->bytenr, &start, &end,
-					    EXTENT_LOCKED);
+					    EXTENT_LOCKED, NULL);
 		ASSERT(!ret);
 		ASSERT(start == node->bytenr);
 		ASSERT(end == node->bytenr + node->num_bytes - 1);
@@ -2600,10 +2607,10 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 
 	while(1) {
 		ret = find_first_extent_bit(&info->free_space_cache, 0,
-					    &start, &end, EXTENT_DIRTY);
+					    &start, &end, EXTENT_DIRTY, NULL);
 		if (ret)
 			break;
-		clear_extent_dirty(&info->free_space_cache, start, end);
+		clear_extent_dirty(&info->free_space_cache, start, end, NULL);
 	}
 
 	while (!list_empty(&info->space_info)) {
@@ -3838,7 +3845,8 @@ u64 add_new_free_space(struct btrfs_block_group *block_group,
 	while (start < end) {
 		ret = find_first_extent_bit(&info->pinned_extents, start,
 					    &extent_start, &extent_end,
-					    EXTENT_DIRTY | EXTENT_UPTODATE);
+					    EXTENT_DIRTY | EXTENT_UPTODATE,
+					    NULL);
 		if (ret)
 			break;
 

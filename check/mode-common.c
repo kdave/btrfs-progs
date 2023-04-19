@@ -596,10 +596,11 @@ void reset_cached_block_groups()
 
 	while (1) {
 		ret = find_first_extent_bit(&gfs_info->free_space_cache, 0,
-					    &start, &end, EXTENT_DIRTY);
+					    &start, &end, EXTENT_DIRTY, NULL);
 		if (ret)
 			break;
-		clear_extent_dirty(&gfs_info->free_space_cache, start, end);
+		clear_extent_dirty(&gfs_info->free_space_cache, start, end,
+				   NULL);
 	}
 
 	start = 0;
@@ -626,7 +627,7 @@ int exclude_metadata_blocks(void)
 	excluded_extents = malloc(sizeof(*excluded_extents));
 	if (!excluded_extents)
 		return -ENOMEM;
-	extent_io_tree_init(excluded_extents);
+	extent_io_tree_init(gfs_info, excluded_extents, 0);
 	gfs_info->excluded_extents = excluded_extents;
 
 	return btrfs_mark_used_tree_blocks(gfs_info, excluded_extents);
@@ -635,7 +636,7 @@ int exclude_metadata_blocks(void)
 void cleanup_excluded_extents(void)
 {
 	if (gfs_info->excluded_extents) {
-		extent_io_tree_cleanup(gfs_info->excluded_extents);
+		extent_io_tree_release(gfs_info->excluded_extents);
 		free(gfs_info->excluded_extents);
 	}
 	gfs_info->excluded_extents = NULL;

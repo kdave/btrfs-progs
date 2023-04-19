@@ -173,6 +173,7 @@ objects = \
 	kernel-shared/delayed-ref.o	\
 	kernel-shared/dir-item.o	\
 	kernel-shared/disk-io.o	\
+	kernel-shared/extent-io-tree.o	\
 	kernel-shared/extent-tree.o	\
 	kernel-shared/extent_io.o	\
 	kernel-shared/file-item.o	\

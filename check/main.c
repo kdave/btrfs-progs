@@ -5200,7 +5200,7 @@ static void free_block_group_record(struct cache_extent *cache)
 
 void free_block_group_tree(struct block_group_tree *tree)
 {
-	extent_io_tree_cleanup(&tree->pending_extents);
+	extent_io_tree_release(&tree->pending_extents);
 	cache_tree_free_extents(&tree->tree, free_block_group_record);
 }
 
@@ -5213,7 +5213,7 @@ static void update_block_group_used(struct block_group_tree *tree,
 	bg_item = lookup_cache_extent(&tree->tree, bytenr, num_bytes);
 	if (!bg_item) {
 		set_extent_dirty(&tree->pending_extents, bytenr,
-				 bytenr + num_bytes - 1);
+				 bytenr + num_bytes - 1, GFP_NOFS);
 		return;
 	}
 	bg_rec = container_of(bg_item, struct block_group_record, cache);
@@ -5452,7 +5452,8 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 	}
 
 	while (!find_first_extent_bit(&block_group_cache->pending_extents,
-				      rec->objectid, &start, &end, EXTENT_DIRTY)) {
+				      rec->objectid, &start, &end, EXTENT_DIRTY,
+				      NULL)) {
 		u64 len;
 
 		if (start >= rec->objectid + rec->offset)
@@ -5461,7 +5462,7 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 		len = min(end - start + 1, rec->objectid + rec->offset - start);
 		rec->actual_used += len;
 		clear_extent_dirty(&block_group_cache->pending_extents, start,
-				   start + len - 1);
+				   start + len - 1, NULL);
 	}
 
 	return ret;
@@ -8057,7 +8058,8 @@ static int check_extent_refs(struct btrfs_root *root,
 			rec = container_of(cache, struct extent_record, cache);
 			set_extent_dirty(gfs_info->excluded_extents,
 					 rec->start,
-					 rec->start + rec->max_size - 1);
+					 rec->start + rec->max_size - 1,
+					 GFP_NOFS);
 			cache = next_cache_extent(cache);
 		}
 
@@ -8066,7 +8068,8 @@ static int check_extent_refs(struct btrfs_root *root,
 		while (cache) {
 			set_extent_dirty(gfs_info->excluded_extents,
 					 cache->start,
-					 cache->start + cache->size - 1);
+					 cache->start + cache->size - 1,
+					 GFP_NOFS);
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks();
@@ -8221,7 +8224,8 @@ next:
 		if (!init_extent_tree && opt_check_repair && (!cur_err || fix))
 			clear_extent_dirty(gfs_info->excluded_extents,
 					   rec->start,
-					   rec->start + rec->max_size - 1);
+					   rec->start + rec->max_size - 1,
+					   NULL);
 		free(rec);
 	}
 repair_abort:
@@ -8927,7 +8931,7 @@ static int check_chunks_and_extents(void)
 	cache_tree_init(&nodes);
 	cache_tree_init(&reada);
 	cache_tree_init(&corrupt_blocks);
-	extent_io_tree_init(&excluded_extents);
+	extent_io_tree_init(gfs_info, &excluded_extents, 0);
 	INIT_LIST_HEAD(&dropping_trees);
 	INIT_LIST_HEAD(&normal_trees);
 
@@ -9015,7 +9019,7 @@ again:
 out:
 	if (opt_check_repair) {
 		free_corrupt_blocks_tree(gfs_info->corrupt_blocks);
-		extent_io_tree_cleanup(&excluded_extents);
+		extent_io_tree_release(&excluded_extents);
 		gfs_info->fsck_extent_cache = NULL;
 		gfs_info->free_extent_hook = NULL;
 		gfs_info->corrupt_blocks = NULL;
@@ -9046,7 +9050,7 @@ loop:
 	free_extent_record_cache(&extent_cache);
 	free_root_item_list(&normal_trees);
 	free_root_item_list(&dropping_trees);
-	extent_io_tree_cleanup(&excluded_extents);
+	extent_io_tree_release(&excluded_extents);
 	goto again;
 }
 
@@ -9215,7 +9219,8 @@ static int reset_block_groups(void)
 				      btrfs_chunk_type(leaf, chunk), key.offset,
 				      btrfs_chunk_length(leaf, chunk));
 		set_extent_dirty(&gfs_info->free_space_cache, key.offset,
-				 key.offset + btrfs_chunk_length(leaf, chunk));
+				 key.offset + btrfs_chunk_length(leaf, chunk),
+				 GFP_NOFS);
 		path.slots[0]++;
 	}
 	start = 0;

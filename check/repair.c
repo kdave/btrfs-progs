@@ -79,13 +79,13 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 	 * This can not only avoid forever loop with broken filesystem
 	 * but also give us some speedups.
 	 */
-	if (test_range_bit(tree, eb->start, end - 1, EXTENT_DIRTY, 0))
+	if (test_range_bit(tree, eb->start, end - 1, EXTENT_DIRTY, 0, NULL))
 		return 0;
 
 	if (pin)
 		btrfs_pin_extent(fs_info, eb->start, eb->len);
 	else
-		set_extent_dirty(tree, eb->start, end - 1);
+		set_extent_dirty(tree, eb->start, end - 1, GFP_NOFS);
 
 	nritems = btrfs_header_nritems(eb);
 	for (i = 0; i < nritems; i++) {
@@ -129,7 +129,7 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 					btrfs_pin_extent(fs_info, bytenr,
 							 fs_info->nodesize);
 				else
-					set_extent_dirty(tree, bytenr, end);
+					set_extent_dirty(tree, bytenr, end, GFP_NOFS);
 				continue;
 			}
 
@@ -211,7 +211,7 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 				ret = -EINVAL;
 				break;
 			}
-			set_extent_dirty(io_tree, start, end);
+			set_extent_dirty(io_tree, start, end, GFP_NOFS);
 		}
 
 		path.slots[0]++;
@@ -260,7 +260,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 	if (ret)
 		return ret;
 
-	extent_io_tree_init(&used);
+	extent_io_tree_init(fs_info, &used, 0);
 
 	ret = btrfs_mark_used_blocks(fs_info, &used);
 	if (ret)
@@ -282,7 +282,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 	start = 0;
 	while (1) {
 		ret = find_first_extent_bit(&used, 0, &start, &end,
-					    EXTENT_DIRTY);
+					    EXTENT_DIRTY, NULL);
 		if (ret)
 			break;
 
@@ -291,12 +291,12 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 					       1, 0);
 		if (ret)
 			goto out;
-		clear_extent_dirty(&used, start, end);
+		clear_extent_dirty(&used, start, end, NULL);
 	}
 	btrfs_set_super_bytes_used(fs_info->super_copy, bytes_used);
 	ret = 0;
 out:
-	extent_io_tree_cleanup(&used);
+	extent_io_tree_release(&used);
 	return ret;
 }
 
