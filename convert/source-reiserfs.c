@@ -31,6 +31,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/file-item.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
 #include "common/messages.h"

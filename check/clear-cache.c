@@ -21,6 +21,7 @@
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/file-item.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "check/common.h"
@@ -465,6 +466,7 @@ int truncate_free_ino_items(struct btrfs_root *root)
 	while (1) {
 		struct extent_buffer *leaf;
 		struct btrfs_file_extent_item *fi;
+		struct btrfs_root *csum_root;
 		struct btrfs_key found_key;
 		u8 found_type;
 
@@ -523,7 +525,10 @@ int truncate_free_ino_items(struct btrfs_root *root)
 				goto out;
 			}
 
-			ret = btrfs_del_csums(trans, extent_disk_bytenr,
+			csum_root = btrfs_csum_root(trans->fs_info,
+						    extent_disk_bytenr);
+			ret = btrfs_del_csums(trans, csum_root,
+					      extent_disk_bytenr,
 					      extent_num_bytes);
 			if (ret < 0) {
 				btrfs_abort_transaction(trans, ret);

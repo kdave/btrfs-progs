@@ -431,14 +431,6 @@ static inline u32 BTRFS_NODEPTRS_PER_EXTENT_BUFFER(const struct extent_buffer *e
 	return BTRFS_LEAF_DATA_SIZE(eb->fs_info) / sizeof(struct btrfs_key_ptr);
 }
 
-#define BTRFS_FILE_EXTENT_INLINE_DATA_START		\
-	(offsetof(struct btrfs_file_extent_item, disk_bytenr))
-static inline u32 BTRFS_MAX_INLINE_DATA_SIZE(const struct btrfs_fs_info *info)
-{
-	return BTRFS_MAX_ITEM_SIZE(info) -
-		BTRFS_FILE_EXTENT_INLINE_DATA_START;
-}
-
 static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
 {
 	return BTRFS_MAX_ITEM_SIZE(info) - sizeof(struct btrfs_dir_item);
@@ -719,19 +711,6 @@ static inline u8 *btrfs_dev_extent_chunk_tree_uuid(struct btrfs_dev_extent *dev)
        return (u8 *)((unsigned long)dev + ptr);
 }
 
-static inline unsigned long btrfs_file_extent_inline_start(struct
-						   btrfs_file_extent_item *e)
-{
-	unsigned long offset = (unsigned long)e;
-	offset += offsetof(struct btrfs_file_extent_item, disk_bytenr);
-	return offset;
-}
-
-static inline u32 btrfs_file_extent_calc_inline_size(u32 datasize)
-{
-	return offsetof(struct btrfs_file_extent_item, disk_bytenr) + datasize;
-}
-
 static inline u64 btrfs_dev_stats_value(const struct extent_buffer *eb,
 					const struct btrfs_dev_stats_item *ptr,
 					int index)
@@ -743,17 +722,6 @@ static inline u64 btrfs_dev_stats_value(const struct extent_buffer *eb,
 			   ((unsigned long)ptr) + (index * sizeof(u64)),
 			   sizeof(val));
 	return val;
-}
-
-/*
- * this returns the number of bytes used by the item on disk, minus the
- * size of any extent headers.  If a file is compressed on disk, this is
- * the compressed size
- */
-static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
-						    int nr)
-{
-	return btrfs_item_size(eb, nr) - BTRFS_FILE_EXTENT_INLINE_DATA_START;
 }
 
 /* struct btrfs_ioctl_search_header */
@@ -1090,19 +1058,6 @@ struct btrfs_inode_ref *btrfs_lookup_inode_ref(struct btrfs_trans_handle *trans,
 int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, const char *name, int name_len,
 			u64 ino, u64 parent_ino, u64 *index);
-
-/* file-item.c */
-int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len);
-int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root,
-			     u64 objectid, u64 pos, u64 offset,
-			     u64 disk_num_bytes,
-			     u64 num_bytes);
-int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root, u64 objectid,
-				u64 offset, const char *buffer, size_t size);
-int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 alloc_end,
-			  u64 bytenr, char *data, size_t len);
 
 /* uuid-tree.c, interface for mounted mounted filesystem */
 int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);

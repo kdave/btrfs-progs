@@ -27,6 +27,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/accessors.h"
+#include "kernel-shared/file-item.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,

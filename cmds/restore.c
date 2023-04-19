@@ -44,6 +44,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/compression.h"
+#include "kernel-shared/file-item.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"

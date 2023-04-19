@@ -27,6 +27,7 @@
 #include <string.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/file-item.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
 #include "convert/common.h"

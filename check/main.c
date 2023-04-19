@@ -42,6 +42,7 @@
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
+#include "kernel-shared/file-item.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"

@@ -27,11 +27,12 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
-#include "crypto/crc32c.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/zoned.h"
+#include "kernel-shared/file-item.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 
 #define PENDING_EXTENT_INSERT 0
@@ -2115,7 +2116,11 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		btrfs_release_path(path);
 
 		if (is_data) {
-			ret = btrfs_del_csums(trans, bytenr, num_bytes);
+			struct btrfs_root *csum_root;
+
+			csum_root = btrfs_csum_root(trans->fs_info, bytenr);
+			ret = btrfs_del_csums(trans, csum_root, bytenr,
+					      num_bytes);
 			BUG_ON(ret);
 		}
 

@@ -35,6 +35,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/file-item.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/path-utils.h"

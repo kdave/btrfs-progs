@@ -30,6 +30,7 @@
 #include "kernel-shared/backref.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/file-item.h"
 #include "common/messages.h"
 #include "common/internal.h"
 #include "common/utils.h"

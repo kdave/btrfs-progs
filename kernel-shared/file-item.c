@@ -23,6 +23,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
+#include "kernel-shared/file-item.h"
 #include "crypto/crc32c.h"
 #include "common/internal.h"
 
@@ -400,7 +401,8 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
  * deletes the csum items from the csum tree for a given
  * range of bytes.
  */
-int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
+int btrfs_del_csums(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		    u64 bytenr, u64 len)
 {
 	struct btrfs_path *path;
 	struct btrfs_key key;
@@ -410,7 +412,6 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
 	int ret;
 	u16 csum_size = trans->fs_info->csum_size;
 	int blocksize = trans->fs_info->sectorsize;
-	struct btrfs_root *csum_root = btrfs_csum_root(trans->fs_info, bytenr);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -421,7 +422,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
 		key.offset = end_byte - 1;
 		key.type = BTRFS_EXTENT_CSUM_KEY;
 
-		ret = btrfs_search_slot(trans, csum_root, &key, path, -1, 1);
+		ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 		if (ret > 0) {
 			if (path->slots[0] == 0)
 				goto out;
@@ -448,7 +449,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
 
 		/* delete the entire item, it is inside our range */
 		if (key.offset >= bytenr && csum_end <= end_byte) {
-			ret = btrfs_del_item(trans, csum_root, path);
+			ret = btrfs_del_item(trans, root, path);
 			BUG_ON(ret);
 		} else if (key.offset < bytenr && csum_end > end_byte) {
 			unsigned long offset;
@@ -488,13 +489,13 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
 			 * btrfs_split_item returns -EAGAIN when the
 			 * item changed size or key
 			 */
-			ret = btrfs_split_item(trans, csum_root, path, &key,
+			ret = btrfs_split_item(trans, root, path, &key,
 					       offset);
 			BUG_ON(ret && ret != -EAGAIN);
 
 			key.offset = end_byte - 1;
 		} else {
-			ret = truncate_one_csum(csum_root, path, &key, bytenr,
+			ret = truncate_one_csum(root, path, &key, bytenr,
 						len);
 			BUG_ON(ret);
 		}

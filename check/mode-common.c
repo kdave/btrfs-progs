@@ -28,6 +28,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/compression.h"
+#include "kernel-shared/file-item.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -1311,7 +1312,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 		if (type == BTRFS_FILE_EXTENT_PREALLOC) {
 			start += btrfs_file_extent_offset(node, fi);
 			len = btrfs_file_extent_num_bytes(node, fi);
-			ret = btrfs_del_csums(trans, start, len);
+			ret = btrfs_del_csums(trans, csum_root, start, len);
 			if (ret < 0)
 				goto out;
 		}
@@ -1473,7 +1474,8 @@ static int remove_csum_for_file_extent(u64 ino, u64 offset, u64 rootid, void *ct
 	btrfs_release_path(&path);
 
 	/* Now delete the csum for the preallocated or nodatasum range */
-	ret = btrfs_del_csums(trans, disk_bytenr, disk_len);
+	root = btrfs_csum_root(fs_info, disk_bytenr);
+	ret = btrfs_del_csums(trans, root, disk_bytenr, disk_len);
 out:
 	btrfs_release_path(&path);
 	return ret;

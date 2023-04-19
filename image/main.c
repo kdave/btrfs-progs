@@ -40,6 +40,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/file-item.h"
 #include "crypto/crc32c.h"
 #include "crypto/hash.h"
 #include "common/internal.h"

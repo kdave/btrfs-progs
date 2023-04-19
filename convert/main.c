@@ -99,6 +99,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/file-item.h"
 #include "crypto/hash.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"

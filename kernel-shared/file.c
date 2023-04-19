@@ -22,6 +22,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/compression.h"
+#include "kernel-shared/file-item.h"
 #include "common/utils.h"
 
 /*

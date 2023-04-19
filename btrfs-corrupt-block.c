@@ -28,6 +28,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/file-item.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/extent-cache.h"
@@ -1098,7 +1099,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 		return ret;
 	}
 
-	ret = btrfs_del_csums(trans, bytenr, bytes);
+	ret = btrfs_del_csums(trans, root, bytenr, bytes);
 	if (ret)
 		error("error deleting csums %d", ret);
 	btrfs_commit_transaction(trans, root);
