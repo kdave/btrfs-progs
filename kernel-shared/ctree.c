@@ -668,17 +668,8 @@ btrfs_check_node(struct btrfs_key *parent_key, struct extent_buffer *node)
 			goto fail;
 		}
 	}
-	return BTRFS_TREE_BLOCK_CLEAN;
+	ret = BTRFS_TREE_BLOCK_CLEAN;
 fail:
-	if (btrfs_header_owner(node) == BTRFS_EXTENT_TREE_OBJECTID) {
-		if (parent_key)
-			memcpy(&key, parent_key, sizeof(struct btrfs_key));
-		else
-			btrfs_node_key_to_cpu(node, &key, 0);
-		btrfs_add_corrupt_extent_record(fs_info, &key,
-						node->start, node->len,
-						btrfs_header_level(node));
-	}
 	return ret;
 }
 
@@ -782,17 +773,8 @@ btrfs_check_leaf(struct btrfs_key *parent_key, struct extent_buffer *leaf)
 		prev_key.offset = key.offset;
 	}
 
-	return BTRFS_TREE_BLOCK_CLEAN;
+	ret = BTRFS_TREE_BLOCK_CLEAN;
 fail:
-	if (btrfs_header_owner(leaf) == BTRFS_EXTENT_TREE_OBJECTID) {
-		if (parent_key)
-			memcpy(&key, parent_key, sizeof(struct btrfs_key));
-		else
-			btrfs_item_key_to_cpu(leaf, &key, 0);
-
-		btrfs_add_corrupt_extent_record(fs_info, &key,
-						leaf->start, leaf->len, 0);
-	}
 	return ret;
 }
 

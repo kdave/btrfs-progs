@@ -299,3 +299,31 @@ out:
 	extent_io_tree_cleanup(&used);
 	return ret;
 }
+
+enum btrfs_tree_block_status btrfs_check_block_for_repair(struct extent_buffer *eb,
+							  struct btrfs_key *first_key)
+{
+	struct btrfs_fs_info *fs_info = eb->fs_info;
+	enum btrfs_tree_block_status status;
+
+	if (btrfs_is_leaf(eb))
+		status = btrfs_check_leaf(first_key, eb);
+	else
+		status = btrfs_check_node(first_key, eb);
+
+	if (status == BTRFS_TREE_BLOCK_CLEAN)
+		return status;
+
+	if (btrfs_header_owner(eb) == BTRFS_EXTENT_TREE_OBJECTID) {
+		struct btrfs_key key;
+
+		if (first_key)
+			memcpy(&key, first_key, sizeof(struct btrfs_key));
+		else
+			btrfs_node_key_to_cpu(eb, &key, 0);
+		btrfs_add_corrupt_extent_record(fs_info, &key,
+						eb->start, eb->len,
+						btrfs_header_level(eb));
+	}
+	return status;
+}

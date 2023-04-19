@@ -2695,7 +2695,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		 * we need to bail otherwise we could end up stuck.
 		 */
 		if (path->slots[0] == 0 &&
-		    btrfs_check_leaf(NULL, path->nodes[0]))
+		    btrfs_check_block_for_repair(path->nodes[0], NULL))
 			ret = -EIO;
 
 		if (ret < 0) {
@@ -5001,7 +5001,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (*level == 0) {
 			/* skip duplicate check */
 			if (check || !check_all) {
-				ret = btrfs_check_leaf(NULL, cur);
+				ret = btrfs_check_block_for_repair(cur, NULL);
 				if (ret != BTRFS_TREE_BLOCK_CLEAN) {
 					err |= -EIO;
 					break;
@@ -5018,7 +5018,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			break;
 		}
 		if (check || !check_all) {
-			ret = btrfs_check_node(NULL, cur);
+			ret = btrfs_check_block_for_repair(cur, NULL);
 			if (ret != BTRFS_TREE_BLOCK_CLEAN) {
 				err |= -EIO;
 				break;
@@ -5065,10 +5065,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (ret < 0)
 			break;
 
-		if (btrfs_is_leaf(next))
-			status = btrfs_check_leaf(NULL, next);
-		else
-			status = btrfs_check_node(NULL, next);
+		status = btrfs_check_block_for_repair(next, NULL);
 		if (status != BTRFS_TREE_BLOCK_CLEAN) {
 			free_extent_buffer(next);
 			err |= -EIO;
