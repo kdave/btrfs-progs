@@ -614,6 +614,10 @@ do {									\
 #define smp_mb__before_atomic() do {} while (0)
 #define smp_mb() do {} while (0)
 
+struct percpu_counter {
+	int count;
+};
+
 typedef struct refcount_struct {
 	int refs;
 } refcount_t;
