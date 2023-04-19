@@ -24,10 +24,10 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
-#include "kernel-lib/rbtree.h"
 #include "libbtrfs/ctree.h"
 #include "libbtrfs/send-utils.h"
 #include "libbtrfs/ioctl.h"
+#include "kernel-lib/rbtree.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);

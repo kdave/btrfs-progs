@@ -22,14 +22,14 @@
 #include <stdbool.h>
 
 #if BTRFS_FLAT_INCLUDES
+#include "libbtrfs/kerncompat.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
-#include "libbtrfs/kerncompat.h"
 #include "libbtrfs/ioctl.h"
 #else
+#include <btrfs/kerncompat.h>
 #include <btrfs/list.h>
 #include <btrfs/rbtree.h>
-#include <btrfs/kerncompat.h>
 #include <btrfs/ioctl.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
