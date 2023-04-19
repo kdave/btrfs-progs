@@ -343,7 +343,8 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 	ret = btrfs_clear_buffer_dirty(uuid_root->node);
 	if (ret < 0)
 		goto out;
-	ret = btrfs_free_tree_block(trans, uuid_root, uuid_root->node, 0, 1);
+	ret = btrfs_free_tree_block(trans, btrfs_root_id(uuid_root),
+				    uuid_root->node, 0, 1);
 	if (ret < 0)
 		goto out;
 	free_extent_buffer(uuid_root->node);

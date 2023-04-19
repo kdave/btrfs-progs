@@ -2139,13 +2139,10 @@ fail:
 	return ret;
 }
 
-int btrfs_free_tree_block(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root,
-			  struct extent_buffer *buf,
-			  u64 parent, int last_ref)
+int btrfs_free_tree_block(struct btrfs_trans_handle *trans, u64 root_id,
+			  struct extent_buffer *buf, u64 parent, int last_ref)
 {
-	return btrfs_free_extent(trans, buf->start, buf->len, parent,
-				 root->root_key.objectid,
+	return btrfs_free_extent(trans, buf->start, buf->len, parent, root_id,
 				 btrfs_header_level(buf), 0);
 }
 

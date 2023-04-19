@@ -2301,7 +2301,7 @@ int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 	ret = btrfs_clear_buffer_dirty(root->node);
 	if (ret)
 		return ret;
-	ret = btrfs_free_tree_block(trans, root, root->node, 0, 1);
+	ret = btrfs_free_tree_block(trans, btrfs_root_id(root), root->node, 0, 1);
 	if (ret)
 		return ret;
 	if (is_global_root(root))
