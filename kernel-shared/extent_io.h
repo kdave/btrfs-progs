@@ -110,14 +110,16 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start, unsigned long len);
 void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len);
-void copy_extent_buffer(struct extent_buffer *dst, struct extent_buffer *src,
+void copy_extent_buffer(const struct extent_buffer *dst,
+			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len);
-void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
+void memmove_extent_buffer(const struct extent_buffer *dst,
+			   const unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len);
-void memset_extent_buffer(struct extent_buffer *eb, char c,
+void memset_extent_buffer(const struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len);
-int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
+int extent_buffer_test_bit(const struct extent_buffer *eb, unsigned long start,
 			   unsigned long nr);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);

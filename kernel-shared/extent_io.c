@@ -609,26 +609,27 @@ void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 	memcpy((void *)eb->data + start, src, len);
 }
 
-void copy_extent_buffer(struct extent_buffer *dst, struct extent_buffer *src,
+void copy_extent_buffer(const struct extent_buffer *dst,
+			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len)
 {
-	memcpy(dst->data + dst_offset, src->data + src_offset, len);
+	memcpy((void *)dst->data + dst_offset, src->data + src_offset, len);
 }
 
-void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
+void memmove_extent_buffer(const struct extent_buffer *dst, unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len)
 {
-	memmove(dst->data + dst_offset, dst->data + src_offset, len);
+	memmove((void *)dst->data + dst_offset, dst->data + src_offset, len);
 }
 
-void memset_extent_buffer(struct extent_buffer *eb, char c,
+void memset_extent_buffer(const struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len)
 {
-	memset(eb->data + start, c, len);
+	memset((void *)eb->data + start, c, len);
 }
 
-int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
+int extent_buffer_test_bit(const struct extent_buffer *eb, unsigned long start,
 			   unsigned long nr)
 {
 	return le_test_bit(nr, (u8 *)eb->data + start);
