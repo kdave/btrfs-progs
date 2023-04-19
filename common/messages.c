@@ -19,9 +19,6 @@
 #include "common/messages.h"
 #include "common/utils.h"
 
-#define PREFIX_ERROR		"ERROR: "
-#define PREFIX_WARNING		"WARNING: "
-
 static const char *common_error_string[] = {
 	[ERROR_MSG_MEMORY]	= "not enough memory",
 	[ERROR_MSG_START_TRANS] = "failed to start transaction",
@@ -29,40 +26,13 @@ static const char *common_error_string[] = {
 };
 
 __attribute__ ((format (printf, 1, 2)))
-void __btrfs_warning(const char *fmt, ...)
+void __btrfs_printf(const char *fmt, ...)
 {
 	va_list args;
 
-	fputs(PREFIX_WARNING, stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
-	fputc('\n', stderr);
-}
-
-__attribute__ ((format (printf, 1, 2)))
-void __btrfs_error(const char *fmt, ...)
-{
-	va_list args;
-
-	fputs(PREFIX_ERROR, stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-}
-
-__attribute__ ((format (printf, 1, 2)))
-void internal_error(const char *fmt, ...)
-{
-	va_list vargs;
-
-	va_start(vargs, fmt);
-	fputs("INTERNAL " PREFIX_ERROR, stderr);
-	vfprintf(stderr, fmt, vargs);
-	va_end(vargs);
-	fputc('\n', stderr);
-	print_trace();
 }
 
 static bool should_print(int level)

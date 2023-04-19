@@ -46,6 +46,28 @@
 #define UASSERT(c) assert(c)
 #endif
 
+#define PREFIX_ERROR		"ERROR: "
+#define PREFIX_WARNING		"WARNING: "
+
+#define __btrfs_msg(prefix, fmt, ...)					\
+	do {								\
+		fputs((prefix), stderr);				\
+		__btrfs_printf((fmt), ##__VA_ARGS__);			\
+		fputc('\n', stderr);					\
+	} while (0)
+
+#define __btrfs_warning(fmt, ...) \
+	__btrfs_msg(PREFIX_WARNING, fmt, ##__VA_ARGS__)
+
+#define __btrfs_error(fmt, ...) \
+	__btrfs_msg(PREFIX_ERROR, fmt, ##__VA_ARGS__)
+
+#define internal_error(fmt, ...)						\
+	do {									\
+		__btrfs_msg("INTERNAL " PREFIX_ERROR, fmt, ##__VA_ARGS__);	\
+		print_trace();							\
+	} while (0)
+
 #define error(fmt, ...)							\
 	do {								\
 		PRINT_TRACE_ON_ERROR;					\
@@ -94,13 +116,7 @@
 	} while (0)
 
 __attribute__ ((format (printf, 1, 2)))
-void __btrfs_warning(const char *fmt, ...);
-
-__attribute__ ((format (printf, 1, 2)))
-void __btrfs_error(const char *fmt, ...);
-
-__attribute__ ((format (printf, 1, 2)))
-void internal_error(const char *fmt, ...);
+void __btrfs_printf(const char *fmt, ...);
 
 /*
  * Level of messages that must be printed by default (in case the verbosity
