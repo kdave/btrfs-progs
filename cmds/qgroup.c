@@ -807,12 +807,11 @@ static int update_qgroup_info(int fd, struct qgroup_lookup *qgroup_lookup, u64 q
 		return PTR_ERR(bq);
 
 	bq->info.generation = btrfs_stack_qgroup_info_generation(info);
-	bq->info.referenced = btrfs_stack_qgroup_info_referenced(info);
+	bq->info.referenced = btrfs_stack_qgroup_info_rfer(info);
 	bq->info.referenced_compressed =
-			btrfs_stack_qgroup_info_referenced_compressed(info);
-	bq->info.exclusive = btrfs_stack_qgroup_info_exclusive(info);
-	bq->info.exclusive_compressed =
-			btrfs_stack_qgroup_info_exclusive_compressed(info);
+		btrfs_stack_qgroup_info_rfer_cmpr(info);
+	bq->info.exclusive = btrfs_stack_qgroup_info_excl(info);
+	bq->info.exclusive_compressed = btrfs_stack_qgroup_info_excl_cmpr(info);
 
 	return 0;
 }
@@ -828,13 +827,10 @@ static int update_qgroup_limit(int fd, struct qgroup_lookup *qgroup_lookup,
 		return PTR_ERR(bq);
 
 	bq->limit.flags = btrfs_stack_qgroup_limit_flags(limit);
-	bq->limit.max_referenced =
-			btrfs_stack_qgroup_limit_max_referenced(limit);
-	bq->limit.max_exclusive =
-			btrfs_stack_qgroup_limit_max_exclusive(limit);
-	bq->limit.rsv_referenced =
-			btrfs_stack_qgroup_limit_rsv_referenced(limit);
-	bq->limit.rsv_exclusive = btrfs_stack_qgroup_limit_rsv_exclusive(limit);
+	bq->limit.max_referenced = btrfs_stack_qgroup_limit_max_rfer(limit);
+	bq->limit.max_exclusive = btrfs_stack_qgroup_limit_max_excl(limit);
+	bq->limit.rsv_referenced = btrfs_stack_qgroup_limit_rsv_rfer(limit);
+	bq->limit.rsv_exclusive = btrfs_stack_qgroup_limit_rsv_excl(limit);
 
 	return 0;
 }

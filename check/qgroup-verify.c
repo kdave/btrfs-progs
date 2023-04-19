@@ -870,12 +870,12 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 		c->key = *key;
 
 		item = &c->diskinfo;
-		item->referenced = btrfs_qgroup_info_referenced(leaf, disk);
+		item->referenced = btrfs_qgroup_info_rfer(leaf, disk);
 		item->referenced_compressed =
-			btrfs_qgroup_info_referenced_compressed(leaf, disk);
-		item->exclusive = btrfs_qgroup_info_exclusive(leaf, disk);
+			btrfs_qgroup_info_rfer_cmpr(leaf, disk);
+		item->exclusive = btrfs_qgroup_info_excl(leaf, disk);
 		item->exclusive_compressed =
-			btrfs_qgroup_info_exclusive_compressed(leaf, disk);
+			btrfs_qgroup_info_excl_cmpr(leaf, disk);
 		INIT_LIST_HEAD(&c->groups);
 		INIT_LIST_HEAD(&c->members);
 		INIT_LIST_HEAD(&c->bad_list);
@@ -1594,14 +1594,14 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	btrfs_set_qgroup_info_generation(path.nodes[0], info_item,
 					 trans->transid);
 
-	btrfs_set_qgroup_info_referenced(path.nodes[0], info_item,
+	btrfs_set_qgroup_info_rfer(path.nodes[0], info_item,
 					 count->info.referenced);
-	btrfs_set_qgroup_info_referenced_compressed(path.nodes[0], info_item,
+	btrfs_set_qgroup_info_rfer_cmpr(path.nodes[0], info_item,
 					    count->info.referenced_compressed);
 
-	btrfs_set_qgroup_info_exclusive(path.nodes[0], info_item,
+	btrfs_set_qgroup_info_excl(path.nodes[0], info_item,
 					count->info.exclusive);
-	btrfs_set_qgroup_info_exclusive_compressed(path.nodes[0], info_item,
+	btrfs_set_qgroup_info_excl_cmpr(path.nodes[0], info_item,
 					   count->info.exclusive_compressed);
 
 	btrfs_mark_buffer_dirty(path.nodes[0]);
