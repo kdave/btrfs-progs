@@ -389,9 +389,9 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			 * btrfs ins dump-tree.
 			 */
 			if (btrfs_header_level(eb))
-				ret = btrfs_check_node(fs_info, NULL, eb);
+				ret = btrfs_check_node(NULL, eb);
 			else
-				ret = btrfs_check_leaf(fs_info, NULL, eb);
+				ret = btrfs_check_leaf(NULL, eb);
 			if (!ret || candidate_mirror == mirror_num) {
 				btrfs_set_buffer_uptodate(eb);
 				return eb;
