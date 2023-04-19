@@ -204,6 +204,11 @@ void free_extent_buffer_nocache(struct extent_buffer *eb)
 	free_extent_buffer_internal(eb, 1);
 }
 
+void free_extent_buffer_stale(struct extent_buffer *eb)
+{
+	free_extent_buffer_internal(eb, 1);
+}
+
 struct extent_buffer *find_extent_buffer(struct btrfs_fs_info *fs_info,
 					 u64 bytenr, u32 blocksize)
 {
