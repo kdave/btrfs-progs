@@ -1205,8 +1205,9 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 /*
  * readahead one full node of leaves
  */
-void reada_for_search(struct btrfs_fs_info *fs_info, struct btrfs_path *path,
-		      int level, int slot, u64 objectid)
+static void reada_for_search(struct btrfs_fs_info *fs_info,
+			     struct btrfs_path *path, int level, int slot,
+			     u64 objectid)
 {
 	struct extent_buffer *node;
 	struct btrfs_disk_key disk_key;
