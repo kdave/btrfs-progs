@@ -479,6 +479,8 @@ struct btrfs_root {
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
 	struct rb_node rb_node;
+
+	spinlock_t accounting_lock;
 };
 
 static inline u64 btrfs_root_id(const struct btrfs_root *root)
