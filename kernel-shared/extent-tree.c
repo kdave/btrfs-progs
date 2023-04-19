@@ -1892,7 +1892,7 @@ static int pin_down_bytes(struct btrfs_trans_handle *trans, u64 bytenr,
 	 * reuse anything from the tree log root because
 	 * it has tiny sub-transactions.
 	 */
-	if (btrfs_buffer_uptodate(buf, 0)) {
+	if (btrfs_buffer_uptodate(buf, 0, 0)) {
 		u64 header_owner = btrfs_header_owner(buf);
 		u64 header_transid = btrfs_header_generation(buf);
 		if (header_owner != BTRFS_TREE_LOG_OBJECTID &&

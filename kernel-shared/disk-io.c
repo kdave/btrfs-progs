@@ -246,7 +246,7 @@ void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	struct btrfs_device *device;
 
 	eb = btrfs_find_tree_block(fs_info, bytenr, fs_info->nodesize);
-	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid)) &&
+	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid, 0)) &&
 	    !btrfs_map_block(fs_info, READ, bytenr, &length, &multi, 0,
 			     NULL)) {
 		device = multi->stripes[0].dev;
@@ -367,7 +367,7 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	if (!eb)
 		return ERR_PTR(-ENOMEM);
 
-	if (btrfs_buffer_uptodate(eb, parent_transid))
+	if (btrfs_buffer_uptodate(eb, parent_transid, 0))
 		return eb;
 
 	num_copies = btrfs_num_copies(fs_info, eb->start, eb->len);
@@ -478,7 +478,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 		BUG();
 	}
 
-	if (trans && !btrfs_buffer_uptodate(eb, trans->transid))
+	if (trans && !btrfs_buffer_uptodate(eb, trans->transid, 0))
 		BUG();
 
 	btrfs_clear_header_flag(eb, BTRFS_HEADER_FLAG_CSUM_NEW);
@@ -2262,7 +2262,8 @@ void btrfs_mark_buffer_dirty(struct extent_buffer *eb)
 	set_extent_buffer_dirty(eb);
 }
 
-int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid)
+int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid,
+			  int atomic)
 {
 	int ret;
 

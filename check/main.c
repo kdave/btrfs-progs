@@ -1895,7 +1895,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		}
 
 		next = btrfs_find_tree_block(gfs_info, bytenr, gfs_info->nodesize);
-		if (!next || !btrfs_buffer_uptodate(next, ptr_gen)) {
+		if (!next || !btrfs_buffer_uptodate(next, ptr_gen, 0)) {
 			free_extent_buffer(next);
 			reada_walk_down(root, cur, path->slots[*level]);
 			next = read_tree_block(gfs_info, bytenr,
