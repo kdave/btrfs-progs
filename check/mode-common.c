@@ -764,7 +764,7 @@ static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
 	if (location.objectid != ino || location.type != BTRFS_INODE_ITEM_KEY ||
 	    location.offset != 0)
 		goto out;
-	filetype = btrfs_dir_type(path.nodes[0], di);
+	filetype = btrfs_dir_ftype(path.nodes[0], di);
 	if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
 		goto out;
 	len = min_t(u32, BTRFS_NAME_LEN,
@@ -823,7 +823,7 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 		    location.type != BTRFS_INODE_ITEM_KEY ||
 		    location.offset != 0)
 			continue;
-		filetype = btrfs_dir_type(path.nodes[0], di);
+		filetype = btrfs_dir_ftype(path.nodes[0], di);
 		if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
 			continue;
 		len = min_t(u32, BTRFS_NAME_LEN,

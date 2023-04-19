@@ -504,10 +504,6 @@ struct __una_u16 { __le16 x; } __attribute__((__packed__));
 struct __una_u32 { __le32 x; } __attribute__((__packed__));
 struct __una_u64 { __le64 x; } __attribute__((__packed__));
 
-#define get_unaligned_le8(p) (*((u8 *)(p)))
-#define get_unaligned_8(p) (*((u8 *)(p)))
-#define put_unaligned_le8(val,p) ((*((u8 *)(p))) = (val))
-#define put_unaligned_8(val,p) ((*((u8 *)(p))) = (val))
 #define get_unaligned_le16(p) le16_to_cpu(((const struct __una_u16 *)(p))->x)
 #define get_unaligned_16(p) (((const struct __una_u16 *)(p))->x)
 #define put_unaligned_le16(val,p) (((struct __una_u16 *)(p))->x = cpu_to_le16(val))
@@ -580,5 +576,7 @@ static inline bool sb_rdonly(struct super_block *sb)
 {
 	return false;
 }
+
+#define unlikely(cond) (cond)
 
 #endif

@@ -868,7 +868,7 @@ loop:
 		    location.offset != 0)
 			goto next;
 
-		filetype = btrfs_dir_type(node, di);
+		filetype = btrfs_dir_ftype(node, di);
 		if (file_type != filetype)
 			goto next;
 
@@ -966,7 +966,7 @@ static int find_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 		    location.offset != location_key->offset)
 			goto next;
 
-		filetype = btrfs_dir_type(node, di);
+		filetype = btrfs_dir_ftype(node, di);
 		if (file_type != filetype)
 			goto next;
 
@@ -1759,7 +1759,7 @@ begin:
 		(*size) += name_len;
 		read_extent_buffer(node, namebuf, (unsigned long)(di + 1),
 				   len);
-		filetype = btrfs_dir_type(node, di);
+		filetype = btrfs_dir_ftype(node, di);
 
 		if (di_key->type == BTRFS_DIR_ITEM_KEY &&
 		    di_key->offset != btrfs_name_hash(namebuf, len)) {

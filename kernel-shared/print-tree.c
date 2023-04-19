@@ -26,12 +26,13 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/compression.h"
+#include "kernel-shared/accessors.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)
 {
-	u8 type = btrfs_dir_type(eb, di);
+	u8 type = btrfs_dir_ftype(eb, di);
 	static const char* dir_item_str[] = {
 		[BTRFS_FT_REG_FILE]	= "FILE",
 		[BTRFS_FT_DIR] 		= "DIR",
@@ -959,15 +960,20 @@ static void print_disk_balance_args(struct btrfs_disk_balance_args *ba)
 static void print_balance_item(struct extent_buffer *eb,
 		struct btrfs_balance_item *bi)
 {
+	struct btrfs_disk_balance_args ba;
+
 	printf("\t\tbalance status flags %llu\n",
-			btrfs_balance_item_flags(eb, bi));
+			btrfs_balance_flags(eb, bi));
 
 	printf("\t\tDATA\n");
-	print_disk_balance_args(btrfs_balance_item_data(eb, bi));
+	btrfs_balance_data(eb, bi, &ba);
+	print_disk_balance_args(&ba);
 	printf("\t\tMETADATA\n");
-	print_disk_balance_args(btrfs_balance_item_meta(eb, bi));
+	btrfs_balance_meta(eb, bi, &ba);
+	print_disk_balance_args(&ba);
 	printf("\t\tSYSTEM\n");
-	print_disk_balance_args(btrfs_balance_item_sys(eb, bi));
+	btrfs_balance_sys(eb, bi, &ba);
+	print_disk_balance_args(&ba);
 }
 
 static void print_dev_stats(struct extent_buffer *eb,

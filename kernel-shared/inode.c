@@ -548,7 +548,7 @@ int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		 */
 		btrfs_dir_item_key_to_cpu(path->nodes[0], dir_item, &found_key);
 		ret_ino = found_key.objectid;
-		if (btrfs_dir_type(path->nodes[0], dir_item) != BTRFS_FT_DIR)
+		if (btrfs_dir_ftype(path->nodes[0], dir_item) != BTRFS_FT_DIR)
 			ret = -EEXIST;
 		goto out;
 	}

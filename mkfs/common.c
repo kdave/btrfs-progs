@@ -27,6 +27,7 @@
 #include <blkid/blkid.h>
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/accessors.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"

@@ -993,7 +993,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		name_len = btrfs_dir_name_len(leaf, dir_item);
 		read_extent_buffer(leaf, filename, name_ptr, name_len);
 		filename[name_len] = '\0';
-		type = btrfs_dir_type(leaf, dir_item);
+		type = btrfs_dir_ftype(leaf, dir_item);
 		btrfs_dir_item_key_to_cpu(leaf, dir_item, &location);
 
 		/* full path from root of btrfs being restored */
