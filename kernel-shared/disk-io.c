@@ -337,38 +337,17 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 	return 0;
 }
 
-struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-				      u64 owner_root, u64 parent_transid,
-				      int level, struct btrfs_key *first_key)
+int btrfs_read_extent_buffer(struct extent_buffer *eb, u64 parent_transid,
+			     int level, struct btrfs_key *first_key)
 {
+	struct btrfs_fs_info *fs_info = eb->fs_info;
 	int ret;
-	struct extent_buffer *eb;
 	u64 best_transid = 0;
-	u32 sectorsize = fs_info->sectorsize;
 	int mirror_num = 1;
 	int good_mirror = 0;
 	int candidate_mirror = 0;
 	int num_copies;
 	int ignore = 0;
-
-	/*
-	 * Don't even try to create tree block for unaligned tree block
-	 * bytenr.
-	 * Such unaligned tree block will free overlapping extent buffer,
-	 * causing use-after-free bugs for fuzzed images.
-	 */
-	if (bytenr < sectorsize || !IS_ALIGNED(bytenr, sectorsize)) {
-		error("tree block bytenr %llu is not aligned to sectorsize %u",
-		      bytenr, sectorsize);
-		return ERR_PTR(-EIO);
-	}
-
-	eb = btrfs_find_create_tree_block(fs_info, bytenr);
-	if (!eb)
-		return ERR_PTR(-ENOMEM);
-
-	if (btrfs_buffer_uptodate(eb, parent_transid, 0))
-		return eb;
 
 	num_copies = btrfs_num_copies(fs_info, eb->start, eb->len);
 	while (1) {
@@ -396,7 +375,7 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 				ret = btrfs_check_leaf(eb);
 			if (!ret || candidate_mirror == mirror_num) {
 				btrfs_set_buffer_uptodate(eb);
-				return eb;
+				return 0;
 			}
 			if (candidate_mirror <= 0)
 				candidate_mirror = mirror_num;
@@ -439,12 +418,47 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			continue;
 		}
 	}
+	return ret;
+}
+
+struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
+				      u64 owner_root, u64 parent_transid,
+				      int level, struct btrfs_key *first_key)
+{
+	int ret;
+	struct extent_buffer *eb;
+	u32 sectorsize = fs_info->sectorsize;
+
 	/*
-	 * We failed to read this tree block, it be should deleted right now
-	 * to avoid stale cache populate the cache.
+	 * Don't even try to create tree block for unaligned tree block
+	 * bytenr.
+	 * Such unaligned tree block will free overlapping extent buffer,
+	 * causing use-after-free bugs for fuzzed images.
 	 */
-	free_extent_buffer_nocache(eb);
-	return ERR_PTR(ret);
+	if (bytenr < sectorsize || !IS_ALIGNED(bytenr, sectorsize)) {
+		error("tree block bytenr %llu is not aligned to sectorsize %u",
+		      bytenr, sectorsize);
+		return ERR_PTR(-EIO);
+	}
+
+	eb = btrfs_find_create_tree_block(fs_info, bytenr);
+	if (!eb)
+		return ERR_PTR(-ENOMEM);
+
+	if (btrfs_buffer_uptodate(eb, parent_transid, 0))
+		return eb;
+
+	ret = btrfs_read_extent_buffer(eb, parent_transid, level, first_key);
+	if (ret) {
+		/*
+		 * We failed to read this tree block, it be should deleted right
+		 * now to avoid stale cache populate the cache.
+		 */
+		free_extent_buffer_nocache(eb);
+		return ERR_PTR(ret);
+	}
+
+	return eb;
 }
 
 int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)

@@ -233,6 +233,8 @@ int btrfs_global_root_insert(struct btrfs_fs_info *fs_info,
 int btrfs_find_and_setup_root(struct btrfs_root *tree_root,
 			      struct btrfs_fs_info *fs_info,
 			      u64 objectid, struct btrfs_root *root);
+int btrfs_read_extent_buffer(struct extent_buffer *eb, u64 parent_transid,
+			     int level, struct btrfs_key *first_key);
 
 static inline struct btrfs_root *btrfs_block_group_root(
 						struct btrfs_fs_info *fs_info)
