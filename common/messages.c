@@ -96,10 +96,7 @@ void internal_error(const char *fmt, ...)
 	vfprintf(stderr, fmt, vargs);
 	va_end(vargs);
 	fputc('\n', stderr);
-
-#ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
-#endif
 }
 
 static bool should_print(int level)

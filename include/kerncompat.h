@@ -94,17 +94,17 @@
 #define BUILD_ASSERT(x)
 #endif
 
-#ifndef BTRFS_DISABLE_BACKTRACE
-#define MAX_BACKTRACE	16
 static inline void print_trace(void)
 {
+#ifndef BTRFS_DISABLE_BACKTRACE
+#define MAX_BACKTRACE	16
 	void *array[MAX_BACKTRACE];
 	int size;
 
 	size = backtrace(array, MAX_BACKTRACE);
 	backtrace_symbols_fd(array, size, 2);
-}
 #endif
+}
 
 static inline void warning_trace(const char *assertion, const char *filename,
 			      const char *func, unsigned line, long val)
@@ -114,9 +114,7 @@ static inline void warning_trace(const char *assertion, const char *filename,
 	fprintf(stderr,
 		"%s:%u: %s: Warning: assertion `%s` failed, value %ld\n",
 		filename, line, func, assertion, val);
-#ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
-#endif
 }
 
 static inline void bugon_trace(const char *assertion, const char *filename,
@@ -127,9 +125,7 @@ static inline void bugon_trace(const char *assertion, const char *filename,
 	fprintf(stderr,
 		"%s:%u: %s: BUG_ON `%s` triggered, value %ld\n",
 		filename, line, func, assertion, val);
-#ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
-#endif
 	abort();
 	exit(1);
 }
