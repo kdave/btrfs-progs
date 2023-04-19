@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <printf.h>
 #include "common/messages.h"
 #include "common/utils.h"
 
@@ -24,6 +25,8 @@ static const char *common_error_string[] = {
 	[ERROR_MSG_START_TRANS] = "failed to start transaction",
 	[ERROR_MSG_COMMIT_TRANS] = "failed to commit transaction",
 };
+
+static int va_modifier = -1;
 
 __attribute__ ((format (printf, 1, 2)))
 void __btrfs_printf(const char *fmt, ...)
@@ -35,10 +38,38 @@ void __btrfs_printf(const char *fmt, ...)
 	va_end(args);
 }
 
+static int print_va_format(FILE *stream, const struct printf_info *info,
+			   const void *const *args)
+{
+	const struct va_format *fmt;
+
+	if (!(info->user & va_modifier))
+		return -2;
+
+	fmt = *((const struct va_format **)(args[0]));
+	return vfprintf(stream, fmt->fmt, *(fmt->va));
+}
+
+static int print_va_format_arginfo(const struct printf_info *info,
+				   size_t n, int *argtypes, int *size)
+{
+	if (n > 0) {
+		argtypes[0] = PA_POINTER;
+		size[0] = sizeof(struct va_format *);
+	}
+	return 1;
+ }
+
 __attribute__ ((format (printf, 2, 3)))
 void btrfs_no_printk(const void *fs_info, const char *fmt, ...)
 {
 	va_list args;
+
+	if (va_modifier == -1) {
+		register_printf_specifier('V', print_va_format,
+					  print_va_format_arginfo);
+		va_modifier = register_printf_modifier(L"p");
+	}
 
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
