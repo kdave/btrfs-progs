@@ -20,7 +20,7 @@
 #define __CMDS_QGROUP_H__
 
 #include "kerncompat.h"
-#include "ioctl.h"
+#include "kernel-shared/uapi/btrfs.h"
 
 struct btrfs_qgroup_info {
 	u64 generation;

@@ -24,11 +24,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/send-utils.h"
 #include "common/messages.h"
 #include "common/utils.h"
-#include "ioctl.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);

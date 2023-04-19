@@ -25,6 +25,7 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include <blkid/blkid.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
@@ -38,7 +39,6 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "mkfs/common.h"
-#include "ioctl.h"
 
 static u64 reference_root_table[] = {
 	[MKFS_ROOT_TREE]	=	BTRFS_ROOT_TREE_OBJECTID,

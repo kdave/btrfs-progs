@@ -19,13 +19,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/volumes.h"
 #include "common/defs.h"
 #include "common/messages.h"
-#include "ioctl.h"
 
 static int change_fsid_prepare(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {

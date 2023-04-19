@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "common/open-utils.h"
@@ -33,7 +34,6 @@
 #include "common/messages.h"
 #include "common/help.h"
 #include "cmds/commands.h"
-#include "ioctl.h"
 
 static const char * const balance_cmd_group_usage[] = {
 	"btrfs balance <command> [options] <path>",

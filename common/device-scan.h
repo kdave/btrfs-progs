@@ -19,7 +19,7 @@
 
 #include "kerncompat.h"
 #include <dirent.h>
-#include "ioctl.h"
+#include "kernel-shared/uapi/btrfs.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)

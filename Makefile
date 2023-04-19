@@ -700,15 +700,15 @@ quick-test: quick-test.o $(objects) libbtrfsutil.a $(libs_shared)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-ioctl-test.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
+ioctl-test.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-ioctl-test-32.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
+ioctl-test-32.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC32]   $@"
 	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
 
-ioctl-test-64.o: tests/ioctl-test.c include/ioctl.h include/kerncompat.h kernel-shared/ctree.h
+ioctl-test-64.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC64]   $@"
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 

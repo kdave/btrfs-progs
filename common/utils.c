@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
@@ -38,7 +39,6 @@
 #include "common/messages.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
-#include "ioctl.h"
 
 static int rand_seed_initialized = 0;
 static unsigned short rand_seed[3];

@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <uuid/uuid.h>
 #include "libbtrfsutil/btrfsutil.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/messages.h"
@@ -38,7 +39,6 @@
 #include "common/filesystem-utils.h"
 #include "cmds/commands.h"
 #include "cmds/props.h"
-#include "ioctl.h"
 
 #define XATTR_BTRFS_PREFIX     "btrfs."
 #define XATTR_BTRFS_PREFIX_LEN (sizeof(XATTR_BTRFS_PREFIX) - 1)

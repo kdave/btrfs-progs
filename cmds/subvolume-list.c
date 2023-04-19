@@ -26,6 +26,7 @@
 #include <uuid/uuid.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/rbtree-utils.h"
@@ -35,7 +36,6 @@
 #include "common/string-utils.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
-#include "ioctl.h"
 
 /*
  * Naming of options:

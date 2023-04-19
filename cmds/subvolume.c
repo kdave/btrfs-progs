@@ -29,6 +29,7 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include "libbtrfsutil/btrfsutil.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/internal.h"
@@ -42,7 +43,6 @@
 #include "common/units.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
-#include "ioctl.h"
 
 static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				       int sleep_interval)

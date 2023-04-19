@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <signal.h>
 #include <stdbool.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
@@ -39,7 +40,6 @@
 #include "common/messages.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
-#include "ioctl.h"
 
 static int print_replace_status(int fd, const char *path, int once);
 static char *time2string(char *buf, size_t s, __u64 t);

@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "common/internal.h"
@@ -43,7 +44,6 @@
 #include "common/string-utils.h"
 #include "common/string-table.h"
 #include "cmds/commands.h"
-#include "ioctl.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",

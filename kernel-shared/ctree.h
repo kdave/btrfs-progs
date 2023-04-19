@@ -24,8 +24,8 @@
 #include "kernel-lib/list.h"
 #include "kerncompat.h"
 #include "common/extent-cache.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/extent_io.h"
-#include "ioctl.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;

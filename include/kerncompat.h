@@ -576,5 +576,6 @@ typedef struct wait_queue_head_s {
 
 #define __init
 #define __cold
+#define __user
 
 #endif

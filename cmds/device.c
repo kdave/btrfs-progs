@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/zoned.h"
 #include "common/string-table.h"
@@ -41,7 +42,6 @@
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "mkfs/common.h"
-#include "ioctl.h"
 
 static const char * const device_cmd_group_usage[] = {
 	"btrfs device <command> [<args>]",

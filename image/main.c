@@ -34,6 +34,7 @@
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
@@ -54,7 +55,6 @@
 #include "cmds/commands.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
-#include "ioctl.h"
 
 #define MAX_WORKER_THREADS	(32)
 

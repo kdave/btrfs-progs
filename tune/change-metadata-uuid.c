@@ -18,11 +18,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "tune/tune.h"
-#include "ioctl.h"
 
 int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
 {

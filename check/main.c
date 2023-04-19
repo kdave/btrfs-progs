@@ -31,6 +31,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
@@ -61,7 +62,6 @@
 #include "check/mode-lowmem.h"
 #include "check/qgroup-verify.h"
 #include "check/clear-cache.h"
-#include "ioctl.h"
 
 /* Global context variables */
 struct btrfs_fs_info *gfs_info;

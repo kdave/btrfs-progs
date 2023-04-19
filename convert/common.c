@@ -21,6 +21,7 @@
 #include <string.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
@@ -29,7 +30,6 @@
 #include "common/messages.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
-#include "ioctl.h"
 
 #define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
 

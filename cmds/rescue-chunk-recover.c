@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "kernel-lib/list.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
@@ -37,7 +38,6 @@
 #include "common/utils.h"
 #include "cmds/rescue.h"
 #include "check/common.h"
-#include "ioctl.h"
 
 struct recover_control {
 	int verbose;

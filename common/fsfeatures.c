@@ -24,12 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/fsfeatures.h"
 #include "common/string-utils.h"
 #include "common/utils.h"
 #include "common/messages.h"
-#include "ioctl.h"
 
 /*
  * Insert a root item for temporary tree root

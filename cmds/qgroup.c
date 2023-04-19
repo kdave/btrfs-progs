@@ -29,6 +29,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/open-utils.h"
 #include "common/utils.h"
@@ -39,7 +40,6 @@
 #include "common/messages.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
-#include "ioctl.h"
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)

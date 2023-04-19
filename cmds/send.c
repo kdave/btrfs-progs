@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "common/utils.h"
 #include "common/send-utils.h"
 #include "common/help.h"
@@ -35,7 +36,6 @@
 #include "common/string-utils.h"
 #include "common/messages.h"
 #include "cmds/commands.h"
-#include "ioctl.h"
 
 #define BTRFS_SEND_BUF_SIZE_V1	(SZ_64K)
 #define BTRFS_MAX_COMPRESSED	(SZ_128K)

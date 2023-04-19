@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  *
@@ -16,28 +17,33 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __BTRFS_IOCTL_H__
-#define __BTRFS_IOCTL_H__
+#ifndef _UAPI_LINUX_BTRFS_H
+#define _UAPI_LINUX_BTRFS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <asm/types.h>
+#include <linux/types.h>
 #include <linux/ioctl.h>
-#include <stddef.h>
+#include <linux/fs.h>
+
+#ifdef DEBUG_BUILD_CHECKS
+#ifndef _static_assert
+#define _static_assert(expr) _Static_assert(expr, #expr)
+#endif
+#else
+#undef _static_assert
+#define _static_assert(expr)
+#endif
 
 #ifndef __user
 #define __user
 #endif
 
-/* We don't want to include entire kerncompat.h */
-#ifndef BUILD_ASSERT
-#define BUILD_ASSERT(x)
-#endif
-
 #define BTRFS_IOCTL_MAGIC 0x94
 #define BTRFS_VOL_NAME_MAX 255
+#define BTRFS_LABEL_SIZE 256
 
 /* this should be 4k */
 #define BTRFS_PATH_NAME_MAX 4087
@@ -45,18 +51,21 @@ struct btrfs_ioctl_vol_args {
 	__s64 fd;
 	char name[BTRFS_PATH_NAME_MAX + 1];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_vol_args) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_vol_args) == 4096);
 
-#define BTRFS_DEVICE_PATH_NAME_MAX 1024
+#define BTRFS_DEVICE_PATH_NAME_MAX	1024
+#define BTRFS_SUBVOL_NAME_MAX 		4039
 
-/*
- * Obsolete since 5.15, functionality removed in kernel 5.7:
- * BTRFS_SUBVOL_CREATE_ASYNC		(1ULL << 0)
- */
+#ifndef __KERNEL__
+/* Deprecated since 5.7 */
+# define BTRFS_SUBVOL_CREATE_ASYNC	(1ULL << 0)
+#endif
 #define BTRFS_SUBVOL_RDONLY		(1ULL << 1)
 #define BTRFS_SUBVOL_QGROUP_INHERIT	(1ULL << 2)
+
 #define BTRFS_DEVICE_SPEC_BY_ID		(1ULL << 3)
-#define BTRFS_SUBVOL_SPEC_BY_ID		(1ULL << 4)
+
+#define BTRFS_SUBVOL_SPEC_BY_ID	(1ULL << 4)
 
 #define BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED		\
 			(BTRFS_SUBVOL_RDONLY |		\
@@ -66,8 +75,21 @@ BUILD_ASSERT(sizeof(struct btrfs_ioctl_vol_args) == 4096);
 
 #define BTRFS_FSID_SIZE 16
 #define BTRFS_UUID_SIZE 16
+#define BTRFS_UUID_UNPARSED_SIZE	37
 
-#define BTRFS_QGROUP_INHERIT_SET_LIMITS	(1ULL << 0)
+/*
+ * flags definition for qgroup limits
+ *
+ * Used by:
+ * struct btrfs_qgroup_limit.flags
+ * struct btrfs_qgroup_limit_item.flags
+ */
+#define BTRFS_QGROUP_LIMIT_MAX_RFER	(1ULL << 0)
+#define BTRFS_QGROUP_LIMIT_MAX_EXCL	(1ULL << 1)
+#define BTRFS_QGROUP_LIMIT_RSV_RFER	(1ULL << 2)
+#define BTRFS_QGROUP_LIMIT_RSV_EXCL	(1ULL << 3)
+#define BTRFS_QGROUP_LIMIT_RFER_CMPR	(1ULL << 4)
+#define BTRFS_QGROUP_LIMIT_EXCL_CMPR	(1ULL << 5)
 
 struct btrfs_qgroup_limit {
 	__u64	flags;
@@ -76,7 +98,15 @@ struct btrfs_qgroup_limit {
 	__u64	rsv_referenced;
 	__u64	rsv_exclusive;
 };
-BUILD_ASSERT(sizeof(struct btrfs_qgroup_limit) == 40);
+_static_assert(sizeof(struct btrfs_qgroup_limit) == 40);
+
+/*
+ * flags definition for qgroup inheritance
+ *
+ * Used by:
+ * struct btrfs_qgroup_inherit.flags
+ */
+#define BTRFS_QGROUP_INHERIT_SET_LIMITS	(1ULL << 0)
 
 struct btrfs_qgroup_inherit {
 	__u64	flags;
@@ -84,17 +114,40 @@ struct btrfs_qgroup_inherit {
 	__u64	num_ref_copies;
 	__u64	num_excl_copies;
 	struct btrfs_qgroup_limit lim;
-	__u64	qgroups[0];
+	__u64	qgroups[];
 };
-BUILD_ASSERT(sizeof(struct btrfs_qgroup_inherit) == 72);
+_static_assert(sizeof(struct btrfs_qgroup_inherit) == 72);
 
 struct btrfs_ioctl_qgroup_limit_args {
 	__u64	qgroupid;
 	struct btrfs_qgroup_limit lim;
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_qgroup_limit_args) == 48);
+_static_assert(sizeof(struct btrfs_ioctl_qgroup_limit_args) == 48);
 
-#define BTRFS_SUBVOL_NAME_MAX 4039
+/*
+ * Arguments for specification of subvolumes or devices, supporting by-name or
+ * by-id and flags
+ *
+ * The set of supported flags depends on the ioctl
+ *
+ * BTRFS_SUBVOL_RDONLY is also provided/consumed by the following ioctls:
+ * - BTRFS_IOC_SUBVOL_GETFLAGS
+ * - BTRFS_IOC_SUBVOL_SETFLAGS
+ */
+
+/* Supported flags for BTRFS_IOC_RM_DEV_V2 */
+#define BTRFS_DEVICE_REMOVE_ARGS_MASK					\
+	(BTRFS_DEVICE_SPEC_BY_ID)
+
+/* Supported flags for BTRFS_IOC_SNAP_CREATE_V2 and BTRFS_IOC_SUBVOL_CREATE_V2 */
+#define BTRFS_SUBVOL_CREATE_ARGS_MASK					\
+	 (BTRFS_SUBVOL_RDONLY |						\
+	 BTRFS_SUBVOL_QGROUP_INHERIT)
+
+/* Supported flags for BTRFS_IOC_SNAP_DESTROY_V2 */
+#define BTRFS_SUBVOL_DELETE_ARGS_MASK					\
+	(BTRFS_SUBVOL_SPEC_BY_ID)
+
 struct btrfs_ioctl_vol_args_v2 {
 	__s64 fd;
 	__u64 transid;
@@ -112,7 +165,7 @@ struct btrfs_ioctl_vol_args_v2 {
 		__u64 subvolid;
 	};
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_vol_args_v2) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_vol_args_v2) == 4096);
 
 /*
  * structure to report errors and progress to userspace, either as a
@@ -161,7 +214,7 @@ struct btrfs_ioctl_scrub_args {
 	/* pad to 1k */
 	__u64 unused[(1024-32-sizeof(struct btrfs_scrub_progress))/8];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_scrub_args) == 1024);
+_static_assert(sizeof(struct btrfs_ioctl_scrub_args) == 1024);
 
 #define BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_ALWAYS	0
 #define BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_AVOID	1
@@ -172,7 +225,7 @@ struct btrfs_ioctl_dev_replace_start_params {
 	__u8 srcdev_name[BTRFS_DEVICE_PATH_NAME_MAX + 1];	/* in */
 	__u8 tgtdev_name[BTRFS_DEVICE_PATH_NAME_MAX + 1];	/* in */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_dev_replace_start_params) == 2072);
+_static_assert(sizeof(struct btrfs_ioctl_dev_replace_start_params) == 2072);
 
 #define BTRFS_IOCTL_DEV_REPLACE_STATE_NEVER_STARTED	0
 #define BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED		1
@@ -187,7 +240,7 @@ struct btrfs_ioctl_dev_replace_status_params {
 	__u64 num_write_errors;	/* out */
 	__u64 num_uncorrectable_read_errors;	/* out */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_dev_replace_status_params) == 48);
+_static_assert(sizeof(struct btrfs_ioctl_dev_replace_status_params) == 48);
 
 #define BTRFS_IOCTL_DEV_REPLACE_CMD_START			0
 #define BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS			1
@@ -207,7 +260,7 @@ struct btrfs_ioctl_dev_replace_args {
 
 	__u64 spare[64];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_dev_replace_args) == 2600);
+_static_assert(sizeof(struct btrfs_ioctl_dev_replace_args) == 2600);
 
 struct btrfs_ioctl_dev_info_args {
 	__u64 devid;				/* in/out */
@@ -227,7 +280,19 @@ struct btrfs_ioctl_dev_info_args {
 	__u64 unused[377];			/* pad to 4k */
 	__u8 path[BTRFS_DEVICE_PATH_NAME_MAX];	/* out */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_dev_info_args) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_dev_info_args) == 4096);
+
+/*
+ * Retrieve information about the filesystem
+ */
+
+/* Request information about checksum type and size */
+#define BTRFS_FS_INFO_FLAG_CSUM_INFO			(1 << 0)
+
+/* Request information about filesystem generation */
+#define BTRFS_FS_INFO_FLAG_GENERATION			(1 << 1)
+/* Request information about filesystem metadata UUID */
+#define BTRFS_FS_INFO_FLAG_METADATA_UUID		(1 << 2)
 
 struct btrfs_ioctl_fs_info_args {
 	__u64 max_id;				/* out */
@@ -236,17 +301,68 @@ struct btrfs_ioctl_fs_info_args {
 	__u32 nodesize;				/* out */
 	__u32 sectorsize;			/* out */
 	__u32 clone_alignment;			/* out */
-	__u32 reserved32;
-	__u64 reserved[122];			/* pad to 1k */
+	/* See BTRFS_FS_INFO_FLAG_* */
+	__u16 csum_type;			/* out */
+	__u16 csum_size;			/* out */
+	__u64 flags;				/* in/out */
+	__u64 generation;			/* out */
+	__u8 metadata_uuid[BTRFS_FSID_SIZE];	/* out */
+	__u8 reserved[944];			/* pad to 1k */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_fs_info_args) == 1024);
+_static_assert(sizeof(struct btrfs_ioctl_fs_info_args) == 1024);
+
+/*
+ * feature flags
+ *
+ * Used by:
+ * struct btrfs_ioctl_feature_flags
+ */
+#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE		(1ULL << 0)
+/*
+ * Older kernels (< 4.9) on big-endian systems produced broken free space tree
+ * bitmaps, and btrfs-progs also used to corrupt the free space tree (versions
+ * < 4.7.3).  If this bit is clear, then the free space tree cannot be trusted.
+ * btrfs-progs can also intentionally clear this bit to ask the kernel to
+ * rebuild the free space tree, however this might not work on older kernels
+ * that do not know about this bit. If not sure, clear the cache manually on
+ * first mount when booting older kernel versions.
+ */
+#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID	(1ULL << 1)
+#define BTRFS_FEATURE_COMPAT_RO_VERITY			(1ULL << 2)
+
+/*
+ * Put all block group items into a dedicated block group tree, greatly
+ * reducing mount time for large filesystem due to better locality.
+ */
+#define BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE	(1ULL << 3)
+
+#define BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF	(1ULL << 0)
+#define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL	(1ULL << 1)
+#define BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS	(1ULL << 2)
+#define BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO	(1ULL << 3)
+#define BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD	(1ULL << 4)
+
+/*
+ * older kernels tried to do bigger metadata blocks, but the
+ * code was pretty buggy.  Lets not let them try anymore.
+ */
+#define BTRFS_FEATURE_INCOMPAT_BIG_METADATA	(1ULL << 5)
+
+#define BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF	(1ULL << 6)
+#define BTRFS_FEATURE_INCOMPAT_RAID56		(1ULL << 7)
+#define BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA	(1ULL << 8)
+#define BTRFS_FEATURE_INCOMPAT_NO_HOLES		(1ULL << 9)
+#define BTRFS_FEATURE_INCOMPAT_METADATA_UUID	(1ULL << 10)
+#define BTRFS_FEATURE_INCOMPAT_RAID1C34		(1ULL << 11)
+#define BTRFS_FEATURE_INCOMPAT_ZONED		(1ULL << 12)
+#define BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2	(1ULL << 13)
 
 struct btrfs_ioctl_feature_flags {
 	__u64 compat_flags;
 	__u64 compat_ro_flags;
 	__u64 incompat_flags;
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_feature_flags) == 24);
+_static_assert(sizeof(struct btrfs_ioctl_feature_flags) == 24);
 
 /* balance control ioctl modes */
 #define BTRFS_BALANCE_CTL_PAUSE		1
@@ -272,7 +388,6 @@ struct btrfs_balance_args {
 			__u32 usage_max;
 		};
 	};
-
 	__u64 devid;
 	__u64 pstart;
 	__u64 pend;
@@ -295,19 +410,89 @@ struct btrfs_balance_args {
 			__u32 limit_max;
 		};
 	};
+
+	/*
+	 * Process chunks that cross stripes_min..stripes_max devices,
+	 * BTRFS_BALANCE_ARGS_STRIPES_RANGE
+	 */
 	__u32 stripes_min;
 	__u32 stripes_max;
+
 	__u64 unused[6];
 } __attribute__ ((__packed__));
 
 /* report balance progress to userspace */
 struct btrfs_balance_progress {
 	__u64 expected;		/* estimated # of chunks that will be
-				 * relocated to fulfil the request */
+				 * relocated to fulfill the request */
 	__u64 considered;	/* # of chunks we have considered so far */
 	__u64 completed;	/* # of chunks relocated so far */
 };
 
+/*
+ * flags definition for balance
+ *
+ * Restriper's general type filter
+ *
+ * Used by:
+ * btrfs_ioctl_balance_args.flags
+ * btrfs_balance_control.flags (internal)
+ */
+#define BTRFS_BALANCE_DATA		(1ULL << 0)
+#define BTRFS_BALANCE_SYSTEM		(1ULL << 1)
+#define BTRFS_BALANCE_METADATA		(1ULL << 2)
+
+#define BTRFS_BALANCE_TYPE_MASK		(BTRFS_BALANCE_DATA |	    \
+					 BTRFS_BALANCE_SYSTEM |	    \
+					 BTRFS_BALANCE_METADATA)
+
+#define BTRFS_BALANCE_FORCE		(1ULL << 3)
+#define BTRFS_BALANCE_RESUME		(1ULL << 4)
+
+/*
+ * flags definitions for per-type balance args
+ *
+ * Balance filters
+ *
+ * Used by:
+ * struct btrfs_balance_args
+ */
+#define BTRFS_BALANCE_ARGS_PROFILES	(1ULL << 0)
+#define BTRFS_BALANCE_ARGS_USAGE	(1ULL << 1)
+#define BTRFS_BALANCE_ARGS_DEVID	(1ULL << 2)
+#define BTRFS_BALANCE_ARGS_DRANGE	(1ULL << 3)
+#define BTRFS_BALANCE_ARGS_VRANGE	(1ULL << 4)
+#define BTRFS_BALANCE_ARGS_LIMIT	(1ULL << 5)
+#define BTRFS_BALANCE_ARGS_LIMIT_RANGE	(1ULL << 6)
+#define BTRFS_BALANCE_ARGS_STRIPES_RANGE (1ULL << 7)
+#define BTRFS_BALANCE_ARGS_USAGE_RANGE	(1ULL << 10)
+
+#define BTRFS_BALANCE_ARGS_MASK			\
+	(BTRFS_BALANCE_ARGS_PROFILES |		\
+	 BTRFS_BALANCE_ARGS_USAGE |		\
+	 BTRFS_BALANCE_ARGS_DEVID | 		\
+	 BTRFS_BALANCE_ARGS_DRANGE |		\
+	 BTRFS_BALANCE_ARGS_VRANGE |		\
+	 BTRFS_BALANCE_ARGS_LIMIT |		\
+	 BTRFS_BALANCE_ARGS_LIMIT_RANGE |	\
+	 BTRFS_BALANCE_ARGS_STRIPES_RANGE |	\
+	 BTRFS_BALANCE_ARGS_USAGE_RANGE)
+
+/*
+ * Profile changing flags.  When SOFT is set we won't relocate chunk if
+ * it already has the target profile (even though it may be
+ * half-filled).
+ */
+#define BTRFS_BALANCE_ARGS_CONVERT	(1ULL << 8)
+#define BTRFS_BALANCE_ARGS_SOFT		(1ULL << 9)
+
+
+/*
+ * flags definition for balance state
+ *
+ * Used by:
+ * struct btrfs_ioctl_balance_args.state
+ */
 #define BTRFS_BALANCE_STATE_RUNNING	(1ULL << 0)
 #define BTRFS_BALANCE_STATE_PAUSE_REQ	(1ULL << 1)
 #define BTRFS_BALANCE_STATE_CANCEL_REQ	(1ULL << 2)
@@ -324,7 +509,7 @@ struct btrfs_ioctl_balance_args {
 
 	__u64 unused[72];			/* pad to 1k */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_balance_args) == 1024);
+_static_assert(sizeof(struct btrfs_ioctl_balance_args) == 1024);
 
 #define BTRFS_INO_LOOKUP_PATH_MAX 4080
 struct btrfs_ioctl_ino_lookup_args {
@@ -332,9 +517,9 @@ struct btrfs_ioctl_ino_lookup_args {
 	__u64 objectid;
 	char name[BTRFS_INO_LOOKUP_PATH_MAX];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_ino_lookup_args) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_ino_lookup_args) == 4096);
 
-#define BTRFS_INO_LOOKUP_USER_PATH_MAX	(4080 - BTRFS_VOL_NAME_MAX - 1)
+#define BTRFS_INO_LOOKUP_USER_PATH_MAX (4080 - BTRFS_VOL_NAME_MAX - 1)
 struct btrfs_ioctl_ino_lookup_user_args {
 	/* in, inode number containing the subvolume of 'subvolid' */
 	__u64 dirid;
@@ -348,33 +533,56 @@ struct btrfs_ioctl_ino_lookup_user_args {
 	 */
 	char path[BTRFS_INO_LOOKUP_USER_PATH_MAX];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_ino_lookup_user_args) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_ino_lookup_user_args) == 4096);
 
+/* Search criteria for the btrfs SEARCH ioctl family. */
 struct btrfs_ioctl_search_key {
-	/* which root are we searching.  0 is the tree of tree roots */
-	__u64 tree_id;
-
-	/* keys returned will be >= min and <= max */
-	__u64 min_objectid;
-	__u64 max_objectid;
-
-	/* keys returned will be >= min and <= max */
-	__u64 min_offset;
-	__u64 max_offset;
-
-	/* max and min transids to search for */
-	__u64 min_transid;
-	__u64 max_transid;
-
-	/* keys returned will be >= min and <= max */
-	__u32 min_type;
-	__u32 max_type;
+	/*
+	 * The tree we're searching in. 1 is the tree of tree roots, 2 is the
+	 * extent tree, etc...
+	 *
+	 * A special tree_id value of 0 will cause a search in the subvolume
+	 * tree that the inode which is passed to the ioctl is part of.
+	 */
+	__u64 tree_id;		/* in */
 
 	/*
-	 * how many items did userland ask for, and how many are we
-	 * returning
+	 * When doing a tree search, we're actually taking a slice from a
+	 * linear search space of 136-bit keys.
+	 *
+	 * A full 136-bit tree key is composed as:
+	 *   (objectid << 72) + (type << 64) + offset
+	 *
+	 * The individual min and max values for objectid, type and offset
+	 * define the min_key and max_key values for the search range. All
+	 * metadata items with a key in the interval [min_key, max_key] will be
+	 * returned.
+	 *
+	 * Additionally, we can filter the items returned on transaction id of
+	 * the metadata block they're stored in by specifying a transid range.
+	 * Be aware that this transaction id only denotes when the metadata
+	 * page that currently contains the item got written the last time as
+	 * result of a COW operation.  The number does not have any meaning
+	 * related to the transaction in which an individual item that is being
+	 * returned was created or changed.
 	 */
-	__u32 nr_items;
+	__u64 min_objectid;	/* in */
+	__u64 max_objectid;	/* in */
+	__u64 min_offset;	/* in */
+	__u64 max_offset;	/* in */
+	__u64 min_transid;	/* in */
+	__u64 max_transid;	/* in */
+	__u32 min_type;		/* in */
+	__u32 max_type;		/* in */
+
+	/*
+	 * input: The maximum amount of results desired.
+	 * output: The actual amount of items returned, restricted by any of:
+	 *  - reaching the upper bound of the search range
+	 *  - reaching the input nr_items amount of items
+	 *  - completely filling the supplied memory buffer
+	 */
+	__u32 nr_items;		/* in/out */
 
 	/* align to 64 bits */
 	__u32 unused;
@@ -392,7 +600,7 @@ struct btrfs_ioctl_search_header {
 	__u64 offset;
 	__u32 type;
 	__u32 len;
-} __attribute__((may_alias));
+} __attribute__ ((__may_alias__));
 
 #define BTRFS_SEARCH_ARGS_BUFSIZE (4096 - sizeof(struct btrfs_ioctl_search_key))
 /*
@@ -410,13 +618,13 @@ struct btrfs_ioctl_search_args {
  * The allocated size of the buffer is set in buf_size.
  */
 struct btrfs_ioctl_search_args_v2 {
-        struct btrfs_ioctl_search_key key; /* in/out - search parameters */
-        __u64 buf_size;			   /* in - size of buffer
-                                            * out - on EOVERFLOW: needed size
-                                            *       to store item */
-        __u64 buf[0];                      /* out - found items */
+	struct btrfs_ioctl_search_key key; /* in/out - search parameters */
+	__u64 buf_size;		   /* in - size of buffer
+					    * out - on EOVERFLOW: needed size
+					    *       to store item */
+	__u64 buf[];                       /* out - found items */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_search_args_v2) == 112);
+_static_assert(sizeof(struct btrfs_ioctl_search_args_v2) == 112);
 
 /* With a @src_length of zero, the range from @src_offset->EOF is cloned! */
 struct btrfs_ioctl_clone_range_args {
@@ -424,38 +632,16 @@ struct btrfs_ioctl_clone_range_args {
 	__u64 src_offset, src_length;
 	__u64 dest_offset;
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_clone_range_args) == 32);
+_static_assert(sizeof(struct btrfs_ioctl_clone_range_args) == 32);
 
-/* flags for the defrag range ioctl */
+/*
+ * flags definition for the defrag range ioctl
+ *
+ * Used by:
+ * struct btrfs_ioctl_defrag_range_args.flags
+ */
 #define BTRFS_DEFRAG_RANGE_COMPRESS 1
 #define BTRFS_DEFRAG_RANGE_START_IO 2
-
-#define BTRFS_SAME_DATA_DIFFERS	1
-/* For extent-same ioctl */
-struct btrfs_ioctl_same_extent_info {
-	__s64 fd;		/* in - destination file */
-	__u64 logical_offset;	/* in - start of extent in destination */
-	__u64 bytes_deduped;	/* out - total # of bytes we were able
-				 * to dedupe from this file */
-	/* status of this dedupe operation:
-	 * 0 if dedup succeeds
-	 * < 0 for error
-	 * == BTRFS_SAME_DATA_DIFFERS if data differs
-	 */
-	__s32 status;		/* out - see above description */
-	__u32 reserved;
-};
-
-struct btrfs_ioctl_same_args {
-	__u64 logical_offset;	/* in - start of extent in source */
-	__u64 length;		/* in - length of extent */
-	__u16 dest_count;	/* in - total elements in info array */
-	__u16 reserved1;
-	__u32 reserved2;
-	struct btrfs_ioctl_same_extent_info info[0];
-};
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_same_args) == 24);
-
 struct btrfs_ioctl_defrag_range_args {
 	/* start of the defrag operation */
 	__u64 start;
@@ -486,7 +672,34 @@ struct btrfs_ioctl_defrag_range_args {
 	/* spare for later */
 	__u32 unused[4];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_defrag_range_args) == 48);
+_static_assert(sizeof(struct btrfs_ioctl_defrag_range_args) == 48);
+
+
+#define BTRFS_SAME_DATA_DIFFERS	1
+/* For extent-same ioctl */
+struct btrfs_ioctl_same_extent_info {
+	__s64 fd;		/* in - destination file */
+	__u64 logical_offset;	/* in - start of extent in destination */
+	__u64 bytes_deduped;	/* out - total # of bytes we were able
+				 * to dedupe from this file */
+	/* status of this dedupe operation:
+	 * 0 if dedup succeeds
+	 * < 0 for error
+	 * == BTRFS_SAME_DATA_DIFFERS if data differs
+	 */
+	__s32 status;		/* out - see above description */
+	__u32 reserved;
+};
+
+struct btrfs_ioctl_same_args {
+	__u64 logical_offset;	/* in - start of extent in source */
+	__u64 length;		/* in - length of extent */
+	__u16 dest_count;	/* in - total elements in info array */
+	__u16 reserved1;
+	__u32 reserved2;
+	struct btrfs_ioctl_same_extent_info info[];
+};
+_static_assert(sizeof(struct btrfs_ioctl_same_args) == 24);
 
 struct btrfs_ioctl_space_info {
 	__u64 flags;
@@ -497,16 +710,16 @@ struct btrfs_ioctl_space_info {
 struct btrfs_ioctl_space_args {
 	__u64 space_slots;
 	__u64 total_spaces;
-	struct btrfs_ioctl_space_info spaces[0];
+	struct btrfs_ioctl_space_info spaces[];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_space_args) == 16);
+_static_assert(sizeof(struct btrfs_ioctl_space_args) == 16);
 
 struct btrfs_data_container {
 	__u32	bytes_left;	/* out -- bytes not needed to deliver output */
 	__u32	bytes_missing;	/* out -- additional bytes needed for result */
 	__u32	elem_cnt;	/* out */
 	__u32	elem_missed;	/* out */
-	__u64	val[0];		/* out */
+	__u64	val[];		/* out */
 };
 
 struct btrfs_ioctl_ino_path_args {
@@ -516,13 +729,13 @@ struct btrfs_ioctl_ino_path_args {
 	/* struct btrfs_data_container	*fspath;	   out */
 	__u64				fspath;		/* out */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_ino_path_args) == 56);
+_static_assert(sizeof(struct btrfs_ioctl_ino_path_args) == 56);
 
 struct btrfs_ioctl_logical_ino_args {
 	__u64				logical;	/* in */
 	__u64				size;		/* in */
-	__u64				reserved[3];
-	__u64				flags;		/* in */
+	__u64				reserved[3];	/* must be 0 for now */
+	__u64				flags;		/* in, v2 only */
 	/* struct btrfs_data_container	*inodes;	out   */
 	__u64				inodes;
 };
@@ -531,7 +744,7 @@ struct btrfs_ioctl_logical_ino_args {
  * Return every ref to the extent, not just those containing logical block.
  * Requires logical == extent bytenr.
  */
-#define BTRFS_LOGICAL_INO_ARGS_IGNORE_OFFSET    (1ULL << 0)
+#define BTRFS_LOGICAL_INO_ARGS_IGNORE_OFFSET	(1ULL << 0)
 
 enum btrfs_dev_stat_values {
 	/* disk I/O failure stats */
@@ -563,26 +776,30 @@ struct btrfs_ioctl_get_dev_stats {
 	/* out values: */
 	__u64 values[BTRFS_DEV_STAT_VALUES_MAX];
 
-	__u64 unused[128 - 2 - BTRFS_DEV_STAT_VALUES_MAX]; /* pad to 1k + 8B */
+	/*
+	 * This pads the struct to 1032 bytes. It was originally meant to pad to
+	 * 1024 bytes, but when adding the flags field, the padding calculation
+	 * was not adjusted.
+	 */
+	__u64 unused[128 - 2 - BTRFS_DEV_STAT_VALUES_MAX];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_get_dev_stats) == 1032);
+_static_assert(sizeof(struct btrfs_ioctl_get_dev_stats) == 1032);
 
-/* BTRFS_IOC_SNAP_CREATE is no longer used by the btrfs command */
 #define BTRFS_QUOTA_CTL_ENABLE	1
 #define BTRFS_QUOTA_CTL_DISABLE	2
-/* 3 has formerly been reserved for BTRFS_QUOTA_CTL_RESCAN */
+#define BTRFS_QUOTA_CTL_RESCAN__NOTUSED	3
 struct btrfs_ioctl_quota_ctl_args {
 	__u64 cmd;
 	__u64 status;
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_quota_ctl_args) == 16);
+_static_assert(sizeof(struct btrfs_ioctl_quota_ctl_args) == 16);
 
 struct btrfs_ioctl_quota_rescan_args {
 	__u64	flags;
 	__u64   progress;
 	__u64   reserved[6];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_quota_rescan_args) == 64);
+_static_assert(sizeof(struct btrfs_ioctl_quota_rescan_args) == 64);
 
 struct btrfs_ioctl_qgroup_assign_args {
 	__u64 assign;
@@ -594,7 +811,7 @@ struct btrfs_ioctl_qgroup_create_args {
 	__u64 create;
 	__u64 qgroupid;
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_qgroup_create_args) == 16);
+_static_assert(sizeof(struct btrfs_ioctl_qgroup_create_args) == 16);
 
 struct btrfs_ioctl_timespec {
 	__u64 sec;
@@ -610,7 +827,7 @@ struct btrfs_ioctl_received_subvol_args {
 	__u64	flags;			/* in */
 	__u64	reserved[16];		/* in */
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_received_subvol_args) == 200);
+_static_assert(sizeof(struct btrfs_ioctl_received_subvol_args) == 200);
 
 /*
  * If we have a 32-bit userspace and 64-bit kernel, then the UAPI
@@ -640,7 +857,7 @@ struct btrfs_ioctl_received_subvol_args_32 {
 	__u64	flags;			/* in */
 	__u64	reserved[16];		/* in */
 } __attribute__ ((__packed__));
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_received_subvol_args_32) == 192);
+_static_assert(sizeof(struct btrfs_ioctl_received_subvol_args_32) == 192);
 
 #define BTRFS_IOC_SET_RECEIVED_SUBVOL_32_COMPAT_DEFINED 1
 
@@ -690,13 +907,14 @@ struct btrfs_ioctl_send_args {
 	__u64 parent_root;		/* in */
 	__u64 flags;			/* in */
 	__u32 version;			/* in */
-	__u8 reserved[28];		/* in */
+	__u8  reserved[28];		/* in */
 };
+
 /*
  * Size of structure depends on pointer width, was not caught in the early
  * days.  Kernel handles pointer width differences transparently.
  */
-BUILD_ASSERT(sizeof(__u64 *) == 8
+_static_assert(sizeof(__u64 *) == 8
 	     ? sizeof(struct btrfs_ioctl_send_args) == 72
 	     : (sizeof(void *) == 4
 		? sizeof(struct btrfs_ioctl_send_args) == 68
@@ -720,7 +938,7 @@ struct btrfs_ioctl_send_args_64 {
 	__u64 flags;			/* in */
 	__u64 reserved[4];		/* in */
 } __attribute__((packed));
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_send_args_64) == 72);
+_static_assert(sizeof(struct btrfs_ioctl_send_args_64) == 72);
 
 #define BTRFS_IOC_SEND_64_COMPAT_DEFINED 1
 
@@ -784,7 +1002,7 @@ struct btrfs_ioctl_get_subvol_info_args {
 	__u64 reserved[8];
 };
 
-#define BTRFS_MAX_ROOTREF_BUFFER_NUM			255
+#define BTRFS_MAX_ROOTREF_BUFFER_NUM 255
 struct btrfs_ioctl_get_subvol_rootref_args {
 	/* in/out, minimum id of rootref's treeid to be searched */
 	__u64 min_treeid;
@@ -799,7 +1017,7 @@ struct btrfs_ioctl_get_subvol_rootref_args {
 	__u8 num_items;
 	__u8 align[7];
 };
-BUILD_ASSERT(sizeof(struct btrfs_ioctl_get_subvol_rootref_args) == 4096);
+_static_assert(sizeof(struct btrfs_ioctl_get_subvol_rootref_args) == 4096);
 
 /*
  * Data and metadata for an encoded read or write.
@@ -931,8 +1149,7 @@ struct btrfs_ioctl_encoded_io_args {
 
 /* Error codes as returned by the kernel */
 enum btrfs_err_code {
-	notused,
-	BTRFS_ERROR_DEV_RAID1_MIN_NOT_MET,
+	BTRFS_ERROR_DEV_RAID1_MIN_NOT_MET = 1,
 	BTRFS_ERROR_DEV_RAID10_MIN_NOT_MET,
 	BTRFS_ERROR_DEV_RAID5_MIN_NOT_MET,
 	BTRFS_ERROR_DEV_RAID6_MIN_NOT_MET,
@@ -997,14 +1214,14 @@ enum btrfs_err_code {
 #define BTRFS_IOC_SUBVOL_GETFLAGS _IOR(BTRFS_IOCTL_MAGIC, 25, __u64)
 #define BTRFS_IOC_SUBVOL_SETFLAGS _IOW(BTRFS_IOCTL_MAGIC, 26, __u64)
 #define BTRFS_IOC_SCRUB _IOWR(BTRFS_IOCTL_MAGIC, 27, \
-				struct btrfs_ioctl_scrub_args)
+			      struct btrfs_ioctl_scrub_args)
 #define BTRFS_IOC_SCRUB_CANCEL _IO(BTRFS_IOCTL_MAGIC, 28)
 #define BTRFS_IOC_SCRUB_PROGRESS _IOWR(BTRFS_IOCTL_MAGIC, 29, \
-					struct btrfs_ioctl_scrub_args)
+				       struct btrfs_ioctl_scrub_args)
 #define BTRFS_IOC_DEV_INFO _IOWR(BTRFS_IOCTL_MAGIC, 30, \
-					struct btrfs_ioctl_dev_info_args)
+				 struct btrfs_ioctl_dev_info_args)
 #define BTRFS_IOC_FS_INFO _IOR(BTRFS_IOCTL_MAGIC, 31, \
-                                 struct btrfs_ioctl_fs_info_args)
+			       struct btrfs_ioctl_fs_info_args)
 #define BTRFS_IOC_BALANCE_V2 _IOWR(BTRFS_IOCTL_MAGIC, 32, \
 				   struct btrfs_ioctl_balance_args)
 #define BTRFS_IOC_BALANCE_CTL _IOW(BTRFS_IOCTL_MAGIC, 33, int)
@@ -1031,22 +1248,30 @@ enum btrfs_err_code {
 #define BTRFS_IOC_DEVICES_READY _IOR(BTRFS_IOCTL_MAGIC, 39, \
 				     struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_QUOTA_CTL _IOWR(BTRFS_IOCTL_MAGIC, 40, \
-					struct btrfs_ioctl_quota_ctl_args)
+			       struct btrfs_ioctl_quota_ctl_args)
 #define BTRFS_IOC_QGROUP_ASSIGN _IOW(BTRFS_IOCTL_MAGIC, 41, \
-					struct btrfs_ioctl_qgroup_assign_args)
+			       struct btrfs_ioctl_qgroup_assign_args)
 #define BTRFS_IOC_QGROUP_CREATE _IOW(BTRFS_IOCTL_MAGIC, 42, \
-					struct btrfs_ioctl_qgroup_create_args)
+			       struct btrfs_ioctl_qgroup_create_args)
 #define BTRFS_IOC_QGROUP_LIMIT _IOR(BTRFS_IOCTL_MAGIC, 43, \
-					struct btrfs_ioctl_qgroup_limit_args)
+			       struct btrfs_ioctl_qgroup_limit_args)
 #define BTRFS_IOC_QUOTA_RESCAN _IOW(BTRFS_IOCTL_MAGIC, 44, \
 			       struct btrfs_ioctl_quota_rescan_args)
 #define BTRFS_IOC_QUOTA_RESCAN_STATUS _IOR(BTRFS_IOCTL_MAGIC, 45, \
 			       struct btrfs_ioctl_quota_rescan_args)
 #define BTRFS_IOC_QUOTA_RESCAN_WAIT _IO(BTRFS_IOCTL_MAGIC, 46)
+#ifndef FS_IOC_GETFSLABEL
 #define BTRFS_IOC_GET_FSLABEL _IOR(BTRFS_IOCTL_MAGIC, 49, \
 				   char[BTRFS_LABEL_SIZE])
+#else
+#define BTRFS_IOC_GET_FSLABEL 	FS_IOC_GETFSLABEL
+#endif
+#ifndef FS_IOC_SETFSLABEL
 #define BTRFS_IOC_SET_FSLABEL _IOW(BTRFS_IOCTL_MAGIC, 50, \
 				   char[BTRFS_LABEL_SIZE])
+#else
+#define BTRFS_IOC_SET_FSLABEL	FS_IOC_SETFSLABEL
+#endif
 #define BTRFS_IOC_GET_DEV_STATS _IOWR(BTRFS_IOCTL_MAGIC, 52, \
 				      struct btrfs_ioctl_get_dev_stats)
 #define BTRFS_IOC_DEV_REPLACE _IOWR(BTRFS_IOCTL_MAGIC, 53, \
@@ -1054,15 +1279,15 @@ enum btrfs_err_code {
 #define BTRFS_IOC_FILE_EXTENT_SAME _IOWR(BTRFS_IOCTL_MAGIC, 54, \
 					 struct btrfs_ioctl_same_args)
 #define BTRFS_IOC_GET_FEATURES _IOR(BTRFS_IOCTL_MAGIC, 57, \
-                                  struct btrfs_ioctl_feature_flags)
+				   struct btrfs_ioctl_feature_flags)
 #define BTRFS_IOC_SET_FEATURES _IOW(BTRFS_IOCTL_MAGIC, 57, \
-                                  struct btrfs_ioctl_feature_flags[2])
+				   struct btrfs_ioctl_feature_flags[2])
 #define BTRFS_IOC_GET_SUPPORTED_FEATURES _IOR(BTRFS_IOCTL_MAGIC, 57, \
-                                  struct btrfs_ioctl_feature_flags[3])
-#define BTRFS_IOC_RM_DEV_V2	_IOW(BTRFS_IOCTL_MAGIC, 58, \
+				   struct btrfs_ioctl_feature_flags[3])
+#define BTRFS_IOC_RM_DEV_V2 _IOW(BTRFS_IOCTL_MAGIC, 58, \
 				   struct btrfs_ioctl_vol_args_v2)
 #define BTRFS_IOC_LOGICAL_INO_V2 _IOWR(BTRFS_IOCTL_MAGIC, 59, \
-                                     struct btrfs_ioctl_logical_ino_args)
+					struct btrfs_ioctl_logical_ino_args)
 #define BTRFS_IOC_GET_SUBVOL_INFO _IOR(BTRFS_IOCTL_MAGIC, 60, \
 				struct btrfs_ioctl_get_subvol_info_args)
 #define BTRFS_IOC_GET_SUBVOL_ROOTREF _IOWR(BTRFS_IOCTL_MAGIC, 61, \
@@ -1070,7 +1295,7 @@ enum btrfs_err_code {
 #define BTRFS_IOC_INO_LOOKUP_USER _IOWR(BTRFS_IOCTL_MAGIC, 62, \
 				struct btrfs_ioctl_ino_lookup_user_args)
 #define BTRFS_IOC_SNAP_DESTROY_V2 _IOW(BTRFS_IOCTL_MAGIC, 63, \
-				   struct btrfs_ioctl_vol_args_v2)
+				struct btrfs_ioctl_vol_args_v2)
 #define BTRFS_IOC_ENCODED_READ _IOR(BTRFS_IOCTL_MAGIC, 64, \
 				    struct btrfs_ioctl_encoded_io_args)
 #define BTRFS_IOC_ENCODED_WRITE _IOW(BTRFS_IOCTL_MAGIC, 64, \
@@ -1080,4 +1305,4 @@ enum btrfs_err_code {
 }
 #endif
 
-#endif
+#endif /* _UAPI_LINUX_BTRFS_H */

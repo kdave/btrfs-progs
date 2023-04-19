@@ -44,6 +44,7 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/messages.h"
@@ -55,7 +56,6 @@
 #include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "cmds/receive-dump.h"
-#include "ioctl.h"
 
 struct btrfs_receive
 {

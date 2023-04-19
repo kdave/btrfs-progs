@@ -29,9 +29,9 @@
 #include <ctype.h>
 #include <uuid/uuid.h>
 #include <gd.h>
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"
-#include "ioctl.h"
 
 static int use_color;
 static void

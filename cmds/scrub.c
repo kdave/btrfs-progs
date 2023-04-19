@@ -43,6 +43,7 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/volumes.h"
 #include "common/defs.h"
 #include "common/messages.h"
@@ -51,7 +52,6 @@
 #include "common/units.h"
 #include "common/help.h"
 #include "cmds/commands.h"
-#include "ioctl.h"
 
 static unsigned unit_mode = UNITS_DEFAULT;
 

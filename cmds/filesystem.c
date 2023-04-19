@@ -35,10 +35,11 @@
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
+#include "kernel-lib/list_sort.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
-#include "kernel-lib/list_sort.h"
 #include "kernel-shared/disk-io.h"
 #include "common/defs.h"
 #include "common/internal.h"
@@ -57,7 +58,6 @@
 #include "common/format-output.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
-#include "ioctl.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

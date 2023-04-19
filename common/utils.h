@@ -24,12 +24,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/fsfeatures.h"
-#include "ioctl.h"
 
 enum exclusive_operation {
 	BTRFS_EXCLOP_NONE,
