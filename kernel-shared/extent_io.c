@@ -651,3 +651,17 @@ void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *srcv)
 {
 	write_extent_buffer(eb, srcv, btrfs_header_fsid(), BTRFS_FSID_SIZE);
 }
+
+/*
+ * btrfs_readahead_node_child - readahead a node's child block
+ * @node:	parent node we're reading from
+ * @slot:	slot in the parent node for the child we want to read
+ *
+ * A helper for readahead_tree_block, we simply read the bytenr pointed at the
+ * slot in the node provided.
+ */
+void btrfs_readahead_node_child(struct extent_buffer *node, int slot)
+{
+	readahead_tree_block(node->fs_info, btrfs_node_blockptr(node, slot),
+			     btrfs_node_ptr_generation(node, slot));
+}

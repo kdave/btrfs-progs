@@ -137,5 +137,6 @@ void extent_buffer_bitmap_set(struct extent_buffer *eb, unsigned long start,
 void extent_buffer_init_cache(struct btrfs_fs_info *fs_info);
 void extent_buffer_free_cache(struct btrfs_fs_info *fs_info);
 void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *srcv);
+void btrfs_readahead_node_child(struct extent_buffer *node, int slot);
 
 #endif
