@@ -39,4 +39,8 @@
 #define max_t(type,x,y) \
 	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
 
+#define clamp_t(type, val, lo, hi) min_t(type, max_t(type, val, lo), hi)
+
+#define clamp_val(val, lo, hi) clamp_t(typeof(val), val, lo, hi)
+
 #endif

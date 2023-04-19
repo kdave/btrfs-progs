@@ -213,6 +213,28 @@ static inline int mutex_is_locked(struct mutex *m)
 	return (m->lock != 1);
 }
 
+static inline void spin_lock_init(spinlock_t *lock)
+{
+	lock->lock = 0;
+}
+
+static inline void spin_lock(spinlock_t *lock)
+{
+	lock->lock++;
+}
+
+static inline void spin_unlock(spinlock_t *lock)
+{
+	lock->lock--;
+}
+
+#define spin_lock_irqsave(_l, _f) do { _f = 0; spin_lock((_l)); } while (0)
+
+static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
+{
+	spin_unlock(lock);
+}
+
 #define cond_resched()		do { } while (0)
 #define preempt_enable()	do { } while (0)
 #define preempt_disable()	do { } while (0)
@@ -543,6 +565,9 @@ do {									\
 	(x) = (val);							\
 } while (0)
 
+#define smp_rmb() do {} while (0)
+#define smp_mb__before_atomic() do {} while (0)
+
 typedef struct refcount_struct {
 	int refs;
 } refcount_t;
@@ -551,8 +576,17 @@ typedef u32 blk_status_t;
 typedef u32 blk_opf_t;
 typedef int atomic_t;
 
-struct work_struct {
+struct work_struct;
+typedef void (*work_func_t)(struct work_struct *work);
+
+struct workqueue_struct {
 };
+
+struct work_struct {
+	work_func_t func;
+};
+
+#define INIT_WORK(_w, _f) do { (_w)->func = (_f); } while (0)
 
 typedef struct wait_queue_head_s {
 } wait_queue_head_t;
@@ -569,6 +603,7 @@ struct va_format {
 #define __init
 #define __cold
 #define __user
+#define __pure
 
 #define __printf(a, b)                  __attribute__((__format__(printf, a, b)))
 
@@ -578,5 +613,49 @@ static inline bool sb_rdonly(struct super_block *sb)
 }
 
 #define unlikely(cond) (cond)
+
+static inline void atomic_set(atomic_t *a, int val)
+{
+	*a = val;
+}
+
+static inline int atomic_read(const atomic_t *a)
+{
+	return *a;
+}
+
+static inline void atomic_inc(atomic_t *a)
+{
+	(*a)++;
+}
+
+static inline void atomic_dec(atomic_t *a)
+{
+	(*a)--;
+}
+
+static inline struct workqueue_struct *alloc_workqueue(const char *name,
+						       unsigned long flags,
+						       int max_active, ...)
+{
+	return (struct workqueue_struct *)5;
+}
+
+static inline void destroy_workqueue(struct workqueue_struct *wq)
+{
+}
+
+static inline void flush_workqueue(struct workqueue_struct *wq)
+{
+}
+
+static inline void workqueue_set_max_active(struct workqueue_struct *wq,
+					    int max_active)
+{
+}
+
+static inline void queue_work(struct workqueue_struct *wq, struct work_struct *work)
+{
+}
 
 #endif
