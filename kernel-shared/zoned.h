@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/messages.h"
 
 #ifdef BTRFS_ZONED
 #include <linux/blkzoned.h>

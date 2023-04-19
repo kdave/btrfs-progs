@@ -31,6 +31,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/messages.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
 #include "common/internal.h"

@@ -41,6 +41,21 @@
 #endif
 
 #ifndef BTRFS_DISABLE_BACKTRACE
+static inline void assert_trace(const char *assertion, const char *filename,
+				const char *func, unsigned line, long val)
+{
+	if (val)
+		return;
+	fprintf(stderr,
+		"%s:%d: %s: Assertion `%s` failed, value %ld\n",
+		filename, line, func, assertion, val);
+#ifndef BTRFS_DISABLE_BACKTRACE
+	print_trace();
+#endif
+	abort();
+	exit(1);
+}
+
 #define	UASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #else
 #define UASSERT(c) assert(c)
@@ -117,6 +132,9 @@
 
 __attribute__ ((format (printf, 1, 2)))
 void __btrfs_printf(const char *fmt, ...);
+
+__attribute__ ((format (printf, 2, 3)))
+void btrfs_no_printk(const void *fs_info, const char *fmt, ...);
 
 /*
  * Level of messages that must be printed by default (in case the verbosity

@@ -22,6 +22,7 @@
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/messages.h"
 #include "kernel-lib/bitops.h"
 #include "common/internal.h"
 

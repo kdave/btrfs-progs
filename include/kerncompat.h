@@ -36,6 +36,7 @@
 #include <linux/const.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <features.h>
 
 /*
@@ -320,6 +321,12 @@ static inline int IS_ERR_OR_NULL(const void *ptr)
 #define printk(fmt, args...) fprintf(stderr, fmt, ##args)
 #define	KERN_CRIT	""
 #define KERN_ERR	""
+#define KERN_EMERG	""
+#define KERN_ALERT	""
+#define KERN_CRIT	""
+#define KERN_NOTICE	""
+#define KERN_INFO	""
+#define KERN_WARNING	""
 
 /*
  * kmalloc/kfree
@@ -334,26 +341,6 @@ static inline int IS_ERR_OR_NULL(const void *ptr)
 #define kvfree(x) free(x)
 #define memalloc_nofs_save() (0)
 #define memalloc_nofs_restore(x)	((void)(x))
-
-#ifndef BTRFS_DISABLE_BACKTRACE
-static inline void assert_trace(const char *assertion, const char *filename,
-			      const char *func, unsigned line, long val)
-{
-	if (val)
-		return;
-	fprintf(stderr,
-		"%s:%d: %s: Assertion `%s` failed, value %ld\n",
-		filename, line, func, assertion, val);
-#ifndef BTRFS_DISABLE_BACKTRACE
-	print_trace();
-#endif
-	abort();
-	exit(1);
-}
-#define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#else
-#define ASSERT(c) assert(c)
-#endif
 
 #define BUG_ON(c) bugon_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #define BUG()				\
@@ -574,8 +561,24 @@ struct work_struct {
 typedef struct wait_queue_head_s {
 } wait_queue_head_t;
 
+struct super_block {
+	char *s_id;
+};
+
+struct va_format {
+	const char *fmt;
+	va_list *va;
+};
+
 #define __init
 #define __cold
 #define __user
+
+#define __printf(a, b)                  __attribute__((__format__(printf, a, b)))
+
+static inline bool sb_rdonly(struct super_block *sb)
+{
+	return false;
+}
 
 #endif

@@ -377,6 +377,8 @@ struct btrfs_fs_info {
 		u64 zone_size;
 		u64 zoned;
 	};
+
+	struct super_block *sb;
 };
 
 static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)

@@ -21,6 +21,7 @@
 #include "kerncompat.h"
 #include "ulist.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/messages.h"
 
 /*
  * ulist is a generic data structure to hold a collection of unique u64

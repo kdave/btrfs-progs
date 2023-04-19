@@ -20,6 +20,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/delayed-ref.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/messages.h"
 
 /*
  * delayed back reference update tracking.  For subvolume trees

@@ -35,6 +35,17 @@ void __btrfs_printf(const char *fmt, ...)
 	va_end(args);
 }
 
+__attribute__ ((format (printf, 2, 3)))
+void btrfs_no_printk(const void *fs_info, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fputc('\n', stderr);
+}
+
 static bool should_print(int level)
 {
 	if (bconf.verbose == BTRFS_BCONF_QUIET || level == BTRFS_BCONF_QUIET)
