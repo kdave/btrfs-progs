@@ -389,6 +389,68 @@ static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)
 }
 
 /*
+ * The state of btrfs root
+ */
+enum {
+	/*
+	 * btrfs_record_root_in_trans is a multi-step process, and it can race
+	 * with the balancing code.   But the race is very small, and only the
+	 * first time the root is added to each transaction.  So IN_TRANS_SETUP
+	 * is used to tell us when more checks are required
+	 */
+	BTRFS_ROOT_IN_TRANS_SETUP,
+
+	/*
+	 * Set if tree blocks of this root can be shared by other roots.
+	 * Only subvolume trees and their reloc trees have this bit set.
+	 * Conflicts with TRACK_DIRTY bit.
+	 *
+	 * This affects two things:
+	 *
+	 * - How balance works
+	 *   For shareable roots, we need to use reloc tree and do path
+	 *   replacement for balance, and need various pre/post hooks for
+	 *   snapshot creation to handle them.
+	 *
+	 *   While for non-shareable trees, we just simply do a tree search
+	 *   with COW.
+	 *
+	 * - How dirty roots are tracked
+	 *   For shareable roots, btrfs_record_root_in_trans() is needed to
+	 *   track them, while non-subvolume roots have TRACK_DIRTY bit, they
+	 *   don't need to set this manually.
+	 */
+	BTRFS_ROOT_SHAREABLE,
+	BTRFS_ROOT_TRACK_DIRTY,
+	BTRFS_ROOT_IN_RADIX,
+	BTRFS_ROOT_ORPHAN_ITEM_INSERTED,
+	BTRFS_ROOT_DEFRAG_RUNNING,
+	BTRFS_ROOT_FORCE_COW,
+	BTRFS_ROOT_MULTI_LOG_TASKS,
+	BTRFS_ROOT_DIRTY,
+	BTRFS_ROOT_DELETING,
+
+	/*
+	 * Reloc tree is orphan, only kept here for qgroup delayed subtree scan
+	 *
+	 * Set for the subvolume tree owning the reloc tree.
+	 */
+	BTRFS_ROOT_DEAD_RELOC_TREE,
+	/* Mark dead root stored on device whose cleanup needs to be resumed */
+	BTRFS_ROOT_DEAD_TREE,
+	/* The root has a log tree. Used for subvolume roots and the tree root. */
+	BTRFS_ROOT_HAS_LOG_TREE,
+	/* Qgroup flushing is in progress */
+	BTRFS_ROOT_QGROUP_FLUSHING,
+	/* We started the orphan cleanup for this root. */
+	BTRFS_ROOT_ORPHAN_CLEANUP,
+	/* This root has a drop operation that was started previously. */
+	BTRFS_ROOT_UNFINISHED_DROP,
+	/* This reloc root needs to have its buffers lockdep class reset. */
+	BTRFS_ROOT_RESET_LOCKDEP_CLASS,
+};
+
+/*
  * in ram representation of the tree.  extent_root is used for all allocations
  * and for the extent tree extent_root root.
  */
@@ -401,9 +463,7 @@ struct btrfs_root {
 	u64 objectid;
 	u64 last_trans;
 
-	int ref_cows;
-	int track_dirty;
-
+	unsigned long state;
 
 	u32 type;
 	u64 last_inode_alloc;

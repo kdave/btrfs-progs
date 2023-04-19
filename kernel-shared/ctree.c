@@ -20,6 +20,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
+#include "kernel-lib/bitops.h"
 #include "crypto/crc32c.h"
 #include "common/internal.h"
 #include "common/messages.h"
@@ -119,7 +120,8 @@ void btrfs_release_path(struct btrfs_path *p)
 
 void add_root_to_dirty_list(struct btrfs_root *root)
 {
-	if (root->track_dirty && list_empty(&root->dirty_list)) {
+	if (test_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state) &&
+	    list_empty(&root->dirty_list)) {
 		list_add(&root->dirty_list,
 			 &root->fs_info->dirty_cowonly_roots);
 	}
@@ -155,9 +157,10 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 	memcpy(new_root, root, sizeof(*new_root));
 	new_root->root_key.objectid = new_root_objectid;
 
-	WARN_ON(root->ref_cows && trans->transid !=
-		root->fs_info->running_transaction->transid);
-	WARN_ON(root->ref_cows && trans->transid != root->last_trans);
+	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
+		trans->transid != root->fs_info->running_transaction->transid);
+	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
+		trans->transid != root->last_trans);
 
 	level = btrfs_header_level(buf);
 	if (level == 0)
@@ -219,7 +222,7 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 
 	btrfs_setup_root(new_root, fs_info, objectid);
 	if (!is_fstree(objectid))
-		new_root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &new_root->state);
 	add_root_to_dirty_list(new_root);
 
 	new_root->objectid = objectid;
@@ -332,7 +335,7 @@ static int btrfs_block_can_be_shared(struct btrfs_root *root,
 	 * snapshot and the block was not allocated by tree relocation,
 	 * we know the block is not shared.
 	 */
-	if (root->ref_cows &&
+	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
 	    buf != root->node && buf != root->commit_root &&
 	    (btrfs_header_generation(buf) <=
 	     btrfs_root_last_snapshot(&root->root_item) ||
@@ -446,9 +449,10 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 	struct btrfs_disk_key disk_key;
 	int level;
 
-	WARN_ON(root->ref_cows && trans->transid !=
-		root->fs_info->running_transaction->transid);
-	WARN_ON(root->ref_cows && trans->transid != root->last_trans);
+	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
+		trans->transid != root->fs_info->running_transaction->transid);
+	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
+		trans->transid != root->last_trans);
 
 	level = btrfs_header_level(buf);
 

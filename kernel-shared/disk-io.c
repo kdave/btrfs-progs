@@ -32,6 +32,7 @@
 #include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "kernel-shared/print-tree.h"
+#include "kernel-lib/bitops.h"
 #include "common/rbtree-utils.h"
 #include "common/device-scan.h"
 #include "common/device-utils.h"
@@ -491,8 +492,7 @@ void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 {
 	root->node = NULL;
 	root->commit_root = NULL;
-	root->ref_cows = 0;
-	root->track_dirty = 0;
+	root->state = 0;
 
 	root->fs_info = fs_info;
 	root->objectid = objectid;
@@ -654,9 +654,9 @@ out:
 	}
 insert:
 	if (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID)
-		root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 	if (is_fstree(root->root_key.objectid))
-		root->ref_cows = 1;
+		set_bit(BTRFS_ROOT_SHAREABLE, &root->state);
 	return root;
 }
 
@@ -1062,7 +1062,7 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 			free(root);
 			break;
 		}
-		root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 
 		ret = btrfs_global_root_insert(fs_info, root);
 		if (ret) {
@@ -1099,7 +1099,7 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 			root->root_key.objectid = objectid;
 			root->root_key.type = BTRFS_ROOT_ITEM_KEY;
 			root->root_key.offset = i;
-			root->track_dirty = 1;
+			set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 			root->node = btrfs_find_create_tree_block(fs_info, 0);
 			if (!root->node) {
 				free(root);
@@ -1232,7 +1232,8 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			error("couldn't load block group tree");
 			return -EIO;
 		}
-		fs_info->block_group_root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY,
+			&fs_info->block_group_root->state);
 	}
 
 	ret = btrfs_find_and_setup_root(root, fs_info,
@@ -1242,7 +1243,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		printk("Couldn't setup device tree\n");
 		return -EIO;
 	}
-	fs_info->dev_root->track_dirty = 1;
+	set_bit(BTRFS_ROOT_TRACK_DIRTY, &fs_info->dev_root->state);
 
 	ret = btrfs_find_and_setup_root(root, fs_info,
 					BTRFS_UUID_TREE_OBJECTID,
@@ -1251,7 +1252,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		free(fs_info->uuid_root);
 		fs_info->uuid_root = NULL;
 	} else {
-		fs_info->uuid_root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &fs_info->uuid_root->state);
 	}
 
 	ret = btrfs_find_and_setup_root(root, fs_info,
@@ -2355,7 +2356,7 @@ struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 
 	extent_buffer_get(root->node);
 	root->commit_root = root->node;
-	root->track_dirty = 1;
+	set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 
 	root->root_item.flags = 0;
 	root->root_item.byte_limit = 0;

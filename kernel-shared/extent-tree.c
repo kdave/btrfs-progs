@@ -1470,7 +1470,7 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 	nritems = btrfs_header_nritems(buf);
 	level = btrfs_header_level(buf);
 
-	if (!root->ref_cows && level == 0)
+	if (!test_bit(BTRFS_ROOT_SHAREABLE, &root->state) && level == 0)
 		return 0;
 
 	if (inc)
@@ -2358,11 +2358,11 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	}
 
 	/*
-	 * Also preallocate metadata for csum tree and fs trees (root->ref_cows
-	 * already set), as they can consume a lot of metadata space.
-	 * Pre-allocate to avoid unexpected ENOSPC.
+	 * Also preallocate metadata for csum tree and fs trees
+	 * (BTRFS_ROOT_SHAREABLE already set) as they can consume a lot of
+	 * metadata space.  Pre-allocate to avoid unexpected ENOSPC.
 	 */
-	if (root->ref_cows ||
+	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) ||
 	    root->root_key.objectid == BTRFS_CSUM_TREE_OBJECTID) {
 		if (!(profile & BTRFS_BLOCK_GROUP_METADATA)) {
 			ret = do_chunk_alloc(trans, info,

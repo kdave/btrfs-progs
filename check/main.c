@@ -31,6 +31,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-lib/bitops.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
@@ -467,7 +468,7 @@ static void record_root_in_trans(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root)
 {
 	if (root->last_trans != trans->transid) {
-		root->track_dirty = 1;
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 		root->last_trans = trans->transid;
 		root->commit_root = root->node;
 		extent_buffer_get(root->node);
