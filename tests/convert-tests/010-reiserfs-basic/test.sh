@@ -13,7 +13,9 @@ check_global_prereq mkreiserfs
 setup_root_helper
 prepare_test_dev
 
-for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
+# Iterate over defaults and options that are not tied to hardware capabilities
+# or number of devices
+for feature in '' 'block-group-tree' ; do
 	convert_test reiserfs "$feature" "reiserfs 4k nodesize" 4096 mkreiserfs -b 4096
 	convert_test reiserfs "$feature" "reiserfs 8k nodesize" 8192 mkreiserfs -b 4096
 	convert_test reiserfs "$feature" "reiserfs 16k nodesize" 16384 mkreiserfs -b 4096
