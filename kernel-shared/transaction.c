@@ -161,7 +161,7 @@ again:
 				goto cleanup;
 			}
 			start += eb->len;
-			clear_extent_buffer_dirty(eb);
+			btrfs_clear_buffer_dirty(eb);
 			free_extent_buffer(eb);
 		}
 	}
@@ -184,7 +184,7 @@ cleanup:
 			eb = find_first_extent_buffer(fs_info, start);
 			BUG_ON(!eb || eb->start != start);
 			start += eb->len;
-			clear_extent_buffer_dirty(eb);
+			btrfs_clear_buffer_dirty(eb);
 			free_extent_buffer(eb);
 		}
 	}

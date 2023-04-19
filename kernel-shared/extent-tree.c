@@ -1901,7 +1901,7 @@ static int pin_down_bytes(struct btrfs_trans_handle *trans, u64 bytenr,
 		if (header_owner != BTRFS_TREE_LOG_OBJECTID &&
 		    header_transid == trans->transid &&
 		    !btrfs_header_flag(buf, BTRFS_HEADER_FLAG_WRITTEN)) {
-			clean_tree_block(buf);
+			btrfs_clear_buffer_dirty(buf);
 			free_extent_buffer(buf);
 			return 1;
 		}

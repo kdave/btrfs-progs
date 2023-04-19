@@ -579,7 +579,7 @@ int set_extent_buffer_dirty(struct extent_buffer *eb)
 	return 0;
 }
 
-int clear_extent_buffer_dirty(struct extent_buffer *eb)
+int btrfs_clear_buffer_dirty(struct extent_buffer *eb)
 {
 	struct extent_io_tree *tree = &eb->fs_info->dirty_buffers;
 	if (eb->flags & EXTENT_BUFFER_DIRTY) {

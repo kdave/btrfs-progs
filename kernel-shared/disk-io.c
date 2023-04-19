@@ -2255,11 +2255,6 @@ skip_commit:
 	return err;
 }
 
-int clean_tree_block(struct extent_buffer *eb)
-{
-	return clear_extent_buffer_dirty(eb);
-}
-
 void btrfs_mark_buffer_dirty(struct extent_buffer *eb)
 {
 	set_extent_buffer_dirty(eb);
@@ -2303,7 +2298,7 @@ int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 		return ret;
 
 	list_del(&root->dirty_list);
-	ret = clean_tree_block(root->node);
+	ret = btrfs_clear_buffer_dirty(root->node);
 	if (ret)
 		return ret;
 	ret = btrfs_free_tree_block(trans, root, root->node, 0, 1);
