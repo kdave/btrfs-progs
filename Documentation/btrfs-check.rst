@@ -104,7 +104,7 @@ DANGEROUS OPTIONS
         .. note::
                 There's a warning and 10 second delay when this option is run without
                 *--force* to give users a chance to think twice before running repair, the
-                warnings in documentation have shown to be insufficient
+                warnings in documentation have shown to be insufficient.
 
 --init-csum-tree
         create a new checksum tree and recalculate checksums in all files
@@ -137,10 +137,15 @@ DANGEROUS OPTIONS
                 experimental.
 
 --force
-        allow work on a mounted filesystem. Note that this should work fine on a
-        quiescent or read-only mounted filesystem but may crash if the device is
-        changed externally, e.g. by the kernel module.  Repair without mount checks is
-        not supported right now.
+        allow work on a mounted filesystem and skip mount checks. Note that
+        this should work fine on a quiescent or read-only mounted filesystem
+        but may crash if the device is changed externally, e.g. by the kernel
+        module.
+
+        .. note::
+		It is possible to run with --repair but on a mounted filesystem
+                that will most likely lead to a corruption unless the filesystem
+                is in a quiescent state which may not be possible to guarantee.
 
         This option also skips the delay and warning in the repair mode (see
         *--repair*).

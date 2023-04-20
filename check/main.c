@@ -9959,7 +9959,10 @@ static const char * const cmd_check_usage[] = {
 	"Operation modes:",
 	OPTLINE("--readonly", "run in read-only mode (default)"),
 	OPTLINE("--repair", "try to repair the filesystem"),
-	OPTLINE("--force", "skip mount checks, repair is not possible"),
+	OPTLINE("--force", "skip mount checks, recommended only with --readonly; "
+			"WARNING: it is possible to run with --repair but on a mounted filesystem "
+			"that will most likely lead to a corruption unless the filesystem "
+			"is quiescent in a quiescent state which may not be possible to guarantee"),
 	OPTLINE("--mode <MODE>", "allows choice of memory/IO trade-offs where MODE is one of:"),
 	OPTLINE("", "original - read inodes and extents to memory (requires more memory, does less IO)"),
 	OPTLINE("", "lowmem   - try to use less memory but read blocks again when needed (experimental)"),
@@ -10147,7 +10150,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		printf("WARNING:\n\n");
 		printf("\tDo not use --repair unless you are advised to do so by a developer\n");
 		printf("\tor an experienced user, and then only after having accepted that no\n");
-		printf("\tfsck can successfully repair all types of filesystem corruption. Eg.\n");
+		printf("\tfsck can successfully repair all types of filesystem corruption. E.g.\n");
 		printf("\tsome software or hardware bugs can fatally damage a volume.\n");
 		printf("\tThe operation will start in %d seconds.\n", delay);
 		printf("\tUse Ctrl-C to stop it.\n");
