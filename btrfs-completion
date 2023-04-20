@@ -103,7 +103,7 @@ _btrfs()
 		case $cmd in
 			filesystem)
 				case $prev in
-					defragment)
+					du|defragment)
 						_filedir
 						return 0
 						;;
