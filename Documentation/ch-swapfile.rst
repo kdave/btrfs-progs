@@ -1,13 +1,16 @@
 A swapfile is file-backed memory that the system uses to temporarily offload
-the RAM.  It is supported since kernel 5.0. Use ``swapon(8)`` to activate the
-swapfile. There are some limitations of the implementation in BTRFS and Linux
-swap subsystem:
+the RAM.  It is supported since kernel 5.0. Use ``swapon(8)`` to activate it as
+a swap area, until then it's just a normal file (with NODATACOW set), for which
+the special restrictions for active swapfile areas don't apply.
+
+There are some limitations of the implementation in BTRFS and Linux swap
+subsystem:
 
 * filesystem - must be only single device
 * filesystem - must have only *single* data profile
-* swapfile - the containing subvolume cannot be snapshotted
-* swapfile - must be preallocated (i.e. no holes)
-* swapfile - must be NODATACOW (i.e. also NODATASUM, no compression)
+* swapfile - the containing subvolume cannot be snapshotted if there's an active swapfile
+* swapfile - the file must be preallocated (i.e. no holes)
+* swapfile - the file must be NODATACOW (i.e. also NODATASUM, no compression)
 
 The limitations come namely from the COW-based design and mapping layer of
 blocks that allows the advanced features like relocation and multi-device
@@ -18,12 +21,14 @@ swap.
 With active swapfiles, the following whole-filesystem operations will skip
 swapfile extents or may fail:
 
-* balance - block groups with swapfile extents are skipped and reported, the
-  rest will be processed normally
+* balance - block groups with an active swapfile extents are skipped and
+  reported, the rest will be processed normally
 * resize grow - unaffected
-* resize shrink - works as long as the extents are outside of the shrunk range
-* device add - a new device does not interfere with existing swapfile and this
-  operation will work, though no new swapfile can be activated afterwards
+* resize shrink - works as long as the extents of an active swapfile are
+  outside of the shrunk range
+* device add - a new device does not interfere with existing active swapfile
+  and this operation will work, though no new swapfile can be activated
+  afterwards
 * device delete - if the device has been added as above, it can be also deleted
 * device replace - ditto
 
@@ -54,7 +59,7 @@ Please note that the UUID returned by the *mkswap* utility identifies the swap
 "filesystem" and because it's stored in a file, it's not generally visible and
 usable as an identifier unlike if it was on a block device.
 
-The file will appear in */proc/swaps*:
+Once activated the file will appear in */proc/swaps*:
 
 .. code-block:: none
 
@@ -72,6 +77,16 @@ priority, not the BTRFS mount options).
 .. code-block:: none
 
         /path/swapfile        none        swap        defaults      0 0
+
+From now on the subvolume with the active swapfile cannot be snapshotted until
+the swapfile is deactivated again by ``swapoff``. Then the swapfile is a
+regular file and the subvolume can be snapshotted again, though this would prevent
+another activation any swapfile that has been snapshotted. New swapfiles (not
+snapshotted) can be created and activated.
+
+Otherwise, an inactive swapfile does not affect the containing subvolume. Activation
+creates a temporary in-memory status and prevents some file operations, but is
+not stored permanently.
 
 Hibernation
 -----------
