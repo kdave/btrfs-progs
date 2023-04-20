@@ -42,7 +42,7 @@ This is inherently incompatible with some features:
 
 Initial support lacks some features but they're planned:
 
-* only single profile is supported
+* only single (data, metadata) and DUP (metadata) profile is supported
 * fstrim - due to dependency on free space cache v1
 
 Super block
@@ -64,3 +64,122 @@ devices is expected to be large, tens of terabytes. Maximum zone size supported
 is 8GiB, which would mean that e.g. offset 0-16GiB would be reserved just for
 the super block on a hypothetical device of that zone size. This is wasteful
 but required to guarantee crash safety.
+
+Devices
+^^^^^^^
+
+Real hardware
+"""""""""""""
+
+The WD Ultrastar series 600 advertises HM-SMR, i.e. the host-managed zoned
+mode. There are two more: DA (device managed, no zoned information exported to
+the system), HA (host aware, can be used as regular disk but zoned writes
+improve performance). There are not many devices available at the moment, the
+information about exact zoned mode is hard to find, check data sheets or
+community sources gathering information from real devices.
+
+Note: zoned mode won't work with DM-SMR disks.
+
+-  Ultrastar® DC ZN540 NVMe ZNS SSD (`product
+   brief <https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/product-brief/product-brief-ultrastar-dc-zn540.pdf>`__)
+
+Emulated: null_blk
+""""""""""""""""""
+
+The driver *null_blk* provides memory backed device and is suitable for
+testing. There are some quirks setting up the devices. The module must be
+loaded with *nr_devices=0* or the numbering of device nodes will be offset. The
+*configfs* must be mounted at */sys/kernel/config* and the administration of
+the null_blk devices is done in */sys/kernel/config/nullb*. The device nodes
+are named like */dev/nullb0* and are numbered sequentially. NOTE: the device
+name may be different than the named directory in sysfs!
+
+Setup:
+
+.. code-block:: bash
+
+   modprobe configfs
+   modprobe null_blk nr_devices=0
+
+Create a device *mydev*, assuming no other previously created devices, size is
+2048MiB, zone size 256MiB. There are more tunable parameters, this is a minimal
+example taking defaults:
+
+.. code-block:: bash
+
+        cd /sys/kernel/config/nullb/
+        mkdir mydev
+        cd mydev
+        echo 2048 > size
+        echo 1 > zoned
+        echo 1 > memory_backed
+        echo 256 > zone_size
+        echo 1 > power
+
+This will create a device */dev/nullb0* and the value of file *index* will
+match the ending number of the device node.
+
+Remove the device:
+
+.. code-block:: bash
+
+   rmdir /sys/kernel/config/nullb/mydev
+
+Then continue with *mkfs.btrfs /dev/nullb0*, the zoned mode is auto-detected.
+
+For convenience, there's a script wrapping the basic null_blk management operations
+https://github.com/kdave/nullb.git, the above commands become:
+
+.. code-block:: bash
+
+   nullb setup
+   nullb create -s 2g -z 256
+   mkfs.btrfs /dev/nullb0
+   ...
+   nullb rm nullb0
+
+Emulated: TCMU runner
+"""""""""""""""""""""
+
+TCMU is a framework to emulate SCSI devices in userspace, providing various
+backends for the storage, with zoned support as well. A file-backed zoned
+device can provide more options for larger storage and zone size. Please follow
+the instructions at https://zonedstorage.io/projects/tcmu-runner/ .
+
+Compatibility, incompatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  the feature sets an incompat bit and requires new kernel to access the
+   filesystem (for both read and write)
+-  superblock needs to be handled in a special way, there are still 3 copies
+   but at different offsets (0, 512GiB, 4TiB) and the 2 consecutive zones are a
+   ring buffer of the superblocks, finding the latest one needs reading it from
+   the write pointer or do a full scan of the zones
+-  mixing zoned and non zoned devices is possible (zones are emulated) but is
+   recommended only for testing
+-  mixing zoned devices with different zone sizes is not possible
+-  zone sizes must be power of two, zone sizes of real devices are e.g. 256MiB
+   or 1GiB, larger size is expected, maximum zone size supported by btrfs is
+   8GiB
+
+Status, stability, reporting bugs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The zoned mode has been released in 5.12 and there are still some rough edges
+and corner cases one can hit during testing. Please report bugs to
+https://github.com/naota/linux/issues/ .
+
+References
+^^^^^^^^^^
+
+-  https://zonedstorage.io
+
+   -  https://zonedstorage.io/projects/libzbc/ -- *libzbc* is library and set
+      of tools to directly manipulate devices with ZBC/ZAC support
+   -  https://zonedstorage.io/projects/libzbd/ -- *libzbd* uses the kernel
+      provided zoned block device interface based on the ioctl() system calls
+
+-  https://hddscan.com/blog/2020/hdd-wd-smr.html -- some details about exact device types
+-  https://lwn.net/Articles/853308/ -- *Btrfs on zoned block devices*
+-  https://www.usenix.org/conference/vault20/presentation/bjorling -- Zone
+   Append: A New Way of Writing to Zoned Storage
