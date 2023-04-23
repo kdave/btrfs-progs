@@ -297,7 +297,8 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			ret = -ENOENT;
 		else
 			ret = PTR_ERR(parent_subvol);
-		error("cannot find parent subvolume");
+		uuid_unparse(parent_uuid, uuid_str);
+		error("snapshot: cannot find parent subvolume %s", uuid_str);
 		goto out;
 	}
 
@@ -749,11 +750,14 @@ static int process_clone(const char *path, u64 offset, u64 len,
 					NULL,
 					subvol_search_by_received_uuid);
 		if (IS_ERR_OR_NULL(si)) {
+			char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+
 			if (!si)
 				ret = -ENOENT;
 			else
 				ret = PTR_ERR(si);
-			error("clone: did not find source subvol");
+			uuid_unparse(clone_uuid, uuid_str);
+			error("clone: cannot find source subvol %s", uuid_str);
 			goto out;
 		}
 		/* strip the subvolume that we are receiving to from the start of subvol_path */
