@@ -219,8 +219,8 @@ Fixes:
   loop device is reformatted and the entry gets stale
 - limit number of send clones by maximum memory allocated
 
-6.3 (? 2023)
-^^^^^^^^^^^^
+6.3 (Apr 2023)
+^^^^^^^^^^^^^^
 
 Features:
 
