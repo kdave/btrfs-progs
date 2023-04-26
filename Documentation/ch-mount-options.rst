@@ -89,17 +89,19 @@ check_int, check_int_data, check_int_print_mask=<value>
         for more information.
 
 clear_cache
-        Force clearing and rebuilding of the free space cache if something
-        has gone wrong.
+        Force clearing of the free space cache.
 
-        For free space cache *v1*, this only clears (and, unless *nospace_cache* is
-        used, rebuilds) the free space cache for block groups that are modified while
-        the filesystem is mounted with that option. To actually clear an entire free
-        space cache *v1*, see :command:`btrfs check --clear-space-cache v1`.
+        For free space cache *v1*, this only clears the free space cache for block
+        groups that are modified while the filesystem is mounted with that option.
+        To actually clear the entire free space cache *v1*, see
+        :command:`btrfs check --clear-space-cache v1`.
 
         For free space cache *v2*, this clears the entire free space cache.
         To do so without requiring to mounting the filesystem, see
         :command:`btrfs check --clear-space-cache v2`.
+
+        For both versions, unless *nospace_cache* is used, the cleared parts of
+        the free space cache are also rebuild.
 
         See also: *space_cache*.
 
