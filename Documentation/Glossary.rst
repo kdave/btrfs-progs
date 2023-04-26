@@ -14,7 +14,7 @@ allocator
 
 balance
 	An operation that can be done to a btrfs filesystem, for example
-	through ``btrfs fi balance /path``. A
+	through :command:`btrfs fi balance /path`. A
 	balance passes all data in the filesystem through the *allocator*
 	again. It is primarily intended to rebalance the data in the filesystem
 	across the *devices* when a device is added or removed. A balance
@@ -247,11 +247,11 @@ RAID-10
 	performance.
 
 reflink
-	Parameter to ``cp``, allowing it to take advantage of the
+	Parameter to :command:`cp`, allowing it to take advantage of the
 	capabilities of *COW*-capable filesystems. Allows for files to be
 	copied and modified, with only the modifications taking up additional
 	storage space. May be considered as *snapshots* on a single file rather
-	than a *subvolume*. Example: ``cp --reflink file1 file2``
+	than a *subvolume*. Example: :command:`cp --reflink file1 file2`
 
 relocation
 	The process of moving block groups within the filesystem while

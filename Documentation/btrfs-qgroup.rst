@@ -12,7 +12,7 @@ DESCRIPTION
 **btrfs qgroup** is used to control quota group (qgroup) of a btrfs filesystem.
 
 .. note::
-   To use qgroup you need to enable quota first using **btrfs quota enable**
+   To use qgroup you need to enable quota first using :command:`btrfs quota enable`
    command.
 
 .. warning::
@@ -34,7 +34,7 @@ exclusive limit.
 The qgroup identifiers conform to *level/id* where level 0 is reserved to the
 qgroups associated with subvolumes. Such qgroups are created automatically.
 
-The qgroup hierarchy is built by commands **create** and **assign**.
+The qgroup hierarchy is built by commands :command:`create` and :command:`assign`.
 
 .. note::
    If the qgroup of a subvolume is destroyed, quota about the subvolume will

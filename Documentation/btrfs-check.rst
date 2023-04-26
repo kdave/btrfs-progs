@@ -14,10 +14,10 @@ and attempt to repair it if requested.  It is recommended to unmount the
 filesystem prior to running the check, but it is possible to start checking a
 mounted filesystem (see *--force*).
 
-By default, **btrfs check** will not modify the device but you can reaffirm that
+By default, :command:`btrfs check` will not modify the device but you can reaffirm that
 by the option *--readonly*.
 
-**btrfsck** is an alias of **btrfs check** command and is now deprecated.
+:command:`btrfsck` is an alias of :command:`btrfs check` command and is now deprecated.
 
 .. warning::
    Do not use *--repair* unless you are advised to do so by a developer

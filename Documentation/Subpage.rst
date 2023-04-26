@@ -10,7 +10,7 @@ pages, like 64KiB on 64bit ARM or PowerPC. This means filesystems created
 with 64KiB sector size cannot be mounted on a system with 4KiB page size.
 
 While with subpage support, systems with 64KiB page size can create (still needs
-"-s 4k" option for mkfs.btrfs) and mount filesystems with 4KiB sectorsize,
+"-s 4k" option for :command:`mkfs.btrfs`) and mount filesystems with 4KiB sectorsize,
 allowing us to push 4KiB sectorsize as default sectorsize for all platforms in the
 near future.
 

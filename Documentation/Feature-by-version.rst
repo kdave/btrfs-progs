@@ -282,7 +282,7 @@ features see [[Status]] page.
 5.0 - metadata uuid
         An optional incompat feature to assign a new filesystem UUID without
         overwriting all metadata blocks, stored only in superblock, unlike what
-        ``btrfstune -u``
+        :command:`btrfstune -u`
 
 5.1 - FORGET_DEV ioctl
         Unregister devices previously added by the scan ioctl, same effect as
@@ -315,7 +315,7 @@ features see [[Status]] page.
 
 5.7 - faster balance cancel
         More cancellation points in balance that will shorten the time to stop
-        processing once ``btrfs balance cancel`` is called.
+        processing once :command:`btrfs balance cancel` is called.
 
 5.7 - *removed flag BTRFS_SUBVOL_CREATE_ASYNC*
         Remove support of flag BTRFS_SUBVOL_CREATE_ASYNC from subvolume creation ioctl.

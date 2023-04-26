@@ -25,7 +25,7 @@ usage=<percent>, usage=<range>
 
 devid=<id>
         Balances only block groups which have at least one chunk on the given
-        device. To list devices with ids use **btrfs filesystem show**.
+        device. To list devices with ids use :command:`btrfs filesystem show`.
 
 drange=<range>
         Balance only block groups which overlap with the given byte range on any

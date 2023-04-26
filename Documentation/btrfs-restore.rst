@@ -9,12 +9,13 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs restore** is used to try to salvage files from a damaged filesystem and
+:command:`btrfs restore` is used to try to salvage files from a damaged filesystem and
 restore them into *path* or just list the subvolume tree roots. The filesystem
 image is not modified.
 
 If the filesystem is damaged and cannot be repaired by the other tools
-(:doc:`btrfs-check(8)<btrfs-check>` or :doc:`btrfs-rescue(8)<btrfs-rescue>`), **btrfs restore** could be used to
+(:doc:`btrfs-check(8)<btrfs-check>` or :doc:`btrfs-rescue(8)<btrfs-rescue>`),
+:command:`btrfs restore` could be used to
 retrieve file data, as far as the metadata are readable. The checks done by
 restore are less strict and the process is usually able to get far enough to
 retrieve data from the whole filesystem. This comes at a cost that some data

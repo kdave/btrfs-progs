@@ -170,11 +170,11 @@ map-swapfile [options] <file>
 
         Find device-specific physical offset of *file* that can be used for
         hibernation. Also verify that the *file* is suitable as a swapfile.
-        See also command ``btrfs filesystem mkswapfile`` and the
+        See also command :command:`btrfs filesystem mkswapfile` and the
         :doc:`Swapfile feature<Swapfile>` description.
 
         .. note::
-                Do not use ``filefrag`` or *FIEMAP* ioctl values reported as
+                Do not use :command:`filefrag` or *FIEMAP* ioctl values reported as
                 physical, this is different due to internal filesystem mappings.
                 The hibernation expects offset relative to the physical block device.
 

@@ -1,4 +1,4 @@
-The **btrfs-convert** tool can be used to convert existing source filesystem
+The :command:`btrfs-convert` tool can be used to convert existing source filesystem
 image to a btrfs filesystem in-place.  The original filesystem image is
 accessible in subvolume named like *ext2_saved* as file *image*.
 
@@ -15,8 +15,8 @@ of help (option *--help*).
 
 .. warning::
    If you are going to perform rollback to the original filesystem, you
-   should not execute **btrfs balance** command on the converted filesystem. This
-   will change the extent layout and make **btrfs-convert** unable to rollback.
+   should not execute :command:`btrfs balance` command on the converted filesystem. This
+   will change the extent layout and make :command:`btrfs-convert` unable to rollback.
 
 The conversion utilizes free space of the original filesystem. The exact
 estimate of the required space cannot be foretold. The final btrfs metadata
@@ -30,13 +30,13 @@ free space layout.
 
 Due to different constraints, it is only possible to convert filesystems that
 have a supported data block size (i.e. the same that would be valid for
-**mkfs.btrfs**). This is typically the system page size (4KiB on x86_64
+:command:`mkfs.btrfs`). This is typically the system page size (4KiB on x86_64
 machines).
 
 **BEFORE YOU START**
 
 The source filesystem must be clean, e.g. no journal to replay or no repairs
-needed. The respective **fsck** utility must be run on the source filesystem prior
+needed. The respective :command:`fsck` utility must be run on the source filesystem prior
 to conversion. Please refer to the manual pages in case you encounter problems.
 
 For ext2/3/4:

@@ -15,7 +15,7 @@ options please refer to ``mount(8)`` manual page. The options are sorted alphabe
 
 Mount options are processed in order, only the last occurrence of an option
 takes effect and may disable other options due to constraints (see e.g.
-*nodatacow* and *compress*). The output of **mount** command shows which options
+*nodatacow* and *compress*). The output of :command:`mount` command shows which options
 have been applied.
 
 acl, noacl
@@ -43,7 +43,7 @@ autodefrag, noautodefrag
                 Defragmenting with Linux kernel versions < 3.9 or ≥ 3.14-rc2 as
                 well as with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or
                 ≥ 3.13.4 will break up the reflinks of COW data (for example files
-                copied with **cp --reflink**, snapshots or de-duplicated data).
+                copied with :command:`cp --reflink`, snapshots or de-duplicated data).
                 This may cause considerable increase of space usage depending on the
                 broken up reflinks.
 
@@ -95,11 +95,11 @@ clear_cache
         For free space cache *v1*, this only clears (and, unless *nospace_cache* is
         used, rebuilds) the free space cache for block groups that are modified while
         the filesystem is mounted with that option. To actually clear an entire free
-        space cache *v1*, see ``btrfs check --clear-space-cache v1``.
+        space cache *v1*, see :command:`btrfs check --clear-space-cache v1`.
 
         For free space cache *v2*, this clears the entire free space cache.
         To do so without requiring to mounting the filesystem, see
-        ``btrfs check --clear-space-cache v2``.
+        :command:`btrfs check --clear-space-cache v2`.
 
         See also: *space_cache*.
 
@@ -218,7 +218,7 @@ discard, discard=sync, discard=async, nodiscard
         negligible compared to the previous mode and it's supposed to be the preferred
         mode if needed.
 
-        If it is not necessary to immediately discard freed blocks, then the ``fstrim``
+        If it is not necessary to immediately discard freed blocks, then the :command:`fstrim`
         tool can be used to discard all free blocks in a batch. Scheduling a TRIM
         during a period of low system activity will prevent latent interference with
         the performance of other operations. Also, a device may ignore the TRIM command
@@ -341,8 +341,8 @@ skip_balance
         (since: 3.3, default: off)
 
         Skip automatic resume of an interrupted balance operation. The operation can
-        later be resumed with **btrfs balance resume**, or the paused state can be
-        removed with **btrfs balance cancel**. The default behaviour is to resume an
+        later be resumed with :command:`btrfs balance resume`, or the paused state can be
+        removed with :command:`btrfs balance cancel`. The default behaviour is to resume an
         interrupted balance immediately after a volume is mounted.
 
 space_cache, space_cache=<version>, nospace_cache
@@ -409,7 +409,7 @@ subvol=<path>
 
 subvolid=<subvolid>
         Mount subvolume specified by a *subvolid* number rather than the toplevel
-        subvolume.  You can use **btrfs subvolume list** of **btrfs subvolume show** to see
+        subvolume.  You can use :command:`btrfs subvolume list` of :command:`btrfs subvolume show` to see
         subvolume ID numbers.
         This mount option overrides the default subvolume set for the given filesystem.
 
@@ -483,8 +483,7 @@ inode_cache, noinode_cache
 
         .. note::
                 The functionality has been removed in 5.11, any stale data created by
-                previous use of the *inode_cache* option can be removed by **btrfs check
-                --clear-ino-cache**.
+                previous use of the *inode_cache* option can be removed by :command:`btrfs check --clear-ino-cache`.
 
 
 NOTES ON GENERIC MOUNT OPTIONS

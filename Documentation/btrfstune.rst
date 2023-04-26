@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfstune** can be used to enable, disable, or set various filesystem
+:command:`btrfstune` can be used to enable, disable, or set various filesystem
 parameters. The filesystem must be unmounted.
 
 The common use case is to enable features that were not enabled at mkfs time.

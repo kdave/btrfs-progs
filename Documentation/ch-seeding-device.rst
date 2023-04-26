@@ -8,8 +8,8 @@ systems, but this became obsolete. There are technologies providing similar
 functionality, like *unionmount*, *overlayfs* or *qcow2* image snapshot.
 
 The seeding device starts as a normal filesystem, once the contents is ready,
-**btrfstune -S 1** is used to flag it as a seeding device. Mounting such device
-will not allow any writes, except adding a new device by **btrfs device add**.
+:command:`btrfstune -S 1` is used to flag it as a seeding device. Mounting such device
+will not allow any writes, except adding a new device by :command:`btrfs device add`.
 Then the filesystem can be remounted as read-write.
 
 Given that the filesystem on the seeding device is always recognized as
@@ -18,7 +18,7 @@ same time. The UUID that is normally attached to a device is automatically
 changed to a random UUID on each mount.
 
 Once the seeding device is mounted, it needs the writable device. After adding
-it, something like **remount -o remount,rw /path** makes the filesystem at
+it, something like :command:`remount -o remount,rw /path` makes the filesystem at
 */path* ready for use. The simplest use case is to throw away all changes by
 unmounting the filesystem when convenient.
 
@@ -26,7 +26,7 @@ Alternatively, deleting the seeding device from the filesystem can turn it into
 a normal filesystem, provided that the writable device can also contain all the
 data from the seeding device.
 
-The seeding device flag can be cleared again by **btrfstune -f -S 0**, e.g.
+The seeding device flag can be cleared again by :command:`btrfstune -f -S 0`, e.g.
 allowing to update with newer data but please note that this will invalidate
 all existing filesystems that use this particular seeding device. This works
 for some use cases, not for others, and the forcing flag to the command is
@@ -74,7 +74,7 @@ A few things to note:
   for multiple devices but the *single* profile must be used in order to make
   the seeding device deletion work
 * block group profiles *single* and *dup* support the use cases above
-* the label is copied from the seeding device and can be changed by **btrfs filesystem label**
+* the label is copied from the seeding device and can be changed by :command:`btrfs filesystem label`
 * each new mount of the seeding device gets a new random UUID
 
 Chained seeding devices

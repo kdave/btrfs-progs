@@ -7,7 +7,7 @@ the damaged one is repaired. All copies of the replicated profiles are validated
    structural damage in the filesystem. It really only checks checksums of data
    and tree blocks, it doesn't ensure the content of tree blocks is valid and
    consistent. There's some validation performed when metadata blocks are read
-   from disk but it's not extensive and cannot substitute full *btrfs check*
+   from disk but it's not extensive and cannot substitute full :command:`btrfs check`
    run.
 
 The user is supposed to run it manually or via a periodic system service. The
@@ -24,5 +24,4 @@ same directory.) The status file is updated every 5 seconds. A resumed scrub
 will continue from the last saved position.
 
 Scrub can be started only on a mounted filesystem, though it's possible to
-scrub only a selected device. See **btrfs scrub start** for more.
-
+scrub only a selected device. See :command:`btrfs scrub start` for more.

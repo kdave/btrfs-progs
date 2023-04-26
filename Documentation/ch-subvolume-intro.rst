@@ -24,7 +24,7 @@ similar to a bind mount, and in fact the subvolume mount does exactly that.
 A freshly created filesystem is also a subvolume, called *top-level*,
 internally has an id 5. This subvolume cannot be removed or replaced by another
 subvolume. This is also the subvolume that will be mounted by default, unless
-the default subvolume has been changed (see ``btrfs subvolume set-default``).
+the default subvolume has been changed (see :command:`btrfs subvolume set-default`).
 
 A snapshot is a subvolume like any other, with given initial content. By
 default, snapshots are created read-write. File modifications in a snapshot
@@ -65,13 +65,13 @@ the subvolume on the filesystem that produced the stream. The use case relies
 on matching data on both sides. Changing the subvolume to read-write after it
 has been received requires to reset the *received_uuid*. As this is a notable
 change and could potentially break the incremental send use case, performing
-it by **btrfs property set** requires force if that is really desired by user.
+it by :command:`btrfs property set` requires force if that is really desired by user.
 
 .. note::
    The safety checks have been implemented in 5.14.2, any subvolumes previously
    received (with a valid *received_uuid*) and read-write status may exist and
-   could still lead to problems with send/receive. You can use **btrfs subvolume
-   show** to identify them. Flipping the flags to read-only and back to
+   could still lead to problems with send/receive. You can use :command:`btrfs subvolume show`
+   to identify them. Flipping the flags to read-only and back to
    read-write will reset the *received_uuid* manually.  There may exist a
    convenience tool in the future.
 
@@ -85,7 +85,7 @@ descendants of the toplevel one), or nested.
 What should be mentioned early is that a snapshotting is not recursive, so a
 subvolume or a snapshot is effectively a barrier and no files in the nested
 appear in the snapshot. Instead there's a stub subvolume (also sometimes
-**empty subvolume** with the same name as original subvolume, with inode number
+:command:`empty subvolume` with the same name as original subvolume, with inode number
 2).  This can be used intentionally but could be confusing in case of nested
 layouts.
 

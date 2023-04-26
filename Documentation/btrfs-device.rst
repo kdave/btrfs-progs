@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-The **btrfs device** command group is used to manage devices of the btrfs filesystems.
+The :command:`btrfs device` command group is used to manage devices of the btrfs filesystems.
 
 DEVICE MANAGEMENT
 -----------------

@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs replace** is used to replace btrfs managed devices with other device.
+:command:`btrfs replace` is used to replace btrfs managed devices with other device.
 
 SUBCOMMAND
 ----------

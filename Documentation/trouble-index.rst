@@ -117,12 +117,12 @@ The full message in system log
 
 This means that conversion will remove a degree of metadata redundancy, for
 example when going from profile *RAID1* or *dup* to *single*. The force
-parameter to ``btrfs balance start -f`` is needed.
+parameter to :command:`btrfs balance start -f` is needed.
 
 How to clean old super block
 ----------------------------
 
-The preferred way is to use the ``wipefs`` utility that is part of the
+The preferred way is to use the :command:`wipefs` utility that is part of the
 *util-linux* package. Running the command with the device will not destroy
 the data, just list the detected filesystems:
 
@@ -161,7 +161,7 @@ Stale signature on device
 Related problem regarding partitioned and unpartitioned device: *Long time ago
 I created btrfs on /dev/sda. After some changes btrfs moved to /dev/sda1.*
 
-Use ``wipefs -o 0x10040`` (i.e. with the offset of the btrfs signature), it
+Use :command:`wipefs -o 0x10040` (i.e. with the offset of the btrfs signature), it
 won't touch the partition table.
 
 Manual deletion of super block signature

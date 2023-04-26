@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs subvolume** is used to create/delete/list/show btrfs subvolumes and
+:command:`btrfs subvolume` is used to create/delete/list/show btrfs subvolumes and
 snapshots.
 
 .. include:: ch-subvolume-intro.rst
@@ -67,12 +67,13 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         If *subvolume* is not a subvolume, btrfs returns an error but continues if
         there are more arguments to process.
 
-        If *--subvolid* is used, *path* must point to a btrfs filesystem. See ``btrfs
-        subvolume list`` or ``btrfs inspect-internal rootid`` how to get the subvolume id.
+        If *--subvolid* is used, *path* must point to a btrfs filesystem. See
+        :command:`btrfs subvolume list` or :command:`btrfs inspect-internal rootid`
+        how to get the subvolume id.
 
         The corresponding directory is removed instantly but the data blocks are
-        removed later in the background. The command returns immediately. See ``btrfs
-        subvolume sync`` how to wait until the subvolume gets completely removed.
+        removed later in the background. The command returns immediately. See
+        :command:`btrfs subvolume sync` how to wait until the subvolume gets completely removed.
 
         The deletion does not involve full transaction commit by default due to
         performance reasons.  As a consequence, the subvolume may appear again after a
@@ -82,9 +83,9 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         Deleting subvolume needs sufficient permissions, by default the owner
         cannot delete it unless it's enabled by a mount option
         *user_subvol_rm_allowed*, or deletion is run as root.
-        The default subvolume (see ``btrfs subvolume set-default``) cannot be deleted and
+        The default subvolume (see :command:`btrfs subvolume set-default`) cannot be deleted and
         returns error (EPERM) and this is logged to the system log. A subvolume that's
-        currently involved in send (see ``btrfs send``) also cannot be deleted until the
+        currently involved in send (see :command:`btrfs send`) also cannot be deleted until the
         send is finished. This is also logged in the system log.
 
         ``Options``
@@ -107,7 +108,7 @@ find-new <subvolume> <last_gen>
 get-default <path>
         Get the default subvolume of the filesystem *path*.
 
-        The output format is similar to **subvolume list** command.
+        The output format is similar to :command:`subvolume list` command.
 
 list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path] <path>
         List the subvolumes present in the filesystem *path*.
@@ -191,8 +192,8 @@ set-default [<subvolume>|<id> <path>]
 
         There are two ways how to specify the subvolume, by *id* or by the *subvolume*
         path.
-        The id can be obtained from **btrfs subvolume list**, **btrfs subvolume show** or
-        **btrfs inspect-internal rootid**.
+        The id can be obtained from :command:`btrfs subvolume list`,
+        :command:`btrfs subvolume show` or :command:`btrfs inspect-internal rootid`.
 
 show [options] <path>
         Show more information about a subvolume (UUIDs, generations, times, flags,

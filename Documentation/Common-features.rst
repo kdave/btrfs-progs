@@ -20,12 +20,11 @@ fallocate modes
         holes, preallocation or zeroing a range
 
 FIEMAP
-        an ioctl that enumerates file extents, related tool is ``filefrag``
+        an ioctl that enumerates file extents, related tool is :command:`filefrag`
 
 filesystem label
         another filesystem identification, could be used for mount or for better
-        recognition, can be set or read by an ioctl or by command ``btrfs
-        filesystem label``
+        recognition, can be set or read by an ioctl or by command :command:`btrfs filesystem label`
 
 O_TMPFILE
         mode of open() syscall that creates a file with no associated directory
@@ -36,8 +35,7 @@ O_TMPFILE
 xattr, acl
         extended attributes (xattr) is a list of *key=value* pairs associated
         with a file, usually storing additional metadata related to security,
-        access control list in particular (ACL) or properties (``btrfs
-        property``)
+        access control list in particular (ACL) or properties (:command:`btrfs property`)
 
 cross-rename
         mode of *renameat2* syscall that can atomically swap 2 directory

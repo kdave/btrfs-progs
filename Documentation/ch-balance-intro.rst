@@ -42,13 +42,13 @@ Compatibility
 
 .. note::
 
-   The balance subcommand also exists under the **btrfs filesystem** namespace.
+   The balance subcommand also exists under the :command:`btrfs filesystem` namespace.
    This still works for backward compatibility but is deprecated and should not
    be used any more.
 
 .. note::
-   A short syntax **btrfs balance <path>** works due to backward compatibility
-   but is deprecated and should not be used any more. Use **btrfs balance start**
+   A short syntax :command:`btrfs balance <path>` works due to backward compatibility
+   but is deprecated and should not be used any more. Use :command:`btrfs balance start`
    command instead.
 
 Performance implications

@@ -12,7 +12,7 @@ It can be completely disabled by mounting with ``max_inline=0``. The upper
 limit is either the size of b-tree node or the page size of the host.
 
 An inline file can be identified by enumerating the extents, e.g. by the tool
-``filefrag``:
+:command:`filefrag`:
 
 .. code-block:: bash
 

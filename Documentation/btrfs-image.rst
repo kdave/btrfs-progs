@@ -8,7 +8,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs-image** is used to create an image of a btrfs filesystem.
+:command:`btrfs-image` is used to create an image of a btrfs filesystem.
 All data will be zeroed, but metadata and the like is preserved.
 Mainly used for debugging purposes.
 

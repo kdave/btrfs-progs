@@ -10,8 +10,8 @@ DESCRIPTION
 -----------
 
 This command will generate a stream of instructions that describe changes
-between two subvolume snapshots. The stream can be consumed by the **btrfs
-receive** command to replicate the sent snapshot on a different filesystem.
+between two subvolume snapshots. The stream can be consumed by the :command:`btrfs receive`
+command to replicate the sent snapshot on a different filesystem.
 The command operates in two modes: full and incremental.
 
 All snapshots involved in one send command must be read-only, and this status
@@ -29,7 +29,7 @@ amount of information that has to be sent to reconstruct the sent snapshot on a
 different filesystem.
 
 The *-p <parent>* option can be omitted when *-c <clone-src>* options are
-given, in which case **btrfs send** will determine a suitable parent from among
+given, in which case :command:`btrfs send` will determine a suitable parent from among
 the clone sources.
 
 You must not specify clone sources unless you guarantee that these snapshots

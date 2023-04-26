@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs filesystem** is used to perform several whole filesystem level tasks,
+:command:`btrfs filesystem` is used to perform several whole filesystem level tasks,
 including all the regular filesystem operations like resizing, space stats,
 label setting/getting, and defragmentation. There are other whole filesystem
 tasks like scrub or balance that are grouped in separate commands.
@@ -26,7 +26,7 @@ df [options] <path>
 
         * device size: *1.9TiB*, one device, no RAID
         * filesystem size: *1.9TiB*
-        * created with: **mkfs.btrfs -d single -m single**
+        * created with: :command:`mkfs.btrfs -d single -m single`
 
         .. code-block:: none
 
@@ -94,7 +94,7 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
         .. warning::
                 Defragmenting with Linux kernel versions < 3.9 or ≥ 3.14-rc2 as well as
                 with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up
-                the reflinks of COW data (for example files copied with **cp --reflink**,
+                the reflinks of COW data (for example files copied with :command:`cp --reflink`,
                 snapshots or de-duplicated data).
                 This may cause considerable increase of space usage depending on the broken up
                 reflinks.
@@ -146,7 +146,7 @@ du [options] <path> [<path>..]
         shared) bytes. We also calculate a 'set shared' value which is
         described below.
 
-        Each argument to **btrfs filesystem du** will have a *set shared* value
+        Each argument to :command:`btrfs filesystem du` will have a *set shared* value
         calculated for it. We define each *set* as those files found by a
         recursive search of an argument (recursion descends to subvolumes but not
         mount points). The *set shared* value then is a sum of all shared space
@@ -197,8 +197,9 @@ mkswapfile [-s size] file
         activated swapfile cannot be balanced.
 
         Swapfile creation can be achieved by standalone commands too. Activation
-        needs to be done by command ``swapon(8)``. See also command ``btrfs
-        inspect-internal map-swapfile`` and the :doc:`Swapfile feature<Swapfile>` description.
+        needs to be done by command ``swapon(8)``. See also command
+        :command:`btrfs inspect-internal map-swapfile`
+        and the :doc:`Swapfile feature<Swapfile>` description.
 
         .. note::
                 The command is a simplified version of 'mkswap', if you want to set
@@ -223,7 +224,7 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
                 as expected and does not resize the image. This would resize the underlying
                 filesystem instead.
 
-        The *devid* can be found in the output of **btrfs filesystem show** and
+        The *devid* can be found in the output of :command:`btrfs filesystem show` and
         defaults to 1 if not specified.
         The *size* parameter specifies the new size of the filesystem.
         If the prefix *+* or *-* is present the size is increased or decreased
@@ -291,11 +292,11 @@ show [options] [<path>|<uuid>|<device>|<label>]
 sync <path>
         Force a sync of the filesystem at *path*, similar to the ``sync(1)`` command. In
         addition, it starts cleaning of deleted subvolumes. To wait for the subvolume
-        deletion to complete use the **btrfs subvolume sync** command.
+        deletion to complete use the :command:`btrfs subvolume sync` command.
 
 usage [options] <path> [<path>...]
         Show detailed information about internal filesystem usage. This is supposed to
-        replace the **btrfs filesystem df** command in the long run.
+        replace the :command:`btrfs filesystem df` command in the long run.
 
         The level of detail can differ if the command is run under a regular or the
         root user (due to use of restricted ioctl). For both there's a summary section
@@ -461,7 +462,7 @@ simply using *max* as size we will achieve that.
 
 .. note::
    There are two ways to minimize the filesystem on a given device. The
-   **btrfs inspect-internal min-dev-size** command, or iteratively shrink in steps.
+   :command:`btrfs inspect-internal min-dev-size` command, or iteratively shrink in steps.
 
 EXIT STATUS
 -----------

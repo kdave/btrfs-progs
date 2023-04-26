@@ -26,7 +26,7 @@ asynchronous
         with the rest of the filesystem activity
 
 manually by fstrim
-        the tool ``fstrim`` starts a trim operation on the whole filesystem, no
+        the tool :command:`fstrim` starts a trim operation on the whole filesystem, no
         mount options need to be specified, so it's up to the filesystem to
         traverse the free space and start the trim, this is suitable for running
         it as periodic service

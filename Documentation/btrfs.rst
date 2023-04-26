@@ -9,12 +9,12 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-The **btrfs** utility is a toolbox for managing btrfs filesystems.  There are
+The :command:`btrfs` utility is a toolbox for managing btrfs filesystems.  There are
 command groups to work with subvolumes, devices, for whole filesystem or other
 specific actions. See section *COMMANDS*.
 
-There are also standalone tools for some tasks like **btrfs-convert** or
-**btrfstune** that were separate historically and/or haven't been merged to the
+There are also standalone tools for some tasks like :command:`btrfs-convert` or
+:command:`btrfstune` that were separate historically and/or haven't been merged to the
 main utility. See section *STANDALONE TOOLS* for more details.
 
 For other topics (mount options, etc) please refer to the separate manual
@@ -27,10 +27,10 @@ Any command name can be shortened so long as the shortened form is unambiguous,
 however, it is recommended to use full command names in scripts.  All command
 groups have their manual page named **btrfs-<group>**.
 
-For example: it is possible to run **btrfs sub snaps** instead of
-**btrfs subvolume snapshot**.
-But **btrfs file s** is not allowed, because **file s** may be interpreted
-both as **filesystem show** and as **filesystem sync**.
+For example: it is possible to run :command:`btrfs sub snaps` instead of
+:command:`btrfs subvolume snapshot`.
+But :command:`btrfs file s` is not allowed, because :command:`file s` may be interpreted
+both as :command:`filesystem show` and as :command:`filesystem sync`.
 
 If the command name is ambiguous, the list of conflicting options is
 printed.
@@ -41,8 +41,8 @@ with the suffix `B` appended.
 All numbers will be formatted according to the rules of the `C` locale
 (ignoring the shell locale, see `locale(7) <https://man7.org/linux/man-pages/man7/locale.7.html>`_).
 
-For an overview of a given command use **btrfs command --help**
-or **btrfs [command...] --help --full** to print all available options.
+For an overview of a given command use :command:`btrfs command --help`
+or :command:`btrfs [command...] --help --full` to print all available options.
 
 There are global options that are passed between *btrfs* and the *group* name
 and affect behaviour not specific to the command, e.g. verbosity or the type
@@ -139,7 +139,7 @@ proves to be useful, then the standalone tool is declared obsolete and its
 functionality is copied to the main tool. Obsolete tools are removed after a
 long (years) depreciation period.
 
-Tools that are still in active use without an equivalent in **btrfs**:
+Tools that are still in active use without an equivalent in :command:`btrfs`:
 
 btrfs-convert
         in-place conversion from ext2/3/4 filesystems to btrfs
@@ -153,7 +153,7 @@ btrfs-find-root
 For space-constrained environments, it's possible to build a single binary with
 functionality of several standalone tools. This is following the concept of
 busybox where the file name selects the functionality. This works for symlinks
-or hardlinks. The full list can be obtained by **btrfs help --box**.
+or hardlinks. The full list can be obtained by :command:`btrfs help --box`.
 
 EXIT STATUS
 -----------

@@ -20,9 +20,9 @@ The filesystem specified by *device* must not be mounted.
    Prior to overwriting the primary superblock, please make sure that the
    backup copies are valid!
 
-To dump a superblock use the **btrfs inspect-internal dump-super** command.
+To dump a superblock use the :command:`btrfs inspect-internal dump-super` command.
 
-Then run the check (in the non-repair mode) using the command **btrfs check -s**
+Then run the check (in the non-repair mode) using the command :command:`btrfs check -s`
 where *-s* specifies the superblock copy to use.
 
 Superblock copies exist in the following offsets on the device:

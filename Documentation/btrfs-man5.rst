@@ -44,8 +44,9 @@ at mkfs time only
 
 after mkfs, on an unmounted filesystem
         Features that may optimize internal structures or add new structures to support
-        new functionality, see :doc:`btrfstune(8)<btrfstune>`. The command **btrfs inspect-internal
-        dump-super /dev/sdx** will dump a superblock, you can map the value of
+        new functionality, see :doc:`btrfstune(8)<btrfstune>`. The command
+        :command:`btrfs inspect-internal dump-super /dev/sdx`
+        will dump a superblock, you can map the value of
         *incompat_flags* to the features listed below
 
 after mkfs, on a mounted filesystem
@@ -76,13 +77,13 @@ compress_lzo
         (since: 2.6.38)
 
         the *lzo* compression has been used on the filesystem, either as a mount option
-        or via **btrfs filesystem defrag**.
+        or via :command:`btrfs filesystem defrag`.
 
 compress_zstd
         (since: 4.14)
 
         the *zstd* compression has been used on the filesystem, either as a mount option
-        or via **btrfs filesystem defrag**.
+        or via :command:`btrfs filesystem defrag`.
 
 default_subvol
         (since: 2.6.34)
@@ -167,7 +168,7 @@ supported_checksums
 supported_sectorsizes
         (since: 5.13)
 
-        list of values that are accepted as sector sizes (**mkfs.btrfs --sectorsize**) by
+        list of values that are accepted as sector sizes (:command:`mkfs.btrfs --sectorsize`) by
         the running kernel
 
 supported_rescue_options
@@ -291,7 +292,7 @@ or (since 5.11) by a convenience command
 The control device is not strictly required but the device scanning will not
 work and a workaround would need to be used to mount a multi-device filesystem.
 The mount option *device* can trigger the device scanning during mount, see
-also **btrfs device scan**.
+also :command:`btrfs device scan`.
 
 
 FILESYSTEM WITH MULTIPLE PROFILES
@@ -299,7 +300,8 @@ FILESYSTEM WITH MULTIPLE PROFILES
 
 It is possible that a btrfs filesystem contains multiple block group profiles
 of the same type.  This could happen when a profile conversion using balance
-filters is interrupted (see :doc:`btrfs-balance(8)<btrfs-balance>`).  Some **btrfs** commands perform
+filters is interrupted (see :doc:`btrfs-balance(8)<btrfs-balance>`).  Some
+:command:`btrfs` commands perform
 a test to detect this kind of condition and print a warning like this:
 
 .. code-block:: none
@@ -308,7 +310,7 @@ a test to detect this kind of condition and print a warning like this:
         WARNING:   Data: single, raid1
         WARNING:   Metadata: single, raid1
 
-The corresponding output of **btrfs filesystem df** might look like:
+The corresponding output of :command:`btrfs filesystem df` might look like:
 
 .. code-block:: none
 
@@ -349,9 +351,9 @@ satisfied.
 
 Commands that print the warning were chosen so they're brought to user
 attention when the filesystem state is being changed in that regard. This is:
-**device add**, **device delete**, **balance cancel**, **balance pause**. Commands
-that report space usage: **filesystem df**, **device usage**. The command
-**filesystem usage** provides a line in the overall summary:
+:command:`device add`, :command:`device delete`, :command:`balance cancel`, :command:`balance pause`. Commands
+that report space usage: :command:`filesystem df`, :command:`device usage`. The command
+:command:`filesystem usage` provides a line in the overall summary:
 
 .. code-block:: none
 
@@ -396,9 +398,9 @@ Missing/incomplete support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When RAID56 is on the same filesystem with different raid profiles, the space
-reporting is inaccurate, e.g. **df**, **btrfs filesystem df** or **btrfs filesystem
-usage**. When there's only a one profile per block group type (e.g. RAID5 for data)
-the reporting is accurate.
+reporting is inaccurate, e.g. :command:`df`, :command:`btrfs filesystem df` or
+:command:`btrfs filesystem usage`. When there's only a one profile per block
+group type (e.g. RAID5 for data) the reporting is accurate.
 
 When scrub is started on a RAID56 filesystem, it's started on all devices that
 degrade the performance. The workaround is to start it on each device

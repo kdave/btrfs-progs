@@ -51,7 +51,7 @@ level 3. For level 0, the leading '0/' can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
 is the qgroup for the root subvolume.
-For the ``btrfs qgroup`` command, the path to the subvolume can also be used
+For the :command:`btrfs qgroup` command, the path to the subvolume can also be used
 instead of *0/ID*.  For all higher levels, the ID can be chosen freely.
 
 Each qgroup can contain a set of lower level qgroups, thus creating a hierarchy

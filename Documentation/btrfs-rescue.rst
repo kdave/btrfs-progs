@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**btrfs rescue** is used to try to recover a damaged btrfs filesystem.
+:command:`btrfs rescue` is used to try to recover a damaged btrfs filesystem.
 
 SUBCOMMAND
 ----------
@@ -28,7 +28,7 @@ chunk-recover [options] <device>
 
 
 .. note::
-   Since **chunk-recover** will scan the whole device, it will be very
+   Since :command:`chunk-recover` will scan the whole device, it will be very
    slow especially executed on a large device.
 
 fix-device-size <device>
@@ -86,7 +86,7 @@ zero-log <device>
                 (default commit period) or less if the commit was implied by
                 other filesystem activity.
 
-        One can determine whether **zero-log** is needed according to the kernel
+        One can determine whether :command:`zero-log` is needed according to the kernel
         backtrace:
 
         .. code-block:: none
@@ -99,7 +99,7 @@ zero-log <device>
                 ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
                 ? open_ctree+0xff6/0x132c [btrfs]
 
-        If the errors are like above, then **zero-log** should be used to clear
+        If the errors are like above, then :command:`zero-log` should be used to clear
         the log and the filesystem may be mounted normally again. The keywords to look
         for are 'open_ctree' which says that it's during mount and function names
         that contain *replay*, *recover* or *log_tree*.

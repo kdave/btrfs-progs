@@ -19,8 +19,8 @@ cancel <path>|<device>
         *device*, cancel it.
 
         If a *device* is specified, the corresponding filesystem is found and
-        **btrfs scrub cancel** behaves as if it was called on that filesystem.
-        The progress is saved in the status file so **btrfs scrub resume** can
+        :command:`btrfs scrub cancel` behaves as if it was called on that filesystem.
+        The progress is saved in the status file so :command:`btrfs scrub resume` can
         continue from the last position.
 
 resume [-BdqrR] <path>|<device>
@@ -32,7 +32,7 @@ resume [-BdqrR] <path>|<device>
 
         ``Options``
 
-        see **scrub start**.
+        see :command:`scrub start`.
 
 start [-BdrRf] <path>|<device>
         Start a scrub on all devices of the mounted filesystem identified by

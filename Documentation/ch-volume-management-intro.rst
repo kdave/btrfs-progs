@@ -7,10 +7,10 @@ terminology is widely used in the documentation.  See :doc:`mkfs.btrfs(8)<mkfs.b
 details and the exact profile capabilities and constraints.
 
 The device management works on a mounted filesystem. Devices can be added,
-removed or replaced, by commands provided by ``btrfs device`` and ``btrfs replace``.
+removed or replaced, by commands provided by :command:`btrfs device` and :command:`btrfs replace`.
 
 The profiles can be also changed, provided there's enough workspace to do the
-conversion, using the ``btrfs balance`` command and namely the filter *convert*.
+conversion, using the :command:`btrfs balance` command and namely the filter *convert*.
 
 Type
         The block group profile type is the main distinction of the information stored

@@ -9,7 +9,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-The commands under **btrfs quota** are used to affect the global status of quotas
+The commands under :command:`btrfs quota` are used to affect the global status of quotas
 of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
 :doc:`btrfs-qgroup(8)<btrfs-qgroup>`.
 

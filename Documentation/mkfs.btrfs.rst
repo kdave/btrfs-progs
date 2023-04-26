@@ -9,12 +9,12 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**mkfs.btrfs** is used to create the btrfs filesystem on a single or multiple
+:command:`mkfs.btrfs` is used to create the btrfs filesystem on a single or multiple
 devices.  The *device* is typically a block device but can be a file-backed image
 as well. Multiple devices are grouped by UUID of the filesystem.
 
 Before mounting such filesystem, the kernel module must know all the devices
-either via preceding execution of **btrfs device scan** or using the *device*
+either via preceding execution of :command:`btrfs device scan` or using the *device*
 mount option. See section *MULTIPLE DEVICES* for more details.
 
 The default block group profiles for data and metadata depend on number of
@@ -145,7 +145,7 @@ OPTIONS
         If the destination block device is a regular file, this option will also
         truncate the file to the minimal size. Otherwise it will reduce the filesystem
         available space.  Extra space will not be usable unless the filesystem is
-        mounted and resized using **btrfs filesystem resize**.
+        mounted and resized using :command:`btrfs filesystem resize`.
 
         .. note::
                 Prior to version 4.14.1, the shrinking was done automatically.
@@ -155,7 +155,7 @@ OPTIONS
         supported by old kernels. To disable a feature, prefix it with *^*.
 
         See section *FILESYSTEM FEATURES* for more details.  To see all available
-        features that **mkfs.btrfs** supports run:
+        features that :command:`mkfs.btrfs` supports run:
 
         .. code-block:: bash
 
@@ -163,8 +163,8 @@ OPTIONS
 
 -f|--force
         Forcibly overwrite the block devices when an existing filesystem is detected.
-        By default, **mkfs.btrfs** will utilize *libblkid* to check for any known
-        filesystem on the devices. Alternatively you can use the **wipefs** utility
+        By default, :command:`mkfs.btrfs` will utilize *libblkid* to check for any known
+        filesystem on the devices. Alternatively you can use the :command:`wipefs` utility
         to clear the devices.
 
 -q|--quiet
@@ -179,7 +179,7 @@ OPTIONS
         Increase verbosity level, default is 1.
 
 -V|--version
-        Print the **mkfs.btrfs** version and exit.
+        Print the :command:`mkfs.btrfs` version and exit.
 
 --help
         Print help.
@@ -207,7 +207,7 @@ association of the block devices that are attached to the filesystem UUID.
 
 There is typically no action needed from the user.  On a system that utilizes a
 udev-like daemon, any new block device is automatically registered. The rules
-call **btrfs device scan**.
+call :command:`btrfs device scan`.
 
 The same command can be used to trigger the device scanning if the btrfs kernel
 module is reloaded (naturally all previous information about the device
@@ -359,7 +359,7 @@ There are the following block group types available:
    performance will be improved.
 
 *Note 1:* DUP may exist on more than 1 device if it starts on a single device and
-another one is added. Since version 4.5.1, **mkfs.btrfs** will let you create DUP
+another one is added. Since version 4.5.1, :command:`mkfs.btrfs` will let you create DUP
 on multiple devices without restrictions.
 
 *Note 2:* It's not recommended to use 2 devices with RAID5. In that case,

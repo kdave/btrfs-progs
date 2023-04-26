@@ -68,7 +68,7 @@ Once activated the file will appear in */proc/swaps*:
         /path/swapfile    file          2097152        0         -2
 
 The swapfile can be created as one-time operation or, once properly created,
-activated on each boot by the **swapon -a** command (usually started by the
+activated on each boot by the :command:`swapon -a` command (usually started by the
 service manager). Add the following entry to */etc/fstab*, assuming the
 filesystem that provides the */path* has been already mounted at this point.
 Additional mount options relevant for the swapfile can be set too (like
@@ -79,7 +79,7 @@ priority, not the BTRFS mount options).
         /path/swapfile        none        swap        defaults      0 0
 
 From now on the subvolume with the active swapfile cannot be snapshotted until
-the swapfile is deactivated again by ``swapoff``. Then the swapfile is a
+the swapfile is deactivated again by :command:`swapoff`. Then the swapfile is a
 regular file and the subvolume can be snapshotted again, though this would prevent
 another activation any swapfile that has been snapshotted. New swapfiles (not
 snapshotted) can be created and activated.
@@ -96,14 +96,14 @@ hibernation a resume offset must be written to file */sys/power/resume_offset*
 or the kernel command line parameter *resume_offset* must be set.
 
 The value is the physical offset on the device. Note that **this is not the same
-value that** ``filefrag`` **prints as physical offset!**
+value that** :command:`filefrag` **prints as physical offset!**
 
 Btrfs filesystem uses mapping between logical and physical addresses but here
 the physical can still map to one or more device-specific physical block
 addresses. It's the device-specific physical offset that is suitable as resume
 offset.
 
-Since version 6.1 there's a command ``btrfs inspect-internal map-swapfile`` that will
+Since version 6.1 there's a command :command:`btrfs inspect-internal map-swapfile` that will
 print the device physical offset and the adjusted value for */sys/power/resume_offset*.
 Note that the value is divided by page size, i.e. it's not the offset itself.
 
@@ -129,10 +129,10 @@ Troubleshooting
 ---------------
 
 If the swapfile activation fails please verify that you followed all the steps
-above or check the system log (e.g. ``dmesg`` or ``journalctl``) for more
+above or check the system log (e.g. :command:`dmesg` or :command:`journalctl`) for more
 information.
 
-Notably, the *swapon* utility exits with a message that does not say what
+Notably, the :command:`swapon` utility exits with a message that does not say what
 failed:
 
 .. code-block:: none
