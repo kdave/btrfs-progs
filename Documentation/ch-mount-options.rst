@@ -191,7 +191,7 @@ device=<devicepath>
                 system at that point.
 
 discard, discard=sync, discard=async, nodiscard
-        (default: off, async support since: 5.6)
+        (default: async when devices support it since 6.2, async support since: 5.6)
 
         Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
         provisioned LUNs, or virtual machine images; however, every storage layer must
