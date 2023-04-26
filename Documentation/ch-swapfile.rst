@@ -1,16 +1,16 @@
-A swapfile is file-backed memory that the system uses to temporarily offload
-the RAM.  It is supported since kernel 5.0. Use ``swapon(8)`` to activate it as
-a swap area, until then it's just a normal file (with NODATACOW set), for which
-the special restrictions for active swapfile areas don't apply.
+A swapfile, when active, is a file-backed swap area.  It is supported since kernel 5.0.
+Use ``swapon(8)`` to activate it, until then (respectively again after deactivating it
+with ``swapoff(8)``) it's just a normal file (with NODATACOW set), for which the special
+restrictions for active swapfiles don't apply.
 
 There are some limitations of the implementation in BTRFS and Linux swap
 subsystem:
 
 * filesystem - must be only single device
 * filesystem - must have only *single* data profile
-* swapfile - the containing subvolume cannot be snapshotted if there's an active swapfile
-* swapfile - the file must be preallocated (i.e. no holes)
-* swapfile - the file must be NODATACOW (i.e. also NODATASUM, no compression)
+* subvolume - cannot be snapshotted if it contains any active swapfiles
+* swapfile - must be preallocated (i.e. no holes)
+* swapfile - must be NODATACOW (i.e. also NODATASUM, no compression)
 
 The limitations come namely from the COW-based design and mapping layer of
 blocks that allows the advanced features like relocation and multi-device
@@ -21,13 +21,13 @@ swap.
 With active swapfiles, the following whole-filesystem operations will skip
 swapfile extents or may fail:
 
-* balance - block groups with an active swapfile extents are skipped and
+* balance - block groups with extents of any active swapfiles are skipped and
   reported, the rest will be processed normally
 * resize grow - unaffected
-* resize shrink - works as long as the extents of an active swapfile are
+* resize shrink - works as long as the extents of any active swapfiles are
   outside of the shrunk range
-* device add - a new device does not interfere with existing active swapfile
-  and this operation will work, though no new swapfile can be activated
+* device add - if the new devices do not interfere with any already active swapfiles
+  this operation will work, though no new swapfile can be activated
   afterwards
 * device delete - if the device has been added as above, it can be also deleted
 * device replace - ditto
