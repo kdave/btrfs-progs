@@ -1,3 +1,27 @@
+btrfs-progs-6.3 (2023-04-27)
+----------------------------
+   * mkfs: option -R deprecated, options unified in -O (-R still works)
+   * mkfs: fix potential race with udev leading to EBUSY due to repeatedly
+     opened file descriptors
+   * block-group-tree is out of experimental mode
+      * available as 'mkfs.btrfs -O block-group-tree'
+      * btrfstune can do in-place conversion to/from (use with care)
+   * balance: fix recognizing old and new syntax
+   * subvol snapshot: specific error if a failure is caused by an active swapfile
+   * tree-stats: rephrase warning when run on a mounted filesystem
+   * completion: 'filesystem du' also completes files
+   * check: fix docs, help text and warning that --force + --repair works on a
+     mounted filesystem
+   * build: fix static build when static libudev is available
+   * documentation:
+      * more updates from wiki, developer docs, changelogs
+      * reformatting
+      * updates and fixes
+   * other:
+      * test updates and fixes
+      * CI cleanups and old files removed
+      * integration with Github actions
+
 btrfs-progs-6.2 (2023-02-28)
 ----------------------------
    * receive: fix a corruption when decompressing zstd extents
