@@ -355,27 +355,29 @@ space_cache, space_cache=<version>, nospace_cache
         the space cache consumes some resources, including a small amount of disk
         space.
 
-        There are two implementations of the free space cache. The original
-        one, referred to as *v1*, used to be a safe default but has been
-        superseded by *v2*.  The *v1* space cache can be disabled at mount time
-        with *nospace_cache* without clearing.
+        There are two implementations of the free space cache:
+        * *v1*, the original one, whose performance may degrade drastically on very
+          large filesystems (many terabytes) and certain workloads.
+        * *v2*, the newer one, which addresses the above issue and uses a new b-tree
+          called "free space tree".
 
-        On very large filesystems (many terabytes) and certain workloads, the
-        performance of the *v1* space cache may degrade drastically. The *v2*
-        implementation, which adds a new b-tree called the free space tree, addresses
-        this issue. Once enabled, the *v2* space cache will always be used and cannot
-        be disabled unless it is cleared. Use *clear_cache,space_cache=v1* or
-        *clear_cache,nospace_cache* to do so. If *v2* is enabled, and *v1* space
-        cache will be cleared (at the first mount) and kernels without *v2*
-        support will only be able to mount the filesystem in read-only mode.
-        On an unmounted filesystem the caches (both versions) can be cleared by
-        "btrfs check --clear-space-cache".
+        When *v2* is enabled, a *v1* space cache will be cleared (at the first mount).
+
+        Kernels without *v2* support will only be able to mount filesystems with *v2*
+        space cache in read-only mode.
+
+        The *v1* space cache can be disabled at mount time with *nospace_cache* without
+        clearing it.
+        The *v2* space cache, once enabled, cannot be disabled and will always be used
+        if present, unless it is cleared and the space cache is either disabled (via
+        *clear_cache,nospace_cache*) or changed to *v1* (via *clear_cache,space_cache=v1*).
+        Both versions can be removed, see :command:`btrfs check --clear-space-cache v2`.
 
         The :doc:`btrfs-check(8)<btrfs-check>` and `:doc:`mkfs.btrfs(8)<mkfs.btrfs>` commands have full *v2* free space
         cache support since v4.19.
 
-        If a version is not explicitly specified, the default implementation will be
-        chosen, which is *v2*.
+        Unless *nospace_cache* is specified, if *space_cache* is not specified at all
+        or specified without version, the default (space cache *v2*) will be used.
 
 ssd, ssd_spread, nossd, nossd_spread
         (default: SSD autodetected)
