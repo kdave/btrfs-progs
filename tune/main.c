@@ -70,8 +70,10 @@ static const char * const tune_usage[] = {
 	OPTLINE("-x", "enable skinny metadata extent refs (mkfs: skinny-metadata)"),
 	OPTLINE("-n", "enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)"),
 	OPTLINE("-S <0|1>", "set/unset seeding status of a device"),
-	OPTLINE("--enable-block-group-tree", "enable block group tree (mkfs: block-group-tree, for less mount time)"),
-	OPTLINE("--disable-block-group-tree", "disable block group tree (mkfs: ^block-group-tree)n"),
+	OPTLINE("--convert-to-block-group-tree", "convert filesystem to track block groups in "
+			"the separate block-group-tree instead of extent tree (sets the incompat bit)"),
+	OPTLINE("--convert-from-block-group-tree",
+			"convert the block group tree back to extent tree (remove the incompat bit)"),
 	"",
 	"UUID changes:",
 	OPTLINE("-u", "rewrite fsid, use a random one"),
@@ -120,9 +122,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		       GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
-			{ "enable-block-group-tree", no_argument, NULL,
+			{ "convert-to-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE},
-			{ "disable-block-group-tree", no_argument, NULL,
+			{ "convert-from-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE},
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
@@ -246,7 +248,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
  	if (to_bg_tree) {
 		if (to_extent_tree) {
-			error("option --enable-block-group-tree conflicts with --disable-block-group-tree");
+			error("option --convert-to-block-group-tree conflicts with --convert-from-block-group-tree");
 			ret = 1;
 			goto out;
 		}
@@ -269,7 +271,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 	if (to_extent_tree) {
 		if (to_bg_tree) {
-			error("option --enable-block-group-tree conflicts with --disable-block-group-tree");
+			error("option --convert-to-block-group-tree conflicts with --convert-from-block-group-tree");
 			ret = 1;
 			goto out;
 		}

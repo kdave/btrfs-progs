@@ -24,16 +24,18 @@ means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs(5)<btrfs-man5>`
 OPTIONS
 -------
 
---enable-block-group-tree
-        (since kernel 6.1)
-        Enable block group tree feature (greatly reduce mount time),
-        enabled by mkfs feature *block-group-tree*.
-
---disable-block-group-tree
+--convert-to-block-group-tree
         (since kernel 6.1)
 
-        Disable block group tree feature and convert the filesystem to extent
-        tree.
+        Convert portions of extent tree that tracks block groups to a separate
+        block gruop tree. This greatly reduces mount time. Can be also enabled
+        at mkfs time.
+
+--convert-from-block-group-tree
+        (since kernel 6.1)
+
+        Convert block groups tracked in standalone block group tree back to
+        extent tree and remove 'block-group-tree' feature bit from the filesystem.
 
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
