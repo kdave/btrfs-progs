@@ -90,6 +90,7 @@ struct extent_record {
 	u64 info_objectid;
 	u32 num_duplicates;
 	u8 info_level;
+	u8 level;
 	unsigned int flag_block_full_backref:2;
 	unsigned int found_rec:1;
 	unsigned int content_checked:1;

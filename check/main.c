@@ -4196,7 +4196,8 @@ static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 	    rec->num_duplicates == 0 && !all_backpointers_checked(rec, 0) &&
 	    !rec->bad_full_backref && !rec->crossing_stripes &&
 	    rec->generation <= super_gen + 1 &&
-	    !rec->wrong_chunk_type) {
+	    !rec->wrong_chunk_type &&
+	    (!rec->metadata || rec->info_level == rec->level)) {
 		remove_cache_extent(extent_cache, &rec->cache);
 		free_all_extent_backrefs(rec);
 		list_del_init(&rec->list);
@@ -4772,6 +4773,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->extent_item_refs = tmpl->extent_item_refs;
 	rec->parent_generation = tmpl->parent_generation;
 	rec->generation = tmpl->generation;
+	rec->level = tmpl->level;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->dups);
 	INIT_LIST_HEAD(&rec->list);
@@ -4853,6 +4855,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 				rec->num_duplicates++;
 			} else {
 				rec->nr = tmpl->nr;
+				rec->level = tmpl->level;
 				rec->found_rec = 1;
 			}
 		}
@@ -5597,6 +5600,8 @@ static int process_extent_item(struct btrfs_root *root,
 	if (metadata)
 		btrfs_check_subpage_eb_alignment(gfs_info, key.objectid, num_bytes);
 
+	memset(&tmpl, 0, sizeof(tmpl));
+
 	ptr = (unsigned long)(ei + 1);
 	if (metadata) {
 		u64 level;
@@ -5615,8 +5620,10 @@ static int process_extent_item(struct btrfs_root *root,
 			      key.objectid, level, BTRFS_MAX_LEVEL - 1);
 			return -EUCLEAN;
 		}
+
+		tmpl.level = (u8)level;
 	}
-	memset(&tmpl, 0, sizeof(tmpl));
+
 	tmpl.start = key.objectid;
 	tmpl.nr = num_bytes;
 	tmpl.extent_item_refs = refs;
@@ -8149,6 +8156,15 @@ static int check_extent_refs(struct btrfs_root *root,
 				cur_err = 1;
 			}
 		}
+
+		if (rec->metadata && rec->level != rec->info_level) {
+			fprintf(stderr,
+				"metadata level mismatch on [%llu, %llu]\n",
+				(unsigned long long)rec->start,
+				(unsigned long long)rec->nr);
+			cur_err = 1;
+		}
+
 		if (rec->refs != rec->extent_item_refs) {
 			fprintf(stderr, "ref mismatch on [%llu %llu] ",
 				(unsigned long long)rec->start,
