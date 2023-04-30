@@ -5546,13 +5546,14 @@ static int process_extent_item(struct btrfs_root *root,
 	unsigned long end;
 	unsigned long ptr;
 	int ret;
-	int type;
+	int type, last_type;
 	u32 item_size = btrfs_item_size(eb, slot);
 	u64 refs = 0;
 	u64 offset;
 	u64 num_bytes;
 	u64 gen;
 	int metadata = 0;
+	u64 last_hash, hash;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
 
@@ -5631,13 +5632,19 @@ static int process_extent_item(struct btrfs_root *root,
 	    key.type == BTRFS_EXTENT_ITEM_KEY)
 		ptr += sizeof(struct btrfs_tree_block_info);
 
+	last_hash = 0xffffffffffffffff;
+	last_type = 0;
+
 	end = (unsigned long)ei + item_size;
 	while (ptr < end) {
 		iref = (struct btrfs_extent_inline_ref *)ptr;
 		type = btrfs_extent_inline_ref_type(eb, iref);
 		offset = btrfs_extent_inline_ref_offset(eb, iref);
+
 		switch (type) {
 		case BTRFS_TREE_BLOCK_REF_KEY:
+			hash = offset;
+
 			ret = add_tree_backref(extent_cache, key.objectid,
 					0, offset, 0);
 			if (ret < 0) {
@@ -5647,6 +5654,8 @@ static int process_extent_item(struct btrfs_root *root,
 			}
 			break;
 		case BTRFS_SHARED_BLOCK_REF_KEY:
+			hash = offset;
+
 			ret = add_tree_backref(extent_cache, key.objectid,
 					offset, 0, 0);
 			if (ret < 0) {
@@ -5657,6 +5666,12 @@ static int process_extent_item(struct btrfs_root *root,
 			break;
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
+
+			hash = hash_extent_data_ref(
+				btrfs_extent_data_ref_root(eb, dref),
+				btrfs_extent_data_ref_objectid(eb, dref),
+				btrfs_extent_data_ref_offset(eb, dref));
+
 			add_data_backref(extent_cache, key.objectid, 0,
 					btrfs_extent_data_ref_root(eb, dref),
 					btrfs_extent_data_ref_objectid(eb,
@@ -5666,6 +5681,8 @@ static int process_extent_item(struct btrfs_root *root,
 					gen, 0, num_bytes);
 			break;
 		case BTRFS_SHARED_DATA_REF_KEY:
+			hash = offset;
+
 			sref = (struct btrfs_shared_data_ref *)(iref + 1);
 			add_data_backref(extent_cache, key.objectid, offset,
 					0, 0, 0,
@@ -5678,6 +5695,28 @@ static int process_extent_item(struct btrfs_root *root,
 				key.objectid, key.type, num_bytes);
 			goto out;
 		}
+
+		if (type != last_type) {
+			last_hash = 0xffffffffffffffff;
+
+			if (type < last_type) {
+				fprintf(stderr,
+			"inline extent refs out of order: key [%llu,%u,%llu]\n",
+				      key.objectid, key.type, num_bytes);
+				goto out;
+			}
+
+			last_type = type;
+		}
+
+		if (hash > last_hash) {
+			fprintf(stderr,
+			"inline extent refs out of order: key [%llu,%u,%llu]\n",
+			      key.objectid, key.type, num_bytes);
+			goto out;
+		}
+
+		last_hash = hash;
 		ptr += btrfs_extent_inline_ref_size(type);
 	}
 	WARN_ON(ptr > end);
