@@ -366,8 +366,8 @@ is located in the ``ROOT_TREE`` and is of the following form.
 +-----------------------------------+
 
 -  There is no item body associated with this key. All required information is
-  contained within the key itself and the ``ROOT_ITEM`` associated with the
-  objectid contained in ``offset``
+   contained within the key itself and the ``ROOT_ITEM`` associated with the
+   objectid contained in ``offset``
 
 When the file system is mounted again after failure, the ``ROOT_TREE`` is
 searched for all orphan keys and the process is resumed for each one using the
