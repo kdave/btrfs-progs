@@ -8,7 +8,7 @@
 # - load required modules and mount configfs
 #
 # nullb create [-s size] [-z zonesize]
-# - create a new device with given sizes, allocating the first free indes, #
+# - create a new device with given sizes, allocating the first free index,
 #   device is /dev/nullb$index
 #
 # nullb ls
@@ -51,8 +51,8 @@ function _dbg() {
 }
 
 function _check_setup() {
-	if ! grep -q null_blk /proc/modules; then
-		_error "module not loaded"
+	if ! modinfo -n null_blk > /dev/null; then
+		_error "module not compiled/loaded"
 	fi
 	if ! grep -q configfs /proc/filesystems; then
 		_error "configfs not mounted"
