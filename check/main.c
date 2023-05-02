@@ -10237,13 +10237,13 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (clear_space_cache) {
-		ret = do_clear_free_space_cache(clear_space_cache);
+		ret = do_clear_free_space_cache(gfs_info, clear_space_cache);
 		err |= !!ret;
 		goto close_out;
 	}
 
 	if (clear_ino_cache) {
-		ret = clear_ino_cache_items();
+		ret = clear_ino_cache_items(gfs_info);
 		err = ret;
 		goto close_out;
 	}
@@ -10409,7 +10409,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 	}
 
-	ret = validate_free_space_cache(root);
+	ret = validate_free_space_cache(root, &g_task_ctx);
 	task_stop(g_task_ctx.info);
 	err |= !!ret;
 
