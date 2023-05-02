@@ -21,6 +21,7 @@ struct btrfs_fs_info;
 struct btrfs_root;
 struct task_ctx;
 
+int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info);
 int do_clear_free_space_cache(struct btrfs_fs_info *fs_info, int clear_version);
 int validate_free_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx);
 int truncate_free_ino_items(struct btrfs_root *root);

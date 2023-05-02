@@ -37,6 +37,11 @@ OPTIONS
         Convert block groups tracked in standalone block group tree back to
         extent tree and remove 'block-group-tree' feature bit from the filesystem.
 
+--convert-to-free-space-tree
+        (since kernel 4.5)
+
+        Convert to free-space-tree feature (v2 of space cache).
+
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
         Make sure that you are aware of the dangers.

@@ -28,6 +28,8 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/free-space-cache.h"
+#include "kernel-shared/free-space-tree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
@@ -38,6 +40,7 @@
 #include "common/box.h"
 #include "cmds/commands.h"
 #include "tune/tune.h"
+#include "check/clear-cache.h"
 
 static char *device;
 static int force = 0;
@@ -60,6 +63,36 @@ static int set_super_incompat_flags(struct btrfs_root *root, u64 flags)
 	return ret;
 }
 
+static int convert_to_fst(struct btrfs_fs_info *fs_info)
+{
+	int ret;
+
+	/* We may have invalid old v2 cache, clear them first. */
+	if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE)) {
+		ret = btrfs_clear_free_space_tree(fs_info);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to clear stale v2 free space cache: %m");
+			return ret;
+		}
+	}
+	ret = btrfs_clear_v1_cache(fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to clear v1 free space cache: %m");
+		return ret;
+	}
+
+	ret = btrfs_create_free_space_tree(fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to create free space tree: %m");
+		return ret;
+	}
+	pr_verbose(LOG_DEFAULT, "Converted to free space tree feature\n");
+	return ret;
+}
+
 static const char * const tune_usage[] = {
 	"btrfstune [options] device",
 	"Tune settings of filesystem features on an unmounted device",
@@ -74,6 +107,7 @@ static const char * const tune_usage[] = {
 			"the separate block-group-tree instead of extent tree (sets the incompat bit)"),
 	OPTLINE("--convert-from-block-group-tree",
 			"convert the block group tree back to extent tree (remove the incompat bit)"),
+	OPTLINE("--convert-to-free-space-tree", "convert filesystem to use free space tree (v2 cache)"),
 	"",
 	"UUID changes:",
 	OPTLINE("-u", "rewrite fsid, use a random one"),
@@ -108,6 +142,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	int change_metadata_uuid = 0;
 	bool to_extent_tree = false;
 	bool to_bg_tree = false;
+	bool to_fst = false;
 	int csum_type = -1;
 	char *new_fsid_str = NULL;
 	int ret;
@@ -119,13 +154,16 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	while(1) {
 		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST,
 		       GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE,
-		       GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE };
+		       GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE,
+		       GETOPT_VAL_ENABLE_FREE_SPACE_TREE };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ "convert-to-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE},
 			{ "convert-from-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE},
+			{ "convert-to-free-space-tree", no_argument, NULL,
+				GETOPT_VAL_ENABLE_FREE_SPACE_TREE},
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
 #endif
@@ -175,6 +213,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE:
 			to_extent_tree = true;
 			break;
+		case GETOPT_VAL_ENABLE_FREE_SPACE_TREE:
+			to_fst = true;
+			break;
 #if EXPERIMENTAL
 		case GETOPT_VAL_CSUM:
 			btrfs_warn_experimental(
@@ -200,7 +241,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
 	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree &&
-	    !to_extent_tree) {
+	    !to_extent_tree && !to_fst) {
 		error("at least one option should be specified");
 		usage(&tune_cmd, 1);
 		return 1;
@@ -267,6 +308,17 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			error("failed to convert the filesystem to block group tree feature");
 			goto out;
 		}
+		goto out;
+	}
+	if (to_fst) {
+		if (btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE_VALID)) {
+			error("filesystem already has free-space-tree feature");
+			ret = 1;
+			goto out;
+		}
+		ret = convert_to_fst(root->fs_info);
+		if (ret < 0)
+			error("failed to convert the filesystem to free-space-tree feature");
 		goto out;
 	}
 	if (to_extent_tree) {

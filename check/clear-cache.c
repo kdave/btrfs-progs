@@ -35,7 +35,7 @@
  */
 #define NR_BLOCK_GROUP_CLUSTER		(16)
 
-static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
+int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_block_group *bg_cache;
@@ -99,7 +99,7 @@ int do_clear_free_space_cache(struct btrfs_fs_info *fs_info, int clear_version)
 			warning(
 "free space cache v2 detected, use --clear-space-cache v2, proceeding with clearing v1");
 
-		ret = clear_free_space_cache(fs_info);
+		ret = btrfs_clear_v1_cache(fs_info);
 		if (ret) {
 			error("failed to clear free space cache");
 			ret = 1;
