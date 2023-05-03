@@ -35,12 +35,6 @@
 extern "C" {
 #endif
 
-/*
- * Compatibility code for kernels < 3.12; the UUID tree is not available there
- * and we have to do the slow search. This should be deprecated someday.
- */
-#define BTRFS_COMPAT_SEND_NO_UUID_TREE 1
-
 enum subvol_search_type {
 	subvol_search_by_root_id,
 	subvol_search_by_uuid,
@@ -49,12 +43,6 @@ enum subvol_search_type {
 };
 
 struct subvol_info {
-#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
-	struct rb_node rb_root_id_node;
-	struct rb_node rb_local_node;
-	struct rb_node rb_received_node;
-	struct rb_node rb_path_node;
-#endif
 
 	u64 root_id;
 	u8 uuid[BTRFS_UUID_SIZE];
@@ -70,14 +58,6 @@ struct subvol_info {
 
 struct subvol_uuid_search {
 	int mnt_fd;
-#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
-	int uuid_tree_existed;
-
-	struct rb_root root_id_subvols;
-	struct rb_root local_subvols;
-	struct rb_root received_subvols;
-	struct rb_root path_subvols;
-#endif
 };
 
 int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s);
