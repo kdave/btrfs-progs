@@ -84,7 +84,8 @@ DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation) \
 	$(call cc-disable-warning, address-of-packed-member)
 
 # Warnings that we want by default
-ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough)
+ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough) \
+			$(call cc-option, -Wmissing-prototypes)
 
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
