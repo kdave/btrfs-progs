@@ -18,6 +18,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
+#include "tune/tune.h"
 
 int update_seeding_flag(struct btrfs_root *root, const char *device, int set_flag, int force)
 {

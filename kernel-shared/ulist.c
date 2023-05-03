@@ -73,7 +73,7 @@ void ulist_init(struct ulist *ulist)
  * This is useful in cases where the base 'struct ulist' has been statically
  * allocated.
  */
-void ulist_release(struct ulist *ulist)
+static void ulist_release(struct ulist *ulist)
 {
 	struct ulist_node *node;
 	struct ulist_node *next;

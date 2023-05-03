@@ -22,6 +22,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "common/extent-cache.h"
+#include "tune/tune.h"
 
 /* After this many block groups we need to commit transaction. */
 #define BLOCK_GROUP_BATCH	64

@@ -280,7 +280,7 @@ static struct {
 static btrfs_list_filter_func all_filter_funcs[];
 static btrfs_list_comp_func all_comp_funcs[];
 
-void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
+static void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
 {
 	int i;
 

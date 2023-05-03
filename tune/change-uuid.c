@@ -26,6 +26,7 @@
 #include "kernel-shared/volumes.h"
 #include "common/defs.h"
 #include "common/messages.h"
+#include "tune/tune.h"
 
 static int change_fsid_prepare(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {

@@ -92,7 +92,7 @@ u64 zone_size(const char *file)
 	return strtoull((const char *)chunk, NULL, 10) << SECTOR_SHIFT;
 }
 
-u64 max_zone_append_size(const char *file)
+static u64 max_zone_append_size(const char *file)
 {
 	char chunk[32];
 	int ret;

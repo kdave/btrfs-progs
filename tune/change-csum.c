@@ -24,6 +24,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "common/internal.h"
+#include "tune/tune.h"
 
 static int change_tree_csum(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 			    int csum_type)

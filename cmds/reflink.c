@@ -58,7 +58,7 @@ struct reflink_range {
 	bool same_file;
 };
 
-void parse_reflink_range(const char *str, u64 *from, u64 *length, u64 *to)
+static void parse_reflink_range(const char *str, u64 *from, u64 *length, u64 *to)
 {
 	char tmp[512];
 	int i;

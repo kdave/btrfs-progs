@@ -332,7 +332,7 @@ u64 device_get_partition_size_fd(int fd)
 	return result;
 }
 
-u64 device_get_partition_size_sysfs(const char *dev)
+static u64 device_get_partition_size_sysfs(const char *dev)
 {
 	int ret;
 	char path[PATH_MAX] = {};

@@ -17,6 +17,8 @@
 #ifndef __BTRFS_TUNE_H__
 #define __BTRFS_TUNE_H__
 
+#include <uuid/uuid.h>
+
 struct btrfs_root;
 struct btrfs_fs_info;
 

@@ -498,7 +498,7 @@ static bool valid_escape(const char *str)
  * - line is advanced to the final separator or nul character
  * - returned path is a valid string terminated by zero or whitespace separator
  */
-char *read_path(char **line)
+static char *read_path(char **line)
 {
 	char *ret = *line;
 	char *out = *line;
