@@ -596,64 +596,6 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	return ret_sz;
 }
 
-/*
- * Check if spcecifeid region is suitable for allocation
- *
- * @device:	the device to allocate a region
- * @pos:	the position of the region
- * @num_bytes:	the size of the region
- *
- * In non-ZONED device, anywhere is suitable for allocation. In ZONED
- * device, check if:
- * 1) the region is not on non-empty sequential zones,
- * 2) all zones in the region have the same zone type,
- * 3) it does not contain super block location
- */
-bool btrfs_check_allocatable_zones(struct btrfs_device *device, u64 pos,
-				   u64 num_bytes)
-{
-	struct btrfs_zoned_device_info *zinfo = device->zone_info;
-	u64 nzones, begin, end;
-	u64 sb_pos;
-	bool is_sequential;
-	int shift;
-	int i;
-
-	if (!zinfo || zinfo->model == ZONED_NONE)
-		return true;
-
-	nzones = num_bytes / zinfo->zone_size;
-	begin = pos / zinfo->zone_size;
-	end = begin + nzones;
-
-	ASSERT(IS_ALIGNED(pos, zinfo->zone_size));
-	ASSERT(IS_ALIGNED(num_bytes, zinfo->zone_size));
-
-	if (end > zinfo->nr_zones)
-		return false;
-
-	shift = ilog2(zinfo->zone_size);
-	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
-		sb_pos = sb_zone_number(shift, i);
-		if (!(end < sb_pos || sb_pos + 1 < begin))
-			return false;
-	}
-
-	is_sequential = btrfs_dev_is_sequential(device, pos);
-
-	while (num_bytes) {
-		if (is_sequential && !btrfs_dev_is_empty_zone(device, pos))
-			return false;
-		if (is_sequential != btrfs_dev_is_sequential(device, pos))
-			return false;
-
-		pos += zinfo->zone_size;
-		num_bytes -= zinfo->zone_size;
-	}
-
-	return true;
-}
-
 /**
  * btrfs_find_allocatable_zones - find allocatable zones within a given region
  *
