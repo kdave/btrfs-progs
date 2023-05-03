@@ -211,4 +211,7 @@ extern int hmacResult(HMACContext *context,
 
 void sha256_init_accel(void);
 
+/* Export for optimized version to silent -Wmissing-prototypes. */
+void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);
+
 #endif /* _SHA_H_ */
