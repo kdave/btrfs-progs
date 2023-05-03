@@ -92,6 +92,11 @@ extern "C" {
 
   void blake2_init_accel(void);
 
+  /* Export optimized versions to silent -Wmissing-prototypes warnings. */
+  void blake2b_compress_avx2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
+  void blake2b_compress_sse2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
+  void blake2b_compress_sse41( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
+
 #if defined(__cplusplus)
 }
 #endif

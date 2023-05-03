@@ -220,10 +220,6 @@ static void blake2b_compress_ref( blake2b_state *S, const uint8_t block[BLAKE2B_
 #undef G
 #undef ROUND
 
-void blake2b_compress_sse2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
-void blake2b_compress_sse41( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
-void blake2b_compress_avx2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );
-
 static void (*blake2b_compress)( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] ) = blake2b_compress_ref;
 
 void blake2_init_accel(void)
