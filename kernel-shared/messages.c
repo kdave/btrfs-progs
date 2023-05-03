@@ -134,15 +134,14 @@ void __btrfs_handle_fs_error(struct btrfs_fs_info *fs_info, const char *function
 	errstr = btrfs_decode_error(error);
 	btrfs_state_to_string(fs_info, statestr);
 	if (fmt) {
-		struct va_format vaf;
+		DECLARE_PV(vaf);
 		va_list args;
 
 		va_start(args, fmt);
-		vaf.fmt = fmt;
-		vaf.va = &args;
+		PV_ASSIGN(vaf, fmt, args);
 
-		pr_crit("BTRFS: error (device %s%s) in %s:%d: error=%d %s (%pV)\n",
-			sb->s_id, statestr, function, line, error, errstr, &vaf);
+		pr_crit("BTRFS: error (device %s%s) in %s:%d: error=%d %s (" PV_FMT ")\n",
+			sb->s_id, statestr, function, line, error, errstr, PV_VAL(vaf));
 		va_end(args);
 	} else {
 		pr_crit("BTRFS: error (device %s%s) in %s:%d: error=%d %s\n",
@@ -215,7 +214,7 @@ static struct ratelimit_state printk_limits[] = {
 void __cold _btrfs_printk(const struct btrfs_fs_info *fs_info, const char *fmt, ...)
 {
 	char lvl[PRINTK_MAX_SINGLE_HEADER_LEN + 1] = "\0";
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 	int kern_level;
 	const char *type = logtypes[4];
@@ -239,18 +238,17 @@ void __cold _btrfs_printk(const struct btrfs_fs_info *fs_info, const char *fmt, 
 		fmt += size;
 	}
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	if (__ratelimit(ratelimit)) {
 		if (fs_info) {
 			char statestr[STATE_STRING_BUF_LEN];
 
 			btrfs_state_to_string(fs_info, statestr);
-			_printk("%sBTRFS %s (device %s%s): %pV\n", lvl, type,
-				fs_info->sb->s_id, statestr, &vaf);
+			_printk("%sBTRFS %s (device %s%s): " PV_FMT "\n", lvl, type,
+				fs_info->sb->s_id, statestr, PV_VAL(vaf));
 		} else {
-			_printk("%sBTRFS %s: %pV\n", lvl, type, &vaf);
+			_printk("%sBTRFS %s: " PV_FMT "\n", lvl, type, PV_VAL(vaf));
 		}
 	}
 
@@ -310,7 +308,7 @@ void __btrfs_panic(struct btrfs_fs_info *fs_info, const char *function,
 		   unsigned int line, int error, const char *fmt, ...)
 {
 	const char *errstr;
-	struct va_format vaf = { .fmt = fmt };
+	DECLARE_PV(vaf);
 	va_list args;
 #if 0
 	char *s_id = "<unknown>";
@@ -320,17 +318,18 @@ void __btrfs_panic(struct btrfs_fs_info *fs_info, const char *function,
 #endif
 
 	va_start(args, fmt);
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	errstr = btrfs_decode_error(error);
 #if 0
 	if (fs_info && (btrfs_test_opt(fs_info, PANIC_ON_FATAL_ERROR)))
-		panic(KERN_CRIT "BTRFS panic (device %s) in %s:%d: %pV (error=%d %s)\n",
-			s_id, function, line, &vaf, error, errstr);
+		panic(KERN_CRIT "BTRFS panic (device %s) in %s:%d: " PV_FMT " (error=%d %s)\n",
+			s_id, function, line, PV_VAL(vaf), error, errstr);
 #endif
 
-	btrfs_crit(fs_info, "panic in %s:%d: %pV (error=%d %s)",
-		   function, line, &vaf, error, errstr);
+
+	btrfs_crit(fs_info, "panic in %s:%d: " PV_FMT " (error=%d %s)",
+		   function, line, PV_VAL(vaf), error, errstr);
 	va_end(args);
 	/* Caller calls BUG() */
 }

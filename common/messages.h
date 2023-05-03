@@ -22,6 +22,23 @@
 #include <stdio.h>
 #include <errno.h>
 
+/*
+ * Workaround for custom format %pV that may not be supported on all libcs.
+ */
+#ifdef HAVE_PRINTF_H
+#define DECLARE_PV(name)		struct va_format name
+#define PV_FMT				"%pV"
+#define PV_VAL(va)			&va
+#define PV_ASSIGN(_va, _fmt, _args)	({ _va.fmt = (_fmt); _va.va = &(_args); })
+#include <printf.h>
+#else
+#define PV_WORKAROUND
+#define DECLARE_PV(name)		char name[1024]
+#define PV_FMT				"%s"
+#define PV_VAL(va)			va
+#define PV_ASSIGN(_va, _fmt, _args)	vsnprintf(_va, 1024, _fmt, _args)
+#endif
+
 #ifdef DEBUG_VERBOSE_ERROR
 #define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
 #else
