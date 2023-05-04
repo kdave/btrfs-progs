@@ -993,8 +993,8 @@ static int __set_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
 {
 	struct extent_state *state;
 	struct extent_state *prealloc = NULL;
-	struct rb_node **p;
-	struct rb_node *parent;
+	struct rb_node **p = NULL;
+	struct rb_node *parent = NULL;
 	int err = 0;
 	u64 last_start;
 	u64 last_end;
