@@ -191,10 +191,18 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 	if (!buffer)
 		return -ENOMEM;
 	for (offset = 0; offset < num_bytes; offset += blocksize) {
-		ret = read_disk_extent(root, disk_bytenr + offset,
-					blocksize, buffer);
+		u64 read_len = blocksize;
+
+		ret = read_data_from_disk(root->fs_info, buffer,
+					  disk_bytenr + offset, &read_len, 0);
 		if (ret)
 			break;
+		if (read_len == 0) {
+			error("failed to read logical bytenr %llu",
+			      disk_bytenr + offset);
+			ret = -EIO;
+			break;
+		}
 		ret = btrfs_csum_file_block(trans,
 					    disk_bytenr + num_bytes,
 					    disk_bytenr + offset,
