@@ -462,27 +462,6 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	return eb;
 }
 
-int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
-{
-	int ret;
-	u64 *raid_map = NULL;
-	struct btrfs_multi_bio *multi = NULL;
-
-	/* write_data_to_disk() will handle all mirrors and RAID56. */
-	ret = write_data_to_disk(fs_info, eb->data, eb->start, eb->len);
-	if (ret < 0) {
-		errno = -ret;
-		error("failed to write bytenr %llu length %u: %m",
-			eb->start, eb->len);
-		goto out;
-	}
-
-out:
-	kfree(raid_map);
-	kfree(multi);
-	return ret;
-}
-
 int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_fs_info *fs_info,
 		     struct extent_buffer *eb)
@@ -500,7 +479,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	csum_tree_block(fs_info, eb, 0);
 
-	return write_and_map_eb(fs_info, eb);
+	return write_data_to_disk(fs_info, eb->data, eb->start, eb->len);
 }
 
 void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,

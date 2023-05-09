@@ -316,7 +316,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	u64 file_pos = 0;
 	u64 cur_bytes;
 	u64 total_bytes;
-	struct extent_buffer *eb = NULL;
+	void *buf = NULL;
 	int fd;
 
 	if (st->st_size == 0)
@@ -358,12 +358,8 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	/* round up our st_size to the FS blocksize */
 	total_bytes = (u64)blocks * sectorsize;
 
-	/*
-	 * do our IO in extent buffers so it can work
-	 * against any raid type
-	 */
-	eb = calloc(1, sizeof(*eb) + sectorsize);
-	if (!eb) {
+	buf = malloc(sectorsize);
+	if (!buf) {
 		ret = -ENOMEM;
 		goto end;
 	}
@@ -385,36 +381,27 @@ again:
 
 	while (bytes_read < cur_bytes) {
 
-		memset(eb->data, 0, sectorsize);
+		memset(buf, 0, sectorsize);
 
-		ret_read = pread(fd, eb->data, sectorsize, file_pos +
-				   bytes_read);
+		ret_read = pread(fd, buf, sectorsize, file_pos + bytes_read);
 		if (ret_read == -1) {
 			error("cannot read %s at offset %llu length %u: %m",
 				path_name, file_pos + bytes_read, sectorsize);
 			goto end;
 		}
 
-		eb->start = first_block + bytes_read;
-		eb->len = sectorsize;
-		eb->fs_info = root->fs_info;
-
-		/*
-		 * we're doing the csum before we record the extent, but
-		 * that's ok
-		 */
-		ret = btrfs_csum_file_block(trans,
-				first_block + bytes_read + sectorsize,
-				first_block + bytes_read,
-				eb->data, sectorsize);
-		if (ret)
-			goto end;
-
-		ret = write_and_map_eb(root->fs_info, eb);
+		ret = write_data_to_disk(root->fs_info, buf,
+					 first_block + bytes_read, sectorsize);
 		if (ret) {
 			error("failed to write %s", path_name);
 			goto end;
 		}
+
+		ret = btrfs_csum_file_block(trans,
+				first_block + bytes_read + sectorsize,
+				first_block + bytes_read, buf, sectorsize);
+		if (ret)
+			goto end;
 
 		bytes_read += sectorsize;
 	}
@@ -434,7 +421,7 @@ again:
 		goto again;
 
 end:
-	free(eb);
+	free(buf);
 	close(fd);
 	return ret;
 }
