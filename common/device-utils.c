@@ -529,7 +529,7 @@ int device_get_rotational(const char *file)
 	return (rotational == '0');
 }
 
-ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
+ssize_t btrfs_direct_pread(int fd, void *buf, size_t count, off_t offset)
 {
 	int alignment;
 	size_t iosize;
@@ -537,13 +537,10 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 	struct stat stat_buf;
 	unsigned long req;
 	int ret;
-	ssize_t ret_rw;
-
-	UASSERT(rw == READ || rw == WRITE);
 
 	if (fstat(fd, &stat_buf) == -1) {
 		error("fstat failed: %m");
-		return 0;
+		return -errno;
 	}
 
 	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK)
@@ -553,20 +550,61 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 
 	if (ioctl(fd, req, &alignment)) {
 		error("failed to get block size: %m");
-		return 0;
+		return -errno;
 	}
 
-	if (IS_ALIGNED((size_t)buf, alignment) && IS_ALIGNED(count, alignment)) {
-		if (rw == WRITE)
-			return pwrite(fd, buf, count, offset);
-		else
-			return pread(fd, buf, count, offset);
+	if (IS_ALIGNED((size_t)buf, alignment) && IS_ALIGNED(count, alignment))
+		return pread(fd, buf, count, offset);
+
+	iosize = round_up(count, alignment);
+
+	ret = posix_memalign(&bounce_buf, alignment, iosize);
+	if (ret) {
+		error_msg(ERROR_MSG_MEMORY, "bounce buffer");
+		errno = ret;
+		return -ret;
 	}
+
+	ret = pread(fd, bounce_buf, iosize, offset);
+	if (ret >= count)
+		ret = count;
+	memcpy(buf, bounce_buf, count);
+
+	free(bounce_buf);
+	return ret;
+}
+
+ssize_t btrfs_direct_pwrite(int fd, const void *buf, size_t count, off_t offset)
+{
+	int alignment;
+	size_t iosize;
+	void *bounce_buf = NULL;
+	struct stat stat_buf;
+	unsigned long req;
+	int ret;
+
+	if (fstat(fd, &stat_buf) == -1) {
+		error("fstat failed: %m");
+		return -errno;
+	}
+
+	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK)
+		req = BLKSSZGET;
+	else
+		req = FIGETBSZ;
+
+	if (ioctl(fd, req, &alignment)) {
+		error("failed to get block size: %m");
+		return -errno;
+	}
+
+	if (IS_ALIGNED((size_t)buf, alignment) && IS_ALIGNED(count, alignment))
+		return pwrite(fd, buf, count, offset);
 
 	/* Cannot do anything if the write size is not aligned */
-	if (rw == WRITE && !IS_ALIGNED(count, alignment)) {
+	if (!IS_ALIGNED(count, alignment)) {
 		error("%zu is not aligned to %d", count, alignment);
-		return 0;
+		return -EINVAL;
 	}
 
 	iosize = round_up(count, alignment);
@@ -575,21 +613,13 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 	if (ret) {
 		error_msg(ERROR_MSG_MEMORY, "bounce buffer");
 		errno = ret;
-		return 0;
+		return -ret;
 	}
 
-	if (rw == WRITE) {
-		UASSERT(iosize == count);
-		memcpy(bounce_buf, buf, count);
-		ret_rw = pwrite(fd, bounce_buf, iosize, offset);
-	} else {
-		ret_rw = pread(fd, bounce_buf, iosize, offset);
-		if (ret_rw >= count) {
-			ret_rw = count;
-			memcpy(buf, bounce_buf, count);
-		}
-	}
+	UASSERT(iosize == count);
+	memcpy(bounce_buf, buf, count);
+	ret = pwrite(fd, bounce_buf, iosize, offset);
 
 	free(bounce_buf);
-	return ret_rw;
+	return ret;
 }
