@@ -54,7 +54,7 @@ ssize_t btrfs_direct_pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t btrfs_direct_pwrite(int fd, const void *buf, size_t count, off_t offset);
 
 #ifdef BTRFS_ZONED
-static inline ssize_t btrfs_pwrite(int fd, void *buf, size_t count,
+static inline ssize_t btrfs_pwrite(int fd, const void *buf, size_t count,
 				   off_t offset, bool direct)
 {
 	if (!direct)
@@ -62,8 +62,8 @@ static inline ssize_t btrfs_pwrite(int fd, void *buf, size_t count,
 
 	return btrfs_direct_pwrite(fd, buf, count, offset);
 }
-static inline ssize_t btrfs_pread(int fd, void *buf, size_t count, off_t offset,
-				  bool direct)
+static inline ssize_t btrfs_pread(int fd, void *buf, size_t count,
+				  off_t offset, bool direct)
 {
 	if (!direct)
 		return pread(fd, buf, count, offset);
