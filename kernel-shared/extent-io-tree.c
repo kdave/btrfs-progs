@@ -1239,8 +1239,8 @@ int convert_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
 {
 	struct extent_state *state;
 	struct extent_state *prealloc = NULL;
-	struct rb_node **p;
-	struct rb_node *parent;
+	struct rb_node **p = NULL;
+	struct rb_node *parent = NULL;
 	int err = 0;
 	u64 last_start;
 	u64 last_end;
@@ -1536,30 +1536,82 @@ out:
 }
 
 /*
- * Count the number of bytes in the tree that have a given bit(s) set.  This
- * can be fairly slow, except for EXTENT_DIRTY which is cached.  The total
- * number found is returned.
+ * Count the number of bytes in the tree that have a given bit(s) set for a
+ * given range.
+ *
+ * @tree:         The io tree to search.
+ * @start:        The start offset of the range. This value is updated to the
+ *                offset of the first byte found with the given bit(s), so it
+ *                can end up being bigger than the initial value.
+ * @search_end:   The end offset (inclusive value) of the search range.
+ * @max_bytes:    The maximum byte count we are interested. The search stops
+ *                once it reaches this count.
+ * @bits:         The bits the range must have in order to be accounted for.
+ *                If multiple bits are set, then only subranges that have all
+ *                the bits set are accounted for.
+ * @contig:       Indicate if we should ignore holes in the range or not. If
+ *                this is true, then stop once we find a hole.
+ * @cached_state: A cached state to be used across multiple calls to this
+ *                function in order to speedup searches. Use NULL if this is
+ *                called only once or if each call does not start where the
+ *                previous one ended.
+ *
+ * Returns the total number of bytes found within the given range that have
+ * all given bits set. If the returned number of bytes is greater than zero
+ * then @start is updated with the offset of the first byte with the bits set.
  */
 u64 count_range_bits(struct extent_io_tree *tree,
 		     u64 *start, u64 search_end, u64 max_bytes,
-		     u32 bits, int contig)
+		     u32 bits, int contig,
+		     struct extent_state **cached_state)
 {
-	struct extent_state *state;
+	struct extent_state *state = NULL;
+	struct extent_state *cached;
 	u64 cur_start = *start;
 	u64 total_bytes = 0;
 	u64 last = 0;
 	int found = 0;
 
-	if (WARN_ON(search_end <= cur_start))
+	if (WARN_ON(search_end < cur_start))
 		return 0;
 
 	spin_lock(&tree->lock);
+
+	if (!cached_state || !*cached_state)
+		goto search;
+
+	cached = *cached_state;
+
+	if (!extent_state_in_tree(cached))
+		goto search;
+
+	if (cached->start <= cur_start && cur_start <= cached->end) {
+		state = cached;
+	} else if (cached->start > cur_start) {
+		struct extent_state *prev;
+
+		/*
+		 * The cached state starts after our search range's start. Check
+		 * if the previous state record starts at or before the range we
+		 * are looking for, and if so, use it - this is a common case
+		 * when there are holes between records in the tree. If there is
+		 * no previous state record, we can start from our cached state.
+		 */
+		prev = prev_state(cached);
+		if (!prev)
+			state = cached;
+		else if (prev->start <= cur_start && cur_start <= prev->end)
+			state = prev;
+	}
 
 	/*
 	 * This search will find all the extents that end after our range
 	 * starts.
 	 */
-	state = tree_search(tree, cur_start);
+search:
+	if (!state)
+		state = tree_search(tree, cur_start);
+
 	while (state) {
 		if (state->start > search_end)
 			break;
@@ -1580,12 +1632,21 @@ u64 count_range_bits(struct extent_io_tree *tree,
 		}
 		state = next_state(state);
 	}
+
+	if (cached_state) {
+		free_extent_state(*cached_state);
+		*cached_state = state;
+		if (state)
+			refcount_inc(&state->refs);
+	}
+
 	spin_unlock(&tree->lock);
+
 	return total_bytes;
 }
 
 /*
- * Searche a range in the state tree for a given mask.  If 'filled' == 1, this
+ * Search a range in the state tree for a given mask.  If 'filled' == 1, this
  * returns 1 only if every extent in the tree has the bits set.  Otherwise, 1
  * is returned if any bit in the range is found set.
  */

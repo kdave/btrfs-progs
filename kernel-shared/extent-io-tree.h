@@ -120,7 +120,8 @@ void __cold extent_state_free_cachep(void);
 
 u64 count_range_bits(struct extent_io_tree *tree,
 		     u64 *start, u64 search_end,
-		     u64 max_bytes, u32 bits, int contig);
+		     u64 max_bytes, u32 bits, int contig,
+		     struct extent_state **cached_state);
 
 void free_extent_state(struct extent_state *state);
 int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
@@ -215,13 +216,6 @@ static inline int set_extent_new(struct extent_io_tree *tree, u64 start,
 		u64 end)
 {
 	return set_extent_bit(tree, start, end, EXTENT_NEW, NULL, GFP_NOFS);
-}
-
-static inline int set_extent_uptodate(struct extent_io_tree *tree, u64 start,
-		u64 end, struct extent_state **cached_state, gfp_t mask)
-{
-	return set_extent_bit(tree, start, end, EXTENT_UPTODATE,
-			      cached_state, mask);
 }
 
 int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
