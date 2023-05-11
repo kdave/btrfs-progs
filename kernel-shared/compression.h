@@ -10,7 +10,8 @@
 
 struct btrfs_inode;
 struct address_space;
-struct cgroup_subsys_state;
+struct inode;
+struct bio;
 
 /*
  * We want to make sure that amount of RAM required to uncompress an extent is
@@ -31,17 +32,11 @@ struct cgroup_subsys_state;
 #define	BTRFS_ZLIB_DEFAULT_LEVEL		3
 
 struct compressed_bio {
-	/* Number of outstanding bios */
-	refcount_t pending_ios;
-
 	/* Number of compressed pages in the array */
 	unsigned int nr_pages;
 
 	/* the pages with the compressed data on them */
 	struct page **compressed_pages;
-
-	/* inode that owns this data */
-	struct inode *inode;
 
 	/* starting offset in the inode for our pages */
 	u64 start;
@@ -58,12 +53,9 @@ struct compressed_bio {
 	/* Whether this is a write for writeback. */
 	bool writeback;
 
-	/* IO errors */
-	blk_status_t status;
-
 	union {
 		/* For reads, this is the bio we are copying the data into */
-		struct bio *orig_bio;
+		struct btrfs_bio *orig_bbio;
 		struct work_struct write_end_work;
 	};
 };
@@ -78,7 +70,7 @@ static inline unsigned int btrfs_compress_level(unsigned int type_level)
 	return ((type_level & 0xF0) >> 4);
 }
 
-int btrfs_init_compress(void);
+int __init btrfs_init_compress(void);
 void __cold btrfs_exit_compress(void);
 
 int btrfs_compress_pages(unsigned int type_level, struct address_space *mapping,
@@ -86,21 +78,19 @@ int btrfs_compress_pages(unsigned int type_level, struct address_space *mapping,
 			 unsigned long *out_pages,
 			 unsigned long *total_in,
 			 unsigned long *total_out);
-int btrfs_decompress(int type, unsigned char *data_in, struct page *dest_page,
+int btrfs_decompress(int type, const u8 *data_in, struct page *dest_page,
 		     unsigned long start_byte, size_t srclen, size_t destlen);
 int btrfs_decompress_buf2page(const char *buf, u32 buf_len,
 			      struct compressed_bio *cb, u32 decompressed);
 
-blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
+void btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
 				  unsigned int len, u64 disk_start,
 				  unsigned int compressed_len,
 				  struct page **compressed_pages,
 				  unsigned int nr_pages,
 				  blk_opf_t write_flags,
-				  struct cgroup_subsys_state *blkcg_css,
 				  bool writeback);
-void btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
-				  int mirror_num);
+void btrfs_submit_compressed_read(struct btrfs_bio *bbio, int mirror_num);
 
 unsigned int btrfs_compress_str2level(unsigned int type, const char *str);
 
@@ -150,7 +140,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 		u64 start, struct page **pages, unsigned long *out_pages,
 		unsigned long *total_in, unsigned long *total_out);
 int zlib_decompress_bio(struct list_head *ws, struct compressed_bio *cb);
-int zlib_decompress(struct list_head *ws, unsigned char *data_in,
+int zlib_decompress(struct list_head *ws, const u8 *data_in,
 		struct page *dest_page, unsigned long start_byte, size_t srclen,
 		size_t destlen);
 struct list_head *zlib_alloc_workspace(unsigned int level);
@@ -161,7 +151,7 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 		u64 start, struct page **pages, unsigned long *out_pages,
 		unsigned long *total_in, unsigned long *total_out);
 int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb);
-int lzo_decompress(struct list_head *ws, unsigned char *data_in,
+int lzo_decompress(struct list_head *ws, const u8 *data_in,
 		struct page *dest_page, unsigned long start_byte, size_t srclen,
 		size_t destlen);
 struct list_head *lzo_alloc_workspace(unsigned int level);
@@ -171,7 +161,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		u64 start, struct page **pages, unsigned long *out_pages,
 		unsigned long *total_in, unsigned long *total_out);
 int zstd_decompress_bio(struct list_head *ws, struct compressed_bio *cb);
-int zstd_decompress(struct list_head *ws, unsigned char *data_in,
+int zstd_decompress(struct list_head *ws, const u8 *data_in,
 		struct page *dest_page, unsigned long start_byte, size_t srclen,
 		size_t destlen);
 void zstd_init_workspace_manager(void);
