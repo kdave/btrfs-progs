@@ -1062,10 +1062,11 @@ void btrfs_set_item_key_unsafe(struct btrfs_root *root,
 			       struct btrfs_path *path,
 			       struct btrfs_key *new_key);
 
-u16 btrfs_super_csum_size(const struct btrfs_super_block *s);
+int btrfs_super_csum_size(const struct btrfs_super_block *sb);
 const char *btrfs_super_csum_name(u16 csum_type);
+const char *btrfs_super_csum_driver(u16 csum_type);
 u16 btrfs_csum_type_size(u16 csum_type);
-size_t btrfs_super_num_csums(void);
+size_t __attribute_const__ btrfs_get_num_csums(void);
 
 /* root-item.c */
 int btrfs_add_root_ref(struct btrfs_trans_handle *trans,

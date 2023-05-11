@@ -32,40 +32,153 @@
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);
-static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, const struct btrfs_key *ins_key,
-		      struct btrfs_path *path, int data_size, int extend);
+static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		      const struct btrfs_key *ins_key, struct btrfs_path *path,
+		      int data_size, int extend);
 static int push_node_left(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root, struct extent_buffer *dst,
+			  struct extent_buffer *dst,
 			  struct extent_buffer *src, int empty);
 static int balance_node_right(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root,
 			      struct extent_buffer *dst_buf,
 			      struct extent_buffer *src_buf);
 
-static const struct btrfs_csum {
-	u16 size;
-	const char name[14];
+static const struct btrfs_csums {
+	u16		size;
+	const char	name[10];
+	const char	driver[12];
 } btrfs_csums[] = {
-	[BTRFS_CSUM_TYPE_CRC32]		= {  4, "crc32c" },
-	[BTRFS_CSUM_TYPE_XXHASH]	= {  8, "xxhash64" },
-	[BTRFS_CSUM_TYPE_SHA256]	= { 32, "sha256" },
-	[BTRFS_CSUM_TYPE_BLAKE2]	= { 32, "blake2" },
+	[BTRFS_CSUM_TYPE_CRC32] = { .size = 4, .name = "crc32c" },
+	[BTRFS_CSUM_TYPE_XXHASH] = { .size = 8, .name = "xxhash64" },
+	[BTRFS_CSUM_TYPE_SHA256] = { .size = 32, .name = "sha256" },
+	[BTRFS_CSUM_TYPE_BLAKE2] = { .size = 32, .name = "blake2b",
+				     .driver = "blake2b-256" },
 };
 
-u16 btrfs_super_csum_size(const struct btrfs_super_block *sb)
+/*
+ * The leaf data grows from end-to-front in the node.  this returns the address
+ * of the start of the last item, which is the stop of the leaf data stack.
+ */
+static unsigned int leaf_data_end(const struct extent_buffer *leaf)
+{
+	u32 nr = btrfs_header_nritems(leaf);
+
+	if (nr == 0)
+		return BTRFS_LEAF_DATA_SIZE(leaf->fs_info);
+	return btrfs_item_offset(leaf, nr - 1);
+}
+
+/*
+ * Move data in a @leaf (using memmove, safe for overlapping ranges).
+ *
+ * @leaf:	leaf that we're doing a memmove on
+ * @dst_offset:	item data offset we're moving to
+ * @src_offset:	item data offset were' moving from
+ * @len:	length of the data we're moving
+ *
+ * Wrapper around memmove_extent_buffer() that takes into account the header on
+ * the leaf.  The btrfs_item offset's start directly after the header, so we
+ * have to adjust any offsets to account for the header in the leaf.  This
+ * handles that math to simplify the callers.
+ */
+static inline void memmove_leaf_data(const struct extent_buffer *leaf,
+				     unsigned long dst_offset,
+				     unsigned long src_offset,
+				     unsigned long len)
+{
+	memmove_extent_buffer(leaf, btrfs_item_nr_offset(leaf, 0) + dst_offset,
+			      btrfs_item_nr_offset(leaf, 0) + src_offset, len);
+}
+
+/*
+ * Copy item data from @src into @dst at the given @offset.
+ *
+ * @dst:	destination leaf that we're copying into
+ * @src:	source leaf that we're copying from
+ * @dst_offset:	item data offset we're copying to
+ * @src_offset:	item data offset were' copying from
+ * @len:	length of the data we're copying
+ *
+ * Wrapper around copy_extent_buffer() that takes into account the header on
+ * the leaf.  The btrfs_item offset's start directly after the header, so we
+ * have to adjust any offsets to account for the header in the leaf.  This
+ * handles that math to simplify the callers.
+ */
+static inline void copy_leaf_data(const struct extent_buffer *dst,
+				  const struct extent_buffer *src,
+				  unsigned long dst_offset,
+				  unsigned long src_offset, unsigned long len)
+{
+	copy_extent_buffer(dst, src, btrfs_item_nr_offset(dst, 0) + dst_offset,
+			   btrfs_item_nr_offset(src, 0) + src_offset, len);
+}
+
+/*
+ * Move items in a @leaf (using memmove).
+ *
+ * @dst:	destination leaf for the items
+ * @dst_item:	the item nr we're copying into
+ * @src_item:	the item nr we're copying from
+ * @nr_items:	the number of items to copy
+ *
+ * Wrapper around memmove_extent_buffer() that does the math to get the
+ * appropriate offsets into the leaf from the item numbers.
+ */
+static inline void memmove_leaf_items(const struct extent_buffer *leaf,
+				      int dst_item, int src_item, int nr_items)
+{
+	memmove_extent_buffer(leaf, btrfs_item_nr_offset(leaf, dst_item),
+			      btrfs_item_nr_offset(leaf, src_item),
+			      nr_items * sizeof(struct btrfs_item));
+}
+
+/*
+ * Copy items from @src into @dst at the given @offset.
+ *
+ * @dst:	destination leaf for the items
+ * @src:	source leaf for the items
+ * @dst_item:	the item nr we're copying into
+ * @src_item:	the item nr we're copying from
+ * @nr_items:	the number of items to copy
+ *
+ * Wrapper around copy_extent_buffer() that does the math to get the
+ * appropriate offsets into the leaf from the item numbers.
+ */
+static inline void copy_leaf_items(const struct extent_buffer *dst,
+				   const struct extent_buffer *src,
+				   int dst_item, int src_item, int nr_items)
+{
+	copy_extent_buffer(dst, src, btrfs_item_nr_offset(dst, dst_item),
+			      btrfs_item_nr_offset(src, src_item),
+			      nr_items * sizeof(struct btrfs_item));
+}
+
+int btrfs_super_csum_size(const struct btrfs_super_block *sb)
 {
 	const u16 csum_type = btrfs_super_csum_type(sb);
 
+	/* csum type is validated at mount time */
 	return btrfs_csums[csum_type].size;
 }
 
 const char *btrfs_super_csum_name(u16 csum_type)
 {
+	/* csum type is validated at mount time */
 	return btrfs_csums[csum_type].name;
 }
 
-size_t btrfs_super_num_csums(void)
+/*
+ * Return driver name if defined, otherwise the name that's also a valid driver
+ * name
+ */
+const char *btrfs_super_csum_driver(u16 csum_type)
+{
+	/* csum type is validated at mount time */
+	return btrfs_csums[csum_type].driver[0] ?
+		btrfs_csums[csum_type].driver :
+		btrfs_csums[csum_type].name;
+}
+
+size_t __attribute_const__ btrfs_get_num_csums(void)
 {
 	return ARRAY_SIZE(btrfs_csums);
 }
@@ -95,11 +208,12 @@ inline void btrfs_init_path(struct btrfs_path *p)
 
 struct btrfs_path *btrfs_alloc_path(void)
 {
-	struct btrfs_path *path;
-	path = kzalloc(sizeof(struct btrfs_path), GFP_NOFS);
-	return path;
+	might_sleep();
+
+	return kzalloc(sizeof(struct btrfs_path), GFP_NOFS);
 }
 
+/* this also releases the path */
 void btrfs_free_path(struct btrfs_path *p)
 {
 	if (!p)
@@ -108,9 +222,16 @@ void btrfs_free_path(struct btrfs_path *p)
 	kfree(p);
 }
 
-void btrfs_release_path(struct btrfs_path *p)
+/*
+ * path release drops references on the extent buffers in the path
+ * and it drops any locks held by this path
+ *
+ * It is safe to call this on paths that no locks or extent buffers held.
+ */
+noinline void btrfs_release_path(struct btrfs_path *p)
 {
 	int i;
+
 	for (i = 0; i < BTRFS_MAX_LEVEL; i++) {
 		if (!p->nodes[i])
 			continue;
@@ -590,19 +711,6 @@ static int btrfs_comp_keys(struct btrfs_disk_key *disk,
 	return btrfs_comp_cpu_keys(&k1, k2);
 }
 
-/*
- * The leaf data grows from end-to-front in the node.
- * this returns the address of the start of the last item,
- * which is the stop of the leaf data stack
- */
-static inline unsigned int leaf_data_end(const struct extent_buffer *leaf)
-{
-	u32 nr = btrfs_header_nritems(leaf);
-	if (nr == 0)
-		return BTRFS_LEAF_DATA_SIZE(leaf->fs_info);
-	return btrfs_item_offset(leaf, nr - 1);
-}
-
 static int noinline check_block(struct btrfs_fs_info *fs_info,
 				struct btrfs_path *path, int level)
 {
@@ -798,7 +906,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 	/* first, try to make some room in the middle buffer */
 	if (left) {
 		orig_slot += btrfs_header_nritems(left);
-		wret = push_node_left(trans, root, left, mid, 1);
+		wret = push_node_left(trans, left, mid, 1);
 		if (wret < 0)
 			ret = wret;
 	}
@@ -807,7 +915,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 	 * then try to empty the right most buffer into the middle
 	 */
 	if (right) {
-		wret = push_node_left(trans, root, mid, right, 1);
+		wret = push_node_left(trans, mid, right, 1);
 		if (wret < 0 && wret != -ENOSPC)
 			ret = wret;
 		if (btrfs_header_nritems(right) == 0) {
@@ -845,13 +953,13 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		 * right
 		 */
 		BUG_ON(!left);
-		wret = balance_node_right(trans, root, mid, left);
+		wret = balance_node_right(trans, mid, left);
 		if (wret < 0) {
 			ret = wret;
 			goto enospc;
 		}
 		if (wret == 1) {
-			wret = push_node_left(trans, root, left, mid, 1);
+			wret = push_node_left(trans, left, mid, 1);
 			if (wret < 0)
 				ret = wret;
 		}
@@ -951,8 +1059,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 			if (ret)
 				wret = 1;
 			else {
-				wret = push_node_left(trans, root,
-						      left, mid, 0);
+				wret = push_node_left(trans, left, mid, 0);
 			}
 		}
 		if (wret < 0)
@@ -995,8 +1102,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 			if (ret)
 				wret = 1;
 			else {
-				wret = balance_node_right(trans, root,
-							  right, mid);
+				wret = balance_node_right(trans, right, mid);
 			}
 		}
 		if (wret < 0)
@@ -1412,9 +1518,10 @@ void btrfs_set_item_key_unsafe(struct btrfs_root *root,
  * error, and > 0 if there was no room in the left hand block.
  */
 static int push_node_left(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root, struct extent_buffer *dst,
+			  struct extent_buffer *dst,
 			  struct extent_buffer *src, int empty)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int push_items = 0;
 	int src_nritems;
 	int dst_nritems;
@@ -1422,7 +1529,7 @@ static int push_node_left(struct btrfs_trans_handle *trans,
 
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
-	push_items = BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - dst_nritems;
+	push_items = BTRFS_NODEPTRS_PER_BLOCK(fs_info) - dst_nritems;
 	WARN_ON(btrfs_header_generation(src) != trans->transid);
 	WARN_ON(btrfs_header_generation(dst) != trans->transid);
 
@@ -1477,10 +1584,10 @@ static int push_node_left(struct btrfs_trans_handle *trans,
  * this will  only push up to 1/2 the contents of the left node over
  */
 static int balance_node_right(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root,
 			      struct extent_buffer *dst,
 			      struct extent_buffer *src)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int push_items = 0;
 	int max_push;
 	int src_nritems;
@@ -1492,7 +1599,7 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
-	push_items = BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - dst_nritems;
+	push_items = BTRFS_NODEPTRS_PER_BLOCK(fs_info) - dst_nritems;
 	if (push_items <= 0) {
 		return 1;
 	}

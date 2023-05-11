@@ -246,6 +246,7 @@ static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
 #define cond_resched()		do { } while (0)
 #define preempt_enable()	do { } while (0)
 #define preempt_disable()	do { } while (0)
+#define might_sleep()		do { } while (0)
 
 #define BITOP_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
 #define BITOP_WORD(nr)		((nr) / BITS_PER_LONG)

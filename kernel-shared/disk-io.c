@@ -1716,7 +1716,7 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	}
 
 	csum_type = btrfs_super_csum_type(sb);
-	if (csum_type >= btrfs_super_num_csums()) {
+	if (csum_type >= btrfs_get_num_csums()) {
 		error("unsupported checksum algorithm %u", csum_type);
 		return -EIO;
 	}
