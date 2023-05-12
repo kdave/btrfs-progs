@@ -21,8 +21,8 @@
 #include "kernel-shared/zoned.h"
 #include "common/messages.h"
 
-struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
-		int num_blocks)
+struct btrfs_trans_handle *btrfs_start_transaction(struct btrfs_root *root,
+						   unsigned int num_items)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_trans_handle *h;
@@ -47,7 +47,7 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 	fs_info->running_transaction = h;
 	fs_info->generation++;
 	h->transid = fs_info->generation;
-	h->blocks_reserved = num_blocks;
+	h->blocks_reserved = num_items;
 	h->reinit_extent_tree = false;
 	h->allocating_chunk = 0;
 	root->last_trans = h->transid;
