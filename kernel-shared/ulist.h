@@ -58,6 +58,7 @@ struct ulist {
 };
 
 void ulist_init(struct ulist *ulist);
+void ulist_release(struct ulist *ulist);
 void ulist_reinit(struct ulist *ulist);
 struct ulist *ulist_alloc(gfp_t gfp_mask);
 void ulist_free(struct ulist *ulist);
@@ -80,7 +81,7 @@ static inline int ulist_add_merge_ptr(struct ulist *ulist, u64 val, void *aux,
 #endif
 }
 
-struct ulist_node *ulist_next(struct ulist *ulist,
+struct ulist_node *ulist_next(const struct ulist *ulist,
 			      struct ulist_iterator *uiter);
 
 #define ULIST_ITER_INIT(uiter) ((uiter)->cur_list = NULL)
