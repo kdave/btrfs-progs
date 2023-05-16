@@ -342,8 +342,12 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	 * Use NO_BLOCK_GROUPS here could also speedup open_ctree() and allow us
 	 * to inspect fs with corrupted extent tree blocks, and show as many good
 	 * tree blocks as possible.
+	 *
+	 * And we want to avoid tree-checker, which can rejects the target tree
+	 * block completely, while we may be debugging the problem.
 	 */
-	open_ctree_flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS;
+	open_ctree_flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS |
+			   OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
 	cache_tree_init(&block_root);
 	optind = 0;
 	while (1) {
