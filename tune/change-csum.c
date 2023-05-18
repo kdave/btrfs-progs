@@ -471,8 +471,144 @@ out:
 	return ret;
 }
 
+static int rewrite_tree_block_csum(struct btrfs_fs_info *fs_info, u64 logical,
+				   u16 new_csum_type)
+{
+	struct extent_buffer *eb;
+	u8 result_old[BTRFS_CSUM_SIZE];
+	u8 result_new[BTRFS_CSUM_SIZE];
+	int ret;
+
+	eb = alloc_dummy_extent_buffer(fs_info, logical, fs_info->nodesize);
+	if (!eb)
+		return -ENOMEM;
+
+	ret = btrfs_read_extent_buffer(eb, 0, 0, NULL);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to read tree block at logical %llu: %m", logical);
+		goto out;
+	}
+
+	/* Verify the csum first. */
+	btrfs_csum_data(fs_info, fs_info->csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
+			result_old, fs_info->nodesize - BTRFS_CSUM_SIZE);
+	btrfs_csum_data(fs_info, new_csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
+			result_new, fs_info->nodesize - BTRFS_CSUM_SIZE);
+
+	/* Matches old csum, rewrite. */
+	if (memcmp_extent_buffer(eb, result_old, 0, fs_info->csum_size) == 0) {
+		write_extent_buffer(eb, result_new, 0,
+				    btrfs_csum_type_size(new_csum_type));
+		ret = write_data_to_disk(fs_info, eb->data, eb->start,
+					 fs_info->nodesize);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to write tree block at logical %llu: %m",
+			      logical);
+		}
+		goto out;
+	}
+
+	/* Already new csum. */
+	if (memcmp_extent_buffer(eb, result_new, 0, fs_info->csum_size) == 0)
+		goto out;
+
+	/* Csum doesn't match either old or new csum type, bad tree block. */
+	ret = -EIO;
+	error("tree block csum mismatch at logical %llu", logical);
+out:
+	free_extent_buffer(eb);
+	return ret;
+}
+
+static int change_meta_csums(struct btrfs_fs_info *fs_info, u32 new_csum_type)
+{
+	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, 0);
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	/*
+	 * Disable metadata csum checks first, as we may hit tree blocks with
+	 * either old or new csums.
+	 * We will manually check the meta csums here.
+	 */
+	fs_info->skip_csum_check = true;
+
+	key.objectid = 0;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get the first tree block of extent tree: %m");
+		return ret;
+	}
+	assert(ret > 0);
+	while (true) {
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_METADATA_ITEM_KEY)
+			goto next;
+
+		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
+			struct btrfs_extent_item *ei;
+			ei = btrfs_item_ptr(path.nodes[0], path.slots[0],
+					    struct btrfs_extent_item);
+			if (btrfs_extent_flags(path.nodes[0], ei) &
+			    BTRFS_EXTENT_FLAG_DATA)
+				goto next;
+		}
+		ret = rewrite_tree_block_csum(fs_info, key.objectid, new_csum_type);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to rewrite csum for tree block %llu: %m",
+			      key.offset);
+			goto out;
+		}
+next:
+		ret = btrfs_next_extent_item(extent_root, &path, U64_MAX);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to get next extent item: %m");
+		}
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+	}
+out:
+	btrfs_release_path(&path);
+
+	/*
+	 * Finish the change by clearing the csum change flag and update the superblock
+	 * csum type.
+	 */
+	if (ret == 0) {
+		u64 super_flags = btrfs_super_flags(fs_info->super_copy);
+
+		btrfs_set_super_csum_type(fs_info->super_copy, new_csum_type);
+		super_flags &= ~(BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+				 BTRFS_SUPER_FLAG_CHANGING_META_CSUM);
+		btrfs_set_super_flags(fs_info->super_copy, super_flags);
+
+		fs_info->csum_type = new_csum_type;
+		fs_info->csum_size = btrfs_csum_type_size(new_csum_type);
+
+		ret = write_all_supers(fs_info);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to write super blocks: %m");
+		}
+	}
+	return ret;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
+	u16 old_csum_type = fs_info->csum_type;
 	int ret;
 
 	/* Phase 0, check conflicting features. */
@@ -511,5 +647,10 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	 * like relocation in progs.
 	 * Thus we have to support reading a tree block with either csum.
 	 */
-	return -EOPNOTSUPP;
+	ret = change_meta_csums(fs_info, new_csum_type);
+	if (ret == 0)
+		printf("converted csum type from %s (%u) to %s (%u)\n",
+		       btrfs_super_csum_name(old_csum_type), old_csum_type,
+		       btrfs_super_csum_name(new_csum_type), new_csum_type);
+	return ret;
 }
