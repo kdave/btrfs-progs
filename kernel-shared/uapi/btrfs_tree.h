@@ -106,6 +106,7 @@
  */
 #define BTRFS_FREE_INO_OBJECTID -12ULL
 
+#define BTRFS_CSUM_CHANGE_OBJECTID -13ULL
 /* dummy objectid represents multiple objectids */
 #define BTRFS_MULTIPLE_OBJECTIDS -255ULL
 

@@ -215,12 +215,6 @@ static int csum_tree_block(struct btrfs_fs_info *fs_info,
 	u16 csum_size = fs_info->csum_size;
 	u16 csum_type = fs_info->csum_type;
 
-	if (fs_info->force_csum_type != -1) {
-		/* printf("CSUM TREE: offset %llu\n", buf->start); */
-		csum_type = fs_info->force_csum_type;
-		csum_size = btrfs_csum_type_size(csum_type);
-	}
-
 	if (verify && fs_info->suppress_check_block_errors)
 		return verify_tree_block_csum_silent(buf, csum_size, csum_type);
 	return csum_tree_block_size(buf, csum_size, verify, csum_type);
@@ -475,7 +469,6 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	if (trans && !btrfs_buffer_uptodate(eb, trans->transid, 0))
 		BUG();
 
-	btrfs_clear_header_flag(eb, BTRFS_HEADER_FLAG_CSUM_NEW);
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	csum_tree_block(fs_info, eb, 0);
 
@@ -885,7 +878,6 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->metadata_alloc_profile = (u64)-1;
 	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
 	fs_info->nr_global_roots = 1;
-	fs_info->force_csum_type = -1;
 
 	return fs_info;
 

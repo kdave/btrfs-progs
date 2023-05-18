@@ -373,7 +373,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	if (csum_type != -1) {
 		/* TODO: check conflicting flags */
 		pr_verbose(LOG_DEFAULT, "Proceed to switch checksums\n");
-		ret = rewrite_checksums(root->fs_info, csum_type);
+		ret = btrfs_change_csum_type(root->fs_info, csum_type);
 	}
 
 	if (change_metadata_uuid) {

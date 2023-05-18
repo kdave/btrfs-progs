@@ -790,6 +790,9 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 	case BTRFS_BLOCK_GROUP_TREE_OBJECTID:
 		fprintf(stream, "BLOCK_GROUP_TREE");
 		break;
+	case BTRFS_CSUM_CHANGE_OBJECTID:
+		fprintf(stream, "CSUM_CHANGE");
+		break;
 	case (u64)-1:
 		fprintf(stream, "-1");
 		break;
@@ -1142,8 +1145,12 @@ static void print_temporary_item(struct extent_buffer *eb, void *ptr,
 	case BTRFS_BALANCE_OBJECTID:
 		print_balance_item(eb, ptr);
 		break;
-	case BTRFS_CSUM_TREE_TMP_OBJECTID:
-		printf("\t\tcsum tree tmp root %llu\n", offset);
+	case BTRFS_CSUM_CHANGE_OBJECTID:
+		if (offset < btrfs_get_num_csums())
+			printf("\t\ttarget csum type %s (%llu)\n",
+			       btrfs_super_csum_name(offset) ,offset);
+		else
+			printf("\t\tunknown csum type %llu\n", offset);
 		break;
 	default:
 		printf("\t\tunknown temporary item objectid %llu\n", objectid);

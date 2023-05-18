@@ -142,7 +142,6 @@ btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 	struct btrfs_csum_item *item;
 	struct extent_buffer *leaf;
 	u64 csum_offset = 0;
-	u16 csum_type = root->fs_info->csum_type;
 	u16 csum_size = root->fs_info->csum_size;
 	int csums_in_item;
 
@@ -153,11 +152,6 @@ btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		goto fail;
 	leaf = path->nodes[0];
-
-	if (leaf->fs_info->force_csum_type != -1) {
-		csum_type = root->fs_info->force_csum_type;
-		csum_size = btrfs_csum_type_size(csum_type);
-	}
 
 	if (ret > 0) {
 		ret = 1;
@@ -207,12 +201,6 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 	u32 ins_size;
 	u16 csum_size = root->fs_info->csum_size;
 	u16 csum_type = root->fs_info->csum_type;
-
-	if (root->fs_info->force_csum_type != -1) {
-		/* printf("CSUM DATA: offset %llu (%d -> %d)\n", bytenr, csum_type, root->fs_info->force_csum_type); */
-		csum_type = root->fs_info->force_csum_type;
-		csum_size = btrfs_csum_type_size(csum_type);
-	}
 
 	path = btrfs_alloc_path();
 	if (!path)
