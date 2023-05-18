@@ -21,6 +21,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/file-item.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
@@ -180,7 +181,14 @@ static int generate_new_csum_range(struct btrfs_trans_handle *trans,
 			goto out;
 		}
 		/* Calculate new csum and insert it into the csum tree. */
-		ret = -EOPNOTSUPP;
+		ret = btrfs_csum_file_block(trans, cur,
+				BTRFS_CSUM_CHANGE_OBJECTID, new_csum_type, buf);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to insert new csum for data at logical %llu: %m",
+			      cur);
+			goto out;
+		}
 	}
 out:
 	free(buf);

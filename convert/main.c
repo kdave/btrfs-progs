@@ -182,7 +182,8 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 			    struct btrfs_root *root,
 			    u64 disk_bytenr, u64 num_bytes)
 {
-	u32 blocksize = root->fs_info->sectorsize;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	u32 blocksize = fs_info->sectorsize;
 	u64 offset;
 	char *buffer;
 	int ret = 0;
@@ -193,7 +194,7 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 	for (offset = 0; offset < num_bytes; offset += blocksize) {
 		u64 read_len = blocksize;
 
-		ret = read_data_from_disk(root->fs_info, buffer,
+		ret = read_data_from_disk(fs_info, buffer,
 					  disk_bytenr + offset, &read_len, 0);
 		if (ret)
 			break;
@@ -203,10 +204,9 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 			ret = -EIO;
 			break;
 		}
-		ret = btrfs_csum_file_block(trans,
-					    disk_bytenr + num_bytes,
-					    disk_bytenr + offset,
-					    buffer, blocksize);
+		ret = btrfs_csum_file_block(trans, disk_bytenr + offset,
+					    BTRFS_EXTENT_CSUM_OBJECTID,
+					    fs_info->csum_type, buffer);
 		if (ret)
 			break;
 	}

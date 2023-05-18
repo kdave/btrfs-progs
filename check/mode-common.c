@@ -1209,18 +1209,19 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *csum_root, char *buf, u64 start,
 			 u64 len)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	u64 offset = 0;
-	u64 sectorsize;
+	u64 sectorsize = fs_info->sectorsize;
 	int ret = 0;
 
 	while (offset < len) {
-		sectorsize = gfs_info->sectorsize;
-		ret = read_data_from_disk(gfs_info, buf, start + offset,
+		ret = read_data_from_disk(fs_info, buf, start + offset,
 					  &sectorsize, 0);
 		if (ret)
 			break;
-		ret = btrfs_csum_file_block(trans, start + len, start + offset,
-					    buf, sectorsize);
+		ret = btrfs_csum_file_block(trans, start + offset,
+					    BTRFS_EXTENT_CSUM_OBJECTID,
+					    fs_info->csum_type, buf);
 		if (ret)
 			break;
 		offset += sectorsize;

@@ -367,6 +367,11 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 	u32 sectorsize = fs_info->sectorsize;
 	const u32 csumsize = fs_info->csum_size;
 
+	/* For fs under csum change, we should not check the regular csum items. */
+	if (unlikely(btrfs_super_flags(fs_info->super_copy) &
+		     (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+		      BTRFS_SUPER_FLAG_CHANGING_META_CSUM)))
+		return 0;
 	if (unlikely(key->objectid != BTRFS_EXTENT_CSUM_OBJECTID)) {
 		generic_err(leaf, slot,
 		"invalid key objectid for csum item, have %llu expect %llu",

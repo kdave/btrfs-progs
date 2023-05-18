@@ -306,12 +306,13 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
 			  struct stat *st, const char *path_name)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int ret = -1;
 	ssize_t ret_read;
 	u64 bytes_read = 0;
 	struct btrfs_key key;
 	int blocks;
-	u32 sectorsize = root->fs_info->sectorsize;
+	u32 sectorsize = fs_info->sectorsize;
 	u64 first_block = 0;
 	u64 file_pos = 0;
 	u64 cur_bytes;
@@ -332,7 +333,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	if (st->st_size % sectorsize)
 		blocks += 1;
 
-	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info) &&
+	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(fs_info) &&
 	    st->st_size < sectorsize) {
 		char *buffer = malloc(st->st_size);
 
@@ -397,9 +398,9 @@ again:
 			goto end;
 		}
 
-		ret = btrfs_csum_file_block(trans,
-				first_block + bytes_read + sectorsize,
-				first_block + bytes_read, buf, sectorsize);
+		ret = btrfs_csum_file_block(trans, first_block + bytes_read,
+					    BTRFS_EXTENT_CSUM_OBJECTID,
+					    fs_info->csum_type, buf);
 		if (ret)
 			goto end;
 
