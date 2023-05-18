@@ -326,6 +326,68 @@ out:
 	return ret;
 }
 
+static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key last_key;
+	int ret;
+
+	last_key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	last_key.type = BTRFS_EXTENT_CSUM_KEY;
+	last_key.offset = (u64)-1;
+
+	trans = btrfs_start_transaction(csum_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction to delete old data csums: %m");
+		return ret;
+	}
+	while (true) {
+		int start_slot;
+		int nr;
+
+		ret = btrfs_search_slot(trans, csum_root, &last_key, &path, -1, 1);
+
+		nr = btrfs_header_nritems(path.nodes[0]);
+		/* No item left (empty csum tree), exit. */
+		if (!nr)
+			break;
+		for (start_slot = 0; start_slot < nr; start_slot++) {
+			struct btrfs_key found_key;
+
+			btrfs_item_key_to_cpu(path.nodes[0], &found_key, start_slot);
+			/* Break from the for loop, we found the first old csum. */
+			if (found_key.objectid == BTRFS_EXTENT_CSUM_OBJECTID)
+				break;
+		}
+		/* No more old csum item detected, exit. */
+		if (start_slot == nr)
+			break;
+
+		/* Delete items starting from @start_slot to the end. */
+		ret = btrfs_del_items(trans, csum_root, &path, start_slot,
+				      nr - start_slot);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to delete items: %m");
+			break;
+		}
+		btrfs_release_path(&path);
+	}
+	btrfs_release_path(&path);
+	if (ret < 0)
+		btrfs_abort_transaction(trans, ret);
+	ret = btrfs_commit_transaction(trans, csum_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit transaction after deleting the old data csums: %m");
+	}
+	return ret;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	int ret;
@@ -350,6 +412,9 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	}
 
 	/* Phase 2, delete the old data csums. */
+	ret = delete_old_data_csums(fs_info);
+	if (ret < 0)
+		return ret;
 
 	/* Phase 3, change the new csum key objectid */
 
