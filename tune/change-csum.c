@@ -26,9 +26,68 @@
 #include "common/internal.h"
 #include "tune/tune.h"
 
+static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	if (btrfs_super_log_root(fs_info->super_copy)) {
+		error("dirty log tree detected, please replay the log or zero it.");
+		return -EINVAL;
+	}
+	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2)) {
+		error("no csum change support for extent-tree-v2 feature yet.");
+		return -EOPNOTSUPP;
+	}
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+	     BTRFS_SUPER_FLAG_CHANGING_META_CSUM)) {
+		error("resume from half converted status is not yet supported");
+		return -EOPNOTSUPP;
+	}
+	key.objectid = BTRFS_BALANCE_OBJECTID;
+	key.type = BTRFS_TEMPORARY_ITEM_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to check the balance status: %m");
+		return ret;
+	}
+	if (ret == 0) {
+		error("running balance detected, please finish or cancel it.");
+		return -EINVAL;
+	}
+
+	key.objectid = 0;
+	key.type = BTRFS_DEV_REPLACE_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to check the dev-reaplce status: %m");
+		return ret;
+	}
+	if (ret == 0) {
+		error("running dev-replace detected, please finish or cancel it.");
+		return -EINVAL;
+	}
+	return 0;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
+	int ret;
+
 	/* Phase 0, check conflicting features. */
+	ret = check_csum_change_requreiment(fs_info);
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Phase 1, generate new data csums.
