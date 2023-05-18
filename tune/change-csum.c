@@ -388,6 +388,89 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 	return ret;
 }
 
+static int change_csum_objectids(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key last_key;
+	u64 super_flags;
+	int ret = 0;
+
+	last_key.objectid = BTRFS_CSUM_CHANGE_OBJECTID;
+	last_key.type = BTRFS_EXTENT_CSUM_KEY;
+	last_key.offset = (u64)-1;
+
+	trans = btrfs_start_transaction(csum_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction to change csum objectids: %m");
+		return ret;
+	}
+	while (true) {
+		struct btrfs_key found_key;
+		int nr;
+
+		ret = btrfs_search_slot(trans, csum_root, &last_key, &path, 0, 1);
+		if (ret < 0)
+			goto out;
+		assert(ret > 0);
+
+		nr = btrfs_header_nritems(path.nodes[0]);
+		/* No item left (empty csum tree), exit. */
+		if (!nr)
+			goto out;
+		/* No more temporary csum items, all converted, exit. */
+		if (path.slots[0] == 0)
+			goto out;
+
+		/* All csum items should be new csums. */
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key, 0);
+		assert(found_key.objectid == BTRFS_CSUM_CHANGE_OBJECTID);
+
+		/*
+		 * Start changing the objectids, since EXTENT_CSUM (-10) is
+		 * larger than CSUM_CHANGE (-13), we always change from the tail.
+		 */
+		for (int i = nr - 1; i >= 0; i--) {
+			btrfs_item_key_to_cpu(path.nodes[0], &found_key, i);
+			found_key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+			path.slots[0] = i;
+			ret = btrfs_set_item_key_safe(csum_root, &path, &found_key);
+			if (ret < 0) {
+				errno = -ret;
+				error("failed to set item key for data csum at logical %llu: %m",
+				      found_key.offset);
+				goto out;
+			}
+		}
+		btrfs_release_path(&path);
+	}
+out:
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+
+	/*
+	 * All data csum items has been changed to the new type, we can clear
+	 * the superblock flag for data csum change, and go to the metadata csum
+	 * change phase.
+	 */
+	super_flags = btrfs_super_flags(fs_info->super_copy);
+	super_flags &= ~BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM;
+	super_flags |= BTRFS_SUPER_FLAG_CHANGING_META_CSUM;
+	btrfs_set_super_flags(fs_info->super_copy, super_flags);
+	ret = btrfs_commit_transaction(trans, csum_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit transaction after changing data csum objectids: %m");
+	}
+	return ret;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	int ret;
@@ -417,6 +500,9 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 		return ret;
 
 	/* Phase 3, change the new csum key objectid */
+	ret = change_csum_objectids(fs_info);
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Phase 4, change the csums for metadata.
