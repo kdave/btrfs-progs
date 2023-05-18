@@ -20,10 +20,12 @@
 #include <stdlib.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "common/internal.h"
+#include "common/utils.h"
 #include "tune/tune.h"
 
 static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
@@ -80,6 +82,242 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
 	return 0;
 }
 
+static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
+{
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	key.type = BTRFS_EXTENT_CSUM_KEY;
+	key.offset = (u64)-1;
+
+	ret = btrfs_search_slot(NULL, csum_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+	assert(ret > 0);
+	ret = btrfs_previous_item(csum_root, &path, BTRFS_EXTENT_CSUM_OBJECTID,
+				  BTRFS_EXTENT_CSUM_KEY);
+	if (ret < 0)
+		return ret;
+	/*
+	 * Emptry csum tree, set last csum byte to 0 so we can skip new data
+	 * csum generation.
+	 */
+	if (ret > 0) {
+		*result = 0;
+		btrfs_release_path(&path);
+		return 0;
+	}
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	*result = key.offset + btrfs_item_size(path.nodes[0], path.slots[0]) /
+			       fs_info->csum_size * fs_info->sectorsize;
+	btrfs_release_path(&path);
+	return 0;
+}
+
+static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
+				       u64 logical, void *data_buf,
+				       const void *old_csums)
+{
+	const u32 sectorsize = fs_info->sectorsize;
+	int num_copies = btrfs_num_copies(fs_info, logical, sectorsize);
+	bool found_good = false;
+
+	for (int mirror = 1; mirror <= num_copies; mirror++) {
+		u8 csum_has[BTRFS_CSUM_SIZE];
+		u64 readlen = sectorsize;
+		int ret;
+
+		ret = read_data_from_disk(fs_info, data_buf, logical, &readlen,
+					  mirror);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to read logical %llu: %m", logical);
+			continue;
+		}
+		btrfs_csum_data(fs_info, fs_info->csum_type, data_buf, csum_has,
+				sectorsize);
+		if (memcmp(csum_has, old_csums, fs_info->csum_size) == 0) {
+			found_good = true;
+			break;
+		} else {
+			char found[BTRFS_CSUM_STRING_LEN];
+			char want[BTRFS_CSUM_STRING_LEN];
+
+			btrfs_format_csum(fs_info->csum_type, old_csums, want);
+			btrfs_format_csum(fs_info->csum_type, csum_has, found);
+			error("csum mismatch for logical %llu mirror %u, has %s expected %s",
+				logical, mirror, found, want);
+		}
+	}
+	if (!found_good)
+		return -EIO;
+	return 0;
+}
+
+static int generate_new_csum_range(struct btrfs_trans_handle *trans,
+				   u64 logical, u64 length, u16 new_csum_type,
+				   const void *old_csums)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	const u32 sectorsize = fs_info->sectorsize;
+	int ret = 0;
+	void *buf;
+
+	buf = malloc(fs_info->sectorsize);
+	if (!buf)
+		return -ENOMEM;
+
+	for (u64 cur = logical; cur < logical + length; cur += sectorsize) {
+		ret = read_verify_one_data_sector(fs_info, cur, buf, old_csums +
+				(cur - logical) / sectorsize * fs_info->csum_size);
+
+		if (ret < 0) {
+			error("failed to recover a good copy for data at logical %llu",
+			      logical);
+			goto out;
+		}
+		/* Calculate new csum and insert it into the csum tree. */
+		ret = -EOPNOTSUPP;
+	}
+out:
+	free(buf);
+	return ret;
+}
+
+/*
+ * After reading this many bytes of data, commit the current transaction.
+ *
+ * Only a soft cap, we can exceed the threshold if hitting a large enough csum
+ * item.
+ */
+#define CSUM_CHANGE_BYTES_THRESHOLD	(SZ_2M)
+static int generate_new_data_csums(struct btrfs_fs_info *fs_info, u16 new_csum_type)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	const u32 new_csum_size = btrfs_csum_type_size(new_csum_type);
+	void *csum_buffer;
+	u64 converted_bytes = 0;
+	u64 last_csum;
+	u64 cur = 0;
+	int ret;
+
+	ret = get_last_csum_bytenr(fs_info, &last_csum);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get the last csum item: %m");
+		return ret;
+	}
+	csum_buffer = malloc(fs_info->nodesize);
+	if (!csum_buffer)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(tree_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction: %m");
+		goto out;
+	}
+	key.objectid = BTRFS_CSUM_CHANGE_OBJECTID;
+	key.type = BTRFS_TEMPORARY_ITEM_KEY;
+	key.offset = new_csum_type;
+	ret = btrfs_insert_empty_item(trans, tree_root, &path, &key, 0);
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to insert csum change item: %m");
+		btrfs_abort_transaction(trans, ret);
+		goto out;
+	}
+	btrfs_set_super_flags(fs_info->super_copy,
+			      btrfs_super_flags(fs_info->super_copy) |
+			      BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM);
+	ret = btrfs_commit_transaction(trans, tree_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit the initial transaction: %m");
+		goto out;
+	}
+
+	trans = btrfs_start_transaction(csum_root,
+			CSUM_CHANGE_BYTES_THRESHOLD / fs_info->sectorsize *
+			new_csum_size);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction: %m");
+		return ret;
+	}
+
+	while (cur < last_csum) {
+		u64 start;
+		u64 len;
+		u32 item_size;
+
+		key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+		key.type = BTRFS_EXTENT_CSUM_KEY;
+		key.offset = cur;
+
+		ret = btrfs_search_slot(NULL, csum_root, &key, &path, 0, 0);
+		if (ret < 0)
+			goto out;
+		if (ret > 0 && path.slots[0] >=
+			       btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(csum_root, &path);
+			if (ret > 0) {
+				ret = 0;
+				btrfs_release_path(&path);
+				break;
+			}
+			if (ret < 0) {
+				btrfs_release_path(&path);
+				goto out;
+			}
+		}
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		assert(key.offset >= cur);
+		item_size = btrfs_item_size(path.nodes[0], path.slots[0]);
+
+		start = key.offset;
+		len = item_size / fs_info->csum_size * fs_info->sectorsize;
+		read_extent_buffer(path.nodes[0], csum_buffer,
+				btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+				item_size);
+		btrfs_release_path(&path);
+
+		ret = generate_new_csum_range(trans, start, len, new_csum_type,
+					      csum_buffer);
+		if (ret < 0)
+			goto out;
+		converted_bytes += len;
+		if (converted_bytes >= CSUM_CHANGE_BYTES_THRESHOLD) {
+			converted_bytes = 0;
+			ret = btrfs_commit_transaction(trans, csum_root);
+			if (ret < 0)
+				goto out;
+			trans = btrfs_start_transaction(csum_root,
+					CSUM_CHANGE_BYTES_THRESHOLD /
+					fs_info->sectorsize * new_csum_size);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				goto out;
+			}
+		}
+		cur = start + len;
+	}
+	ret = btrfs_commit_transaction(trans, csum_root);
+out:
+	free(csum_buffer);
+	return ret;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	int ret;
@@ -96,6 +334,12 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	 * will be a temporary item in root tree to indicate the new checksum
 	 * algo.
 	 */
+	ret = generate_new_data_csums(fs_info, new_csum_type);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to generate new data csums: %m");
+		return ret;
+	}
 
 	/* Phase 2, delete the old data csums. */
 
