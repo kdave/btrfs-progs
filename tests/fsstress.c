@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <getopt.h>
 #include "common/internal.h"
 
 #define AIO
@@ -190,6 +191,7 @@ typedef enum {
 	OP_URING_WRITE,
 	OP_WRITE,
 	OP_WRITEV,
+	/* OP_XCHGRANGE, */
 	OP_LAST
 } opty_t;
 
@@ -261,7 +263,6 @@ struct print_string {
 #define XATTR_NAME_BUF_SIZE 18
 
 void	afsync_f(opnum_t, long);
-/* void	allocsp_f(opnum_t, long); */
 void	aread_f(opnum_t, long);
 void	attr_remove_f(opnum_t, long);
 void	attr_set_f(opnum_t, long);
@@ -278,7 +279,6 @@ void	dwrite_f(opnum_t, long);
 void	fallocate_f(opnum_t, long);
 void	fdatasync_f(opnum_t, long);
 void	fiemap_f(opnum_t, long);
-/* void	freesp_f(opnum_t, long); */
 void	fsync_f(opnum_t, long);
 char	*gen_random_string(int);
 void	getattr_f(opnum_t, long);
@@ -321,12 +321,13 @@ void	uring_read_f(opnum_t, long);
 void	uring_write_f(opnum_t, long);
 void	write_f(opnum_t, long);
 void	writev_f(opnum_t, long);
+/* void	xchgrange_f(opnum_t, long); */
+
 char	*xattr_flag_to_string(int);
 
 struct opdesc	ops[OP_LAST]	= {
      /* [OP_ENUM]	   = {"name",	       function,	freq, iswrite }, */
 	[OP_AFSYNC]	   = {"afsync",	       afsync_f,	0, 1 },
-	/* [OP_ALLOCSP]	   = {"allocsp",       allocsp_f,	1, 1 }, */
 	[OP_AREAD]	   = {"aread",	       aread_f,		1, 0 },
 	[OP_ATTR_REMOVE]   = {"attr_remove",   attr_remove_f,	0, 1 },
 	[OP_ATTR_SET]	   = {"attr_set",      attr_set_f,	0, 1 },
@@ -343,7 +344,6 @@ struct opdesc	ops[OP_LAST]	= {
 	[OP_FALLOCATE]	   = {"fallocate",     fallocate_f,	1, 1 },
 	[OP_FDATASYNC]	   = {"fdatasync",     fdatasync_f,	1, 1 },
 	[OP_FIEMAP]	   = {"fiemap",	       fiemap_f,	1, 1 },
-	/* [OP_FREESP]	   = {"freesp",	       freesp_f,	1, 1 }, */
 	[OP_FSYNC]	   = {"fsync",	       fsync_f,		1, 1 },
 	[OP_GETATTR]	   = {"getattr",       getattr_f,	1, 0 },
 	[OP_GETDENTS]	   = {"getdents",      getdents_f,	1, 0 },
@@ -391,6 +391,7 @@ struct opdesc	ops[OP_LAST]	= {
 	[OP_URING_WRITE]   = {"uring_write",   uring_write_f,	1, 1 },
 	[OP_WRITE]	   = {"write",	       write_f,		4, 1 },
 	[OP_WRITEV]	   = {"writev",	       writev_f,	4, 1 },
+	/* [OP_XCHGRANGE]	   = {"xchgrange",     xchgrange_f,	2, 1 }, */
 }, *ops_end;
 
 flist_t	flist[FT_nft] = {
@@ -411,7 +412,7 @@ int		freq_table_size;
 char		*homedir;
 int		*ilist;
 int		ilistlen;
-off_t		maxfsize;
+off64_t		maxfsize;
 char		*myprog;
 int		namerand;
 int		nameseq;
@@ -432,6 +433,8 @@ sigjmp_buf	*sigbus_jmp = NULL;
 char		*execute_cmd = NULL;
 int		execute_freq = 1;
 struct print_string	flag_str = {0};
+
+struct timespec deadline = { 0 };
 
 void	add_to_flist(int, int, int, int);
 void	append_pathname(pathname_t *, char *);
@@ -458,7 +461,7 @@ int	get_fname(int, long, pathname_t *, flist_t **, fent_t **, int *);
 void	init_pathname(pathname_t *);
 int	lchown_path(pathname_t *, uid_t, gid_t);
 int	link_path(pathname_t *, pathname_t *);
-int	lstat_path(pathname_t *, struct stat *);
+int	lstat64_path(pathname_t *, struct stat64 *);
 void	make_freq_table(void);
 int	mkdir_path(pathname_t *, mode_t);
 int	mknod_path(pathname_t *, mode_t, dev_t);
@@ -472,16 +475,17 @@ int	rename_path(pathname_t *, pathname_t *, int);
 int	rmdir_path(pathname_t *);
 void	separate_pathname(pathname_t *, char *, pathname_t *);
 void	show_ops(int, char *);
-int	stat_path(pathname_t *, struct stat *);
+int	stat64_path(pathname_t *, struct stat64 *);
 int	symlink_path(const char *, pathname_t *);
-int	truncate64_path(pathname_t *, off_t);
+int	truncate64_path(pathname_t *, off64_t);
 int	unlink_path(pathname_t *);
 void	usage(void);
+void	read_freq(void);
 void	write_freq(void);
 void	zero_freq(void);
 void	non_btrfs_freq(const char *);
 
-void sg_handler(int signum)
+static void sg_handler(int signum)
 {
 	switch (signum) {
 	case SIGTERM:
@@ -505,6 +509,34 @@ void sg_handler(int signum)
 	}
 }
 
+static bool
+keep_looping(int i, int loops)
+{
+	int ret;
+
+	if (deadline.tv_nsec) {
+		struct timespec now;
+
+		ret = clock_gettime(CLOCK_MONOTONIC, &now);
+		if (ret) {
+			perror("CLOCK_MONOTONIC");
+			return false;
+		}
+
+		return now.tv_sec <= deadline.tv_sec;
+	}
+
+	if (!loops)
+		return true;
+
+	return i < loops;
+}
+
+static struct option longopts[] = {
+	{"duration", optional_argument, 0, 256},
+	{ }
+};
+
 int main(int argc, char **argv)
 {
 	char		buf[10];
@@ -523,14 +555,15 @@ int main(int argc, char **argv)
 	/* xfs_error_injection_t	        err_inj; */
 	struct sigaction action;
 	int		loops = 1;
-	const char	*allopts = "cd:e:f:i:l:m:M:n:o:p:rs:S:vVwx:X:zH";
+	const char	*allopts = "cd:e:f:i:l:m:M:n:o:p:rRs:S:vVwx:X:zH";
+	long long	duration;
 
 	errrange = errtag = 0;
 	umask(0);
 	nops = sizeof(ops) / sizeof(ops[0]);
 	ops_end = &ops[nops];
 	myprog = argv[0];
-	while ((c = getopt(argc, argv, allopts)) != -1) {
+	while ((c = getopt_long(argc, argv, allopts, longopts, NULL)) != -1) {
 		switch (c) {
 		case 'c':
 			cleanup = 1;
@@ -589,6 +622,9 @@ int main(int argc, char **argv)
 		case 'r':
 			namerand = 1;
 			break;
+		case 'R':
+			read_freq();
+			break;
 		case 's':
 			seed = strtoul(optarg, NULL, 0);
 			break;
@@ -621,6 +657,26 @@ int main(int argc, char **argv)
 
 		case 'X':
 			execute_freq = strtoul(optarg, NULL, 0);
+			break;
+		case 256:  /* --duration */
+			if (!optarg) {
+				fprintf(stderr, "Specify time with --duration=\n");
+				exit(87);
+			}
+			duration = strtoll(optarg, NULL, 0);
+			if (duration < 1) {
+				fprintf(stderr, "%lld: invalid duration\n", duration);
+				exit(88);
+			}
+
+			i = clock_gettime(CLOCK_MONOTONIC, &deadline);
+			if (i) {
+				perror("CLOCK_MONOTONIC");
+				exit(89);
+			}
+
+			deadline.tv_sec += duration;
+			deadline.tv_nsec = 1;
 			break;
 		case '?':
 			fprintf(stderr, "%s - invalid parameters\n",
@@ -662,10 +718,10 @@ int main(int argc, char **argv)
 	}
 	sprintf(buf, "fss%x", (unsigned int)getpid());
 	fd = creat(buf, 0666);
-	if (lseek64(fd, (off_t)(MAXFSIZE32 + 1ULL), SEEK_SET) < 0)
-		maxfsize = (off_t)MAXFSIZE32;
+	if (lseek64(fd, (off64_t)(MAXFSIZE32 + 1ULL), SEEK_SET) < 0)
+		maxfsize = (off64_t)MAXFSIZE32;
 	else
-		maxfsize = (off_t)MAXFSIZE;
+		maxfsize = (off64_t)MAXFSIZE;
 	make_freq_table();
 	dcache_init();
 	setlinebuf(stdout);
@@ -766,7 +822,7 @@ int main(int argc, char **argv)
 				}
 			}
 #endif
-			for (i = 0; !loops || (i < loops); i++)
+			for (i = 0; keep_looping(i, loops); i++)
 				doproc();
 #ifdef AIO
 			if(io_destroy(io_ctx) != 0) {
@@ -813,7 +869,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-int
+static int
 add_string(struct print_string *str, const char *add)
 {
 	int len = strlen(add);
@@ -833,7 +889,7 @@ add_string(struct print_string *str, const char *add)
 	return len;
 }
 
-char *
+static char *
 translate_flags(int flags, const char *delim,
 		const struct print_flags *flag_array)
 {
@@ -918,7 +974,7 @@ append_pathname(pathname_t *name, char *str)
 	name->len += len;
 }
 
-int
+static int
 attr_list_count(char *buffer, int buffersize)
 {
 	char *p = buffer;
@@ -998,13 +1054,13 @@ void
 check_cwd(void)
 {
 #ifdef DEBUG
-	struct stat	statbuf;
+	struct stat64	statbuf;
 	int ret;
 
-	ret = stat(".", &statbuf);
+	ret = stat64(".", &statbuf);
 	if (ret != 0) {
-		fprintf(stderr, "fsstress: check_cwd stat() returned %d with errno: %d (%m)\n",
-			ret, errno);
+		fprintf(stderr, "fsstress: check_cwd stat64() returned %d with errno: %d (%s)\n",
+			ret, errno, strerror(errno));
 		goto out;
 	}
 
@@ -1123,7 +1179,7 @@ del_from_flist(int ft, int slot)
 		ftp->nfiles--;
 }
 
-void
+static void
 delete_subvol_children(int parid)
 {
 	flist_t	*flp;
@@ -1143,7 +1199,7 @@ again:
 	}
 }
 
-fent_t *
+static fent_t *
 dirid_to_fent(int dirid)
 {
 	fent_t	*efep;
@@ -1168,10 +1224,30 @@ again:
 	return NULL;
 }
 
+static bool
+keep_running(opnum_t opno, opnum_t operations)
+{
+	int ret;
+
+	if (deadline.tv_nsec) {
+		struct timespec now;
+
+		ret = clock_gettime(CLOCK_MONOTONIC, &now);
+		if (ret) {
+			perror("CLOCK_MONOTONIC");
+			return false;
+		}
+
+		return now.tv_sec <= deadline.tv_sec;
+	}
+
+	return opno < operations;
+}
+
 void
 doproc(void)
 {
-	struct stat	statbuf;
+	struct stat64	statbuf;
 	char		buf[10];
 	char		cmd[64];
 	opnum_t		opno;
@@ -1182,7 +1258,7 @@ doproc(void)
 	dividend = (operations + execute_freq) / (execute_freq + 1);
 	sprintf(buf, "p%x", procid);
 	(void)mkdir(buf, 0777);
-	if (chdir(buf) < 0 || stat(".", &statbuf) < 0) {
+	if (chdir(buf) < 0 || stat64(".", &statbuf) < 0) {
 		perror(buf);
 		_exit(1);
 	}
@@ -1196,7 +1272,7 @@ doproc(void)
 	srandom(seed);
 	if (namerand)
 		namerand = random();
-	for (opno = 0; opno < operations; opno++) {
+	for (opno = 0; keep_running(opno, operations); opno++) {
 		if (execute_cmd && opno && opno % dividend == 0) {
 			if (verbose)
 				printf("%lld: execute command %s\n", opno,
@@ -1214,7 +1290,7 @@ doproc(void)
 		 * the forced shutdown happened.
 		 */
 		if (errtag != 0 && opno % 100 == 0)  {
-			rval = stat(".", &statbuf);
+			rval = stat64(".", &statbuf);
 			if (rval == EIO)  {
 				fprintf(stderr, "Detected EIO\n");
 				goto errout;
@@ -1537,18 +1613,18 @@ link_path(pathname_t *name1, pathname_t *name2)
 }
 
 int
-lstat_path(pathname_t *name, struct stat *sbuf)
+lstat64_path(pathname_t *name, struct stat64 *sbuf)
 {
 	char		buf[NAME_MAX + 1];
 	pathname_t	newname;
 	int		rval;
 
-	rval = lstat(name->path, sbuf);
+	rval = lstat64(name->path, sbuf);
 	if (rval >= 0 || errno != ENAMETOOLONG)
 		return rval;
 	separate_pathname(name, buf, &newname);
 	if (chdir(buf) == 0) {
-		rval = lstat_path(&newname, sbuf);
+		rval = lstat64_path(&newname, sbuf);
 		assert(chdir("..") == 0);
 	}
 	free_pathname(&newname);
@@ -1870,18 +1946,18 @@ show_ops(int flag, char *lead_str)
 }
 
 int
-stat_path(pathname_t *name, struct stat *sbuf)
+stat64_path(pathname_t *name, struct stat64 *sbuf)
 {
 	char		buf[NAME_MAX + 1];
 	pathname_t	newname;
 	int		rval;
 
-	rval = stat(name->path, sbuf);
+	rval = stat64(name->path, sbuf);
 	if (rval >= 0 || errno != ENAMETOOLONG)
 		return rval;
 	separate_pathname(name, buf, &newname);
 	if (chdir(buf) == 0) {
-		rval = stat_path(&newname, sbuf);
+		rval = stat64_path(&newname, sbuf);
 		assert(chdir("..") == 0);
 	}
 	free_pathname(&newname);
@@ -1913,7 +1989,7 @@ symlink_path(const char *name1, pathname_t *name)
 }
 
 int
-truncate64_path(pathname_t *name, off_t length)
+truncate64_path(pathname_t *name, off64_t length)
 {
 	char		buf[NAME_MAX + 1];
 	pathname_t	newname;
@@ -1972,6 +2048,7 @@ usage(void)
 	printf("   -o logfile       specifies logfile name\n");
 	printf("   -p nproc         specifies the no. of processes (default 1)\n");
 	printf("   -r               specifies random name padding\n");
+	printf("   -R               zeros frequencies of write operations\n");
 	printf("   -s seed          specifies the seed for the random generator (default random)\n");
 	printf("   -v               specifies verbose mode\n");
 	printf("   -w               zeros frequencies of non-write operations\n");
@@ -1981,6 +2058,18 @@ usage(void)
 	printf("   -V               specifies verifiable logging mode (omitting inode numbers)\n");
 	printf("   -X ncmd          number of calls to the -x command (default 1)\n");
 	printf("   -H               prints usage and exits\n");
+	printf("   --duration=s     ignore any -n setting and run for this many seconds\n");
+}
+
+void
+read_freq(void)
+{
+	opdesc_t	*p;
+
+	for (p = ops; p < ops_end; p++) {
+		if (p->iswrite)
+			p->freq = 0;
+	}
 }
 
 void
@@ -2026,7 +2115,7 @@ non_btrfs_freq(const char *path)
 		ops[btrfs_ops[i]].freq = 0;
 }
 
-void inode_info(char *str, size_t sz, struct stat *s, int verbose)
+static void inode_info(char *str, size_t sz, struct stat64 *s, int verbose)
 {
 	if (verbose)
 		snprintf(str, sz, "[%ld %ld %d %d %lld %lld]",
@@ -2091,64 +2180,8 @@ afsync_f(opnum_t opno, long r)
 #endif
 }
 
-#if 0
-void
-allocsp_f(opnum_t opno, long r)
-{
-	int		e;
-	pathname_t	f;
-	int		fd;
-	struct xfs_flock64	fl;
-	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
-	int		v;
-	char		st[1024];
-
-	init_pathname(&f);
-	if (!get_fname(FT_REGFILE, r, &f, NULL, NULL, &v)) {
-		if (v)
-			printf("%d/%lld: allocsp - no filename\n", procid, opno);
-		free_pathname(&f);
-		return;
-	}
-	fd = open_path(&f, O_RDWR);
-	e = fd < 0 ? errno : 0;
-	check_cwd();
-	if (fd < 0) {
-		if (v)
-			printf("%d/%lld: allocsp - open %s failed %d\n",
-				procid, opno, f.path, e);
-		free_pathname(&f);
-		return;
-	}
-	if (fstat(fd, &stb) < 0) {
-		if (v)
-			printf("%d/%lld: allocsp - fstat %s failed %d\n",
-				procid, opno, f.path, errno);
-		free_pathname(&f);
-		close(fd);
-		return;
-	}
-	inode_info(st, sizeof(st), &stb, v);
-	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
-	off %= maxfsize;
-	fl.l_whence = SEEK_SET;
-	fl.l_start = off;
-	fl.l_len = 0;
-	e = xfsctl(f.path, fd, XFS_IOC_ALLOCSP64, &fl) < 0 ? errno : 0;
-	if (v) {
-		printf("%d/%lld: xfsctl(XFS_IOC_ALLOCSP64) %s%s %lld 0 %d\n",
-		       procid, opno, f.path, st, (long long)off, e);
-	}
-	free_pathname(&f);
-	close(fd);
-}
-#endif
-
 #ifdef AIO
-void
+static void
 do_aio_rw(opnum_t opno, long r, int flags)
 {
 	int64_t		align;
@@ -2159,8 +2192,8 @@ do_aio_rw(opnum_t opno, long r, int flags)
 	int		fd = -1;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	char		*dio_env;
@@ -2184,9 +2217,9 @@ do_aio_rw(opnum_t opno, long r, int flags)
 			       procid, opno, f.path, e);
 		goto aio_out;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: do_aio_rw - fstat %s failed %d\n",
+			printf("%d/%lld: do_aio_rw - fstat64 %s failed %d\n",
 			       procid, opno, f.path, errno);
 		goto aio_out;
 	}
@@ -2230,13 +2263,13 @@ do_aio_rw(opnum_t opno, long r, int flags)
 	}
 
 	if (iswrite) {
-		off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+		off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 		off -= (off % align);
 		off %= maxfsize;
 		memset(buf, nameseq & 0xff, len);
 		io_prep_pwrite(&iocb, fd, buf, len, off);
 	} else {
-		off = (off_t)(lr % stb.st_size);
+		off = (off64_t)(lr % stb.st_size);
 		off -= (off % align);
 		io_prep_pread(&iocb, fd, buf, len, off);
 	}
@@ -2268,7 +2301,7 @@ do_aio_rw(opnum_t opno, long r, int flags)
 #endif
 
 #ifdef URING
-void
+static void
 do_uring_rw(opnum_t opno, long r, int flags)
 {
 	char		*buf = NULL;
@@ -2277,8 +2310,8 @@ do_uring_rw(opnum_t opno, long r, int flags)
 	int		fd = -1;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	struct io_uring_sqe	*sqe;
@@ -2304,9 +2337,9 @@ do_uring_rw(opnum_t opno, long r, int flags)
 			       procid, opno, f.path, e);
 		goto uring_out;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: do_uring_rw - fstat %s failed %d\n",
+			printf("%d/%lld: do_uring_rw - fstat64 %s failed %d\n",
 			       procid, opno, f.path, errno);
 		goto uring_out;
 	}
@@ -2336,12 +2369,12 @@ do_uring_rw(opnum_t opno, long r, int flags)
 	iovec.iov_base = buf;
 	iovec.iov_len = len;
 	if (iswrite) {
-		off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+		off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 		off %= maxfsize;
 		memset(buf, nameseq & 0xff, len);
 		io_uring_prep_writev(sqe, fd, &iovec, 1, off);
 	} else {
-		off = (off_t)(lr % stb.st_size);
+		off = (off64_t)(lr % stb.st_size);
 		io_uring_prep_readv(sqe, fd, &iovec, 1, off);
 	}
 
@@ -2522,7 +2555,7 @@ bulkstat1_f(opnum_t opno, long r)
 	int		fd;
 	int		good;
 	__u64		ino;
-	struct stat	s;
+	struct stat64	s;
 	struct xfs_bstat	t;
 	int		v;
 	struct xfs_fsop_bulkreq bsr;
@@ -2534,7 +2567,7 @@ bulkstat1_f(opnum_t opno, long r)
 		init_pathname(&f);
 		if (!get_fname(FT_ANYm, r, &f, NULL, NULL, &v))
 			append_pathname(&f, ".");
-		ino = stat_path(&f, &s) < 0 ? (ino64_t)r : s.st_ino;
+		ino = stat64_path(&f, &s) < 0 ? (ino64_t)r : s.st_ino;
 		check_cwd();
 		free_pathname(&f);
 	} else {
@@ -2595,6 +2628,173 @@ chown_f(opnum_t opno, long r)
 	free_pathname(&f);
 }
 
+#if 0
+/* exchange some arbitrary range of f1 to f2...fn. */
+void
+xchgrange_f(
+	opnum_t			opno,
+	long			r)
+{
+#ifdef FIEXCHANGE_RANGE
+	struct file_xchg_range	fxr = { 0 };
+	static __u64		swap_flags = 0;
+	struct pathname		fpath1;
+	struct pathname		fpath2;
+	struct stat64		stat1;
+	struct stat64		stat2;
+	char			inoinfo1[1024];
+	char			inoinfo2[1024];
+	off64_t			lr;
+	off64_t			off1;
+	off64_t			off2;
+	off64_t			max_off2;
+	size_t			len;
+	int			v1;
+	int			v2;
+	int			fd1;
+	int			fd2;
+	int			ret;
+	int			tries = 0;
+	int			e;
+
+	/* Load paths */
+	init_pathname(&fpath1);
+	if (!get_fname(FT_REGm, r, &fpath1, NULL, NULL, &v1)) {
+		if (v1)
+			printf("%d/%lld: xchgrange read - no filename\n",
+				procid, opno);
+		goto out_fpath1;
+	}
+
+	init_pathname(&fpath2);
+	if (!get_fname(FT_REGm, random(), &fpath2, NULL, NULL, &v2)) {
+		if (v2)
+			printf("%d/%lld: xchgrange write - no filename\n",
+				procid, opno);
+		goto out_fpath2;
+	}
+
+	/* Open files */
+	fd1 = open_path(&fpath1, O_RDONLY);
+	e = fd1 < 0 ? errno : 0;
+	check_cwd();
+	if (fd1 < 0) {
+		if (v1)
+			printf("%d/%lld: xchgrange read - open %s failed %d\n",
+				procid, opno, fpath1.path, e);
+		goto out_fpath2;
+	}
+
+	fd2 = open_path(&fpath2, O_WRONLY);
+	e = fd2 < 0 ? errno : 0;
+	check_cwd();
+	if (fd2 < 0) {
+		if (v2)
+			printf("%d/%lld: xchgrange write - open %s failed %d\n",
+				procid, opno, fpath2.path, e);
+		goto out_fd1;
+	}
+
+	/* Get file stats */
+	if (fstat64(fd1, &stat1) < 0) {
+		if (v1)
+			printf("%d/%lld: xchgrange read - fstat64 %s failed %d\n",
+				procid, opno, fpath1.path, errno);
+		goto out_fd2;
+	}
+	inode_info(inoinfo1, sizeof(inoinfo1), &stat1, v1);
+
+	if (fstat64(fd2, &stat2) < 0) {
+		if (v2)
+			printf("%d/%lld: xchgrange write - fstat64 %s failed %d\n",
+				procid, opno, fpath2.path, errno);
+		goto out_fd2;
+	}
+	inode_info(inoinfo2, sizeof(inoinfo2), &stat2, v2);
+
+	if (stat1.st_size < (stat1.st_blksize * 2) ||
+	    stat2.st_size < (stat2.st_blksize * 2)) {
+		if (v2)
+			printf("%d/%lld: xchgrange - files are too small\n",
+				procid, opno);
+		goto out_fd2;
+	}
+
+	/* Never let us swap more than 1/4 of the files. */
+	len = (random() % FILELEN_MAX) + 1;
+	if (len > stat1.st_size / 4)
+		len = stat1.st_size / 4;
+	if (len > stat2.st_size / 4)
+		len = stat2.st_size / 4;
+	len = rounddown_64(len, stat1.st_blksize);
+	if (len == 0)
+		len = stat1.st_blksize;
+
+	/* Calculate offsets */
+	lr = ((int64_t)random() << 32) + random();
+	if (stat1.st_size == len)
+		off1 = 0;
+	else
+		off1 = (off64_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
+	off1 %= maxfsize;
+	off1 = rounddown_64(off1, stat1.st_blksize);
+
+	/*
+	 * If srcfile == destfile, randomly generate destination ranges
+	 * until we find one that doesn't overlap the source range.
+	 */
+	max_off2 = MIN(stat2.st_size  - len, MAXFSIZE);
+	do {
+		lr = ((int64_t)random() << 32) + random();
+		if (stat2.st_size == len)
+			off2 = 0;
+		else
+			off2 = (off64_t)(lr % max_off2);
+		off2 %= maxfsize;
+		off2 = rounddown_64(off2, stat2.st_blksize);
+	} while (stat1.st_ino == stat2.st_ino &&
+		 llabs(off2 - off1) < len &&
+		 tries++ < 10);
+
+	/* Swap data blocks */
+	fxr.file1_fd = fd1;
+	fxr.file1_offset = off1;
+	fxr.length = len;
+	fxr.file2_offset = off2;
+	fxr.flags = swap_flags;
+
+retry:
+	ret = ioctl(fd2, FIEXCHANGE_RANGE, &fxr);
+	e = ret < 0 ? errno : 0;
+	if (e == EOPNOTSUPP && !(swap_flags & FILE_XCHG_RANGE_NONATOMIC)) {
+		swap_flags = FILE_XCHG_RANGE_NONATOMIC;
+		fxr.flags |= swap_flags;
+		goto retry;
+	}
+	if (v1 || v2) {
+		printf("%d/%lld: xchgrange %s%s [%lld,%lld] -> %s%s [%lld,%lld]",
+			procid, opno,
+			fpath1.path, inoinfo1, (long long)off1, (long long)len,
+			fpath2.path, inoinfo2, (long long)off2, (long long)len);
+
+		if (ret < 0)
+			printf(" error %d", e);
+		printf("\n");
+	}
+
+out_fd2:
+	close(fd2);
+out_fd1:
+	close(fd1);
+out_fpath2:
+	free_pathname(&fpath2);
+out_fpath1:
+	free_pathname(&fpath1);
+#endif
+}
+
+#endif
+
 /* reflink some arbitrary range of f1 to f2. */
 void
 clonerange_f(
@@ -2605,14 +2805,14 @@ clonerange_f(
 	struct file_clone_range	fcr;
 	struct pathname		fpath1;
 	struct pathname		fpath2;
-	struct stat		stat1;
-	struct stat		stat2;
+	struct stat64		stat1;
+	struct stat64		stat2;
 	char			inoinfo1[1024];
 	char			inoinfo2[1024];
-	off_t			lr;
-	off_t			off1;
-	off_t			off2;
-	off_t			max_off2;
+	off64_t			lr;
+	off64_t			off1;
+	off64_t			off2;
+	off64_t			max_off2;
 	size_t			len;
 	int			v1;
 	int			v2;
@@ -2660,17 +2860,17 @@ clonerange_f(
 	}
 
 	/* Get file stats */
-	if (fstat(fd1, &stat1) < 0) {
+	if (fstat64(fd1, &stat1) < 0) {
 		if (v1)
-			printf("%d/%lld: clonerange read - fstat %s failed %d\n",
+			printf("%d/%lld: clonerange read - fstat64 %s failed %d\n",
 				procid, opno, fpath1.path, errno);
 		goto out_fd2;
 	}
 	inode_info(inoinfo1, sizeof(inoinfo1), &stat1, v1);
 
-	if (fstat(fd2, &stat2) < 0) {
+	if (fstat64(fd2, &stat2) < 0) {
 		if (v2)
-			printf("%d/%lld: clonerange write - fstat %s failed %d\n",
+			printf("%d/%lld: clonerange write - fstat64 %s failed %d\n",
 				procid, opno, fpath2.path, errno);
 		goto out_fd2;
 	}
@@ -2688,7 +2888,7 @@ clonerange_f(
 	if (stat1.st_size == len)
 		off1 = 0;
 	else
-		off1 = (off_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
+		off1 = (off64_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
 	off1 %= maxfsize;
 	off1 = rounddown_64(off1, stat1.st_blksize);
 
@@ -2699,7 +2899,7 @@ clonerange_f(
 	max_off2 = MIN(stat2.st_size + (1024ULL * stat2.st_blksize), MAXFSIZE);
 	do {
 		lr = ((int64_t)random() << 32) + random();
-		off2 = (off_t)(lr % max_off2);
+		off2 = (off64_t)(lr % max_off2);
 		off2 %= maxfsize;
 		off2 = rounddown_64(off2, stat2.st_blksize);
 	} while (stat1.st_ino == stat2.st_ino && llabs(off2 - off1) < len);
@@ -2743,8 +2943,8 @@ copyrange_f(
 #ifdef HAVE_COPY_FILE_RANGE
 	struct pathname		fpath1;
 	struct pathname		fpath2;
-	struct stat		stat1;
-	struct stat		stat2;
+	struct stat64		stat1;
+	struct stat64		stat2;
 	char			inoinfo1[1024];
 	char			inoinfo2[1024];
 	loff_t			lr;
@@ -2802,17 +3002,17 @@ copyrange_f(
 	}
 
 	/* Get file stats */
-	if (fstat(fd1, &stat1) < 0) {
+	if (fstat64(fd1, &stat1) < 0) {
 		if (v1)
-			printf("%d/%lld: copyrange read - fstat %s failed %d\n",
+			printf("%d/%lld: copyrange read - fstat64 %s failed %d\n",
 				procid, opno, fpath1.path, errno);
 		goto out_fd2;
 	}
 	inode_info(inoinfo1, sizeof(inoinfo1), &stat1, v1);
 
-	if (fstat(fd2, &stat2) < 0) {
+	if (fstat64(fd2, &stat2) < 0) {
 		if (v2)
-			printf("%d/%lld: copyrange write - fstat %s failed %d\n",
+			printf("%d/%lld: copyrange write - fstat64 %s failed %d\n",
 				procid, opno, fpath2.path, errno);
 		goto out_fd2;
 	}
@@ -2829,7 +3029,7 @@ copyrange_f(
 	if (stat1.st_size == len)
 		off1 = 0;
 	else
-		off1 = (off_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
+		off1 = (off64_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
 	off1 %= maxfsize;
 
 	/*
@@ -2839,7 +3039,7 @@ copyrange_f(
 	max_off2 = MIN(stat2.st_size + (1024ULL * stat2.st_blksize), MAXFSIZE);
 	do {
 		lr = ((int64_t)random() << 32) + random();
-		off2 = (off_t)(lr % max_off2);
+		off2 = (off64_t)(lr % max_off2);
 		off2 %= maxfsize;
 	} while (stat1.st_ino == stat2.st_ino && llabs(off2 - off1) < len);
 
@@ -2900,13 +3100,13 @@ deduperange_f(
 #define INFO_SZ			1024
 	struct file_dedupe_range *fdr;
 	struct pathname		*fpath;
-	struct stat		*stat;
+	struct stat64		*stat;
 	char			*info;
-	off_t			*off;
+	off64_t			*off;
 	int			*v;
 	int			*fd;
 	int			nr;
-	off_t			lr;
+	off64_t			lr;
 	size_t			len;
 	int			ret;
 	int			i;
@@ -2938,7 +3138,7 @@ deduperange_f(
 		goto out_fdr;
 	}
 
-	stat = calloc(nr, sizeof(struct stat));
+	stat = calloc(nr, sizeof(struct stat64));
 	if (!stat) {
 		printf("%d/%lld: line %d error %d\n",
 			procid, opno, __LINE__, errno);
@@ -2952,7 +3152,7 @@ deduperange_f(
 		goto out_stats;
 	}
 
-	off = calloc(nr, sizeof(off_t));
+	off = calloc(nr, sizeof(off64_t));
 	if (!off) {
 		printf("%d/%lld: line %d error %d\n",
 			procid, opno, __LINE__, errno);
@@ -3017,9 +3217,9 @@ deduperange_f(
 	}
 
 	/* Get file stats */
-	if (fstat(fd[0], &stat[0]) < 0) {
+	if (fstat64(fd[0], &stat[0]) < 0) {
 		if (v[0])
-			printf("%d/%lld: deduperange read - fstat %s failed %d\n",
+			printf("%d/%lld: deduperange read - fstat64 %s failed %d\n",
 				procid, opno, fpath[0].path, errno);
 		goto out_fds;
 	}
@@ -3027,9 +3227,9 @@ deduperange_f(
 	inode_info(&info[0], INFO_SZ, &stat[0], v[0]);
 
 	for (i = 1; i < nr; i++) {
-		if (fstat(fd[i], &stat[i]) < 0) {
+		if (fstat64(fd[i], &stat[i]) < 0) {
 			if (v[i])
-				printf("%d/%lld: deduperange write - fstat %s failed %d\n",
+				printf("%d/%lld: deduperange write - fstat64 %s failed %d\n",
 					procid, opno, fpath[i].path, errno);
 			goto out_fds;
 		}
@@ -3049,7 +3249,7 @@ deduperange_f(
 	if (stat[0].st_size == len)
 		off[0] = 0;
 	else
-		off[0] = (off_t)(lr % MIN(stat[0].st_size - len, MAXFSIZE));
+		off[0] = (off64_t)(lr % MIN(stat[0].st_size - len, MAXFSIZE));
 	off[0] %= maxfsize;
 	off[0] = rounddown_64(off[0], stat[0].st_blksize);
 
@@ -3065,7 +3265,7 @@ deduperange_f(
 			if (stat[i].st_size <= len)
 				off[i] = 0;
 			else
-				off[i] = (off_t)(lr % MIN(stat[i].st_size - len, MAXFSIZE));
+				off[i] = (off64_t)(lr % MIN(stat[i].st_size - len, MAXFSIZE));
 			off[i] %= maxfsize;
 			off[i] = rounddown_64(off[i], stat[i].st_blksize);
 		} while (stat[0].st_ino == stat[i].st_ino &&
@@ -3179,8 +3379,8 @@ splice_f(opnum_t opno, long r)
 {
 	struct pathname		fpath1;
 	struct pathname		fpath2;
-	struct stat		stat1;
-	struct stat		stat2;
+	struct stat64		stat1;
+	struct stat64		stat2;
 	char			inoinfo1[1024];
 	char			inoinfo2[1024];
 	loff_t			lr;
@@ -3237,17 +3437,17 @@ splice_f(opnum_t opno, long r)
 	}
 
 	/* Get file stats */
-	if (fstat(fd1, &stat1) < 0) {
+	if (fstat64(fd1, &stat1) < 0) {
 		if (v1)
-			printf("%d/%lld: splice read - fstat %s failed %d\n",
+			printf("%d/%lld: splice read - fstat64 %s failed %d\n",
 				procid, opno, fpath1.path, errno);
 		goto out_fd2;
 	}
 	inode_info(inoinfo1, sizeof(inoinfo1), &stat1, v1);
 
-	if (fstat(fd2, &stat2) < 0) {
+	if (fstat64(fd2, &stat2) < 0) {
 		if (v2)
-			printf("%d/%lld: splice write - fstat %s failed %d\n",
+			printf("%d/%lld: splice write - fstat64 %s failed %d\n",
 				procid, opno, fpath2.path, errno);
 		goto out_fd2;
 	}
@@ -3264,7 +3464,7 @@ splice_f(opnum_t opno, long r)
 	if (stat1.st_size == len)
 		off1 = 0;
 	else
-		off1 = (off_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
+		off1 = (off64_t)(lr % MIN(stat1.st_size - len, MAXFSIZE));
 	off1 %= maxfsize;
 
 	/*
@@ -3273,7 +3473,7 @@ splice_f(opnum_t opno, long r)
 	 * past the current dest file EOF
 	 */
 	lr = ((int64_t)random() << 32) + random();
-	off2 = (off_t)(lr % MIN(stat2.st_size + (1024ULL * stat2.st_blksize), MAXFSIZE));
+	off2 = (off64_t)(lr % MIN(stat2.st_size + (1024ULL * stat2.st_blksize), MAXFSIZE));
 
 	/*
 	 * Since len, off1 and off2 will be changed later, preserve their
@@ -3431,8 +3631,8 @@ dread_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	char		*dio_env;
@@ -3454,9 +3654,9 @@ dread_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: dread - fstat %s failed %d\n",
+			printf("%d/%lld: dread - fstat64 %s failed %d\n",
 			       procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -3491,7 +3691,7 @@ dread_f(opnum_t opno, long r)
 
 	align = (int64_t)diob.d_miniosz;
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % stb.st_size);
+	off = (off64_t)(lr % stb.st_size);
 	off -= (off % align);
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
@@ -3521,8 +3721,8 @@ dwrite_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	char		*dio_env;
@@ -3544,9 +3744,9 @@ dwrite_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: dwrite - fstat %s failed %d\n",
+			printf("%d/%lld: dwrite - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -3572,7 +3772,7 @@ dwrite_f(opnum_t opno, long r)
 
 	align = (int64_t)diob.d_miniosz;
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off -= (off % align);
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
@@ -3610,7 +3810,7 @@ struct print_flags falloc_flags [] = {
 	({translate_flags(mode, "|", falloc_flags);})
 #endif
 
-void
+static void
 do_fallocate(opnum_t opno, long r, int mode)
 {
 #ifdef HAVE_LINUX_FALLOC_H
@@ -3618,9 +3818,9 @@ do_fallocate(opnum_t opno, long r, int mode)
 	pathname_t	f;
 	int		fd;
 	int64_t		lr;
-	off_t		off;
-	off_t		len;
-	struct stat	stb;
+	off64_t		off;
+	off64_t		len;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -3640,9 +3840,9 @@ do_fallocate(opnum_t opno, long r, int mode)
 		return;
 	}
 	check_cwd();
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: do_fallocate - fstat %s failed %d\n",
+			printf("%d/%lld: do_fallocate - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -3650,9 +3850,9 @@ do_fallocate(opnum_t opno, long r, int mode)
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
-	len = (off_t)(random() % (1024 * 1024));
+	len = (off64_t)(random() % (1024 * 1024));
 	/*
 	 * Collapse/insert range requires off and len to be block aligned,
 	 * make it more likely to be the case.
@@ -3733,8 +3933,8 @@ fiemap_f(opnum_t opno, long r)
 	pathname_t	f;
 	int		fd;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	int blocks_to_map;
@@ -3757,9 +3957,9 @@ fiemap_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: fiemap - fstat %s failed %d\n",
+			printf("%d/%lld: fiemap - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -3777,7 +3977,7 @@ fiemap_f(opnum_t opno, long r)
 		return;
 	}
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	fiemap->fm_flags = random() & (FIEMAP_FLAGS_COMPAT | 0x10000);
 	fiemap->fm_extent_count = blocks_to_map;
@@ -3796,61 +3996,6 @@ fiemap_f(opnum_t opno, long r)
 	close(fd);
 #endif
 }
-
-#if 0
-void
-freesp_f(opnum_t opno, long r)
-{
-	int		e;
-	pathname_t	f;
-	int		fd;
-	struct xfs_flock64	fl;
-	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
-	int		v;
-	char		st[1024];
-
-	init_pathname(&f);
-	if (!get_fname(FT_REGFILE, r, &f, NULL, NULL, &v)) {
-		if (v)
-			printf("%d/%lld: freesp - no filename\n", procid, opno);
-		free_pathname(&f);
-		return;
-	}
-	fd = open_path(&f, O_RDWR);
-	e = fd < 0 ? errno : 0;
-	check_cwd();
-	if (fd < 0) {
-		if (v)
-			printf("%d/%lld: freesp - open %s failed %d\n",
-				procid, opno, f.path, e);
-		free_pathname(&f);
-		return;
-	}
-	if (fstat(fd, &stb) < 0) {
-		if (v)
-			printf("%d/%lld: freesp - fstat %s failed %d\n",
-				procid, opno, f.path, errno);
-		free_pathname(&f);
-		close(fd);
-		return;
-	}
-	inode_info(st, sizeof(st), &stb, v);
-	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
-	off %= maxfsize;
-	fl.l_whence = SEEK_SET;
-	fl.l_start = off;
-	fl.l_len = 0;
-	e = xfsctl(f.path, fd, XFS_IOC_FREESP64, &fl) < 0 ? errno : 0;
-	if (v)
-		printf("%d/%lld: xfsctl(XFS_IOC_FREESP64) %s%s %lld 0 %d\n",
-		       procid, opno, f.path, st, (long long)off, e);
-	free_pathname(&f);
-	close(fd);
-}
-#endif
 
 void
 fsync_f(opnum_t opno, long r)
@@ -4214,7 +4359,7 @@ struct print_flags mmap_flags[] = {
 	({translate_flags(flags, "|", mmap_flags);})
 #endif
 
-void
+static void
 do_mmap(opnum_t opno, long r, int prot)
 {
 #ifdef HAVE_SYS_MMAN_H
@@ -4224,9 +4369,9 @@ do_mmap(opnum_t opno, long r, int prot)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
+	off64_t		off;
 	int		flags;
-	struct stat	stb;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	sigjmp_buf	sigbus_jmpbuf;
@@ -4248,9 +4393,9 @@ do_mmap(opnum_t opno, long r, int prot)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: do_mmap - fstat %s failed %d\n",
+			printf("%d/%lld: do_mmap - fstat64 %s failed %d\n",
 			       procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -4267,7 +4412,7 @@ do_mmap(opnum_t opno, long r, int prot)
 	}
 
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % stb.st_size);
+	off = (off64_t)(lr % stb.st_size);
 	off = rounddown_64(off, sysconf(_SC_PAGE_SIZE));
 	len = (size_t)(random() % MIN(stb.st_size - off, FILELEN_MAX)) + 1;
 
@@ -4369,8 +4514,8 @@ read_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -4391,9 +4536,9 @@ read_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: read - fstat %s failed %d\n",
+			printf("%d/%lld: read - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -4409,7 +4554,7 @@ read_f(opnum_t opno, long r)
 		return;
 	}
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % stb.st_size);
+	off = (off64_t)(lr % stb.st_size);
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
 	buf = malloc(len);
@@ -4453,8 +4598,8 @@ readv_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	struct iovec	*iov = NULL;
@@ -4480,9 +4625,9 @@ readv_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: readv - fstat %s failed %d\n",
+			printf("%d/%lld: readv - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -4498,7 +4643,7 @@ readv_f(opnum_t opno, long r)
 		return;
 	}
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % stb.st_size);
+	off = (off64_t)(lr % stb.st_size);
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
 	buf = malloc(len);
@@ -4576,7 +4721,7 @@ struct print_flags renameat2_flags [] = {
 #define translate_renameat2_flags(mode)        \
 	({translate_flags(mode, "|", renameat2_flags);})
 
-void
+static void
 do_renameat2(opnum_t opno, long r, int mode)
 {
 	fent_t		*dfep;
@@ -4738,8 +4883,8 @@ resvsp_f(opnum_t opno, long r)
 	int		fd;
 	struct xfs_flock64	fl;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -4760,9 +4905,9 @@ resvsp_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: resvsp - fstat %s failed %d\n",
+			printf("%d/%lld: resvsp - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -4770,11 +4915,11 @@ resvsp_f(opnum_t opno, long r)
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	fl.l_whence = SEEK_SET;
 	fl.l_start = off;
-	fl.l_len = (off_t)(random() % (1024 * 1024));
+	fl.l_len = (off64_t)(random() % (1024 * 1024));
 	e = xfsctl(f.path, fd, XFS_IOC_RESVSP64, &fl) < 0 ? errno : 0;
 	if (v)
 		printf("%d/%lld: xfsctl(XFS_IOC_RESVSP64) %s%s %lld %lld %d\n",
@@ -4971,7 +5116,7 @@ stat_f(opnum_t opno, long r)
 {
 	int		e;
 	pathname_t	f;
-	struct stat	stb;
+	struct stat64	stb;
 	int		v;
 
 	init_pathname(&f);
@@ -4981,7 +5126,7 @@ stat_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	e = lstat_path(&f, &stb) < 0 ? errno : 0;
+	e = lstat64_path(&f, &stb) < 0 ? errno : 0;
 	check_cwd();
 	if (v)
 		printf("%d/%lld: stat %s %d\n", procid, opno, f.path, e);
@@ -5132,8 +5277,8 @@ truncate_f(opnum_t opno, long r)
 	int		e;
 	pathname_t	f;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -5144,18 +5289,18 @@ truncate_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	e = stat_path(&f, &stb) < 0 ? errno : 0;
+	e = stat64_path(&f, &stb) < 0 ? errno : 0;
 	check_cwd();
 	if (e > 0) {
 		if (v)
-			printf("%d/%lld: truncate - stat %s failed %d\n",
+			printf("%d/%lld: truncate - stat64 %s failed %d\n",
 				procid, opno, f.path, e);
 		free_pathname(&f);
 		return;
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	e = truncate64_path(&f, off) < 0 ? errno : 0;
 	check_cwd();
@@ -5208,8 +5353,8 @@ unresvsp_f(opnum_t opno, long r)
 	int		fd;
 	struct xfs_flock64	fl;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -5230,9 +5375,9 @@ unresvsp_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: unresvsp - fstat %s failed %d\n",
+			printf("%d/%lld: unresvsp - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -5240,11 +5385,11 @@ unresvsp_f(opnum_t opno, long r)
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	fl.l_whence = SEEK_SET;
 	fl.l_start = off;
-	fl.l_len = (off_t)(random() % (1 << 20));
+	fl.l_len = (off64_t)(random() % (1 << 20));
 	e = xfsctl(f.path, fd, XFS_IOC_UNRESVSP64, &fl) < 0 ? errno : 0;
 	if (v)
 		printf("%d/%lld: xfsctl(XFS_IOC_UNRESVSP64) %s%s %lld %lld %d\n",
@@ -5280,8 +5425,8 @@ write_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 
@@ -5302,9 +5447,9 @@ write_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: write - fstat %s failed %d\n",
+			printf("%d/%lld: write - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -5312,7 +5457,7 @@ write_f(opnum_t opno, long r)
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
@@ -5336,8 +5481,8 @@ writev_f(opnum_t opno, long r)
 	int		fd;
 	size_t		len;
 	int64_t		lr;
-	off_t		off;
-	struct stat	stb;
+	off64_t		off;
+	struct stat64	stb;
 	int		v;
 	char		st[1024];
 	struct iovec	*iov = NULL;
@@ -5363,9 +5508,9 @@ writev_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat64(fd, &stb) < 0) {
 		if (v)
-			printf("%d/%lld: writev - fstat %s failed %d\n",
+			printf("%d/%lld: writev - fstat64 %s failed %d\n",
 				procid, opno, f.path, errno);
 		free_pathname(&f);
 		close(fd);
@@ -5373,7 +5518,7 @@ writev_f(opnum_t opno, long r)
 	}
 	inode_info(st, sizeof(st), &stb, v);
 	lr = ((int64_t)random() << 32) + random();
-	off = (off_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
+	off = (off64_t)(lr % MIN(stb.st_size + (1024 * 1024), MAXFSIZE));
 	off %= maxfsize;
 	lseek64(fd, off, SEEK_SET);
 	len = (random() % FILELEN_MAX) + 1;
