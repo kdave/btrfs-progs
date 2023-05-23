@@ -583,10 +583,13 @@ out:
 	btrfs_release_path(&path);
 
 	/*
-	 * Finish the change by clearing the csum change flag and update the superblock
-	 * csum type.
+	 * Finish the change by clearing the csum change flag, update the superblock
+	 * csum type, and delete the csum change item in the fs with new csum type.
 	 */
 	if (ret == 0) {
+		struct btrfs_root *tree_root = fs_info->tree_root;
+		struct btrfs_trans_handle *trans;
+
 		u64 super_flags = btrfs_super_flags(fs_info->super_copy);
 
 		btrfs_set_super_csum_type(fs_info->super_copy, new_csum_type);
@@ -596,11 +599,42 @@ out:
 
 		fs_info->csum_type = new_csum_type;
 		fs_info->csum_size = btrfs_csum_type_size(new_csum_type);
+		fs_info->skip_csum_check = 0;
 
-		ret = write_all_supers(fs_info);
+		trans = btrfs_start_transaction(tree_root, 1);
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
+			errno = -ret;
+			error("failed to start new transaction with new csum type: %m");
+			return ret;
+		}
+		key.objectid = BTRFS_CSUM_CHANGE_OBJECTID;
+		key.type = BTRFS_TEMPORARY_ITEM_KEY;
+		key.offset = new_csum_type;
+
+		ret = btrfs_search_slot(trans, tree_root, &key, &path, -1, 1);
+		if (ret > 0)
+			ret = -ENOENT;
 		if (ret < 0) {
 			errno = -ret;
-			error("failed to write super blocks: %m");
+			error("failed to locate the csum change item: %m");
+			btrfs_release_path(&path);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		ret = btrfs_del_item(trans, tree_root, &path);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to delete the csum change item: %m");
+			btrfs_release_path(&path);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		btrfs_release_path(&path);
+		ret = btrfs_commit_transaction(trans, tree_root);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to finalize the csum change: %m");
 		}
 	}
 	return ret;
