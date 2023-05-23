@@ -1,0 +1,40 @@
+#!/bin/sh -e
+
+type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
+type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
+
+repo="kdave/btrfs-progs"
+
+daysmax=8
+
+clean_workflow() {
+	local wf="$1"
+	local json=$(gh run -R "$repo" list -w "$wf" --json databaseId,startedAt)
+
+	echo "Cleaning workflow $wf"
+	i=0
+	while :; do
+		id=$(echo "$json" | jq -r ".[$i].databaseId")
+		if [ "$id" == "null" -o -z "$id" ]; then
+			break
+		fi
+		echo "ID: $id"
+		now=$(date +%s)
+		date=$(echo "$json" | jq -r ".[$i].startedAt")
+		ts=$(date --date=${date} +%s)
+		delta=$(($now-$ts))
+		days=$(($delta/3600/24))
+		echo "Started at $id, delta $delta, days $days"
+		if [ "$days" -ge "$daysmax" ]; then
+			echo "Delete run $id"
+			gh run -R "$repo" delete "$id"
+		fi
+
+		# loop
+		i=$(($i+1))
+	done
+}
+
+clean_workflow "Testing CI build"
+clean_workflow "Devel build and tests"
+clean_workflow "CI image tests"

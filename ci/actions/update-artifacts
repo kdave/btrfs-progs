@@ -1,0 +1,31 @@
+#!/bin/sh -ex
+# Usage: $0 tag
+#
+# Requires: gh extension 'release' installed (https://cli.github.com/manual/gh_release)
+
+if [ -z "$1" ]; then
+	echo "ERROR: needs tag where to upload the static binaries"
+	exit 1
+fi
+
+type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
+type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
+
+repo="kdave/btrfs-progs"
+
+tag="$1"
+# TODO: verify that tag exists
+
+# Read last workflow id
+id=$(gh run -R "$repo" list -w 'Static binaries' -L 1 --json databaseId | jq '.[].databaseId')
+
+for asset in btrfs.box.static btrfs.static; do
+	gh run -R "$repo" download "$id" -n "$asset"
+	chmod 755 "$asset"
+	gh release -R "$repo" upload "$tag" "$asset"
+done
+
+for asset in btrfs.box.static.sha256 btrfs.static.sha256; do
+	gh run -R "$repo" download "$id" -n "$asset"
+	gh release -R "$repo" upload "$tag" "$asset"
+done
