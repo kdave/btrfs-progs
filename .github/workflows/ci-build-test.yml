@@ -23,5 +23,7 @@ jobs:
         run: ci/ci-build-leap154
       - name: CI Musl
         run: ci/ci-build-musl
+      - name: CI Musl (32bit)
+        run: ci/ci-build-musl-i386
       - name: CI Tumbleweed
         run: ci/ci-build-tumbleweed
