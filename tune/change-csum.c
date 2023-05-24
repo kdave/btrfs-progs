@@ -45,12 +45,7 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
 		error("no csum change support for extent-tree-v2 feature yet.");
 		return -EOPNOTSUPP;
 	}
-	if (btrfs_super_flags(fs_info->super_copy) &
-	    (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
-	     BTRFS_SUPER_FLAG_CHANGING_META_CSUM)) {
-		error("resume from half converted status is not yet supported");
-		return -EOPNOTSUPP;
-	}
+
 	key.objectid = BTRFS_BALANCE_OBJECTID;
 	key.type = BTRFS_TEMPORARY_ITEM_KEY;
 	key.offset = 0;
@@ -522,7 +517,7 @@ out:
 	return ret;
 }
 
-static int change_meta_csums(struct btrfs_fs_info *fs_info, u32 new_csum_type)
+static int change_meta_csums(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_path path = { 0 };
@@ -640,6 +635,73 @@ out:
 	return ret;
 }
 
+static int resume_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_type)
+{
+	const u64 super_flags = btrfs_super_flags(fs_info->super_copy);
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	if ((super_flags & (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+			    BTRFS_SUPER_FLAG_CHANGING_META_CSUM)) ==
+	    (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+	     BTRFS_SUPER_FLAG_CHANGING_META_CSUM)) {
+		error(
+"invalid super flags, only one bit of CHANGING_DATA_CSUM or CHANGING_META_CSUM can be set");
+		return -EUCLEAN;
+	}
+
+	key.objectid = BTRFS_CSUM_CHANGE_OBJECTID;
+	key.type = BTRFS_TEMPORARY_ITEM_KEY;
+	key.offset = (u64)-1;
+	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate the csum change item: %m");
+		return ret;
+	}
+	assert(ret > 0);
+	ret = btrfs_previous_item(tree_root, &path, BTRFS_CSUM_CHANGE_OBJECTID,
+				  BTRFS_TEMPORARY_ITEM_KEY);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate the csum change item: %m");
+		btrfs_release_path(&path);
+		return ret;
+	}
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	btrfs_release_path(&path);
+
+	if (new_csum_type != key.offset) {
+		ret = -EINVAL;
+		error(
+"target csum type mismatch with interrupted csum type, has %s (%u) expect %s (%llu)",
+		      btrfs_super_csum_name(new_csum_type), new_csum_type,
+		      btrfs_super_csum_name(key.offset), key.offset);
+		return ret;
+	}
+
+	if (super_flags & BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM) {
+		error("resume on data checksum changing is not yet supported");
+		return -EOPNOTSUPP;
+	}
+
+	/*
+	 * For metadata resume, just call the same change_meta_csums(), as we
+	 * have no record on previous converted metadata, thus have to go
+	 * through all metadata anyway.
+	 */
+	ret = change_meta_csums(fs_info, new_csum_type);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to resume metadata csum change: %m");
+	}
+	return ret;
+}
+
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	u16 old_csum_type = fs_info->csum_type;
@@ -650,6 +712,20 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	if (ret < 0)
 		return ret;
 
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    (BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |
+	     BTRFS_SUPER_FLAG_CHANGING_META_CSUM)) {
+		ret = resume_csum_change(fs_info, new_csum_type);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to resume unfinished csum change: %m");
+			return ret;
+		}
+		printf("converted csum type from %s (%u) to %s (%u)\n",
+		       btrfs_super_csum_name(old_csum_type), old_csum_type,
+		       btrfs_super_csum_name(new_csum_type), new_csum_type);
+		return ret;
+	}
 	/*
 	 * Phase 1, generate new data csums.
 	 *
