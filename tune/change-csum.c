@@ -875,6 +875,15 @@ static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_t
 		goto new_data_csums;
 	}
 
+	/*
+	 * Both old and new csum exist, and old csum is a subset of the new ones.
+	 *
+	 * This means we're deleting the old csums.
+	 */
+	if (old_csum_found && new_csum_found && new_csum_first <= old_csum_first &&
+	    new_csum_last >= old_csum_last)
+		goto delete_old;
+
 	/* Other cases are not yet supported. */
 	return -EOPNOTSUPP;
 
@@ -885,6 +894,7 @@ new_data_csums:
 		error("failed to generate new data csums: %m");
 		return ret;
 	}
+delete_old:
 	ret = delete_old_data_csums(fs_info);
 	if (ret < 0)
 		return ret;
