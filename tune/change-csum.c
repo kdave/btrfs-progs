@@ -29,7 +29,7 @@
 #include "common/utils.h"
 #include "tune/tune.h"
 
-static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
+static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *dev_root = fs_info->dev_root;
@@ -73,6 +73,12 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info)
 	}
 	if (ret == 0) {
 		error("running dev-replace detected, please finish or cancel it.");
+		return -EINVAL;
+	}
+
+	if (fs_info->csum_type == new_csum_type) {
+		error("the fs is already using csum type %s (%u)",
+		      btrfs_super_csum_name(new_csum_type), new_csum_type);
 		return -EINVAL;
 	}
 	return 0;
@@ -1002,7 +1008,7 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	int ret;
 
 	/* Phase 0, check conflicting features. */
-	ret = check_csum_change_requreiment(fs_info);
+	ret = check_csum_change_requreiment(fs_info, new_csum_type);
 	if (ret < 0)
 		return ret;
 
