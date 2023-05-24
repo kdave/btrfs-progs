@@ -884,8 +884,26 @@ static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_t
 	    new_csum_last >= old_csum_last)
 		goto delete_old;
 
-	/* Other cases are not yet supported. */
-	return -EOPNOTSUPP;
+	/*
+	 * Both csums exist but not covering each other, or only new csum exists.
+	 *
+	 * This means we have already deleted all the old csums, is going to or
+	 * have already started objectid change.
+	 */
+	if ((old_csum_found && new_csum_found && old_csum_last <= new_csum_first) &&
+	    (!old_csum_found && new_csum_found))
+		goto change;
+
+	/* The remaining cases should not be possible. */
+	error("unexpected resume condition:");
+	error("old csum found=%d start=%llu last=%llu new csum found=%d start=%llu last=%llu",
+		old_csum_found,
+		old_csum_found ? old_csum_first : 0,
+		old_csum_found ? old_csum_last : 0,
+		new_csum_found,
+		new_csum_found ? new_csum_first : 0,
+		new_csum_found ? new_csum_last : 0);
+	return -EUCLEAN;
 
 new_data_csums:
 	ret = generate_new_data_csums_range(fs_info, resume_start, new_csum_type);
@@ -898,6 +916,7 @@ delete_old:
 	ret = delete_old_data_csums(fs_info);
 	if (ret < 0)
 		return ret;
+change:
 	ret = change_csum_objectids(fs_info);
 	if (ret < 0)
 		return ret;
