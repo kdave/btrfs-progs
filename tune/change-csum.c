@@ -828,6 +828,13 @@ static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_t
 		new_csum_found = true;
 
 	/*
+	 * No csum item found at all, this fs has empty csum tree.
+	 * Just go metadata change.
+	 */
+	if (!old_csum_found && !new_csum_found)
+		goto new_meta_csum;
+
+	/*
 	 * Only old csums exists. This can be one of the two cases:
 	 * - Only the csum change item inserted, no new csum generated.
 	 * - All data csum is converted to the new type.
