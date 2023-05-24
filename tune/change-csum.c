@@ -115,7 +115,8 @@ static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
 
 static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
 				       u64 logical, void *data_buf,
-				       const void *old_csums)
+				       const void *old_csums, u16 old_csum_type,
+				       bool output_error)
 {
 	const u32 sectorsize = fs_info->sectorsize;
 	int num_copies = btrfs_num_copies(fs_info, logical, sectorsize);
@@ -138,7 +139,7 @@ static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
 		if (memcmp(csum_has, old_csums, fs_info->csum_size) == 0) {
 			found_good = true;
 			break;
-		} else {
+		} else if (output_error){
 			char found[BTRFS_CSUM_STRING_LEN];
 			char want[BTRFS_CSUM_STRING_LEN];
 
@@ -168,7 +169,8 @@ static int generate_new_csum_range(struct btrfs_trans_handle *trans,
 
 	for (u64 cur = logical; cur < logical + length; cur += sectorsize) {
 		ret = read_verify_one_data_sector(fs_info, cur, buf, old_csums +
-				(cur - logical) / sectorsize * fs_info->csum_size);
+				(cur - logical) / sectorsize * fs_info->csum_size,
+				fs_info->csum_type, true);
 
 		if (ret < 0) {
 			error("failed to recover a good copy for data at logical %llu",
@@ -532,7 +534,19 @@ static int change_meta_csums(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
+	u64 super_flags;
 	int ret;
+
+	/* Re-set the super flags, this is for resume cases. */
+	super_flags = btrfs_super_flags(fs_info->super_copy);
+	super_flags &= ~BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM;
+	super_flags |= BTRFS_SUPER_FLAG_CHANGING_META_CSUM;
+	btrfs_set_super_flags(fs_info->super_copy, super_flags);
+	ret = write_all_supers(fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to update super flags: %m");
+	}
 
 	/*
 	 * Disable metadata csum checks first, as we may hit tree blocks with
@@ -728,6 +742,63 @@ static int get_csum_items_range(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
+/*
+ * Verify one data sector to determine which csum type matches the csum.
+ *
+ * Return >0 if the current csum type doesn't pass the check (including csum
+ * item too small compared to csum type).
+ * Return 0 if the current csum type passes the check.
+ * Return <0 for other errors.
+ */
+static int determine_csum_type(struct btrfs_fs_info *fs_info, u64 logical,
+			       u16 csum_type)
+{
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, logical);
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	u16 csum_size = btrfs_csum_type_size(csum_type);
+	u8 csum_expected[BTRFS_CSUM_SIZE];
+	void *buf;
+	int ret;
+
+	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	key.type = BTRFS_EXTENT_CSUM_KEY;
+	key.offset = logical;
+
+	ret = btrfs_search_slot(NULL, csum_root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search csum tree: %m");
+		btrfs_release_path(&path);
+		return ret;
+	}
+
+	/*
+	 * The csum item size is smaller than expected csum size, no
+	 * more need to check.
+	 */
+	if (btrfs_item_size(path.nodes[0], path.slots[0]) < csum_size) {
+		btrfs_release_path(&path);
+		return 1;
+	}
+	read_extent_buffer(path.nodes[0], csum_expected,
+			   btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+			   csum_size);
+	btrfs_release_path(&path);
+
+	buf = malloc(fs_info->sectorsize);
+	if (!buf)
+		return -ENOMEM;
+	ret = read_verify_one_data_sector(fs_info, logical, buf, csum_expected,
+					  csum_type, false);
+	if (ret < 0)
+		ret = 1;
+	free(buf);
+	return ret;
+}
+
 static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	u64 old_csum_first;
@@ -755,6 +826,33 @@ static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_t
 		return ret;
 	if (ret == 0)
 		new_csum_found = true;
+
+	/*
+	 * Only old csums exists. This can be one of the two cases:
+	 * - Only the csum change item inserted, no new csum generated.
+	 * - All data csum is converted to the new type.
+	 *
+	 * Here we need to check if the csum item is in old or new type.
+	 */
+	if (old_csum_found && !new_csum_found) {
+		ret = determine_csum_type(fs_info, old_csum_first, fs_info->csum_type);
+		if (ret == 0) {
+			/* All old data csums, restart generation. */
+			resume_start = 0;
+			goto new_data_csums;
+		}
+		ret = determine_csum_type(fs_info, old_csum_first, new_csum_type);
+		if (ret == 0) {
+			/*
+			 * All new data csums, just go metadata csum change, which
+			 * would drop the CHANGING_DATA_CSUM flag for us.
+			 */
+			goto new_meta_csum;
+		}
+		error("The data checksum for logical %llu doesn't match either old or new csum type, unable to resume",
+			old_csum_first);
+		return -EUCLEAN;
+	}
 
 	/*
 	 * Both old and new csum exist, and new csum is only a subset of the
@@ -786,6 +884,7 @@ new_data_csums:
 	ret = change_csum_objectids(fs_info);
 	if (ret < 0)
 		return ret;
+new_meta_csum:
 	ret = change_meta_csums(fs_info, new_csum_type);
 	return ret;
 }
