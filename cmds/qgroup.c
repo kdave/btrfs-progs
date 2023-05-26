@@ -1439,10 +1439,10 @@ static const struct rowspec qgroup_show_rowspec[] = {
 	{ .key = "qgroupid", .fmt = "qgroupid", .out_json = "qgroupid" },
 	{ .key = "referenced", .fmt = "%llu", .out_json = "referenced" },
 	{ .key = "exclusive", .fmt = "%llu", .out_json = "exclusive" },
-	{ .key = "max_referenced", .fmt = "size", .out_json = "max_referenced" },
+	{ .key = "max_referenced", .fmt = "%llu", .out_json = "max_referenced" },
 	/* Special value if limits not set. */
 	{ .key = "max_referenced-none", .fmt = "%s", .out_json = "max_referenced" },
-	{ .key = "max_exclusive", .fmt = "size", .out_json = "max_exclusive" },
+	{ .key = "max_exclusive", .fmt = "%llu", .out_json = "max_exclusive" },
 	/* Special value if limits not set. */
 	{ .key = "max_exclusive-none", .fmt = "%s", .out_json = "max_exclusive" },
 	{ .key = "path", .fmt = "str", .out_json = "path" },
