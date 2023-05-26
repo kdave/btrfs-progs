@@ -163,7 +163,7 @@ Let's be more positive, you manage to attract the attention of some developer
 and he says, he does not like the approach of the patch(es).  Better than
 nothing, isn't it? Depending on the feedback, try to understand the objections
 and try to find a solution or insist on your approach but possibly back it by
-good arguments (performance gain, expected usecase) or a better explanation
+good arguments (performance gain, expected use case) or a better explanation
 *why* the change is needed.
 
 Repeated submissions
@@ -175,7 +175,7 @@ why they're wrong or not needed. (You can try to pinkie-swear to implement them
 later, but do not try this too often.)
 
 For the next iteration, add a short description of the changes made, under the
-first **---** (tripple dash) marker in the patch. For example (see also Example
+first **---** (triple dash) marker in the patch. For example (see also Example
 3):
 
 .. code-block::
@@ -195,7 +195,7 @@ can send an early version, use a *[RFC]* string somewhere in the subject. This
 means *request for comments*. Be prepared to get comments.
 
 Please describe the level of completeness, e.g. what tests it does or does not
-pass or what type of usecases is not yet implemented. The purpose is to get
+pass or what type of use cases is not yet implemented. The purpose is to get
 feedback from other developers about the direction or implementation approach.
 This may save you hours of coding.
 
@@ -222,7 +222,7 @@ moving development base.
 **Do:** make sure that each patch compiles and does not deliberately introduce
 a bug, this is a good practice that makes *bisecting* go smooth
 
-**Do:** send the cover letter (ie. the non-patch mail) with brief description
+**Do:** send the cover letter (i.e. the non-patch mail) with brief description
 of the series, this is a place where feedback to the whole patchset will be
 sent rather than comments to the individual patches. To generate the series
 with cover letter use *git format-patch --cover-letter --thread*.
@@ -233,7 +233,7 @@ Good practices, contribution hints
 -  if you feel that you understand some area of code enough to stick your
    *Reviewed-by* to submitted patches, please do. Even for small patches.
 -  don't hesitate to be vocal if you see that a wrong patch has been committed
--  be patient if your patch is not accepted immediatelly, try to send a gentle
+-  be patient if your patch is not accepted immediately, try to send a gentle
    ping if there's a significant time without any action
 -  if you want to start contributing but are not sure about how to do that,
    lurk in the mailingist or on the IRC channel
@@ -337,7 +337,7 @@ should meet/have:
 -  no coding style violations
 -  good quality of implementation, should not exhibit trivial mistakes, lack of
    comments
--  unspecified number of other things that usually get poitned out in review
+-  unspecified number of other things that usually get pointed out in review
    comments
 
    -  this knowledge can be demonstrated by doing reviews of other developers'
@@ -345,7 +345,7 @@ should meet/have:
    -  doing reviews of other developers' patches is strongly recommended
 
 -  good changelogs and subject lines
--  the base point of the git branch is well-defined (ie. a stable release point
+-  the base point of the git branch is well-defined (i.e. a stable release point
    or last development point, that will not get rebased)
 
 The third point is vague, mostly refers to preferred coding patterns that we
@@ -375,8 +375,8 @@ Patches for next development cycle:
 
 -  **base** -- the last release candidate tag in Linus' tree, be sure
    not to be ahead of the integration branches that will become the pull
-   requests for the next dev cycle.
--  **for-next** -- patches should be in a good state, ie. don't
+   requests for the next development cycle.
+-  **for-next** -- patches should be in a good state, i.e. don't
    complicate testing too much, workarounds or known problems should be
    documented (e.g. in the patchset cover letter)
 -  other names, for example a patchset for a given feature as a topic
@@ -413,7 +413,7 @@ Quoting https://spdx.dev/about/:
    international open standard for security, license compliance, and
    other software supply chain artifacts as ISO/IEC 5962:2021.
 
-The initiative started in 2017 `1 <https://lwn.net/Articles/739183/>`__ aims to
+The initiative started in 2017 https://lwn.net/Articles/739183/ aims to
 unify licensing information in all files using **SPDX** tags, this is driven by
 the Linux Foundation. Therefore it's not necessary to repeat the license header
 (GPL) in each file, the licensing rules are documented in
@@ -454,7 +454,7 @@ copyright holders of changes in a given file. The code is usually heavily
 changed over time in smaller portions, slowly morphing into something that does
 not resemble the original code anymore though it shares a lot of the core ideas
 and implemented logic.  A copyright notice by a company that does not exist
-anymore from 10 years ago is a clear example of uselessnes for the developers.
+anymore from 10 years ago is a clear example of uselesness for the developers.
 
 When code is moved verbatim from a file to another file, in the new file it
 appears to be contributed by a single author while it is in most cases code
@@ -495,7 +495,7 @@ Major release
 position of the version, e.g. it's *4.6*. This usually means distributions
 start to adopt the sources, the stable kernels are going to be released.
 
-*Developers:* expect bugreports based on this version, this usually does not
+*Developers:* expect bug reports based on this version, this usually does not
 have other significance regarding development of new features or bugfixes
 
 Merge window
@@ -551,9 +551,17 @@ more release candidates.
 tested, can be found in the *for-next* branch
 
 Sending intrusive changes at this point is not guaranteed to be reviewed or
-testd in time so it gets queued for the next kernel. This highly depends on the
+tested in time so it gets queued for the next kernel. This highly depends on the
 nature of the changes. Patch count should not be an issue if the patches are
 revieweable or do not do intrusive changes.
+
+Last rcX before major release (rc7 or rc8)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The releases typically take 3 months, which means that rc7 or rc8 are the
+last ones, followed by a release and the merge window opens. Before that the
+development is effectively frozen or continues in parallel. Up to date list of
+release dates is at https://en.wikipedia.org/wiki/Linux_kernel_version_history .
 
 Major release
 ~~~~~~~~~~~~~
@@ -593,40 +601,30 @@ to newcomers.
 How to get started - development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Build and install the latest kernel from Linus's git repo.
--  Read and understand the user documentation
-   (`Main_Page#Guides_and_usage_information <Main_Page#Guides_and_usage_information>`__).
+-  Build and install the latest kernel from Linus's git repository.
 -  Create one or several btrfs filesystems with different configurations
    and learn how they work in userspace -- what are the features, what
    are the problems you see? Actually use at least one of the
    filesystems you created for real data in daily use (with backups)
 -  Build the userspace tools from git
--  Pick up one of the userspace projects from
-   `Project_ideas#Userspace_tools_projects <Project_ideas#Userspace_tools_projects>`__
-   and implement that. If you pick the right one(s), you'll have to
-   learn about some of the internal structures of the FS anyway. Compile
+-  Project ideas used to be tracked on the wiki
+   (https://archive.kernel.org/oldwiki/btrfs.wiki.kernel.org/index.php/Project_ideas.html)
+   but this contains outdated information and will be moved elsewhere eventually.
+   If you pick the right one(s), you'll have to
+   learn about some of the internal structures of the filesystem anyway. Compile
    and test your patch. If you're adding a new feature, write an
-   automated xfstest for it as well.
+   automated fstests case for it as well.
 -  Get that patch accepted. This will probably involve a sequence of
    revisions to it, multiple versions over a period of several weeks or
    more, with a review process. You should also send your test to
-   xfstests and get that accepted.
+   fstests and get that accepted.
 -  Do the above again, until you get used to the processes involved, and
    have demonstrated that you can work well with the other people in the
    subsystem, and are generally producing useful and sane code. It's all
    about trust -- can you be trusted to mostly do the right thing?
--  Use the documentation at
-   `Main_Page#Developer_documentation <Main_Page#Developer_documentation>`__,
-   and the output of btrfs-debug-tree to understand the internal
-   structure of the FS
--  Pick up one of the smaller, more self-contained ideas from the
-   projects page `Project_ideas <Project_ideas>`__ (say,
-   `Project_ideas#Cancellable_operations <Project_ideas#Cancellable_operations>`__
-   or
-   `Project_ideas#Implement_new_FALLOC_FL_.2A_modes <Project_ideas#Implement_new_FALLOC_FL_.2A_modes>`__)
-   and try to implement it. Again: build, write test code, test
-   thoroughly, submit patch for review, modify as suggested by
-   reviewers, and repeat as often as necessary.
+-  Developer documentation is listed in a section on the main documentation page.
+-  Output of *btrfs inspect-internal dump-tree* can be helpful to understand
+   the internal structure of the filesystem.
 
 How not to start
 ~~~~~~~~~~~~~~~~
@@ -637,7 +635,7 @@ that. The following text reflects our stance:
 
 If you want to contribute and do something useful for others and yourself, just
 don't keep sending these patches to fix whitespace/style issues reported by
-checkpatch. Think about it:
+checkpatch.pl. Think about it:
 
 #. You don't learn anything by doing them. You don't learn nothing about btrfs
    internals, filesystems in general, kernel programming in general, general
