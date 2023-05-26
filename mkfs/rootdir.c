@@ -39,6 +39,7 @@
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/path-utils.h"
+#include "common/utils.h"
 #include "mkfs/rootdir.h"
 
 static u32 fs_block_size;
@@ -510,6 +511,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		}
 
 		for (i = 0; i < count; i++) {
+			char tmp[PATH_MAX];
+
 			cur_file = files[i];
 
 			if (lstat(cur_file->d_name, &st) == -1) {
@@ -517,6 +520,10 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 					cur_file->d_name);
 				ret = -1;
 				goto fail;
+			}
+			if (bconf.verbose >= LOG_INFO) {
+				path_cat_out(tmp, parent_dir_entry->path, cur_file->d_name);
+				pr_verbose(LOG_INFO, "ADD: %s\n", tmp);
 			}
 
 			/*
@@ -566,8 +573,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 			}
 
 			if (S_ISDIR(st.st_mode)) {
-				char tmp[PATH_MAX];
-
 				dir_entry = malloc(sizeof(*dir_entry));
 				if (!dir_entry) {
 					ret = -ENOMEM;
@@ -631,8 +636,7 @@ fail_no_dir:
 	goto out;
 }
 
-int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
-			bool verbose)
+int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
@@ -669,8 +673,6 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
 		goto out;
 	}
 
-	if (verbose)
-		printf("Making image is completed.\n");
 	return 0;
 fail:
 	/*

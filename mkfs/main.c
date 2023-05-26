@@ -1721,12 +1721,14 @@ raid_groups:
 	}
 
 	if (source_dir) {
-		ret = btrfs_mkfs_fill_dir(source_dir, root, bconf.verbose);
+		pr_verbose(LOG_DEFAULT, "Rootdir from:       %s\n", source_dir);
+		ret = btrfs_mkfs_fill_dir(source_dir, root);
 		if (ret) {
 			error("error while filling filesystem: %d", ret);
 			goto out;
 		}
 		if (shrink_rootdir) {
+			pr_verbose(LOG_DEFAULT, "  Shrink:           yes\n");
 			ret = btrfs_mkfs_shrink_fs(fs_info, &shrink_size,
 						   shrink_rootdir);
 			if (ret < 0) {
@@ -1734,6 +1736,8 @@ raid_groups:
 					ret);
 				goto out;
 			}
+		} else {
+			pr_verbose(LOG_DEFAULT, "  Shrink:           no\n");
 		}
 	}
 
@@ -1783,9 +1787,8 @@ raid_groups:
 		btrfs_parse_runtime_features_to_string(features_buf, &features);
 		printf("Runtime features:   %s\n", features_buf);
 #endif
-		printf("Checksum:           %s",
+		printf("Checksum:           %s\n",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));
-		printf("\n");
 
 		list_all_devices(root);
 
