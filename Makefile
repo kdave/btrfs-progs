@@ -521,7 +521,7 @@ test-json: json-formatter-test
 		max=`./json-formatter-test`;				\
 		for testno in `seq 1 $$max`; do				\
 			echo "    [TEST/json]  $$testno";		\
-			./json-formatter-test $$testno | jq >& /dev/null; \
+			./json-formatter-test $$testno | jq >/dev/null; \
 		done							\
 	}
 
@@ -531,7 +531,7 @@ test-string-table: string-table-test
 		max=`./string-table-test`;				\
 		for testno in `seq 1 $$max`; do				\
 			echo "    [TEST/s-t]  $$testno";		\
-			./string-table-test $$testno ;			\
+			./string-table-test $$testno >/dev/null;	\
 		done							\
 	}
 

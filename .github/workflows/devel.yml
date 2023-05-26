@@ -3,7 +3,7 @@
 # - various runtime tests
 
 name: Devel build and tests
-run-name: Devel tests
+run-name: Devel build and tests
 on:
   push:
     branches:
@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: uname -a
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure
       - name: Make
@@ -32,3 +32,19 @@ jobs:
         run: sudo make TEST_LOG=dump test-check-lowmem
       - name: Tests misc
         run: sudo make TEST_LOG=dump test-misc
+      - name: Tests json formatter
+        run: make test-json
+      - name: Tests string-table formatter
+        run: make test-string-table
+      - name: Libbtrfsutil test
+        run: make test-libbtrfsutil
+      - name: Libbtrfs build test
+        run: make library-test
+      - name: Libbtrfs build test (static)
+        run: make library-test.static
+      - name: Tests ioctl
+        run: make ioctl-test
+      - name: Tests hash (speed)
+        run: make hash-speedtest && ./hash-speedtest 1
+      - name: Tests hash (correctness)
+        run: make hash-vectest && ./hash-vectest
