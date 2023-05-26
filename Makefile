@@ -865,7 +865,7 @@ clean-gen:
 		Documentation/Makefile tags TAGS \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log include/config.h include/config.h.in~ aclocal.m4 \
-		configure autom4te.cache/ config/
+		configure autom4te.cache/
 
 clean-dep:
 	@echo "Cleaning dependency files"

@@ -63,9 +63,9 @@ echo "   automake:   $(automake --version | head -1)"
 
 rm -rf autom4te.cache
 
-aclocal -I m4 $AL_OPTS &&
-autoconf -I m4 $AC_OPTS &&
-autoheader -I m4 $AH_OPTS ||
+aclocal -I config $AL_OPTS &&
+autoconf -I config $AC_OPTS &&
+autoheader -I config $AH_OPTS ||
 exit 1
 
 # it's better to use helper files from automake installation than
@@ -87,7 +87,6 @@ find_autofile() {
 	exit 1
 }
 
-mkdir -p config/
 find_autofile config.guess
 find_autofile config.sub
 find_autofile install-sh
