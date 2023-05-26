@@ -15,8 +15,10 @@ Welcome to BTRFS documentation!
    CHANGES
    Feature-by-version
    Kernel-by-version
+   Contributors
    Glossary
    INSTALL
+   Source-repositories
 
 .. toctree::
    :maxdepth: 1
@@ -45,13 +47,6 @@ Welcome to BTRFS documentation!
    Trim
    Volume-management
    Zoned-mode
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Project information
-
-   Source-repositories
-   Contributors
 
 .. toctree::
    :maxdepth: 1
