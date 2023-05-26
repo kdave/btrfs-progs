@@ -1025,7 +1025,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *label = NULL;
 	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
 	char *source_dir = NULL;
-	bool source_dir_set = false;
 
 	cpu_detect_flags();
 	hash_init_accel();
@@ -1172,7 +1171,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'r':
 				free(source_dir);
 				source_dir = strdup(optarg);
-				source_dir_set = true;
 				break;
 			case 'U':
 				strncpy(fs_uuid, optarg,
@@ -1221,11 +1219,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	opt_zoned = !!(features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
 
-	if (source_dir_set && device_count > 1) {
+	if (source_dir && device_count > 1) {
 		error("the option -r is limited to a single device");
 		goto error;
 	}
-	if (shrink_rootdir && !source_dir_set) {
+	if (shrink_rootdir && source_dir == NULL) {
 		error("the option --shrink must be used with --rootdir");
 		goto error;
 	}
@@ -1246,7 +1244,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	for (i = 0; i < device_count; i++) {
 		file = argv[optind++];
 
-		if (source_dir_set && path_exists(file) == 0)
+		if (source_dir && path_exists(file) == 0)
 			ret = 0;
 		else if (path_is_block_device(file) == 1)
 			ret = test_dev_for_mkfs(file, force_overwrite);
@@ -1352,7 +1350,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (opt_zoned) {
 		const int blkid_version =  blkid_get_library_version(NULL, NULL);
 
-		if (source_dir_set) {
+		if (source_dir) {
 			error("the option -r and zoned mode are incompatible");
 			exit(1);
 		}
@@ -1388,7 +1386,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	 *
 	 * This must be done before minimal device size checks.
 	 */
-	if (source_dir_set) {
+	if (source_dir) {
 		int oflags = O_RDWR;
 		struct stat statbuf;
 		int fd;
@@ -1722,7 +1720,7 @@ raid_groups:
 		goto out;
 	}
 
-	if (source_dir_set) {
+	if (source_dir) {
 		ret = btrfs_mkfs_fill_dir(source_dir, root, bconf.verbose);
 		if (ret) {
 			error("error while filling filesystem: %d", ret);
