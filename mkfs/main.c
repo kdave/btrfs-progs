@@ -1541,12 +1541,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	    btrfs_bg_type_to_tolerated_failures(data_profile))
 		warning("metadata has lower redundancy than data!\n");
 
-	printf("NOTE: several default settings have changed in version 5.15, please make sure\n");
-	printf("      this does not affect your deployments:\n");
-	printf("      - DUP for metadata (-m dup)\n");
-	printf("      - enabled no-holes (-O no-holes)\n");
-	printf("      - enabled free-space-tree (-R free-space-tree)\n");
-	printf("\n");
+	if (bconf.verbose) {
+		printf("NOTE: several default settings have changed in version 5.15, please make sure\n");
+		printf("      this does not affect your deployments:\n");
+		printf("      - DUP for metadata (-m dup)\n");
+		printf("      - enabled no-holes (-O no-holes)\n");
+		printf("      - enabled free-space-tree (-R free-space-tree)\n");
+		printf("\n");
+	}
 
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
