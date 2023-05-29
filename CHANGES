@@ -22,6 +22,25 @@ btrfs-progs-6.3 (2023-04-27)
       * CI cleanups and old files removed
       * integration with Github actions
 
+btrfs-progs-6.3.1 (2023-05-29)
+""""""""""""""""""""""""""""""
+   * convert: fix checksum of a block relocated from 0-1M range
+   * qgroup show: fix formatting of limit values in json output
+   * receive: report paret subovl UUID on errors
+   * btrfsune: new option --convert-to-free-space-tree to convert from
+     block-group-tree back to extent tree for block group tracking
+   * mkfs: make option --rootdir more verbose and report start when filling
+     from the given directory starts
+   * experimental:
+     * btrfstune: checksum switch logic reimplemented, conversion of all
+       metadata and data now works, resume from various states also supported
+   * other:
+      * more CI github actions test coverage
+      * more kernel/userspace source code sync
+      * warning fixes
+      * code cleanups
+      * documentation updates
+
 btrfs-progs-6.2 (2023-02-28)
 ----------------------------
    * receive: fix a corruption when decompressing zstd extents
