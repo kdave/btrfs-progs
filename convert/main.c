@@ -99,6 +99,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/file-item.h"
 #include "crypto/hash.h"
 #include "common/defs.h"
@@ -116,6 +117,7 @@
 #include "common/open-utils.h"
 #include "cmds/commands.h"
 #include "check/repair.h"
+#include "check/clear-cache.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
@@ -1347,6 +1349,27 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	if (!root) {
 		error("unable to open ctree for finalization");
 		goto fail;
+	}
+
+	/*
+	 * Setup free space tree.
+	 *
+	 * - Clear any v1 cache first
+	 * - Create v2 free space tree
+	 */
+	if (mkfs_cfg.features.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE) {
+		ret = do_clear_free_space_cache(root->fs_info, 1);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to clear v1 space cache: %m");
+			goto fail;
+		}
+		ret = btrfs_create_free_space_tree(root->fs_info);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to create v2 space cache: %m");
+			goto fail;
+		}
 	}
 	root->fs_info->finalize_on_close = 1;
 	close_ctree(root);
