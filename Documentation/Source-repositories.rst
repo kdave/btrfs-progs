@@ -108,6 +108,6 @@ patch page to the command:
 
 .. code-block:: bash
 
-        $ wget -O - '<nowiki>https://patchwork.kernel.org/patch/123456/mbox</nowiki>' | git am -
+        $ wget -O - 'https://patchwork.kernel.org/patch/123456/mbox' | git am -
 
 You may want to add *--reject*, or decide otherwise what to do with the patch.

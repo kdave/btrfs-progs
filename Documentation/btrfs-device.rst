@@ -14,7 +14,7 @@ The :command:`btrfs device` command group is used to manage devices of the btrfs
 DEVICE MANAGEMENT
 -----------------
 
-.. include ch-volume-management-intro.rst
+.. include:: ch-volume-management-intro.rst
 
 SUBCOMMAND
 ----------

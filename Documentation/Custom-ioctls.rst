@@ -19,3 +19,6 @@ a command if available:
   which is also exported in :file:`/sys/fs/btrfs/`
 
 - query/set a subset of features on a mounted filesystem
+
+Programming documentaion of the ioctls is in the manual page
+:doc:`btrfs-ioctl(2)<btrfs-ioctl>`.

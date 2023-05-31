@@ -241,6 +241,8 @@ mixed-bg
 
         mixed data and metadata block groups, also set by option *--mixed*
 
+.. _mkfs-feature-extended-refs:
+
 extref
         (default since btrfs-progs 3.12, kernel support since 3.7)
 
@@ -254,10 +256,14 @@ raid56
         extended format for RAID5/6, also enabled if RAID5 or RAID6 block groups
         are selected
 
+.. _mkfs-feature-skinny-metadata:
+
 skinny-metadata
         (default since btrfs-progs 3.18, kernel support since 3.10)
 
         reduced-size metadata for extent references, saves a few percent of metadata
+
+.. _mkfs-feature-no-holes:
 
 no-holes
         (default since btrfs-progs 5.15, kernel support since 3.14)
@@ -278,6 +284,8 @@ quota
         Enable quota support (qgroups). The qgroup accounting will be consistent,
         can be used together with *--rootdir*.  See also :doc:`btrfs-quota(8)<btrfs-quota>`.
 
+.. _mkfs-feature-free-space-tree:
+
 free-space-tree
         (default since btrfs-progs 5.15, kernel support since 4.5)
 
@@ -288,6 +296,8 @@ block-group-tree
         (kernel support since 6.1)
 
         Enable the block group tree to greatly reduce mount time for large filesystems.
+
+.. _mkfs-section-profiles:
 
 BLOCK GROUPS, CHUNKS, RAID
 --------------------------

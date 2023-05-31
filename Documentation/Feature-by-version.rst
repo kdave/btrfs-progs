@@ -71,7 +71,7 @@ features see [[Status]] page.
 
         .. note::
            Disabled since 3.14 (and backported to some stable kernel versions)
-           due to problems. Will be enabled in the future.
+           due to problems. Has been completely removed in 5.6.
 
 3.9 - lightweight send
         A mode of *send* that does not add the actual file data to the stream

@@ -16,8 +16,13 @@ statx
         *stat*
 
 fallocate modes
-        the *fallocate* syscall allows to manipulate file extents like punching
-        holes, preallocation or zeroing a range
+        the *fallocate* syscall allows to manipulate file extents
+
+        Supported modes:
+
+        - keep size (FALLOC_FL_KEEP_SIZE)
+        - hole punching (FALLOC_FL_PUNCH_HOLE)
+        - zero range (FALLOC_FL_ZERO_RANGE)
 
 FIEMAP
         an ioctl that enumerates file extents, related tool is :command:`filefrag`
@@ -39,7 +44,7 @@ xattr, acl
 
 cross-rename
         mode of *renameat2* syscall that can atomically swap 2 directory
-        entries (files/directories/subvolumes)
+        entries (files/directories/subvolumes/symlinks) within the same filesystem
 
 
 File attributes, XFLAGS

@@ -13,7 +13,7 @@ in meeting your performance expectations for your specific workload.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.2**
+**The table is based on the latest released linux kernel: 6.3**
 
 The columns for each feature reflect the status of the implementation
 in following ways:
@@ -30,6 +30,10 @@ in following ways:
 -  **Unstable**: do not use for other then testing purposes, known
    severe problems, missing implementation of some core parts
 
+.. role:: statusok
+.. role:: statusmok
+.. role:: statusunst
+
 .. list-table::
    :header-rows: 1
 
@@ -37,180 +41,188 @@ in following ways:
      - Stability
      - Performance
      - Notes
-   * - discard (synchronous)
-     - OK
+   * - :doc:`discard (synchronous)<Trim>`
+     - :statusok:`OK`
      -
      - mounted with `-o discard` (has performance implications), also see `fstrim`
-   * - discard (asynchronous)
-     - OK
+   * - :doc:`discard (asynchronous)<Trim>`
+     - :statusok:`OK`
      -
-     - mounted with `-o discard=async` (improved performance)"
+     - mounted with `-o discard=async` (improved performance)
    * - Autodefrag
-     - OK
+     - :statusok:`OK`
      -
      -
-   * - Defrag
-     - mostly OK
+   * - :doc:`Defrag<Defragmentation>`
+     - :statusmok:`mostly OK`
      -
      - extents get unshared (see below)
-   * - Compression
-     - OK (4.14)
+   * - :doc:`Compression<Compression>`
+     - :statusok:`OK`
      -
      -
-   * - Out-of-band dedupe
-     - OK
-     - mostly OK
+   * - :doc:`Out-of-band dedupe<Deduplication>`
+     - :statusok:`OK`
+     - :statusmok:`mostly OK`
      - (reflink), heavily referenced extents have a noticeable performance hit (see below)
-   * - File range cloning
-     - OK
-     - mostly OK
+   * - :doc:`File range cloning<Reflink>`
+     - :statusok:`OK`
+     - :statusmok:`mostly OK`
      - (reflink), heavily referenced extents have a noticeable performance hit (see below)
-   * - More checksumming algorithms
-     - OK
+   * - :doc:`More checksumming algorithms<Checksumming>`
+     - :statusok:`OK`
      - OK
      -
-   * - Auto-repair
-     - OK
+   * - :doc:`Auto-repair<Auto-repair>`
+     - :statusok:`OK`
      - OK
      - automatically repair from a correct spare copy if possible (DUP, RAID1, RAID10, RAID56)
-   * - Scrub
-     - OK
+   * - :doc:`Scrub<Scrub>`
+     - :statusok:`OK`
      - OK
      -
    * - Scrub + RAID56
-     - mostly OK
+     - :statusmok:`mostly OK`
      - mostly OK
      -
    * - nodatacow
-     - OK
+     - :statusok:`OK`
      - OK
      -
-   * - Device replace
-     - mostly OK
+   * - :doc:`Device replace<Volume-management>`
+     - :statusmok:`mostly OK`
      - mostly OK
      - (see below)
    * - Degraded mount
-     - OK (4.14)
+     - :statusok:`OK`
      - n/a
      -
-   * - Single (block group profile)
-     - OK
-     - OK
-     -
-   * - DUP (block group profile)
-     - OK
+   * - :ref:`Single (block group profile)<mkfs-section-profiles>`
+     - :statusok:`OK`
      - OK
      -
-   * - RAID0
-     - OK
+   * - :ref:`DUP (block group profile)<mkfs-section-profiles>`
+     - :statusok:`OK`
      - OK
      -
-   * - RAID1
+   * - :ref:`RAID0<mkfs-section-profiles>`
+     - :statusok:`OK`
      - OK
+     -
+   * - :ref:`RAID1<mkfs-section-profiles>`
+     - :statusok:`OK`
      - mostly OK
      - reading from mirrors in parallel can be optimized further (see below)
-   * - RAID1C3
-     - OK
+   * - :ref:`RAID1C3<mkfs-section-profiles>`
+     - :statusok:`OK`
      - mostly OK
      - reading from mirrors in parallel can be optimized further (see below)
-   * - RAID1C4
-     - OK
+   * - :ref:`RAID1C4<mkfs-section-profiles>`
+     - :statusok:`OK`
      - mostly OK
      - reading from mirrors in parallel can be optimized further (see below)
-   * - RAID10
-     - OK
+   * - :ref:`RAID10<mkfs-section-profiles>`
+     - :statusok:`OK`
      - mostly OK
      - reading from mirrors in parallel can be optimized further (see below)
-   * - RAID56
-     - unstable
+   * - :ref:`RAID56<mkfs-section-profiles>`
+     - :statusunst:`unstable`
      - n/a
      - (see below)
    * - Mixed block groups
-     - OK
+     - :statusok:`OK`
      - OK
      -
-   * - Filesystem resize
-     - OK
+   * - :doc:`Filesystem resize<Resize>`
+     - :statusok:`OK`
      - OK
      - shrink, grow
-   * - Balance
-     - OK
+   * - :doc:`Balance<Balance>`
+     - :statusok:`OK`
      - OK
      - balance + qgroups can be slow when there are many snapshots
    * - Offline UUID change
-     - OK
+     - :statusok:`OK`
      - OK
      -
    * - Metadata UUID change
-     - OK
-     - OK
-     -
-   * - Subvolumes, snapshots
-     - OK
+     - :statusok:`OK`
      - OK
      -
-   * - Send
-     - OK
-     - OK
-     -
-   * - Receive
-     - OK
+   * - :doc:`Subvolumes, snapshots<Subvolumes>`
+     - :statusok:`OK`
      - OK
      -
-   * - Seeding
-     - OK
+   * - :doc:`Send<Send-receive>`
+     - :statusok:`OK`
      - OK
      -
-   * - Quotas, qgroups
-     - mostly OK
+   * - :doc:`Receive<Send-receive>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :doc:`Seeding<Seeding-device>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :doc:`Quotas, qgroups<Qgroups>`
+     - :statusmok:`mostly OK`
      - mostly OK
      - qgroups with many snapshots slows down balance
-   * - Swapfile
-     - OK
+   * - :doc:`Swapfile<Swapfile>`
+     - :statusok:`OK`
      - n/a
      - with some limitations
-   * - NFS
-     - OK
+   * - :ref:`NFS<interop-nfs>`
+     - :statusok:`OK`
      - OK
      -
-   * - cgroups
-     - OK
+   * - :ref:`cgroups<interop-cgroups>`
+     - :statusok:`OK`
      - OK
      - IO controller
-   * - Samba
-     - OK
+   * - :ref:`Samba<interop-samba>`
+     - :statusok:`OK`
      - OK
      - compression, server-side copies, snapshots
-   * - io_uring
-     - OK
-     - OK
-     -
-   * - fsverity
-     - OK
+   * - :ref:`io_uring<interop-io-uring>`
+     - :statusok:`OK`
      - OK
      -
-   * - idmapped mount
-     - OK
-     - OK
-     -
-   * - Free space tree
-     - OK (4.9)
-     -
-     -
-   * - no-holes
-     - OK
+   * - :ref:`fsverity<interop-fsverity>`
+     - :statusok:`OK`
      - OK
      -
-   * - skinny-metadata
-     - OK
-     - OK
-     -
-   * - extended-refs
-     - OK
+   * - :ref:`idmapped mount<interop-idmapped>`
+     - :statusok:`OK`
      - OK
      -
-   * - zoned mode
+   * - :ref:`Free space tree<mkfs-feature-free-space-tree>`
+     - :statusok:`OK`
+     -
+     -
+   * - Block group tree
+     - :statusok:`OK`
+     -
+     -
+   * - :ref:`no-holes<mkfs-feature-no-holes>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :ref:`skinny-metadata<mkfs-feature-skinny-metadata>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :ref:`extended-refs<mkfs-feature-extended-refs>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :doc:`Subpage block size<Subpage>`
+     - :statusmok:`mostly OK`
      - mostly OK
+     -
+   * - :doc:`Zoned mode<Zoned-mode>`
+     - :statusmok:`mostly OK`
      - mostly OK
      - there are known bugs, use only for testing
 
@@ -222,6 +234,70 @@ Please open an issue if:
 -  you know of a bug that lowers the feature status
 -  a reference could be enhanced by an actual link to documentation
    (wiki, manual pages)
+
+Subpage block size
+------------------
+
+Most commonly used page sizes are 4KiB, 16KiB and 64KiB. All combinations with
+a 4KiB sector size filesystems are supported. Some features are not compatible
+with subpage or require another feature to work:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Feature
+     - Status
+     - Notes
+   * - Inline files
+     - unsupported
+     - The max_inline mount option value is ignored
+   * - Free space cache v1
+     - unsupported
+     - Free space tree is mandatory
+   * - Compression
+     - partial support
+     - Only page-aligned ranges can be compressed
+
+
+Zoned mode
+----------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Feature
+     - Status
+     - Notes
+   * - Boot
+     - incompatible
+     - The blocks where partition table is stored is used for super block
+   * - Mixed block groups
+     - incompatible
+     - Interleaving data and metadata would lead to out of order write
+   * - NODATACOW
+     - incompatible
+     - In-place overwrite
+   * - fallocate
+     - incompatible
+     - Preallocation of blocks would require an out of order write
+   * - Free space cache v1
+     - incompatible
+     - Cache data are updated in a NODATACOW-way
+   * - Free space tree
+     - supported
+     -
+   * - fstrim
+     - not implemented
+     - This would require free space v1
+   * - single profile
+     - supported
+     - Both data and metadata
+   * - DUP profile
+     - partial support
+     - Only for metadata
+   * - RAID (all)
+     - not implemented
+     - This requires raid-stripe-tree feature which is still work in progress
 
 
 Details that do not fit the table
@@ -275,10 +351,10 @@ continue to be mountable and usable by newer kernels.
 The core of the on-disk format that comprises building blocks of the
 filesystem:
 
--  layout of the main data structures, eg. superblock, b-tree nodes,
+-  layout of the main data structures, e.g. superblock, b-tree nodes,
    b-tree keys, block headers
 -  the COW mechanism, based on the original design of Ohad Rodeh's paper
-   "Shadowing and clones"
+   "B-trees, Shadowing and Clones" (http://sylab-srv.cs.fiu.edu/lib/exe/fetch.php?media=paperclub:shadow_btree.pdf)
 
 Newly introduced features build on top of the above and could add
 specific structures. If a backward compatibility is not possible to
