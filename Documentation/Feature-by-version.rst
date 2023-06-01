@@ -9,266 +9,89 @@ kernel. It does not tell anything about at which kernel version it is
 considered mature enough for production use. For an estimation on stability of
 features see [[Status]] page.
 
-3.x
+6.x
 ---
 
-3.0 - scrub
-        Read all data and verify checksums, repair if possible.
-
-3.2 - auto raid repair
-        Automatic repair of broken data from a good copy
-
-3.2 - root backups
-        Save a few previous versions of the most important tree roots at commit time, used by *-o recovery*
-
-3.3 - integrity checker
-        Optional infrastructure to verify integrity of written metadata blocks
-
-3.3 - backref walking
-        Groundwork to allow tracking owner of blocks, used via *inspect-internal*
-
-3.3 - restriper
-        RAID profiles can be changed on-line, balance filters
-
-3.4 - big metadata blocks
-        Support for metadata blocks larger than page size
-
-        .. note::
-           Default nodesize is 16k since btrfs-progs 3.12
-
-3.4 - error handling
-        Generic infrastructure for graceful error handling (EIO)
-
-3.5 - device statistics
-        Persistent statistics about device errors
-
-3.5 - fsync speedup
-        Noticeable improvements in fsync() implementation
-
-3.6 - qgroups
-        Subvolume-aware quotas
-
-3.6 - send/receive
-        Ability to transfer one filesystem via a data stream (full or
-        incremental) and apply the changes on a remote filesystem.
-3.7 - extrefs
-        Hardlink count limit is lifted to 64k
-
-        .. note::
-           Default since btrfs-progs 3.12
-
-3.7 - hole punching
-        Implement the FALLOC_FL_PUNCH_HOLE mode of *fallocate*
-
-3.8 - device replace
-        Efficient replacement of existing device (add/remove in one go)
-
-3.9 - raid 5/6 *(incomplete)*
-        Basic support for RAID5/6 profiles, no crash resiliency, replace and scrub support
-
-3.9 - snapshot-aware defrag
-        Defrag does not break links between shared extents (snapshots, reflinked files)
-
-        .. note::
-           Disabled since 3.14 (and backported to some stable kernel versions)
-           due to problems. Has been completely removed in 5.6.
-
-3.9 - lightweight send
-        A mode of *send* that does not add the actual file data to the stream
-
-3.9 - on-line label set/get
-        Label editable on mounted filesystems
-
-3.10 - skinny metadata
-        Reduced metadata size (format change) of extents
-
-       .. note::
-          Default since btrfs-progs 3.18
-
-3.10 - qgroup rescan
-        Sync qgroups with existing filesystem data
-
-3.12 - UUID tree
-        A map of subvolume/UUID that vastly speeds up send/receive
-
-3.12 - out-of-bound deduplication
-        Support for deduplicating extents on a given set of files.
-
-3.14 - no-holes
-        No extent representation for file holes (format change), may reduce overall metadata consumption
-
-3.14 - feature bits in sysfs
-        /sys/fs/btrfs exports various bits about filesystem capabilities and feature support
-
-3.16 - O_TMPFILE
-        Mode of open() to safely create a temporary file
-
-3.16 - search ioctl v2
-        The extended SEARCH_TREE ioctl able to get more than a 4k data
-
-3.18 - auto block group reclaim
-        Automatically remove block groups (aka. chunks) that become completely empty.
-
-3.19 - RAID56: scrub, replace
-        Scrub and device replace works on RAID56 filesystems.
-
-4.x
----
-
-4.0 - store otime
-        Save creation time (otime) for all new files and directories. For
-        future use, current tool cannot read it directly.
-
-4.2 - rootid ioctl accessible
-        The INO_LOOKUP will return root id (id of the containing subvolume),
-        unrestricted and to all users if the *treeid* is 0.
-
-4.2 - dedupe possible on the same inode
-        The EXTENT_SAME ioctl will accept the same inode as source and
-        destination (ranges must not overlap).
-
-4.3 - trim all free space
-        Trim will be performed also on the space that's not allocated by the
-        chunks, not only free space within the allocated chunks.
-
-4.4 - balance filter updates
-        Enhanced syntax and new balance filters:
-        * limit=min..max
-        * usage=min..max
-        * stripes=min..max
-
-4.5 - free space tree
-        Improved implementation of free space cache (aka v2), using b-trees.
-
-        .. note::
-           Default since btrfs-progs 5.15, Kernel 4.9 fixes endianity bugs on
-           big-endian machines, x86* is ok
-
-4.5 - balance filter updates
-        Conversion to data/DUP profile possible through balance filters -- on single-device filesystem.
-
-        .. note::
-           mkfs.btrfs allows creating DUP on single device in the non-mixed mode since 4.4
-
-4.6 - max_inline default
-        The default value of max_inline changed to 2048.
-
-4.6 - read features from control device
-        The existing ioctl GET_SUPPORTED_FEATURES can be now used on the
-        control device (/dev/btrfs-control) and returns the supported features
-        without any mounted filesystem.
-
-4.7 - delete device by id
-        Add new ioctl RM_DEV_V2, pass device to be deleted by its ID.
-
-4.7 - more renameat2 modes
-        Add support for RENAME_EXCHANGE and RENAME_WHITEOUT to *renameat2*
-        syscall. This also means that *overlayfs* is now supported on top of
-        btrfs.
-
-4.7 - balance filter updates
-        Conversion to data/DUP profile possible through balance filters -- on multiple-device filesystems.
-
-        .. note::
-           mkfs.btrfs allows creating DUP on multiple devices since 4.5.1
-
-4.12 - RAID56: auto repair
-        Scrub will attempt auto-repair (similar to raid1/raid10)
-
-4.13 - statx
-        Support for the enhanced statx syscall; file creation timestamp
-
-4.13 - sysfs qgroups override
-        qgroups: new sysfs control file to allow temporary quota override with CAP_SYS_RESOURCE
-
-4.13 - *deprecated mount option alloc_start*
-        That was a debugging helper, not used and not supposed to be used nowadays.
-
-4.14 - ZSTD compression
-        New compression algorithm ZSTD, supposedly better ratio/speed performance.
-
-4.14 - improved degraded mount
-        Allow degraded mount based on the chunk constraints, not device number
-        constraints. E.g. when one device is missing but the remaining one holds
-        all *single* chunks.
-
-4.14 - *deprecated user transaction ioctl*
-        BTRFS_IOC_TRANS_START and BTRFS_IOC_TRANS_END, no known users, tricky
-        to use; scheduled to be removed in 4.17
-
-4.14 - refine SSD optimizations
-        The mount option *ssd* does not make any assumptions about block layout
-        or management by the device anymore, leaving only the speedups based on
-        low seek cost active.  This could avoid some corner cases leading to
-        excessive fragmentation.
-        https://git.kernel.org/linus/583b723151794e2ff1691f1510b4e43710293875
-        The story so far.
-
-4.15 - overlayfs
-        Overlayfs can now use btrfs as the lower filesystem.
-
-4.15 - *ref-verify*
-        Debugging functionality to verify extent references. New mount option
-        <i>ref-verify</i>, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
-
-4.15 - ZLIB level
-        Allow to set the ZLIB compression level via mount option, e.g. like
-        *compress=zlib:9*. The levels match the default ZLIB compression
-        levels. The default is 3.
-
-4.15 - v2 of LOGICAL_INO ioctl
-        An enhanced version of ioctl that can translate logical extent offset
-        to inode numbers, "who owns this block". For certain use cases the V1
-        performs bad and this is addressed by V2.
-        [https://git.kernel.org/linus/d24a67b2d997c860a42516076f3315c2ad2d2884
-        Read more.]
-
-4.15 - compression heuristics
-        Apply a few heuristics to the data before they're compressed to decide
-        if it's likely to gain any space savings. The methods: frequency
-        sampling, repeated pattern detection, Shannon entropy calculation.
-
-4.16 - fallocate: zero range
-        Mode of the [http://man7.org/linux/man-pages/man2/fallocate.2.html
-        *fallocate*] syscall to zero file range.
-
-4.17 - *removed user transaction ioctl*
-        deprecated in 4.14, see above
-
-4.17 - *rmdir* on subvolumes
-        Allow rmdir to delete an empty subvolume.
-
-4.18 - XFLAGS ioctl
-        Add support for ioctl FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR, successor of
-        FS_IOC_SETFLAGS/FS_IOC_GETFLAGS ioctl. Currently supports: APPEND,
-        IMMUTABLE, NOATIME, NODUMP, SYNC. Note that the naming is very
-        confusing, though it's named *xattr*, it does not mean the extended
-        attributes. It should be referenced as extended inode flags or
-        *xflags*.
-
-4.18 - EXTENT_SAME ioctl / 16MiB chunks
-        The range for out-of-band deduplication implemented by the EXTENT_SAME
-        ioctl will split the range into 16MiB chunks. Up to now this was the
-        overall limit and effectively only the first 16MiB was deduplicated.
-
-4.18 - GET_SUBVOL_INFO ioctl
-        New ioctl to read subvolume information (id, directory name,
-        generation, flags, UUIDs, time). This does not require root
-        permissions, only the regular access to to the subvolume.
-
-4.18 - GET_SUBVOL_ROOTREF ioctl
-        New ioctl to enumerate subvolume references of a given subvolume. This
-        does not require root permissions, only the regular access to to the
-        subvolume.
-
-4.18 - INO_LOOKUP_USER ioctl
-        New ioctl to lookup path by inode number. This does not require root
-        permissions, only the regular access to to the subvolume, unlike the
-        INO_LOOKUP ioctl.
-
-4.19 - defrag ro/rw
-        Allow to run defrag on files that are normally accessible for
-        read-write, but are currently opened in read-only mode.
+6.0 - send protocol v2
+        Send protocol update that adds new commands and extends existing
+        functionality to write large data chunks. Compressed (and encrypted)
+        extents can be optionally emitted and transferred as-is without the need
+        to recompress (or reencrypt) on the receiving side.
+
+6.0 - sysfs exports commit stats
+        The file /sys/fs/btrfs/FSID/commit_stats shows number of commits and
+        various time related statistics.
+
+6.0 - sysfs exports chunk sizes
+        Chunk size value can be read from
+        /sys/fs/btrfs/FSID/allocation/PROFILE/chunk_size .
+
+6.0 - sysfs shows zoned mode among features
+        The zoned mode has been supported since 5.10 and adding functionality.
+        Now it's advertised among features.
+
+6.0 - checksum implementation is logged at mount time
+        When a filesystem is mounted the implementation backing the checksums
+        is logged. The information is also accessible in
+        /sys/fs/btrfs/FSID/checksum .
+
+6.1 - sysfs support to temporarily skip exact qgroup accounting
+        Allow user override of qgroup accounting and make it temporarily out
+        of date e.g. in case when there are several subvolumes deleted and the
+        qgroup numbers need to be updated at some cost, an update after that
+        can amortize the costs.
+
+6.1 - scrub also repairs superblock
+        An improvement to scrub in case the superblock is detected to be
+        corrupted, the repair happens immediately. Previously it was delayed
+        until the next transaction commit for performance reasons that would
+        store an updated and correct copy eventually.
+
+6.1 - block group tree
+        An incompatible change that has to be enabled at mkfs time. Add a new
+        b-tree item that stores information about block groups in a compact way
+        that significantly improves mount time that's usually long due to
+        fragmentation and scattered b-tree items tracking the individual block
+        groups. Requires and also enables the free-space-tree and no-holes
+        features.
+
+6.1 - discard stats available in sysfs
+        The directory '/sys/fs/btrfs/FSID/discard' exports statistics and
+        tunables related to discard.
+
+6.1 - additional qgroup stats in sysfs
+        The overall status of qgroups are exported in
+        /sys/sys/fs/btrfs/FSID/qgroups/ .
+
+6.1 - check that subperblock is unchanged at thaw time
+        Do full check of super block once a filesystem is thawed. This namely
+        happens when system resumes from suspend or hibernation. Accidental
+        change by other operating systems will be detected.
+
+6.2 - discard=async on by default
+        Devices that support trim/discard will enable the asynchronous discard
+        for the whole filesystem.
+
+6.3 - discard=async settings tuned
+        The default IOPS limit has changed from 100 to 1000 and writing value 0
+        to '/sys/fs/btrfs/FSID/discard/iops_limit' newly means to not do any
+        throttling.
+
+6.3 - block group allocation class heuristics
+        Pack files by size (up to 128k, up to 8M, more) to avoid fragmentation
+        in block groups, assuming that file size and life time is correlated,
+        in particular this may help during balance. The stats about the number
+        of used classes per block group type is exported in
+        '/sys/fs/btrfs/FSID/allocation/\*/size_classes'.
+
+6.3 - in DEV_INFO ioctl export per-device FSID
+        A seeding device could have a different FSID, available in syfs and now
+        available via DEV_INFO ioctl.
+
+6.3 - send utimes cache, reduced stream size
+        Utimes for directories are emitted into the send steram only when
+        finalizing the directory, the cache also gains significant speedups (up
+        to 10x).
 
 5.x
 ---
@@ -464,86 +287,263 @@ features see [[Status]] page.
         Additional check done by tree-checker to verify relationship between a
         tree block and it's tree root owner.
 
-6.x
+4.x
 ---
 
-6.0 - send protocol v2
-        Send protocol update that adds new commands and extends existing
-        functionality to write large data chunks. Compressed (and encrypted)
-        extents can be optionally emitted and transferred as-is without the need
-        to recompress (or reencrypt) on the receiving side.
+4.0 - store otime
+        Save creation time (otime) for all new files and directories. For
+        future use, current tool cannot read it directly.
 
-6.0 - sysfs exports commit stats
-        The file /sys/fs/btrfs/FSID/commit_stats shows number of commits and
-        various time related statistics.
+4.2 - rootid ioctl accessible
+        The INO_LOOKUP will return root id (id of the containing subvolume),
+        unrestricted and to all users if the *treeid* is 0.
 
-6.0 - sysfs exports chunk sizes
-        Chunk size value can be read from
-        /sys/fs/btrfs/FSID/allocation/PROFILE/chunk_size .
+4.2 - dedupe possible on the same inode
+        The EXTENT_SAME ioctl will accept the same inode as source and
+        destination (ranges must not overlap).
 
-6.0 - sysfs shows zoned mode among features
-        The zoned mode has been supported since 5.10 and adding functionality.
-        Now it's advertised among features.
+4.3 - trim all free space
+        Trim will be performed also on the space that's not allocated by the
+        chunks, not only free space within the allocated chunks.
 
-6.0 - checksum implementation is logged at mount time
-        When a filesystem is mounted the implementation backing the checksums
-        is logged. The information is also accessible in
-        /sys/fs/btrfs/FSID/checksum .
+4.4 - balance filter updates
+        Enhanced syntax and new balance filters:
+        * limit=min..max
+        * usage=min..max
+        * stripes=min..max
 
-6.1 - sysfs support to temporarily skip exact qgroup accounting
-        Allow user override of qgroup accounting and make it temporarily out
-        of date e.g. in case when there are several subvolumes deleted and the
-        qgroup numbers need to be updated at some cost, an update after that
-        can amortize the costs.
+4.5 - free space tree
+        Improved implementation of free space cache (aka v2), using b-trees.
 
-6.1 - scrub also repairs superblock
-        An improvement to scrub in case the superblock is detected to be
-        corrupted, the repair happens immediately. Previously it was delayed
-        until the next transaction commit for performance reasons that would
-        store an updated and correct copy eventually.
+        .. note::
+           Default since btrfs-progs 5.15, Kernel 4.9 fixes endianity bugs on
+           big-endian machines, x86* is ok
 
-6.1 - block group tree
-        An incompatible change that has to be enabled at mkfs time. Add a new
-        b-tree item that stores information about block groups in a compact way
-        that significantly improves mount time that's usually long due to
-        fragmentation and scattered b-tree items tracking the individual block
-        groups. Requires and also enables the free-space-tree and no-holes
-        features.
+4.5 - balance filter updates
+        Conversion to data/DUP profile possible through balance filters -- on single-device filesystem.
 
-6.1 - discard stats available in sysfs
-        The directory '/sys/fs/btrfs/FSID/discard' exports statistics and
-        tunables related to discard.
+        .. note::
+           mkfs.btrfs allows creating DUP on single device in the non-mixed mode since 4.4
 
-6.1 - additional qgroup stats in sysfs
-        The overall status of qgroups are exported in
-        /sys/sys/fs/btrfs/FSID/qgroups/ .
+4.6 - max_inline default
+        The default value of max_inline changed to 2048.
 
-6.1 - check that subperblock is unchanged at thaw time
-        Do full check of super block once a filesystem is thawed. This namely
-        happens when system resumes from suspend or hibernation. Accidental
-        change by other operating systems will be detected.
+4.6 - read features from control device
+        The existing ioctl GET_SUPPORTED_FEATURES can be now used on the
+        control device (/dev/btrfs-control) and returns the supported features
+        without any mounted filesystem.
 
-6.2 - discard=async on by default
-        Devices that support trim/discard will enable the asynchronous discard
-        for the whole filesystem.
+4.7 - delete device by id
+        Add new ioctl RM_DEV_V2, pass device to be deleted by its ID.
 
-6.3 - discard=async settings tuned
-        The default IOPS limit has changed from 100 to 1000 and writing value 0
-        to '/sys/fs/btrfs/FSID/discard/iops_limit' newly means to not do any
-        throttling.
+4.7 - more renameat2 modes
+        Add support for RENAME_EXCHANGE and RENAME_WHITEOUT to *renameat2*
+        syscall. This also means that *overlayfs* is now supported on top of
+        btrfs.
 
-6.3 - block group allocation class heuristics
-        Pack files by size (up to 128k, up to 8M, more) to avoid fragmentation
-        in block groups, assuming that file size and life time is correlated,
-        in particular this may help during balance. The stats about the number
-        of used classes per block group type is exported in
-        '/sys/fs/btrfs/FSID/allocation/\*/size_classes'.
+4.7 - balance filter updates
+        Conversion to data/DUP profile possible through balance filters -- on multiple-device filesystems.
 
-6.3 - in DEV_INFO ioctl export per-device FSID
-        A seeding device could have a different FSID, available in syfs and now
-        available via DEV_INFO ioctl.
+        .. note::
+           mkfs.btrfs allows creating DUP on multiple devices since 4.5.1
 
-6.3 - send utimes cache, reduced stream size
-        Utimes for directories are emitted into the send steram only when
-        finalizing the directory, the cache also gains significant speedups (up
-        to 10x).
+4.12 - RAID56: auto repair
+        Scrub will attempt auto-repair (similar to raid1/raid10)
+
+4.13 - statx
+        Support for the enhanced statx syscall; file creation timestamp
+
+4.13 - sysfs qgroups override
+        qgroups: new sysfs control file to allow temporary quota override with CAP_SYS_RESOURCE
+
+4.13 - *deprecated mount option alloc_start*
+        That was a debugging helper, not used and not supposed to be used nowadays.
+
+4.14 - ZSTD compression
+        New compression algorithm ZSTD, supposedly better ratio/speed performance.
+
+4.14 - improved degraded mount
+        Allow degraded mount based on the chunk constraints, not device number
+        constraints. E.g. when one device is missing but the remaining one holds
+        all *single* chunks.
+
+4.14 - *deprecated user transaction ioctl*
+        BTRFS_IOC_TRANS_START and BTRFS_IOC_TRANS_END, no known users, tricky
+        to use; scheduled to be removed in 4.17
+
+4.14 - refine SSD optimizations
+        The mount option *ssd* does not make any assumptions about block layout
+        or management by the device anymore, leaving only the speedups based on
+        low seek cost active.  This could avoid some corner cases leading to
+        excessive fragmentation.
+        https://git.kernel.org/linus/583b723151794e2ff1691f1510b4e43710293875
+        The story so far.
+
+4.15 - overlayfs
+        Overlayfs can now use btrfs as the lower filesystem.
+
+4.15 - *ref-verify*
+        Debugging functionality to verify extent references. New mount option
+        <i>ref-verify</i>, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
+
+4.15 - ZLIB level
+        Allow to set the ZLIB compression level via mount option, e.g. like
+        *compress=zlib:9*. The levels match the default ZLIB compression
+        levels. The default is 3.
+
+4.15 - v2 of LOGICAL_INO ioctl
+        An enhanced version of ioctl that can translate logical extent offset
+        to inode numbers, "who owns this block". For certain use cases the V1
+        performs bad and this is addressed by V2.
+        [https://git.kernel.org/linus/d24a67b2d997c860a42516076f3315c2ad2d2884
+        Read more.]
+
+4.15 - compression heuristics
+        Apply a few heuristics to the data before they're compressed to decide
+        if it's likely to gain any space savings. The methods: frequency
+        sampling, repeated pattern detection, Shannon entropy calculation.
+
+4.16 - fallocate: zero range
+        Mode of the [http://man7.org/linux/man-pages/man2/fallocate.2.html
+        *fallocate*] syscall to zero file range.
+
+4.17 - *removed user transaction ioctl*
+        deprecated in 4.14, see above
+
+4.17 - *rmdir* on subvolumes
+        Allow rmdir to delete an empty subvolume.
+
+4.18 - XFLAGS ioctl
+        Add support for ioctl FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR, successor of
+        FS_IOC_SETFLAGS/FS_IOC_GETFLAGS ioctl. Currently supports: APPEND,
+        IMMUTABLE, NOATIME, NODUMP, SYNC. Note that the naming is very
+        confusing, though it's named *xattr*, it does not mean the extended
+        attributes. It should be referenced as extended inode flags or
+        *xflags*.
+
+4.18 - EXTENT_SAME ioctl / 16MiB chunks
+        The range for out-of-band deduplication implemented by the EXTENT_SAME
+        ioctl will split the range into 16MiB chunks. Up to now this was the
+        overall limit and effectively only the first 16MiB was deduplicated.
+
+4.18 - GET_SUBVOL_INFO ioctl
+        New ioctl to read subvolume information (id, directory name,
+        generation, flags, UUIDs, time). This does not require root
+        permissions, only the regular access to to the subvolume.
+
+4.18 - GET_SUBVOL_ROOTREF ioctl
+        New ioctl to enumerate subvolume references of a given subvolume. This
+        does not require root permissions, only the regular access to to the
+        subvolume.
+
+4.18 - INO_LOOKUP_USER ioctl
+        New ioctl to lookup path by inode number. This does not require root
+        permissions, only the regular access to to the subvolume, unlike the
+        INO_LOOKUP ioctl.
+
+4.19 - defrag ro/rw
+        Allow to run defrag on files that are normally accessible for
+        read-write, but are currently opened in read-only mode.
+
+3.x
+---
+
+3.0 - scrub
+        Read all data and verify checksums, repair if possible.
+
+3.2 - auto raid repair
+        Automatic repair of broken data from a good copy
+
+3.2 - root backups
+        Save a few previous versions of the most important tree roots at commit time, used by *-o recovery*
+
+3.3 - integrity checker
+        Optional infrastructure to verify integrity of written metadata blocks
+
+3.3 - backref walking
+        Groundwork to allow tracking owner of blocks, used via *inspect-internal*
+
+3.3 - restriper
+        RAID profiles can be changed on-line, balance filters
+
+3.4 - big metadata blocks
+        Support for metadata blocks larger than page size
+
+        .. note::
+           Default nodesize is 16k since btrfs-progs 3.12
+
+3.4 - error handling
+        Generic infrastructure for graceful error handling (EIO)
+
+3.5 - device statistics
+        Persistent statistics about device errors
+
+3.5 - fsync speedup
+        Noticeable improvements in fsync() implementation
+
+3.6 - qgroups
+        Subvolume-aware quotas
+
+3.6 - send/receive
+        Ability to transfer one filesystem via a data stream (full or
+        incremental) and apply the changes on a remote filesystem.
+3.7 - extrefs
+        Hardlink count limit is lifted to 64k
+
+        .. note::
+           Default since btrfs-progs 3.12
+
+3.7 - hole punching
+        Implement the FALLOC_FL_PUNCH_HOLE mode of *fallocate*
+
+3.8 - device replace
+        Efficient replacement of existing device (add/remove in one go)
+
+3.9 - raid 5/6 *(incomplete)*
+        Basic support for RAID5/6 profiles, no crash resiliency, replace and scrub support
+
+3.9 - snapshot-aware defrag
+        Defrag does not break links between shared extents (snapshots, reflinked files)
+
+        .. note::
+           Disabled since 3.14 (and backported to some stable kernel versions)
+           due to problems. Has been completely removed in 5.6.
+
+3.9 - lightweight send
+        A mode of *send* that does not add the actual file data to the stream
+
+3.9 - on-line label set/get
+        Label editable on mounted filesystems
+
+3.10 - skinny metadata
+        Reduced metadata size (format change) of extents
+
+       .. note::
+          Default since btrfs-progs 3.18
+
+3.10 - qgroup rescan
+        Sync qgroups with existing filesystem data
+
+3.12 - UUID tree
+        A map of subvolume/UUID that vastly speeds up send/receive
+
+3.12 - out-of-bound deduplication
+        Support for deduplicating extents on a given set of files.
+
+3.14 - no-holes
+        No extent representation for file holes (format change), may reduce overall metadata consumption
+
+3.14 - feature bits in sysfs
+        /sys/fs/btrfs exports various bits about filesystem capabilities and feature support
+
+3.16 - O_TMPFILE
+        Mode of open() to safely create a temporary file
+
+3.16 - search ioctl v2
+        The extended SEARCH_TREE ioctl able to get more than a 4k data
+
+3.18 - auto block group reclaim
+        Automatically remove block groups (aka. chunks) that become completely empty.
+
+3.19 - RAID56: scrub, replace
+        Scrub and device replace works on RAID56 filesystems.
