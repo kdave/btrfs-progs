@@ -36,7 +36,6 @@ Generating documentation:
 - sphinx
 
 Please note that the package names may differ according to the distribution.
-See https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories#Dependencies .
 
 
 Building from sources
@@ -122,4 +121,4 @@ versions on a 32bit host is recommended.
 
 References:
 * https://btrfs.readthedocs.io
-* https://btrfs.wiki.kernel.org
+* https://btrfs.wiki.kernel.org (outdated)

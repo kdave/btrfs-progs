@@ -112,9 +112,9 @@ scan [options] [<device> [<device>...]]
 
 stats [options] <path>|<device>
         Read and print the device IO error statistics for all devices of the given
-        filesystem identified by *path* or for a single *device>. The filesystem must
-        be mounted.  See section *DEVICE STATS* for more information about the reported
-        statistics and the meaning.
+        filesystem identified by *path* or for a single *device*. The filesystem must
+        be mounted.  See section :ref:`DEVICE STATS<man-device-device-stats>`
+        for more information about the reported statistics and the meaning.
 
         ``Options``
 
@@ -195,6 +195,8 @@ usage [options] <path> [<path>...]::
 
         If conflicting options are passed, the last one takes precedence.
 
+.. _man-device-device-stats:
+
 DEVICE STATS
 ------------
 
@@ -228,7 +230,7 @@ generation_errs
         parent node).
 
 Since kernel 5.14 the device stats are also available in textual form in
-*/sys/fs/btrfs/FSID/devinfo/DEVID/error_stats*.
+:file:`/sys/fs/btrfs/FSID/devinfo/DEVID/error_stats`.
 
 EXIT STATUS
 -----------

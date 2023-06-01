@@ -12,9 +12,9 @@ Welcome to BTRFS documentation!
    man-index
    Administration
    Hardware
-   CHANGES
    Feature-by-version
    Kernel-by-version
+   CHANGES
    Contributors
    Glossary
    INSTALL

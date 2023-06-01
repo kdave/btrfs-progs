@@ -1,7 +1,7 @@
 GRUB2 (https://www.gnu.org/software/grub) has the most advanced support of
 booting from BTRFS with respect to features.
 
-U-boot (https://www.denx.de/wiki/U-Boot/) has decent support for booting but
+U-Boot (https://www.denx.de/wiki/U-Boot/) has decent support for booting but
 not all BTRFS features are implemented, check the documentation.
 
 In general, the first 1MiB on each device is unused with the exception of

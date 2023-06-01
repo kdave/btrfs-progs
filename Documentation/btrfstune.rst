@@ -15,8 +15,8 @@ parameters. The filesystem must be unmounted.
 The common use case is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
-https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the
-manual page :doc:`mkfs.btrfs(8)<mkfs.btrfs>` contains more details about the features.
+:doc:`Feature by version<Feature-by-version>` page.  Also, the manual page
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>` contains more details about the features.
 
 Some of the features could be also enabled on a mounted filesystem by other
 means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs(5)<btrfs-man5>`.
@@ -81,7 +81,8 @@ OPTIONS
         Enable seeding on a given device. Value 1 will enable seeding, 0 will
         disable it.  A seeding filesystem is forced to be mounted read-only. A
         new device can be added to the filesystem and will capture all writes
-        keeping the seeding device intact.  See also section *SEEDING DEVICE*
+        keeping the seeding device intact.  See also section
+        :ref:`SEEDING DEVICE<man-btrfs5-seeding-device>`
         in :doc:`btrfs(5)<btrfs-man5>`.
 
         .. warning::
@@ -113,7 +114,7 @@ OPTIONS
         .. warning::
                 Cancelling or interrupting a UUID change operation will make
                 the filesystem temporarily unmountable.  To fix it, rerun
-                *btrfstune -u* and let it complete.
+                :command:`btrfstune -u` and let it complete.
 
 -x
         (since kernel: 3.10)

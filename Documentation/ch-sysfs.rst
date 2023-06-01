@@ -1,6 +1,6 @@
 Btrfs has a sysfs interface to provide extra knobs.
 
-The top level path is `/sys/fs/btrfs/`, and the main directory layout is the following:
+The top level path is :file:`/sys/fs/btrfs/`, and the main directory layout is the following:
 
 =============================  ===================================  ========
 Relative Path                  Description                          Version
@@ -16,16 +16,16 @@ features/                      All supported features               3.14+
 <UUID>/discard/                Discard stats and tunables           6.1+
 =============================  ===================================  ========
 
-For `/sys/fs/btrfs/features/` directory, each file means a supported feature
+For :file:`/sys/fs/btrfs/features/` directory, each file means a supported feature
 for the current kernel.
 
-For `/sys/fs/btrfs/<UUID>/features/` directory, each file means an enabled
+For :file:`/sys/fs/btrfs/<UUID>/features/` directory, each file means an enabled
 feature for the mounted filesystem.
 
-The features shares the same name in section *FILESYSTEM FEATURES*.
+The features shares the same name in section
+:ref:`FILESYSTEM FEATURES<man-btrfs5-filesystem-features>`.
 
-
-Files in `/sys/fs/btrfs/<UUID>/` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/` directory are:
 
 bg_reclaim_threshold
         (RW, since: 5.19)
@@ -37,7 +37,8 @@ checksum
         (RO, since: 5.5)
 
         The checksum used for the mounted filesystem.
-        This includes both the checksum type (see section *CHECKSUM ALGORITHMS*)
+        This includes both the checksum type (see section
+        :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`)
         and the implemented driver (mostly shows if it's hardware accelerated).
 
 clone_alignment
@@ -58,7 +59,9 @@ exclusive_operation
         (RO, since: 5.10)
 
         Shows the running exclusive operation.
-        Check section *FILESYSTEM EXCLUSIVE OPERATIONS* for details.
+        Check section
+        :ref:`FILESYSTEM EXCLUSIVE OPERATIONS<man-btrfs5-fileysstem-exclusive-operations>`
+        for details.
 
 generation
         (RO, since: 5.11)
@@ -100,7 +103,7 @@ sectorsize
         Shows the sectorsize of the mounted filesystem.
 
 
-Files and directories in `/sys/fs/btrfs/<UUID>/allocations` directory are:
+Files and directories in :file:`/sys/fs/btrfs/<UUID>/allocations` directory are:
 
 global_rsv_reserved
         (RO, since: 3.14)
@@ -118,7 +121,7 @@ global_rsv_size
         Space info accounting for the 3 chunk types.
         Mostly for debug purposes.
 
-Files in `/sys/fs/btrfs/<UUID>/allocations/{data,metadata,system}` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/allocations/{data,metadata,system}` directory are:
 
 bg_reclaim_threshold
         (RW, since: 5.19)
@@ -133,7 +136,7 @@ chunk_size
         Shows the chunk size. Can be changed for data and metadata.
         Cannot be set for zoned devices.
 
-Files in `/sys/fs/btrfs/<UUID>/devinfo/<DEVID>` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/devinfo/<DEVID>` directory are:
 
 error_stats:
         (RO, since: 5.14)
@@ -175,7 +178,7 @@ writeable
 
         Show if the device is writeable.
 
-Files in `/sys/fs/btrfs/<UUID>/qgroups/` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/qgroups/` directory are:
 
 enabled
         (RO, since: 6.1)
@@ -206,7 +209,7 @@ drop_subtree_threshold
         Lower value can reduce qgroup workload, at the cost of extra qgroup rescan
         to re-calculate the numbers.
 
-Files in `/sys/fs/btrfs/<UUID>/<LEVEL>_<ID>/` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/<LEVEL>_<ID>/` directory are:
 
 exclusive
         (RO, since: 5.9)
@@ -249,7 +252,7 @@ rsv_meta_prealloc
 
         Shows the reserved bytes for preallocated metadata.
 
-Files in `/sys/fs/btrfs/<UUID>/discard/` directory are:
+Files in :file:`/sys/fs/btrfs/<UUID>/discard/` directory are:
 
 discardable_bytes
         (RO, since: 6.1)

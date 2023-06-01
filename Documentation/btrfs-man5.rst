@@ -23,11 +23,14 @@ tools.  Currently covers:
 #. RAID56 status and recommended practices
 #. storage model, hardware considerations
 
+.. _man-btrfs5-mount-option:
 
 MOUNT OPTIONS
 -------------
 
 .. include:: ch-mount-options.rst
+
+.. _man-btrfs5-filesystem-features:
 
 FILESYSTEM FEATURES
 -------------------
@@ -59,7 +62,8 @@ after mkfs, on a mounted filesystem
         in the directory */sys/fs/btrfs/features/*, one file per feature. The value *1*
         means the feature can be enabled.
 
-List of features (see also :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section *FILESYSTEM FEATURES*):
+List of features (see also :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section
+:ref:`FILESYSTEM FEATURES<man-mkfs-filesystem-features>`):
 
 big_metadata
         (since: 3.4)
@@ -189,6 +193,8 @@ SWAPFILE SUPPORT
 
 .. include:: ch-swapfile.rst
 
+.. _man-mkfs-checksum-algorithms:
+
 CHECKSUM ALGORITHMS
 -------------------
 
@@ -203,6 +209,8 @@ SYSFS INTERFACE
 ---------------
 
 .. include:: ch-sysfs.rst
+
+.. _man-btrfs5-fileysstem-exclusive-operations:
 
 FILESYSTEM EXCLUSIVE OPERATIONS
 -------------------------------
@@ -244,6 +252,8 @@ FILE ATTRIBUTES
 ---------------
 
 .. include:: ch-file-attributes.rst
+
+.. _man-btrfs5-zoned-mode:
 
 ZONED MODE
 ----------
@@ -294,6 +304,7 @@ work and a workaround would need to be used to mount a multi-device filesystem.
 The mount option *device* can trigger the device scanning during mount, see
 also :command:`btrfs device scan`.
 
+.. _man-btrfs5-filesystem-with-multiple-profiles:
 
 FILESYSTEM WITH MULTIPLE PROFILES
 ---------------------------------
@@ -359,6 +370,7 @@ that report space usage: :command:`filesystem df`, :command:`device usage`. The 
 
     Multiple profiles:                 yes (data, metadata)
 
+.. _man-btrfs5-seeding-device:
 
 SEEDING DEVICE
 --------------

@@ -41,7 +41,8 @@ OPTIONS
 -O|--features <feature1>[,<feature2>...]
         A list of filesystem features enabled the at time of conversion. Not all features
         are supported by old kernels. To disable a feature, prefix it with *^*.
-        Description of the features is in section *FILESYSTEM FEATURES* of
+        Description of the features is in section
+        :ref:`FILESYSTEM FEATURES<man-mkfs-filesystem-features>` of
         :doc:`mkfs.btrfs(8)<mkfs.btrfs>`.
 
         To see all available features that btrfs-convert supports run:

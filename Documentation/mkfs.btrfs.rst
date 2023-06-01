@@ -15,7 +15,8 @@ as well. Multiple devices are grouped by UUID of the filesystem.
 
 Before mounting such filesystem, the kernel module must know all the devices
 either via preceding execution of :command:`btrfs device scan` or using the *device*
-mount option. See section *MULTIPLE DEVICES* for more details.
+mount option. See section :ref:`MULTIPLE DEVICES<man-mkfs-multiple-devices>`
+for more details.
 
 The default block group profiles for data and metadata depend on number of
 devices and possibly other factors. It's recommended to use specific profiles
@@ -35,14 +36,16 @@ OPTIONS
 --csum <type>, --checksum <type>
         Specify the checksum algorithm. Default is *crc32c*. Valid values are *crc32c*,
         *xxhash*, *sha256* or *blake2*. To mount such filesystem kernel must support the
-        checksums as well. See *CHECKSUM ALGORITHMS* in :doc:`btrfs(5)<btrfs-man5>`.
+        checksums as well. See section :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`
+        in :doc:`btrfs(5)<btrfs-man5>`.
 
 -d|--data <profile>
         Specify the profile for the data block groups.  Valid values are *raid0*,
         *raid1*, *raid1c3*, *raid1c4*, *raid5*, *raid6*, *raid10* or *single* or *dup*
         (case does not matter).
 
-        See *DUP PROFILES ON A SINGLE DEVICE* for more details.
+        See section :ref:`DUP PROFILES ON A SINGLE DEVICE<man-mkfs-dup-profiles-on-a-single-device>`
+        for more details.
 
         On multiple devices, the default was *raid0* until version 5.7, while it is
         *single* since version 5.8. You can still select *raid0* manually, but it was not
@@ -62,7 +65,7 @@ OPTIONS
         .. note::
                 Up to version 5.14 there was a detection of a SSD device (more precisely
                 if it's a rotational device, determined by the contents of file
-                */sys/block/DEV/queue/rotational*) that used to select *single*. This has
+                :file:`/sys/block/DEV/queue/rotational`) that used to select *single*. This has
                 changed in version 5.15 to be always *dup*.
 
                 Note that the rotational status can be arbitrarily set by the underlying block
@@ -71,7 +74,8 @@ OPTIONS
                 etc). It's recommended to always set the options *--data/--metadata* to avoid
                 confusion and unexpected results.
 
-                See *DUP PROFILES ON A SINGLE DEVICE* for more details.
+                See section :ref:`DUP PROFILES ON A SINGLE DEVICE<man-mkfs-dup-profiles-on-a-single-device>`
+                for more details.
 
         On multiple devices the default is *raid1*.
 
@@ -154,8 +158,9 @@ OPTIONS
         A list of filesystem features turned on at mkfs time. Not all features are
         supported by old kernels. To disable a feature, prefix it with *^*.
 
-        See section *FILESYSTEM FEATURES* for more details.  To see all available
-        features that :command:`mkfs.btrfs` supports run:
+        See section :ref:`FILESYSTEM FEATURES<man-mkfs-filesystem-features>`
+        for more details.  To see all available features that
+        :command:`mkfs.btrfs` supports run:
 
         .. code-block:: bash
 
@@ -199,6 +204,8 @@ The default unit is *byte*. All size parameters accept suffixes in the 1024
 base. The recognized suffixes are: *k*, *m*, *g*, *t*, *p*, *e*, both uppercase
 and lowercase.
 
+.. _man-mkfs-multiple-devices:
+
 MULTIPLE DEVICES
 ----------------
 
@@ -230,11 +237,13 @@ devices to scan at the time of mount.
 .. warning::
         RAID5/6 has known problems and should not be used in production.
 
+.. _man-mkfs-filesystem-features:
+
 FILESYSTEM FEATURES
 -------------------
 
 Features that can be enabled during creation time. See also :doc:`btrfs(5)<btrfs-man5>` section
-*FILESYSTEM FEATURES*.
+:ref:`FILESYSTEM FEATURES<man-btrfs5-filesystem-features>`.
 
 mixed-bg
         (kernel support since 2.6.37)
@@ -275,8 +284,9 @@ zoned
         (kernel support since 5.12)
 
         zoned mode, data allocation and write friendly to zoned/SMR/ZBC/ZNS devices,
-        see *ZONED MODE* in :doc:`btrfs(5)<btrfs-man5>`, the mode is automatically selected when
-        a zoned device is detected
+        see :ref:`ZONED MODE<man-btrfs5-zoned-mode>` in
+        :doc:`btrfs(5)<btrfs-man5>`, the mode is automatically selected when a
+        zoned device is detected
 
 quota
         (kernel support since 3.4)
@@ -332,7 +342,9 @@ RAID
 
 profile
         when used in connection with block groups refers to the allocation strategy
-        and constraints, see the section *PROFILES* for more details
+        and constraints, see the section :ref:`PROFILES<man-mkfs-profiles>` for more details
+
+.. _man-mkfs-profiles:
 
 PROFILES
 --------
@@ -456,6 +468,8 @@ C1        QD        PB        D1
 PD        B2        PC        PA
 ========  ========  ========  ========
 
+.. _man-mkfs-dup-profiles-on-a-single-device:
+
 DUP PROFILES ON A SINGLE DEVICE
 -------------------------------
 
@@ -508,7 +522,7 @@ to be created and could end up in the following situation:
 
        # mkfs.btrfs -f -n 65536 /dev/loop0
        btrfs-progs v3.19-rc2-405-g976307c
-       See http://btrfs.wiki.kernel.org for more information.
+       See https://btrfs.readthedocs.io for more information.
 
        Performing full device TRIM (512.00MiB) ...
        Label:              (null)

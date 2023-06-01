@@ -32,8 +32,8 @@ btrfs-progs-6.3.1 (2023-05-29)
    * mkfs: make option --rootdir more verbose and report start when filling
      from the given directory starts
    * experimental:
-     * btrfstune: checksum switch logic reimplemented, conversion of all
-       metadata and data now works, resume from various states also supported
+      * btrfstune: checksum switch logic reimplemented, conversion of all
+        metadata and data now works, resume from various states also supported
    * other:
       * more CI github actions test coverage
       * more kernel/userspace source code sync

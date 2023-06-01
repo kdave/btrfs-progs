@@ -80,4 +80,5 @@ Profile names, used in *profiles* and *convert* are one of: *raid0*, *raid1*,
 *raid1c3*, *raid1c4*, *raid10*, *raid5*, *raid6*, *dup*, *single*.  The mixed
 data/metadata profiles can be converted in the same way, but it's conversion
 between mixed and non-mixed is not implemented. For the constraints of the
-profiles please refer to :doc:`mkfs.btrfs(8)<mkfs.btrfs>`, section *PROFILES*.
+profiles please refer to :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section
+:ref:`PROFILES<man-mkfs-profiles>`.

@@ -27,7 +27,7 @@ There are:
 * snapshots of *for-next*, that contain all of the above (e.g. for-next-20200512)
 
 Note that the branches get rebased.  The base point for patches depend on the
-development phase.  See [[Developer%27s_FAQ#Development_schedule]].
+development phase.  See :ref:`development schedule<devfaq-development-schedule>`.
 Independent changes can be based on the *linus/master* branch, changes that
 could depend on patches that have been added to one of the queues should use
 that as a base.

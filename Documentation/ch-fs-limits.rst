@@ -21,7 +21,7 @@ maximum number of inodes
 
 inode numbers
         minimum number: 256 (for subvolumes), regular files and directories: 257,
-        maximum number: (2\:sup:`64` - 256)
+        maximum number: (2\ :sup:`64` - 256)
 
         The inode numbers that can be assigned to user created files are from
         the whole 64bit space except first 256 and last 256 in that range that
@@ -42,7 +42,7 @@ maximum number of subvolumes
 
 maximum number of hardlinks of a file in a directory
         65536 when the *extref* feature is turned on during mkfs (default), roughly
-        100 otherwise
+        100 otherwise and depends on file name length that fits into one metadata node
 
 minimum filesystem size
         the minimal size of each device depends on the *mixed-bg* feature, without that

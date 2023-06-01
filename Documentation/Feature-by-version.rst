@@ -7,7 +7,7 @@ information look below.
 The version states at which version a feature has been merged into the mainline
 kernel. It does not tell anything about at which kernel version it is
 considered mature enough for production use. For an estimation on stability of
-features see [[Status]] page.
+features see :doc:`Status<Status>` page.
 
 6.x
 ---
@@ -16,15 +16,15 @@ features see [[Status]] page.
         Send protocol update that adds new commands and extends existing
         functionality to write large data chunks. Compressed (and encrypted)
         extents can be optionally emitted and transferred as-is without the need
-        to recompress (or reencrypt) on the receiving side.
+        to re-compress (or re-encrypt) on the receiving side.
 
 6.0 - sysfs exports commit stats
-        The file /sys/fs/btrfs/FSID/commit_stats shows number of commits and
+        The file :file:`/sys/fs/btrfs/FSID/commit_stats` shows number of commits and
         various time related statistics.
 
 6.0 - sysfs exports chunk sizes
         Chunk size value can be read from
-        /sys/fs/btrfs/FSID/allocation/PROFILE/chunk_size .
+        :file:`/sys/fs/btrfs/FSID/allocation/PROFILE/chunk_size`.
 
 6.0 - sysfs shows zoned mode among features
         The zoned mode has been supported since 5.10 and adding functionality.
@@ -33,7 +33,7 @@ features see [[Status]] page.
 6.0 - checksum implementation is logged at mount time
         When a filesystem is mounted the implementation backing the checksums
         is logged. The information is also accessible in
-        /sys/fs/btrfs/FSID/checksum .
+        :file:`/sys/fs/btrfs/FSID/checksum`.
 
 6.1 - sysfs support to temporarily skip exact qgroup accounting
         Allow user override of qgroup accounting and make it temporarily out
@@ -56,14 +56,14 @@ features see [[Status]] page.
         features.
 
 6.1 - discard stats available in sysfs
-        The directory '/sys/fs/btrfs/FSID/discard' exports statistics and
+        The directory :file:`/sys/fs/btrfs/FSID/discard` exports statistics and
         tunables related to discard.
 
 6.1 - additional qgroup stats in sysfs
         The overall status of qgroups are exported in
-        /sys/sys/fs/btrfs/FSID/qgroups/ .
+        :file:`/sys/sys/fs/btrfs/FSID/qgroups/`.
 
-6.1 - check that subperblock is unchanged at thaw time
+6.1 - check that super block is unchanged at thaw time
         Do full check of super block once a filesystem is thawed. This namely
         happens when system resumes from suspend or hibernation. Accidental
         change by other operating systems will be detected.
@@ -74,7 +74,7 @@ features see [[Status]] page.
 
 6.3 - discard=async settings tuned
         The default IOPS limit has changed from 100 to 1000 and writing value 0
-        to '/sys/fs/btrfs/FSID/discard/iops_limit' newly means to not do any
+        to :file:`/sys/fs/btrfs/FSID/discard/iops_limit` newly means to not do any
         throttling.
 
 6.3 - block group allocation class heuristics
@@ -82,14 +82,14 @@ features see [[Status]] page.
         in block groups, assuming that file size and life time is correlated,
         in particular this may help during balance. The stats about the number
         of used classes per block group type is exported in
-        '/sys/fs/btrfs/FSID/allocation/\*/size_classes'.
+        :file:`/sys/fs/btrfs/FSID/allocation/\*/size_classes`.
 
 6.3 - in DEV_INFO ioctl export per-device FSID
-        A seeding device could have a different FSID, available in syfs and now
+        A seeding device could have a different FSID, available in sysfs and now
         available via DEV_INFO ioctl.
 
 6.3 - send utimes cache, reduced stream size
-        Utimes for directories are emitted into the send steram only when
+        Utimes for directories are emitted into the send stream only when
         finalizing the directory, the cache also gains significant speedups (up
         to 10x).
 
@@ -151,7 +151,7 @@ features see [[Status]] page.
         filesystem. Now supports: nologreplay, usebackuproot
 
 5.9 - qgroups in sysfs
-        The information about qgroup status and relations is exported in */sys/fs/UUID/qgroups*
+        The information about qgroup status and relations is exported in :file:`/sys/fs/UUID/qgroups`
 
 5.9 - FS_INFO ioctl
         Export more information: checksum type, checksum size, generation, metadata_uuid
@@ -163,24 +163,25 @@ features see [[Status]] page.
 5.11 - remove *inode_cache*
         Remove inode number caching feature (mount -o inode_cache)
 
-5.11 - more rescue=
+5.11 - more rescue= modes
         Additional modes for mount option *rescue=*: ignorebadroots/ibadroots,
-        ignoredatacsums/idatacsums. All are exported in sysfs.
+        ignoredatacsums/idatacsums. All are exported in
+        :file:`/sys/fs/btrfs/features/supported_rescue_options`.
 
 5.12 - zoned mode
         Support for zoned devices with special allocation/write mode to
-        fixed-size zones. See [[Zoned]].
+        fixed-size zones. See :doc:`Zoned<Zoned-mode>`.
 
 5.13 - supported_sectorsizes in sysfs
-        List supported sector sizes in sysfs file /sys/fs/btrfs/features/supported_sectorsizes
+        List supported sector sizes in sysfs file :file:`/sys/fs/btrfs/features/supported_sectorsizes`.
 
 5.14 - sysfs scrub bw limit
         Tunable bandwidth limit
-        (/sys/fs/btrfs/FSID/devinfo/DEVID/scrub_speed_max) for scrub (and
+        :file:`/sys/fs/btrfs/FSID/devinfo/DEVID/scrub_speed_max` for scrub (and
         device replace) for a given device.
 
 5.14 - sysfs device stats
-        The device stats can be also found in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats.
+        The device stats can be also found in :file:`/sys/fs/btrfs/FSID/devinfo/DEVID/error_stats`.
 
 5.14 - cancellable resize, device delete
         The filesystem resize and device delete operations can be cancelled by
@@ -217,25 +218,25 @@ features see [[Status]] page.
 
 5.17 - *no warning with flushoncommit*
         Mounting with *-o flushoncommit* does not trigger the (harmless)
-        warning at each transaction commit
+        warning at each transaction commit.
 
         .. note::
            Also backported to 5.15.27 and 5.16.13
 
 5.18 - zoned and DUP metadata
-        DUP metadata works with zoned mode
+        DUP metadata works with zoned mode.
 
 5.18 - encoded data ioctl
         New ioctls to read and write pre-encoded data (i.e. no transformation
-        and directly written as extents), now works for compressed data
+        and directly written as extents), now works for compressed data.
 
 5.18 - *removed balance ioctl v1*
         The support for ioctl BTRFS_IOC_BALANCE has been removed, superseded by
-        BTRFS_IOC_BALANCE_V2m long time ago
+        BTRFS_IOC_BALANCE_V2 long time ago.
 
 5.18 - *cross-mount reflink works*
-        the VFS limitation to reflink files on separate subvolume mounts of the
-        same filesystem has been removed
+        The VFS limitation to reflink files on separate subvolume mounts of the
+        same filesystem has been removed.
 
 5.18 - syslog error messages with filesystem state
         Messages are printed with a one letter tag ("state: X") that denotes in
@@ -281,7 +282,7 @@ features see [[Status]] page.
         Add possibility to set a threshold to automatically reclaim block groups
         also in non-zoned mode. By default completely empty block groups are
         reclaimed automatically but the threshold can be tuned in
-        /sys/fs/btrfs/FSID/allocation/PROFILE/bg_reclaim_threshold .
+        :file:`/sys/fs/btrfs/FSID/allocation/PROFILE/bg_reclaim_threshold`.
 
 5.19 - tree-checker verifies metadata block ownership
         Additional check done by tree-checker to verify relationship between a
@@ -308,9 +309,10 @@ features see [[Status]] page.
 
 4.4 - balance filter updates
         Enhanced syntax and new balance filters:
-        * limit=min..max
-        * usage=min..max
-        * stripes=min..max
+
+        *  limit=min..max
+        *  usage=min..max
+        *  stripes=min..max
 
 4.5 - free space tree
         Improved implementation of free space cache (aka v2), using b-trees.
@@ -330,7 +332,7 @@ features see [[Status]] page.
 
 4.6 - read features from control device
         The existing ioctl GET_SUPPORTED_FEATURES can be now used on the
-        control device (/dev/btrfs-control) and returns the supported features
+        control device (:file:`/dev/btrfs-control`) and returns the supported features
         without any mounted filesystem.
 
 4.7 - delete device by id
@@ -384,7 +386,7 @@ features see [[Status]] page.
 
 4.15 - *ref-verify*
         Debugging functionality to verify extent references. New mount option
-        <i>ref-verify</i>, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
+        *ref-verify*, must be built with CONFIG_BTRFS_FS_REF_VERIFY.
 
 4.15 - ZLIB level
         Allow to set the ZLIB compression level via mount option, e.g. like
@@ -395,8 +397,7 @@ features see [[Status]] page.
         An enhanced version of ioctl that can translate logical extent offset
         to inode numbers, "who owns this block". For certain use cases the V1
         performs bad and this is addressed by V2.
-        [https://git.kernel.org/linus/d24a67b2d997c860a42516076f3315c2ad2d2884
-        Read more.]
+        See for more https://git.kernel.org/linus/d24a67b2d997c860a42516076f3315c2ad2d2884 .
 
 4.15 - compression heuristics
         Apply a few heuristics to the data before they're compressed to decide
@@ -404,14 +405,13 @@ features see [[Status]] page.
         sampling, repeated pattern detection, Shannon entropy calculation.
 
 4.16 - fallocate: zero range
-        Mode of the [http://man7.org/linux/man-pages/man2/fallocate.2.html
-        *fallocate*] syscall to zero file range.
+        Mode of the *fallocate* syscall to zero file range.
 
 4.17 - *removed user transaction ioctl*
-        deprecated in 4.14, see above
+        Deprecated in 4.14, see above.
 
 4.17 - *rmdir* on subvolumes
-        Allow rmdir to delete an empty subvolume.
+        Allow *rmdir* to delete an empty subvolume.
 
 4.18 - XFLAGS ioctl
         Add support for ioctl FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR, successor of
@@ -470,7 +470,7 @@ features see [[Status]] page.
         Support for metadata blocks larger than page size
 
         .. note::
-           Default nodesize is 16k since btrfs-progs 3.12
+           Default nodesize is 16KiB since btrfs-progs 3.12
 
 3.4 - error handling
         Generic infrastructure for graceful error handling (EIO)
@@ -487,54 +487,59 @@ features see [[Status]] page.
 3.6 - send/receive
         Ability to transfer one filesystem via a data stream (full or
         incremental) and apply the changes on a remote filesystem.
+
 3.7 - extrefs
-        Hardlink count limit is lifted to 64k
+        Hardlink count limit is lifted to 65536.
 
         .. note::
            Default since btrfs-progs 3.12
 
 3.7 - hole punching
-        Implement the FALLOC_FL_PUNCH_HOLE mode of *fallocate*
+        Implement the FALLOC_FL_PUNCH_HOLE mode of *fallocate*.
 
 3.8 - device replace
-        Efficient replacement of existing device (add/remove in one go)
+        Efficient replacement of existing device (add/remove in one go).
 
 3.9 - raid 5/6 *(incomplete)*
-        Basic support for RAID5/6 profiles, no crash resiliency, replace and scrub support
+        Basic support for RAID5/6 profiles, no crash resiliency, replace and
+        scrub support.
 
 3.9 - snapshot-aware defrag
-        Defrag does not break links between shared extents (snapshots, reflinked files)
+        Defrag does not break links between shared extents (snapshots,
+        reflinked files).
 
         .. note::
            Disabled since 3.14 (and backported to some stable kernel versions)
            due to problems. Has been completely removed in 5.6.
 
 3.9 - lightweight send
-        A mode of *send* that does not add the actual file data to the stream
+        A mode of *send* that does not add the actual file data to the stream.
 
 3.9 - on-line label set/get
-        Label editable on mounted filesystems
+        Label editable on mounted filesystems.
 
 3.10 - skinny metadata
-        Reduced metadata size (format change) of extents
+        Reduced metadata size (format change) of extents.
 
        .. note::
           Default since btrfs-progs 3.18
 
 3.10 - qgroup rescan
-        Sync qgroups with existing filesystem data
+        Sync qgroups with existing filesystem data.
 
 3.12 - UUID tree
-        A map of subvolume/UUID that vastly speeds up send/receive
+        A map of subvolume/UUID that vastly speeds up send/receive.
 
 3.12 - out-of-bound deduplication
         Support for deduplicating extents on a given set of files.
 
 3.14 - no-holes
-        No extent representation for file holes (format change), may reduce overall metadata consumption
+        No extent representation for file holes (format change), may reduce
+        overall metadata consumption
 
 3.14 - feature bits in sysfs
-        /sys/fs/btrfs exports various bits about filesystem capabilities and feature support
+        :file:`/sys/fs/btrfs` exports various bits about filesystem
+        capabilities and feature support
 
 3.16 - O_TMPFILE
         Mode of open() to safely create a temporary file

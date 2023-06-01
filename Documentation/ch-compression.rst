@@ -38,7 +38,8 @@ How to enable compression
 Typically the compression can be enabled on the whole filesystem, specified for
 the mount point. Note that the compression mount options are shared among all
 mounts of the same filesystem, either bind mounts or subvolume mounts.
-Please refer to section *MOUNT OPTIONS*.
+Please refer to :doc:`btrfs(5)<btrfs-man5>` section
+:ref:`MOUNT OPTIONS<man-btrfs5-mount-option>`.
 
 .. code-block:: shell
 

@@ -456,7 +456,7 @@ The Btrfs snapshotting implementation is based on the ideas he
 presented.
 
 Btrfsck
-~~~~~~~
+-------
 
 The filesystem checking utility is a crucial tool, but it can be a major
 bottleneck in getting systems back online after something has gone

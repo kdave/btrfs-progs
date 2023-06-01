@@ -1260,10 +1260,10 @@ Fixes:
 3.10 (Jun 2013)
 ^^^^^^^^^^^^^^^
 
-* reduced size of metadata by so-called '''[[Feature:Skinny_Metadata|skinny extents]]''' [http://git.kernel.org/linus/3173a18f70554fe7880bb2d85c7da566e364eb3c]
+* reduced size of metadata by so-called :ref:`skinny extents<mkfs-feature-skinny-metadata>` [http://git.kernel.org/linus/3173a18f70554fe7880bb2d85c7da566e364eb3c]
 * enhanced syslog message format [http://permalink.gmane.org/gmane.comp.file-systems.btrfs/24330]
 * the mount option ''subvolrootid'' is deprecated
-* lots of stability improvements, removed <big>many</big> <small>BUG_ONs</small> <!-- a big thing! -->
+* lots of stability improvements, removed many< BUG_ONs
 * qgroups are automatically created when quotas are enabled [http://git.kernel.org/linus/7708f029dca5f1b9e9d6ea01ab10cd83e4c74ff2]
 * qgroups are able to ''rescan'' current filesystem and sync the quota state with the existing subvolumes
 * enhanced ''send/recv '' format for multiplexing more data into one stream [http://git.kernel.org/linus/c2c71324ecb471c932bc1ff59e46ffcf82f274fc]
@@ -1281,7 +1281,7 @@ Fixes:
 ^^^^^^^^^^^^^^^
 
 * Major performance improvement for send/receive with large numbers of subvolumes
-* Support for batch [[deduplication]] (userspace tools required)
+* Support for batch :doc:`deduplication<Deduplication>` (userspace tools required)
 * new mount option ''commit'' to set the commit interval
 * Lots of stability and bugfix patches
 

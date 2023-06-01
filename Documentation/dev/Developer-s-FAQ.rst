@@ -482,6 +482,8 @@ You may also read a perspective from Linux Foundation that shares a similar
 view:
 https://www.linuxfoundation.org/blog/copyright-notices-in-open-source-software-projects/
 
+.. _devfaq-development-schedule:
+
 Development schedule
 --------------------
 

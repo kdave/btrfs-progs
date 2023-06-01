@@ -11,11 +11,12 @@ DESCRIPTION
 
 The :command:`btrfs` utility is a toolbox for managing btrfs filesystems.  There are
 command groups to work with subvolumes, devices, for whole filesystem or other
-specific actions. See section *COMMANDS*.
+specific actions. See section :ref:`COMMANDS<man-btrfs8-commands>`.
 
 There are also standalone tools for some tasks like :command:`btrfs-convert` or
 :command:`btrfstune` that were separate historically and/or haven't been merged to the
-main utility. See section *STANDALONE TOOLS* for more details.
+main utility. See section :ref:`STANDALONE TOOLS<man-btrfs8-standalone-tools>`
+for more details.
 
 For other topics (mount options, etc) please refer to the separate manual
 page :doc:`btrfs(5)<btrfs-man5>`.
@@ -67,6 +68,8 @@ The remaining options are relevant only for the main tool:
 
 --version
         print version string
+
+.. _man-btrfs8-commands:
 
 COMMANDS
 --------
@@ -130,6 +133,8 @@ send
 subvolume
 	Create/delete/list/manage btrfs subvolume.
 	See :doc:`btrfs-subvolume(8)<btrfs-subvolume>` for details.
+
+.. _man-btrfs8-standalone-tools:
 
 STANDALONE TOOLS
 ----------------

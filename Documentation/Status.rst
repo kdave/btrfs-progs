@@ -232,8 +232,6 @@ Please open an issue if:
 -  a particular feature combination that has a different status and is
    worth mentioning separately
 -  you know of a bug that lowers the feature status
--  a reference could be enhanced by an actual link to documentation
-   (wiki, manual pages)
 
 Subpage block size
 ------------------

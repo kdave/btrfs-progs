@@ -351,7 +351,7 @@ usage [options] <path> [<path>...]
           filesystem)
         * *Multiple profiles* -- what block group types (data, metadata) have
           more than one profile (single, raid1, ...), see :doc:`btrfs(5)<btrfs-man5>` section
-          *FILESYSTEMS WITH MULTIPLE BLOCK GROUP PROFILES*.
+          :ref:`FILESYSTEMS WITH MULTIPLE PROFILES<man-btrfs5-filesystem-with-multiple-profiles>`.
 
         And on a zoned filesystem there are two more lines in the *Device* section:
 
