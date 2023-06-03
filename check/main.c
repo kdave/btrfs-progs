@@ -9956,7 +9956,7 @@ static const char * const cmd_check_usage[] = {
 	"",
 	"Operation modes:",
 	OPTLINE("--readonly", "run in read-only mode (default)"),
-	OPTLINE("--repair", "try to repair the filesystem"),
+	OPTLINE("--repair", "try to repair the filesystem (dangerous, see above warning)"),
 	OPTLINE("--force", "skip mount checks, recommended only with --readonly; "
 			"WARNING: it is possible to run with --repair but on a mounted filesystem "
 			"that will most likely lead to a corruption unless the filesystem "
