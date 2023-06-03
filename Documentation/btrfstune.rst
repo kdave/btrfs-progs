@@ -28,7 +28,7 @@ OPTIONS
         (since kernel 6.1)
 
         Convert portions of extent tree that tracks block groups to a separate
-        block gruop tree. This greatly reduces mount time. Can be also enabled
+        block group tree. This greatly reduces mount time. Can be also enabled
         at mkfs time.
 
 --convert-from-block-group-tree
