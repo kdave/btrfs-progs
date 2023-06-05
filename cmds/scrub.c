@@ -326,7 +326,8 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 		if (raw)
 			print_scrub_full(p);
 		else
-			print_scrub_summary(p, ss, di->bytes_used);
+			print_scrub_summary(p, ss, p->data_bytes_scrubbed +
+						   p->tree_bytes_scrubbed);
 	}
 }
 
@@ -1540,28 +1541,31 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	if (do_print) {
 		const char *append = "done";
-		u64 total_bytes_used = 0;
+		u64 total_bytes_scrubbed = 0;
 
 		if (!do_stats_per_dev)
 			init_fs_stat(&fs_stat);
 		for (i = 0; i < fi_args.num_devices; ++i) {
+			struct btrfs_scrub_progress *cur_progress =
+						&sp[i].scrub_args.progress;
+
 			if (do_stats_per_dev) {
 				print_scrub_dev(&di_args[i],
-						&sp[i].scrub_args.progress,
+						cur_progress,
 						print_raw,
 						sp[i].ret ? "canceled" : "done",
 						&sp[i].stats);
 			} else {
 				if (sp[i].ret)
 					append = "canceled";
-				add_to_fs_stat(&sp[i].scrub_args.progress,
-						&sp[i].stats, &fs_stat);
+				add_to_fs_stat(cur_progress, &sp[i].stats, &fs_stat);
 			}
-			total_bytes_used += di_args[i].bytes_used;
+			total_bytes_scrubbed += cur_progress->data_bytes_scrubbed +
+						cur_progress->tree_bytes_scrubbed;
 		}
 		if (!do_stats_per_dev) {
 			pr_verbose(LOG_DEFAULT, "scrub %s for %s\n", append, fsid);
-			print_fs_stat(&fs_stat, print_raw, total_bytes_used);
+			print_fs_stat(&fs_stat, print_raw, total_bytes_scrubbed);
 		}
 	}
 
