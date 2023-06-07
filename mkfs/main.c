@@ -507,10 +507,10 @@ static void list_all_devices(struct btrfs_root *root)
 	printf("\n");
 }
 
-static int is_temp_block_group(struct extent_buffer *node,
-			       struct btrfs_block_group_item *bgi,
-			       u64 data_profile, u64 meta_profile,
-			       u64 sys_profile)
+static bool is_temp_block_group(struct extent_buffer *node,
+				struct btrfs_block_group_item *bgi,
+				u64 data_profile, u64 meta_profile,
+				u64 sys_profile)
 {
 	u64 flag = btrfs_block_group_flags(node, bgi);
 	u64 flag_type = flag & BTRFS_BLOCK_GROUP_TYPE_MASK;
@@ -537,26 +537,26 @@ static int is_temp_block_group(struct extent_buffer *node,
 	 * So only use condition 1) and 2) to judge them.
 	 */
 	if (used != 0)
-		return 0;
+		return false;
 	switch (flag_type) {
 	case BTRFS_BLOCK_GROUP_DATA:
 	case BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA:
 		data_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
 		if (flag_profile != data_profile)
-			return 1;
+			return true;
 		break;
 	case BTRFS_BLOCK_GROUP_METADATA:
 		meta_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
 		if (flag_profile != meta_profile)
-			return 1;
+			return true;
 		break;
 	case BTRFS_BLOCK_GROUP_SYSTEM:
 		sys_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
 		if (flag_profile != sys_profile)
-			return 1;
+			return true;
 		break;
 	}
-	return 0;
+	return false;
 }
 
 /* Note: if current is a block group, it will skip it anyway */
