@@ -122,7 +122,7 @@ static void find_collision_calc_suffix(unsigned long current_crc,
 /*
  * Check if suffix is valid according to our file name conventions
  */
-static int find_collision_is_suffix_valid(const char *suffix)
+static bool find_collision_is_suffix_valid(const char *suffix)
 {
 	int i;
 	char c;
@@ -130,9 +130,9 @@ static int find_collision_is_suffix_valid(const char *suffix)
 	for (i = 0; i < 4; i++) {
 		c = suffix[i];
 		if (c < ' ' || c > 126 || c == '/')
-			return 0;
+			return false;
 	}
-	return 1;
+	return true;
 }
 
 static int find_collision_reverse_crc32c(struct name *val, u32 name_len)

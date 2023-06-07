@@ -176,7 +176,7 @@ static void csum_block(u8 *buf, size_t len)
 	memcpy(buf, result, csum_size);
 }
 
-static int has_name(struct btrfs_key *key)
+static bool has_name(struct btrfs_key *key)
 {
 	switch (key->type) {
 	case BTRFS_DIR_ITEM_KEY:
@@ -184,12 +184,12 @@ static int has_name(struct btrfs_key *key)
 	case BTRFS_INODE_REF_KEY:
 	case BTRFS_INODE_EXTREF_KEY:
 	case BTRFS_XATTR_ITEM_KEY:
-		return 1;
+		return true;
 	default:
 		break;
 	}
 
-	return 0;
+	return false;
 }
 
 static int chunk_cmp(struct rb_node *a, struct rb_node *b, int fuzz)
@@ -2350,7 +2350,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	return search_for_chunk_blocks(mdres);
 }
 
-static int range_contains_super(u64 physical, u64 bytes)
+static bool range_contains_super(u64 physical, u64 bytes)
 {
 	u64 super_bytenr;
 	int i;
@@ -2359,10 +2359,10 @@ static int range_contains_super(u64 physical, u64 bytes)
 		super_bytenr = btrfs_sb_offset(i);
 		if (super_bytenr >= physical &&
 		    super_bytenr < physical + bytes)
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 static void remap_overlapping_chunks(struct mdrestore_struct *mdres)
