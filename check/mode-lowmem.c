@@ -153,7 +153,7 @@ out:
  * in every fs or file tree check. Here we find its all root ids, and only check
  * it in the fs or file tree which has the smallest root id.
  */
-static int need_check(struct btrfs_root *root, struct ulist *roots)
+static bool need_check(struct btrfs_root *root, struct ulist *roots)
 {
 	struct rb_node *node;
 	struct ulist_node *u;
@@ -164,7 +164,7 @@ static int need_check(struct btrfs_root *root, struct ulist *roots)
 	 * the tree owner to ensure some other root will check it.
 	 */
 	if (roots->nnodes == 1 || roots->nnodes == 0)
-		return 1;
+		return true;
 
 	node = rb_first(&roots->root);
 	u = rb_entry(node, struct ulist_node, rb_node);
@@ -173,9 +173,9 @@ static int need_check(struct btrfs_root *root, struct ulist *roots)
 	 * in the fs or file tree who hash the smallest root id.
 	 */
 	if (root->objectid != u->val)
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
 /*
@@ -2958,24 +2958,24 @@ out:
  * @level           if @level == -1 means extent data item
  *                  else normal treeblock.
  */
-static int should_check_extent_strictly(struct btrfs_root *root,
+static bool should_check_extent_strictly(struct btrfs_root *root,
 					struct node_refs *nrefs, int level)
 {
 	int root_level = btrfs_header_level(root->node);
 
 	if (level > root_level || level < -1)
-		return 1;
+		return true;
 	if (level == root_level)
-		return 1;
+		return true;
 	/*
 	 * if the upper node is marked full backref, it should contain shared
 	 * backref of the parent (except owner == root->objectid).
 	 */
 	while (++level <= root_level)
 		if (nrefs->refs[level] > 1)
-			return 0;
+			return false;
 
-	return 1;
+	return true;
 }
 
 static int check_extent_inline_ref(struct extent_buffer *eb,

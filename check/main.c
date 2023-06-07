@@ -814,12 +814,12 @@ static void free_inode_rec(struct inode_record *rec)
 	free(rec);
 }
 
-static int can_free_inode_rec(struct inode_record *rec)
+static bool can_free_inode_rec(struct inode_record *rec)
 {
 	if (!rec->errors && rec->checked && rec->found_inode_item &&
 	    rec->nlink == rec->found_link && list_empty(&rec->backrefs))
-		return 1;
-	return 0;
+		return true;
+	return false;
 }
 
 static void maybe_free_inode_rec(struct cache_tree *inode_cache,
@@ -905,7 +905,7 @@ static int check_orphan_item(struct btrfs_root *root, u64 ino)
 	return ret;
 }
 
-static int process_inode_item(struct extent_buffer *eb,
+static bool process_inode_item(struct extent_buffer *eb,
 			      int slot, struct btrfs_key *key,
 			      struct shared_node *active_node)
 {
@@ -918,7 +918,7 @@ static int process_inode_item(struct extent_buffer *eb,
 	BUG_ON(rec->ino != key->objectid || rec->refs > 1);
 	if (rec->found_inode_item) {
 		rec->errors |= I_ERR_DUP_INODE_ITEM;
-		return 1;
+		return true;
 	}
 	item = btrfs_item_ptr(eb, slot, struct btrfs_inode_item);
 	rec->nlink = btrfs_inode_nlink(eb, item);
@@ -947,7 +947,7 @@ static int process_inode_item(struct extent_buffer *eb,
 	    btrfs_inode_transid(eb, item) > gen_uplimit)
 		rec->errors |= I_ERR_INVALID_GEN;
 	maybe_free_inode_rec(&active_node->inode_cache, rec);
-	return 0;
+	return false;
 }
 
 static struct inode_backref *get_inode_backref(struct inode_record *rec,
@@ -1249,7 +1249,7 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 	int ret;
 
 	if (level == wc->active_node)
-		return 0;
+		return false;
 
 	BUG_ON(wc->active_node <= level);
 	node = find_shared_node(&wc->shared, bytenr);
@@ -1259,7 +1259,7 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 		node = find_shared_node(&wc->shared, bytenr);
 		wc->nodes[level] = node;
 		wc->active_node = level;
-		return 0;
+		return false;
 	}
 
 	if (wc->root_level == wc->active_node &&
@@ -1270,7 +1270,7 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 			remove_cache_extent(&wc->shared, &node->cache);
 			free(node);
 		}
-		return 1;
+		return true;
 	}
 
 	dest = wc->nodes[wc->active_node];
@@ -1279,7 +1279,7 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 		remove_cache_extent(&wc->shared, &node->cache);
 		free(node);
 	}
-	return 1;
+	return true;
 }
 
 static int leave_shared_node(struct btrfs_root *root,
@@ -4204,7 +4204,7 @@ static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 	return 0;
 }
 
-static int check_owner_ref(struct btrfs_root *root,
+static bool check_owner_ref(struct btrfs_root *root,
 			    struct extent_record *rec,
 			    struct extent_buffer *buf)
 {
@@ -4215,7 +4215,7 @@ static int check_owner_ref(struct btrfs_root *root,
 	struct btrfs_path path;
 	struct extent_buffer *parent;
 	int level;
-	int found = 0;
+	bool found = false;
 	int ret;
 
 	rbtree_postorder_for_each_entry_safe(node, tmp,
@@ -4228,14 +4228,14 @@ static int check_owner_ref(struct btrfs_root *root,
 			continue;
 		back = to_tree_backref(node);
 		if (btrfs_header_owner(buf) == back->root)
-			return 0;
+			return false;
 	}
 	/*
 	 * Some unexpected root item referring to this one, return 1 to
 	 * indicate owner not found
 	 */
 	if (rec->is_root)
-		return 1;
+		return true;
 
 	/* try to find the block by search corresponding fs tree */
 	key.objectid = btrfs_header_owner(buf);
@@ -4244,7 +4244,7 @@ static int check_owner_ref(struct btrfs_root *root,
 
 	ref_root = btrfs_read_fs_root(gfs_info, &key);
 	if (IS_ERR(ref_root))
-		return 1;
+		return true;
 
 	level = btrfs_header_level(buf);
 	if (level == 0)
@@ -4256,15 +4256,15 @@ static int check_owner_ref(struct btrfs_root *root,
 	path.lowest_level = level + 1;
 	ret = btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
 	if (ret < 0)
-		return 0;
+		return false;
 
 	parent = path.nodes[level + 1];
 	if (parent && buf->start == btrfs_node_blockptr(parent,
 							path.slots[level + 1]))
-		found = 1;
+		found = true;
 
 	btrfs_release_path(&path);
-	return found ? 0 : 1;
+	return !found;
 }
 
 static int is_extent_tree_record(struct extent_record *rec)
@@ -6050,20 +6050,20 @@ static int check_csums(void)
 	return ret;
 }
 
-static int is_dropped_key(struct btrfs_key *key,
+static bool is_dropped_key(struct btrfs_key *key,
 			  struct btrfs_key *drop_key)
 {
 	if (key->objectid < drop_key->objectid)
-		return 1;
+		return true;
 	else if (key->objectid == drop_key->objectid) {
 		if (key->type < drop_key->type)
-			return 1;
+			return true;
 		else if (key->type == drop_key->type) {
 			if (key->offset < drop_key->offset)
-				return 1;
+				return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 /*
