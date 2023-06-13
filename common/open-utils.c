@@ -57,7 +57,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 {
 	int ret;
 	u64 total_devs = 1;
-	int is_btrfs;
+	bool is_btrfs;
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	FILE *f;
 	struct mntent *mnt;
