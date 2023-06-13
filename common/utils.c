@@ -230,7 +230,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 			goto out;
 		}
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
-					  &fs_devices_mnt, SBREAD_DEFAULT);
+					  &fs_devices_mnt, SBREAD_DEFAULT, false);
 		if (!ret) {
 			ret = -EINVAL;
 			goto out;

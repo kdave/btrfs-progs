@@ -268,7 +268,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 
 	ret = check_mounted_where(fd, device, NULL, 0, NULL,
-			SBREAD_IGNORE_FSID_MISMATCH);
+				  SBREAD_IGNORE_FSID_MISMATCH, false);
 	if (ret < 0) {
 		errno = -ret;
 		error("could not check mount status of %s: %m", device);

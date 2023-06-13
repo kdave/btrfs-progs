@@ -53,7 +53,8 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 }
 
 int check_mounted_where(int fd, const char *file, char *where, int size,
-			struct btrfs_fs_devices **fs_dev_ret, unsigned sbflags)
+			struct btrfs_fs_devices **fs_dev_ret, unsigned sbflags,
+			bool noscan)
 {
 	int ret;
 	u64 total_devs = 1;
@@ -108,6 +109,8 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 	}
 	if (fs_dev_ret)
 		*fs_dev_ret = fs_devices_mnt;
+	else if (noscan)
+		btrfs_close_all_devices();
 
 	ret = (mnt != NULL);
 
@@ -132,7 +135,7 @@ int check_mounted(const char* file)
 		return -errno;
 	}
 
-	ret =  check_mounted_where(fd, file, NULL, 0, NULL, SBREAD_DEFAULT);
+	ret =  check_mounted_where(fd, file, NULL, 0, NULL, SBREAD_DEFAULT, false);
 	close(fd);
 
 	return ret;
@@ -168,7 +171,7 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 		goto out;
 	}
 
-	ret = check_mounted_where(fd, dev, mp, mp_size, NULL, SBREAD_DEFAULT);
+	ret = check_mounted_where(fd, dev, mp, mp_size, NULL, SBREAD_DEFAULT, false);
 	if (!ret) {
 		ret = -EINVAL;
 	} else { /* mounted, all good */
