@@ -327,7 +327,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	bool roots_only = false;
 	bool root_backups = false;
 	int traverse = BTRFS_PRINT_TREE_DEFAULT;
-	int dev_optind;
 	u64 block_bytenr;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
@@ -455,39 +454,9 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
-	dev_optind = optind;
-	while (dev_optind < argc) {
-		int fd;
-		struct btrfs_fs_devices *fs_devices;
-		u64 num_devices;
-
-		ret = check_arg_type(argv[optind]);
-		if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
-			if (ret < 0) {
-				errno = -ret;
-				error("invalid argument %s: %m", argv[dev_optind]);
-			} else {
-				error("not a block device or regular file: %s",
-				       argv[dev_optind]);
-			}
-		}
-		fd = open(argv[dev_optind], O_RDONLY);
-		if (fd < 0) {
-			error("cannot open %s: %m", argv[dev_optind]);
-			return -EINVAL;
-		}
-		ret = btrfs_scan_one_device(fd, argv[dev_optind], &fs_devices,
-					    &num_devices,
-					    BTRFS_SUPER_INFO_OFFSET,
-					    SBREAD_DEFAULT);
-		close(fd);
-		if (ret < 0) {
-			errno = -ret;
-			error("device scan %s: %m", argv[dev_optind]);
-			return ret;
-		}
-		dev_optind++;
-	}
+	ret = btrfs_scan_argv_devices(optind, argc, argv);
+	if (ret)
+		return ret;
 
 	pr_verbose(LOG_DEFAULT, "%s\n", PACKAGE_STRING);
 

@@ -500,3 +500,42 @@ int btrfs_scan_devices(int verbose)
 	return 0;
 }
 
+int btrfs_scan_argv_devices(int dev_optind, int dev_argc, char **dev_argv)
+{
+	int ret;
+
+	while (dev_optind < dev_argc) {
+		int fd;
+		u64 num_devices;
+		struct btrfs_fs_devices *fs_devices;
+
+		ret = check_arg_type(dev_argv[dev_optind]);
+		if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
+			if (ret < 0) {
+				errno = -ret;
+				error("invalid argument %s: %m", dev_argv[dev_optind]);
+			} else {
+				error("not a block device or regular file: %s",
+				       dev_argv[dev_optind]);
+			}
+		}
+		fd = open(dev_argv[dev_optind], O_RDONLY);
+		if (fd < 0) {
+			error("cannot open %s: %m", dev_argv[dev_optind]);
+			return -errno;
+		}
+		ret = btrfs_scan_one_device(fd, dev_argv[dev_optind], &fs_devices,
+					    &num_devices,
+					    BTRFS_SUPER_INFO_OFFSET,
+					    SBREAD_DEFAULT);
+		close(fd);
+		if (ret < 0) {
+			errno = -ret;
+			error("device scan of %s failed: %m", dev_argv[dev_optind]);
+			return ret;
+		}
+		dev_optind++;
+	}
+
+	return 0;
+}

@@ -45,6 +45,7 @@ struct seen_fsid {
 };
 
 int btrfs_scan_devices(int verbose);
+int btrfs_scan_argv_devices(int dev_optind, int argc, char **argv);
 int btrfs_register_one_device(const char *fname);
 int btrfs_register_all_devices(void);
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
