@@ -9983,7 +9983,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
-	struct open_ctree_flags ocf = { 0 };
+	struct open_ctree_args oca = { 0 };
 	u64 bytenr = 0;
 	u64 subvolid = 0;
 	u64 tree_root_bytenr = 0;
@@ -10204,12 +10204,12 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	if (opt_check_repair)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
-	ocf.filename = argv[optind];
-	ocf.sb_bytenr = bytenr;
-	ocf.root_tree_bytenr = tree_root_bytenr;
-	ocf.chunk_tree_bytenr = chunk_root_bytenr;
-	ocf.flags = ctree_flags;
-	gfs_info = open_ctree_fs_info(&ocf);
+	oca.filename = argv[optind];
+	oca.sb_bytenr = bytenr;
+	oca.root_tree_bytenr = tree_root_bytenr;
+	oca.chunk_tree_bytenr = chunk_root_bytenr;
+	oca.flags = ctree_flags;
+	gfs_info = open_ctree_fs_info(&oca);
 	if (!gfs_info) {
 		error("cannot open file system");
 		ret = -EIO;

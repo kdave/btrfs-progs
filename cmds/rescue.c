@@ -233,7 +233,7 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 				      int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
-	struct open_ctree_flags ocf = { 0 };
+	struct open_ctree_args oca = { 0 };
 	char *devname;
 	int ret;
 
@@ -254,9 +254,9 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	ocf.filename = devname;
-	ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
-	fs_info = open_ctree_fs_info(&ocf);
+	oca.filename = devname;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
+	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("could not open btrfs");
 		ret = -EIO;
@@ -368,7 +368,7 @@ static int cmd_rescue_clear_uuid_tree(const struct cmd_struct *cmd,
 				      int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
-	struct open_ctree_flags ocf = {};
+	struct open_ctree_args oca = { 0 };
 	char *devname;
 	int ret;
 
@@ -387,9 +387,9 @@ static int cmd_rescue_clear_uuid_tree(const struct cmd_struct *cmd,
 		ret = -EBUSY;
 		goto out;
 	}
-	ocf.filename = devname;
-	ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
-	fs_info = open_ctree_fs_info(&ocf);
+	oca.filename = devname;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
+	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("could not open btrfs");
 		ret = -EIO;

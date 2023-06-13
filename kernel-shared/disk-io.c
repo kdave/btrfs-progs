@@ -1437,7 +1437,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
-static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *ocf)
+static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1446,8 +1446,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	int ret;
 	int oflags;
 	unsigned sbflags = SBREAD_DEFAULT;
-	unsigned flags = ocf->flags;
-	u64 sb_bytenr = ocf->sb_bytenr;
+	unsigned flags = oca->flags;
+	u64 sb_bytenr = oca->sb_bytenr;
 
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
@@ -1491,7 +1491,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	if (flags & OPEN_CTREE_IGNORE_FSID_MISMATCH)
 		sbflags |= SBREAD_IGNORE_FSID_MISMATCH;
 
-	ret = btrfs_scan_fs_devices(fp, ocf->filename, &fs_devices, sb_bytenr,
+	ret = btrfs_scan_fs_devices(fp, oca->filename, &fs_devices, sb_bytenr,
 			sbflags, (flags & OPEN_CTREE_NO_DEVICES));
 	if (ret)
 		goto out;
@@ -1559,7 +1559,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	if (fcntl(fp, F_GETFL) & O_DIRECT)
 		fs_info->zoned = 1;
 
-	ret = btrfs_setup_chunk_tree_and_device_map(fs_info, ocf->chunk_tree_bytenr);
+	ret = btrfs_setup_chunk_tree_and_device_map(fs_info, oca->chunk_tree_bytenr);
 	if (ret)
 		goto out_chunk;
 
@@ -1591,7 +1591,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 			   btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
-	ret = btrfs_setup_all_roots(fs_info, ocf->root_tree_bytenr, flags);
+	ret = btrfs_setup_all_roots(fs_info, oca->root_tree_bytenr, flags);
 	if (ret && !(flags & __OPEN_CTREE_RETURN_CHUNK_ROOT) &&
 	    !fs_info->ignore_chunk_tree_error)
 		goto out_chunk;
@@ -1608,7 +1608,7 @@ out:
 	return NULL;
 }
 
-struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_flags *ocf)
+struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_args *oca)
 {
 	int fp;
 	int ret;
@@ -1616,28 +1616,28 @@ struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_flags *ocf)
 	int oflags = O_RDWR;
 	struct stat st;
 
-	ret = stat(ocf->filename, &st);
+	ret = stat(oca->filename, &st);
 	if (ret < 0) {
-		error("cannot stat '%s': %m", ocf->filename);
+		error("cannot stat '%s': %m", oca->filename);
 		return NULL;
 	}
 	if (!(((st.st_mode & S_IFMT) == S_IFREG) || ((st.st_mode & S_IFMT) == S_IFBLK))) {
-		error("not a regular file or block device: %s", ocf->filename);
+		error("not a regular file or block device: %s", oca->filename);
 		return NULL;
 	}
 
-	if (!(ocf->flags & OPEN_CTREE_WRITES))
+	if (!(oca->flags & OPEN_CTREE_WRITES))
 		oflags = O_RDONLY;
 
-	if ((oflags & O_RDWR) && zoned_model(ocf->filename) == ZONED_HOST_MANAGED)
+	if ((oflags & O_RDWR) && zoned_model(oca->filename) == ZONED_HOST_MANAGED)
 		oflags |= O_DIRECT;
 
-	fp = open(ocf->filename, oflags);
+	fp = open(oca->filename, oflags);
 	if (fp < 0) {
-		error("cannot open '%s': %m", ocf->filename);
+		error("cannot open '%s': %m", oca->filename);
 		return NULL;
 	}
-	info = __open_ctree_fd(fp, ocf);
+	info = __open_ctree_fd(fp, oca);
 	close(fp);
 	return info;
 }
@@ -1646,14 +1646,14 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 			      unsigned flags)
 {
 	struct btrfs_fs_info *info;
-	struct open_ctree_flags ocf = { 0 };
+	struct open_ctree_args oca = { 0 };
 
 	/* This flags may not return fs_info with any valid root */
 	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
-	ocf.filename = filename;
-	ocf.sb_bytenr = sb_bytenr;
-	ocf.flags = flags;
-	info = open_ctree_fs_info(&ocf);
+	oca.filename = filename;
+	oca.sb_bytenr = sb_bytenr;
+	oca.flags = flags;
+	info = open_ctree_fs_info(&oca);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)
@@ -1665,7 +1665,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 unsigned flags)
 {
 	struct btrfs_fs_info *info;
-	struct open_ctree_flags ocf = { 0 };
+	struct open_ctree_args oca = { 0 };
 
 	/* This flags may not return fs_info with any valid root */
 	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR) {
@@ -1673,10 +1673,10 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				(unsigned long long)flags);
 		return NULL;
 	}
-	ocf.filename = path;
-	ocf.sb_bytenr = sb_bytenr;
-	ocf.flags = flags;
-	info = __open_ctree_fd(fp, &ocf);
+	oca.filename = path;
+	oca.sb_bytenr = sb_bytenr;
+	oca.flags = flags;
+	info = __open_ctree_fd(fp, &oca);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)
