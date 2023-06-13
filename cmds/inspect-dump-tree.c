@@ -328,7 +328,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	bool root_backups = false;
 	int traverse = BTRFS_PRINT_TREE_DEFAULT;
 	int dev_optind;
-	unsigned open_ctree_flags;
 	u64 block_bytenr;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
@@ -346,8 +345,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	 * And we want to avoid tree-checker, which can rejects the target tree
 	 * block completely, while we may be debugging the problem.
 	 */
-	open_ctree_flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS |
-			   OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
+	oca.flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS |
+		    OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
 	cache_tree_init(&block_root);
 	optind = 0;
 	while (1) {
@@ -400,7 +399,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			 * If only showing one block, no need to fill roots
 			 * other than chunk root
 			 */
-			open_ctree_flags |= __OPEN_CTREE_RETURN_CHUNK_ROOT;
+			oca.flags |= __OPEN_CTREE_RETURN_CHUNK_ROOT;
 			block_bytenr = arg_strtou64(optarg);
 			ret = dump_add_tree_block(&block_root, block_bytenr);
 			if (ret < 0)
@@ -437,10 +436,10 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			traverse = BTRFS_PRINT_TREE_BFS;
 			break;
 		case GETOPT_VAL_NOSCAN:
-			open_ctree_flags |= OPEN_CTREE_NO_DEVICES;
+			oca.flags |= OPEN_CTREE_NO_DEVICES;
 			break;
 		case GETOPT_VAL_HIDE_NAMES:
-			open_ctree_flags |= OPEN_CTREE_HIDE_NAMES;
+			oca.flags |= OPEN_CTREE_HIDE_NAMES;
 			break;
 		case GETOPT_VAL_CSUM_HEADERS:
 			csum_mode |= BTRFS_PRINT_TREE_CSUM_HEADERS;
@@ -493,7 +492,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	pr_verbose(LOG_DEFAULT, "%s\n", PACKAGE_STRING);
 
 	oca.filename = argv[optind];
-	oca.flags = open_ctree_flags;
 	info = open_ctree_fs_info(&oca);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
