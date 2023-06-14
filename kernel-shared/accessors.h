@@ -3,6 +3,8 @@
 #ifndef BTRFS_ACCESSORS_H
 #define BTRFS_ACCESSORS_H
 
+#include "kerncompat.h"
+
 #ifndef _static_assert
 #define _static_assert(expr)   _Static_assert(expr, #expr)
 #endif
@@ -579,7 +581,7 @@ BTRFS_SETGET_STACK_FUNCS(disk_key_objectid, struct btrfs_disk_key, objectid, 64)
 BTRFS_SETGET_STACK_FUNCS(disk_key_offset, struct btrfs_disk_key, offset, 64);
 BTRFS_SETGET_STACK_FUNCS(disk_key_type, struct btrfs_disk_key, type, 8);
 
-#ifdef __LITTLE_ENDIAN
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 
 /*
  * Optimized helpers for little-endian architectures where CPU and on-disk
