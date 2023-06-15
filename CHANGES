@@ -41,6 +41,17 @@ btrfs-progs-6.3.1 (2023-05-29)
       * code cleanups
       * documentation updates
 
+btrfs-progs-6.3.2 (2023-06-15)
+""""""""""""""""""""""""""""""
+   * build: fix build on big endian hosts
+   * mkfs: don't print changed defaults notice with --quiet
+   * scrub: fix wrong stats of processed bytes in background and foreground mode
+   * convert: actually create free-space-tree instead of v1 space cache
+   * print-tree: recognize and print CHANGING_FSID_V2 flag (for the
+     metadata_uuid change in progress)
+   * other:
+      * documentation updates
+
 btrfs-progs-6.2 (2023-02-28)
 ----------------------------
    * receive: fix a corruption when decompressing zstd extents
