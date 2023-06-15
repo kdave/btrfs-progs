@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - release-test
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
