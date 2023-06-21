@@ -50,12 +50,25 @@ check_global_prereq getfacl
 check_global_prereq setfacl
 check_global_prereq md5sum
 
+test_found=0
+
 run_one_test() {
 	local testdir
 	local testname
 
 	testdir="$1"
 	testname=$(basename "$testdir")
+	if ! [ -z "$TEST_FROM" ]; then
+		if [ "$test_found" == 0 ]; then
+			case "$testname" in
+				$TEST_FROM) test_found=1;;
+			esac
+		fi
+		if [ "$test_found" == 0 ]; then
+			printf "    [TEST/conv]   %-40s (SKIPPED)\n" "$testname"
+			return
+		fi
+	fi
 	echo "    [TEST/conv]   $testname"
 	cd "$testdir"
 	echo "=== START TEST $testname" >> "$RESULTS"

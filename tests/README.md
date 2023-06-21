@@ -1,6 +1,6 @@
 # Btrfs-progs tests
 
-A testsuite covering functionality of btrfs-progs, ie. the checker, image, mkfs
+A testsuite covering functionality of btrfs-progs, i.e. the checker, image, mkfs
 and similar tools. There are no additional requirements on kernel features
 (other than `CONFIG_BTRFS_FS` built-in or module), the
 tests build on top of the core functionality like snapshots and device
@@ -26,7 +26,7 @@ $ ./misc-tests.sh
 ```
 
 The verbose output of the tests is logged into a file named after the test
-category, eg. `fsck-tests-results.txt`.
+category, e.g. `fsck-tests-results.txt`.
 
 ## Selective testing
 
@@ -46,8 +46,18 @@ $ TEST=001\* ./fsck-tests.sh     # in the top directory
 ```
 
 will run the first test in fsck-tests subdirectory. If the test directories
-follow a good naming scheme, it's possible to select a subset eg. like the
-convert tests for ext[234] filesystems using mask 'TEST='*ext[234]*'.
+follow a good naming scheme, it's possible to select a subset e.g. like the
+convert tests for ext[234] filesystems using mask 'TEST='\*ext[234]\*'.
+
+When running tests in a sequence and one fails, testing can be started from
+that test skipping all the ones that are supposed to pass, like:
+
+```shell
+$ make TEST_FROM=004\* test-fsck
+```
+
+This will skip any tests found in the directory that precede *004*, assuming
+that there is such test.
 
 
 ## Test directory structure
@@ -88,7 +98,7 @@ convert tests for ext[234] filesystems using mask 'TEST='*ext[234]*'.
 
   * default testing image, available as `TEST_DEV` variable, the file is never
     deleted by the scripts but truncated to 0 bytes, so it keeps it's
-    permissions. It's eg. possible to host it on NFS, make it `chmod a+w` for
+    permissions. It's e.g. possible to host it on NFS, make it `chmod a+w` for
     root.
 
 
@@ -126,6 +136,10 @@ occurs, possibly allowing to continue interactively debugging.
 
 ### Verbosity, test tuning
 
+* `TEST_FROM=glob` -- start testing from the first test that matches the *glob*
+  expression and skip anything before that, this can be combined with the
+  `TEST` variable that takes precedence
+
 * `TEST_LOG=tty` -- setting the variable will print all commands executed by
   some of the wrappers (`run_check` etc), other commands are not printed to the
   terminal (but the full output is in the log)
@@ -158,7 +172,7 @@ $ make TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check
 ```
 
 Specifically, fsck-tests that are known to be able to repair images in the
-lowmem mode shoulde be marked using a file `.lowmem_repairable` in the test
+lowmem mode should be marked using a file `.lowmem_repairable` in the test
 directory. Then the fsck-tests with the 'mode=lowmem' will continue when image
 repair is requested.
 
@@ -204,7 +218,7 @@ common scripts and/or prepares the test devices. Other scripts contain examples
 how to do mkfs, mount, unmount, check, loop device management etc.
 
 2. Use the highest unused number in the sequence, write a short descriptive title
-and join by dashes `-`. This will become the directory name, eg. `012-subvolume-sync-must-wait`.
+and join by dashes `-`. This will become the directory name, e.g. `012-subvolume-sync-must-wait`.
 
 3. Write a short description of the bug and how it's tested to the comment at the
 beginning of `test.sh`. You don't need to add the file to git yet. Don't forget
@@ -221,7 +235,7 @@ $ TEST=012\* ./misc-tests.sh           # from tests/
 
 6. The commit changelog should reference a commit that either introduced or
   fixed the bug (or both). Subject line of the shall mention the name of the
-  new directory for ease of search, eg. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
+  new directory for ease of search, e.g. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
 
 7. A commit that fixes a bug should be applied before the test that verifies
   the fix. This is to keep the git history bisectable.
@@ -230,18 +244,18 @@ $ TEST=012\* ./misc-tests.sh           # from tests/
 ### Test images
 
 Most tests should be able to create the test images from scratch, using regular
-commands and file operation. The commands also document the testcase and use
+commands and file operation. The commands also document the test case and use
 the test code and kernel of the environment.
 
 In other cases, a pre-created image may be the right way if the above does not
-work (eg. comparing output, requesting an exact layout or some intermediate
+work (e.g. comparing output, requesting an exact layout or some intermediate
 state that would be hard to achieve otherwise).
 
 * images that don't need data and valid checksums can be created by
   `btrfs-image`, the image can be compressed by the tool itself (file extension
   `.img`) or compressed externally (recognized is `.img.xz`)
 
-* raw images that are binary dump of an existing image, created eg. from a
+* raw images that are binary dump of an existing image, created e.g. from a
   sparse file (`.raw` or `.raw.xz`)
 
 Use `xz --best` and try to get the smallest size as the file is stored in git.
@@ -310,11 +324,11 @@ The tests assume write access to their directories.
   `xfs_io` that's conveniently used in fstests but we'd require `xfsprogs`,
   so use `dd` instead
 * throw away (redirect to */dev/null*) output of commands unless it's justified
-  (ie. really too much text, unnecessary slowdown) -- the test output log is
+  (i.e. really too much text, unnecessary slowdown) -- the test output log is
   regenerated all the time and we need to be able to analyze test failures or
   just observe how the tests progress
 * cleanup after failed test -- the testsuite stops on first failure and the
-  developer can eg. access the environment that the test created and do further
+  developer can e.g. access the environment that the test created and do further
   debugging
   * this might change in the future so the tests cover as much as possible, but
     this would require to enhance all tests with a cleanup phase
@@ -401,17 +415,17 @@ that file or other tests to get the idea how easy writing a test really is.
 
 * result
   * `_fail` - a failure condition has been found
-  * `_not_run` - some prerequisite condition is not met, eg. missing kernel functionality
+  * `_not_run` - some prerequisite condition is not met, e.g. missing kernel functionality
 * messages
-  * `_log` - message printed to the result file (eg.
+  * `_log` - message printed to the result file (e.g.
     `tests/mkfs-tests-results.txt`), and not printed to the terminal
-  * `_log_stdout` - dtto but it is printed to the terminal
+  * `_log_stdout` - ditto but it is printed to the terminal
 * execution helpers
   * `run_check` - should be used for basically all commands, the command and arguments
   are stored to the results log for debugging and the return value is checked so there
   are no silent failures even for the "unimportant" commands
-  * `run_check_stdout` - like the above but the output can be processed further, eg. filtering
+  * `run_check_stdout` - like the above but the output can be processed further, e.g. filtering
   out some data or looking for some specific string
-  * `run_mayfail` - the command is allowed to fail in a non-fatal way (eg. no segfault),
+  * `run_mayfail` - the command is allowed to fail in a non-fatal way (e.g. no segfault),
   there's also the `run_mayfail_stdout` variant
   * `run_mustfail` - expected failure, note that the first argument is mandatory message describing unexpected pass condition

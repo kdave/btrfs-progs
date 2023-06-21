@@ -47,21 +47,35 @@ check_kernel_support
 
 # The tests are driven by their custom script called 'test.sh'
 
+test_found=0
+
 for i in $(find "$TEST_TOP/mkfs-tests" -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
-	echo "    [TEST/mkfs]   $(basename $i)"
+	name=$(basename "$i")
+	if ! [ -z "$TEST_FROM" ]; then
+		if [ "$test_found" == 0 ]; then
+			case "$name" in
+				$TEST_FROM) test_found=1;;
+			esac
+		fi
+		if [ "$test_found" == 0 ]; then
+			printf "    [TEST/mkfs]   %-32s (SKIPPED)\n" "$name"
+			continue
+		fi
+	fi
 	cd "$i"
-	echo "=== START TEST $i" >> "$RESULTS"
 	if [ -x test.sh ]; then
+		echo "=== START TEST $i" >> "$RESULTS"
+		echo "    [TEST/mkfs]   $name"
 		./test.sh
 		if [ $? -ne 0 ]; then
 			if [[ $TEST_LOG =~ dump ]]; then
 				cat "$RESULTS"
 			fi
-			_fail "test failed for case $(basename $i)"
+			_fail "test failed for case $name"
 		fi
-		check_test_results "$RESULTS" "$(basename $i)"
+		check_test_results "$RESULTS" "$name"
 	fi
 	cd "$TEST_TOP"
 done

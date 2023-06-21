@@ -45,10 +45,23 @@ check_prereq btrfs
 
 # The tests are driven by their custom script called 'test.sh'
 
+test_found=0
+
 for i in $(find "$TEST_TOP/fuzz-tests" -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
 	name=$(basename "$i")
+	if ! [ -z "$TEST_FROM" ]; then
+		if [ "$test_found" == 0 ]; then
+			case "$name" in
+				$TEST_FROM) test_found=1;;
+			esac
+		fi
+		if [ "$test_found" == 0 ]; then
+			printf "    [TEST/fuzz]   %-32s (SKIPPED)\n" "$name"
+			continue
+		fi
+	fi
 	cd $i
 	if [ -x test.sh ]; then
 		echo "=== START TEST $i" >> "$RESULTS"
