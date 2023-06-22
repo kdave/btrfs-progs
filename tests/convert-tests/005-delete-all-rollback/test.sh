@@ -10,6 +10,7 @@ check_global_prereq mke2fs
 
 setup_root_helper
 prepare_test_dev
+check_kernel_support_acl
 
 # simple wrapper for a convert test
 # $1: btrfs features, argument to -O

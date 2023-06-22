@@ -8,6 +8,7 @@ check_global_prereq mke2fs
 
 setup_root_helper
 prepare_test_dev
+check_kernel_support_acl
 
 # Iterate over defaults and options that are not tied to hardware capabilities
 # or number of devices

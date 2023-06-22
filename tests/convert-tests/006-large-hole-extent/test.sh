@@ -13,6 +13,7 @@ check_global_prereq mke2fs
 
 setup_root_helper
 prepare_test_dev
+check_kernel_support_acl
 
 default_mke2fs="mke2fs -t ext4 -b 4096"
 convert_test_preamble '' 'large hole extent test' 16k "$default_mke2fs"

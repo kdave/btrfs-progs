@@ -10,6 +10,7 @@ check_prereq btrfs
 
 setup_root_helper
 prepare_test_dev
+check_kernel_support_acl
 
 run_check_mkfs_test_dev -O ^free-space-tree
 run_check_mount_test_dev
