@@ -575,6 +575,24 @@ setup_root_helper()
 	SUDO_HELPER=root_helper
 }
 
+# Check if btrfs is compiled with CONFIG_BTRFS_FS_POSIX_ACL, may need TEST_DEV.
+check_kernel_support_acl()
+{
+	if [ -f /proc/config.gz ] && \
+	   ! zgrep -q "^CONFIG_BTRFS_FS_POSIX_ACL=y" /proc/config.gz; then
+		_not_run "ACL is not compiled in"
+	fi
+
+	run_check_mkfs_test_dev
+	run_check_mount_test_dev
+
+	if grep "$TEST_MNT" /proc/self/mounts | grep -q noacl; then
+		run_check_umount_test_dev
+		_not_run "ACL is not compiled in"
+	fi
+	run_check_umount_test_dev
+}
+
 prepare_test_dev()
 {
 	# num[K/M/G/T...]
