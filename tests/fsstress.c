@@ -1179,6 +1179,7 @@ del_from_flist(int ft, int slot)
 		ftp->nfiles--;
 }
 
+#ifdef HAVE_BTRFSUTIL_H
 static void
 delete_subvol_children(int parid)
 {
@@ -1198,6 +1199,7 @@ again:
 		}
 	}
 }
+#endif
 
 static fent_t *
 dirid_to_fent(int dirid)
