@@ -3810,10 +3810,10 @@ struct print_flags falloc_flags [] = {
 	({translate_flags(mode, "|", falloc_flags);})
 #endif
 
+#ifdef HAVE_LINUX_FALLOC_H
 static void
 do_fallocate(opnum_t opno, long r, int mode)
 {
-#ifdef HAVE_LINUX_FALLOC_H
 	int		e;
 	pathname_t	f;
 	int		fd;
@@ -3870,8 +3870,8 @@ do_fallocate(opnum_t opno, long r, int mode)
 		       f.path, st, (long long)off, (long long)len, e);
 	free_pathname(&f);
 	close(fd);
-#endif
 }
+#endif
 
 void
 fallocate_f(opnum_t opno, long r)
