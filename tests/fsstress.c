@@ -4359,10 +4359,10 @@ struct print_flags mmap_flags[] = {
 	({translate_flags(flags, "|", mmap_flags);})
 #endif
 
+#ifdef HAVE_SYS_MMAN_H
 static void
 do_mmap(opnum_t opno, long r, int prot)
 {
-#ifdef HAVE_SYS_MMAN_H
 	char		*addr;
 	int		e;
 	pathname_t	f;
@@ -4454,8 +4454,8 @@ do_mmap(opnum_t opno, long r, int prot)
 
 	free_pathname(&f);
 	close(fd);
-#endif
 }
+#endif
 
 void
 mread_f(opnum_t opno, long r)
