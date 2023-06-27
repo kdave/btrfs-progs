@@ -67,7 +67,7 @@ include Makefile.extrawarn
 EXTRA_CFLAGS :=
 EXTRA_LDFLAGS :=
 
-DEBUG_CFLAGS_DEFAULT = -O0 -U_FORTIFY_SOURCE -ggdb3
+DEBUG_CFLAGS_DEFAULT = -O0 -U_FORTIFY_SOURCE -ggdb3 -DINJECT
 DEBUG_CFLAGS_INTERNAL =
 DEBUG_CFLAGS :=
 
@@ -202,6 +202,7 @@ objects = \
 	common/format-output.o	\
 	common/fsfeatures.o	\
 	common/help.o	\
+	common/inject-error.o	\
 	common/messages.o	\
 	common/open-utils.o	\
 	common/parse-utils.o	\
