@@ -157,7 +157,7 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 	if (!new)
 		return NULL;
 
-	copy_extent_buffer(new, src, 0, 0, src->len);
+	copy_extent_buffer_full(new, src);
 	new->flags |= EXTENT_BUFFER_DUMMY;
 
 	return new;
@@ -615,18 +615,18 @@ void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 	memcpy((void *)eb->data + start, src, len);
 }
 
+void copy_extent_buffer_full(const struct extent_buffer *dst,
+			     const struct extent_buffer *src)
+{
+	copy_extent_buffer(dst, src, 0, 0, src->len);
+}
+
 void copy_extent_buffer(const struct extent_buffer *dst,
 			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len)
 {
 	memcpy((void *)dst->data + dst_offset, src->data + src_offset, len);
-}
-
-void copy_extent_buffer_full(const struct extent_buffer *dst,
-			     const struct extent_buffer *src)
-{
-	copy_extent_buffer(dst, src, 0, 0, src->len);
 }
 
 void memmove_extent_buffer(const struct extent_buffer *dst, unsigned long dst_offset,

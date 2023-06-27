@@ -111,12 +111,12 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start, unsigned long len);
 void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len);
+void copy_extent_buffer_full(const struct extent_buffer *dst,
+			     const struct extent_buffer *src);
 void copy_extent_buffer(const struct extent_buffer *dst,
 			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len);
-void copy_extent_buffer_full(const struct extent_buffer *dst,
-			     const struct extent_buffer *src);
 void memmove_extent_buffer(const struct extent_buffer *dst,
 			   const unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len);
