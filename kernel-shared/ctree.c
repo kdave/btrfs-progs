@@ -392,9 +392,7 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(node, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(node, objectid);
 	write_extent_buffer_fsid(node, fs_info->fs_devices->metadata_uuid);
-	write_extent_buffer(node, fs_info->chunk_tree_uuid,
-			    btrfs_header_chunk_tree_uuid(node),
-			    BTRFS_UUID_SIZE);
+	write_extent_buffer_chunk_tree_uuid(node, fs_info->chunk_tree_uuid);
 	btrfs_set_header_nritems(node, 0);
 	btrfs_set_header_level(node, 0);
 	ret = btrfs_inc_ref(trans, new_root, node, 0);
@@ -1736,10 +1734,7 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 	root_add_used(root, root->fs_info->nodesize);
 
 	write_extent_buffer_fsid(c, root->fs_info->fs_devices->metadata_uuid);
-	write_extent_buffer(c, root->fs_info->chunk_tree_uuid,
-			    btrfs_header_chunk_tree_uuid(c),
-			    BTRFS_UUID_SIZE);
-
+	write_extent_buffer_chunk_tree_uuid(c, root->fs_info->chunk_tree_uuid);
 	btrfs_set_node_key(c, &lower_key, 0);
 	btrfs_set_node_blockptr(c, 0, lower->start);
 	lower_gen = btrfs_header_generation(lower);
@@ -1856,9 +1851,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_header_backref_rev(split, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(split, root->root_key.objectid);
 	write_extent_buffer_fsid(split, root->fs_info->fs_devices->metadata_uuid);
-	write_extent_buffer(split, root->fs_info->chunk_tree_uuid,
-			    btrfs_header_chunk_tree_uuid(split),
-			    BTRFS_UUID_SIZE);
+	write_extent_buffer_chunk_tree_uuid(split, root->fs_info->chunk_tree_uuid);
 
 	root_add_used(root, root->fs_info->nodesize);
 
@@ -2425,9 +2418,7 @@ again:
 	btrfs_set_header_owner(right, root->root_key.objectid);
 	btrfs_set_header_level(right, 0);
 	write_extent_buffer_fsid(right, root->fs_info->fs_devices->metadata_uuid);
-	write_extent_buffer(right, root->fs_info->chunk_tree_uuid,
-			    btrfs_header_chunk_tree_uuid(right),
-			    BTRFS_UUID_SIZE);
+	write_extent_buffer_chunk_tree_uuid(right, root->fs_info->chunk_tree_uuid);
 
 	root_add_used(root, root->fs_info->nodesize);
 

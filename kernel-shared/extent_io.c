@@ -614,6 +614,12 @@ void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *src)
 	write_extent_buffer(eb, src, btrfs_header_fsid(), BTRFS_FSID_SIZE);
 }
 
+void write_extent_buffer_chunk_tree_uuid(const struct extent_buffer *eb,
+		const void *src)
+{
+	write_extent_buffer(eb, src, btrfs_header_chunk_tree_uuid(eb), BTRFS_FSID_SIZE);
+}
+
 void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len)
 {
