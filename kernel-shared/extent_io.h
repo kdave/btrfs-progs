@@ -109,6 +109,7 @@ int memcmp_extent_buffer(const struct extent_buffer *eb, const void *ptrv,
 			 unsigned long start, unsigned long len);
 void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start, unsigned long len);
+void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *src);
 void write_extent_buffer(const struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len);
 void copy_extent_buffer_full(const struct extent_buffer *dst,
@@ -136,7 +137,6 @@ void extent_buffer_bitmap_set(struct extent_buffer *eb, unsigned long start,
                               unsigned long pos, unsigned long len);
 void extent_buffer_init_cache(struct btrfs_fs_info *fs_info);
 void extent_buffer_free_cache(struct btrfs_fs_info *fs_info);
-void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *srcv);
 void btrfs_readahead_node_child(struct extent_buffer *node, int slot);
 
 #endif
