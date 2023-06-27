@@ -22,6 +22,7 @@
 #include <stdbool.h>
 
 #include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
 #include "kerncompat.h"
 #include "common/extent-cache.h"
 #include "kernel-shared/uapi/btrfs.h"
@@ -148,13 +149,20 @@ enum {
 	READA_FORWARD_ALWAYS,
 };
 
+/*
+ * btrfs_paths remember the path taken from the root down to the leaf.
+ * level 0 is always the leaf, and nodes[1...BTRFS_MAX_LEVEL] will point
+ * to any other levels that are present.
+ *
+ * The slots array records the index of the item or block pointer
+ * used while walking the tree.
+ */
 struct btrfs_path {
 	struct extent_buffer *nodes[BTRFS_MAX_LEVEL];
 	int slots[BTRFS_MAX_LEVEL];
 	/* The kernel locking scheme is not done in userspace. */
-	int locks[BTRFS_MAX_LEVEL];
-
-	signed char reada;
+	u8 locks[BTRFS_MAX_LEVEL];
+	u8 reada;
 	/* keep some upper locks as we walk down */
 	u8 lowest_level;
 
@@ -477,15 +485,20 @@ enum {
  * and for the extent tree extent_root root.
  */
 struct btrfs_root {
+	struct rb_node rb_node;
+
 	struct extent_buffer *node;
+
 	struct extent_buffer *commit_root;
+	struct btrfs_root *log_root;
+	struct btrfs_root *reloc_root;
+
+	unsigned long state;
 	struct btrfs_root_item root_item;
 	struct btrfs_key root_key;
 	struct btrfs_fs_info *fs_info;
 	u64 objectid;
 	u64 last_trans;
-
-	unsigned long state;
 
 	u32 type;
 	u64 last_inode_alloc;
@@ -494,7 +507,6 @@ struct btrfs_root {
 
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
-	struct rb_node rb_node;
 
 	spinlock_t accounting_lock;
 };

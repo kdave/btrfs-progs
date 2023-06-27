@@ -233,11 +233,33 @@ noinline void btrfs_release_path(struct btrfs_path *p)
 	int i;
 
 	for (i = 0; i < BTRFS_MAX_LEVEL; i++) {
+		p->slots[i] = 0;
 		if (!p->nodes[i])
 			continue;
+		if (p->locks[i]) {
+			btrfs_tree_unlock_rw(p->nodes[i], p->locks[i]);
+			p->locks[i] = 0;
+		}
 		free_extent_buffer(p->nodes[i]);
+		p->nodes[i] = NULL;
 	}
 	memset(p, 0, sizeof(*p));
+}
+
+/*
+ * We want the transaction abort to print stack trace only for errors where the
+ * cause could be a bug, eg. due to ENOSPC, and not for common errors that are
+ * caused by external factors.
+ */
+bool __cold abort_should_print_stack(int errno)
+{
+	switch (errno) {
+	case -EIO:
+	case -EROFS:
+	case -ENOMEM:
+		return false;
+	}
+	return true;
 }
 
 void add_root_to_dirty_list(struct btrfs_root *root)
@@ -289,6 +311,7 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 		btrfs_item_key(buf, &disk_key, 0);
 	else
 		btrfs_node_key(buf, &disk_key, 0);
+
 	cow = btrfs_alloc_tree_block(trans, new_root, buf->len,
 				     new_root_objectid, &disk_key,
 				     level, buf->start, 0,
@@ -451,10 +474,9 @@ static int btrfs_block_can_be_shared(struct btrfs_root *root,
 			             struct extent_buffer *buf)
 {
 	/*
-	 * Tree blocks not in reference counted trees and tree roots
-	 * are never shared. If a block was allocated after the last
-	 * snapshot and the block was not allocated by tree relocation,
-	 * we know the block is not shared.
+	 * Tree blocks not in shareable trees and tree roots are never shared.
+	 * If a block was allocated after the last snapshot and the block was
+	 * not allocated by tree relocation, we know the block is not shared.
 	 */
 	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
 	    buf != root->node && buf != root->commit_root &&
@@ -462,6 +484,7 @@ static int btrfs_block_can_be_shared(struct btrfs_root *root,
 	     btrfs_root_last_snapshot(&root->root_item) ||
 	     btrfs_header_flag(buf, BTRFS_HEADER_FLAG_RELOC)))
 		return 1;
+
 	return 0;
 }
 
@@ -557,7 +580,19 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int __btrfs_cow_block(struct btrfs_trans_handle *trans,
+/*
+ * does the dirty work in cow of a single block.  The parent block (if
+ * supplied) is updated to point to the new cow copy.  The new buffer is marked
+ * dirty and returned locked.  If you modify the block it needs to be marked
+ * dirty again.
+ *
+ * search_start -- an allocation hint for the new block
+ *
+ * empty_size -- a hint that you plan on doing more cow.  This is the size in
+ * bytes the allocator should try to find free next to the block it returns.
+ * This is just a hint and may be ignored by the allocator.
+ */
+static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     struct extent_buffer *buf,
 			     struct extent_buffer *parent, int parent_slot,
@@ -679,7 +714,24 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2)
+/*
+ * helper function for defrag to decide if two blocks pointed to by a
+ * node are actually close by
+ */
+static __attribute__((unused)) int close_blocks(u64 blocknr, u64 other, u32 blocksize)
+{
+	if (blocknr < other && other - (blocknr + blocksize) < 32768)
+		return 1;
+	if (blocknr > other && blocknr - (other + blocksize) < 32768)
+		return 1;
+	return 0;
+}
+
+
+/*
+ * same as comp_keys only with two btrfs_key's
+ */
+int __pure btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2)
 {
 	if (k1->objectid > k2->objectid)
 		return 1;
@@ -818,15 +870,20 @@ struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 	return ret;
 }
 
-static int balance_level(struct btrfs_trans_handle *trans,
+/*
+ * node level balancing, used to make sure nodes are in proper order for
+ * item deletion.  We balance from the top down, so we have to make sure
+ * that a deletion won't leave an node completely empty later on.
+ */
+static noinline int balance_level(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root,
 			 struct btrfs_path *path, int level)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *right = NULL;
 	struct extent_buffer *mid;
 	struct extent_buffer *left = NULL;
 	struct extent_buffer *parent = NULL;
-	struct btrfs_fs_info *fs_info = root->fs_info;
 	int ret = 0;
 	int wret;
 	int pslot;
@@ -1013,16 +1070,19 @@ enospc:
 	return ret;
 }
 
-/* returns zero if the push worked, non-zero otherwise */
-static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
+/* Node balancing for insertion.  Here we only split or push nodes around
+ * when they are completely full.  This is also done top down, so we
+ * have to be pessimistic.
+ */
+static noinline int push_nodes_for_insert(struct btrfs_trans_handle *trans,
 					  struct btrfs_root *root,
 					  struct btrfs_path *path, int level)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *right = NULL;
 	struct extent_buffer *mid;
 	struct extent_buffer *left = NULL;
 	struct extent_buffer *parent = NULL;
-	struct btrfs_fs_info *fs_info = root->fs_info;
 	int ret = 0;
 	int wret;
 	int pslot;
@@ -1128,11 +1188,12 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 }
 
 /*
- * readahead one full node of leaves
+ * readahead one full node of leaves, finding things that are close
+ * to the block in 'slot', and triggering ra on them.
  */
 static void reada_for_search(struct btrfs_fs_info *fs_info,
-			     struct btrfs_path *path, int level, int slot,
-			     u64 objectid)
+			     struct btrfs_path *path,
+			     int level, int slot, u64 objectid)
 {
 	struct extent_buffer *node;
 	struct btrfs_disk_key disk_key;

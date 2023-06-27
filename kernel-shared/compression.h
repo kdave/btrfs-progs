@@ -12,6 +12,8 @@ struct btrfs_inode;
 struct address_space;
 struct inode;
 struct bio;
+/* Stub for kernel-user parity. */
+struct btrfs_bio { };
 
 /*
  * We want to make sure that amount of RAM required to uncompress an extent is
@@ -58,6 +60,9 @@ struct compressed_bio {
 		struct btrfs_bio *orig_bbio;
 		struct work_struct write_end_work;
 	};
+
+	/* Must be last. */
+	struct btrfs_bio bbio;
 };
 
 static inline unsigned int btrfs_compress_type(unsigned int type_level)

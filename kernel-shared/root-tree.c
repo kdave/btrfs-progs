@@ -195,7 +195,6 @@ int btrfs_add_root_ref(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 	unsigned long ptr;
 
-
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;

@@ -138,10 +138,9 @@ static struct btrfs_delayed_ref_node* tree_insert(struct rb_root *root,
 }
 
 /*
- * find an head entry based on bytenr. This returns the delayed ref
- * head if it was able to find one, or NULL if nothing was in that spot.
- * If return_bigger is given, the next bigger entry is returned if no exact
- * match is found.
+ * Find a head entry based on bytenr. This returns the delayed ref head if it
+ * was able to find one, or NULL if nothing was in that spot.  If return_bigger
+ * is given, the next bigger entry is returned if no exact match is found.
  */
 static struct btrfs_delayed_ref_head *
 find_ref_head(struct rb_root *root, u64 bytenr,
