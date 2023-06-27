@@ -28,7 +28,7 @@ static bool check_setget_bounds(const struct extent_buffer *eb,
 
 /*
  * MODIFIED:
- *  - We don't have eb->pages.
+ *  - We don't have eb->folios
  */
 void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *eb)
 {
@@ -39,7 +39,7 @@ void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *e
 
 /*
  * MODIFIED:
- *  - We don't have eb->pages, simply wrap the set/get helpers.
+ *  - We don't have eb->folios, simply wrap the set/get helpers.
  */
 
 /*
@@ -61,7 +61,7 @@ void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *e
  * an offset into the extent buffer page array, cast to a specific type.  This
  * gives us all the type checking.
  *
- * The extent buffer pages stored in the array pages do not form a contiguous
+ * The extent buffer pages stored in the array folios may not form a contiguous
  * phyusical range, but the API functions assume the linear offset to the range
  * from 0 to metadata node size.
  */

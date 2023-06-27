@@ -25,12 +25,11 @@ struct list_head;
 
 static inline u32 BTRFS_MAX_INLINE_DATA_SIZE(const struct btrfs_fs_info *info)
 {
-	return BTRFS_MAX_ITEM_SIZE(info) -
-	       BTRFS_FILE_EXTENT_INLINE_DATA_START;
+	return BTRFS_MAX_ITEM_SIZE(info) - BTRFS_FILE_EXTENT_INLINE_DATA_START;
 }
 
 /*
- * Returns the number of bytes used by the item on disk, minus the size of any
+ * Return the number of bytes used by the item on disk, minus the size of any
  * extent headers.  If a file is compressed on disk, this is the compressed
  * size.
  */

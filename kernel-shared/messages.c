@@ -10,14 +10,13 @@
 #ifdef CONFIG_PRINTK
 
 #define STATE_STRING_PREFACE	": state "
-#define STATE_STRING_BUF_LEN	(sizeof(STATE_STRING_PREFACE) + BTRFS_FS_STATE_COUNT)
+#define STATE_STRING_BUF_LEN	(sizeof(STATE_STRING_PREFACE) + BTRFS_FS_STATE_COUNT + 1)
 
 /*
  * Characters to print to indicate error conditions or uncommon filesystem state.
  * RO is not an error.
  */
 static const char fs_state_chars[] = {
-	[BTRFS_FS_STATE_ERROR]			= 'E',
 	[BTRFS_FS_STATE_REMOUNTING]		= 'M',
 	[BTRFS_FS_STATE_RO]			= 0,
 	[BTRFS_FS_STATE_TRANS_ABORTED]		= 'A',
@@ -36,6 +35,11 @@ static void btrfs_state_to_string(const struct btrfs_fs_info *info, char *buf)
 
 	memcpy(curr, STATE_STRING_PREFACE, sizeof(STATE_STRING_PREFACE));
 	curr += sizeof(STATE_STRING_PREFACE) - 1;
+
+	if (BTRFS_FS_ERROR(info)) {
+		*curr++ = 'E';
+		states_printed = true;
+	}
 
 	for_each_set_bit(bit, &fs_state, sizeof(fs_state)) {
 		WARN_ON_ONCE(bit >= BTRFS_FS_STATE_COUNT);
@@ -106,8 +110,8 @@ const char * __attribute_const__ btrfs_decode_error(int error)
 }
 
 /*
- * __btrfs_handle_fs_error decodes expected errors from the caller and
- * invokes the appropriate error response.
+ * Decodes expected errors from the caller and invokes the appropriate error
+ * response.
  */
 __cold
 void __btrfs_handle_fs_error(struct btrfs_fs_info *fs_info, const char *function,
@@ -121,7 +125,7 @@ void __btrfs_handle_fs_error(struct btrfs_fs_info *fs_info, const char *function
 
 #ifdef CONFIG_PRINTK_INDEX
 	printk_index_subsys_emit(
-		"BTRFS: error (device %s%s) in %s:%d: error=%d %s", KERN_CRIT, fmt);
+		"BTRFS: error (device %s%s) in %s:%d: errno=%d %s", KERN_CRIT, fmt);
 #endif
 
 	/*
@@ -145,7 +149,7 @@ void __btrfs_handle_fs_error(struct btrfs_fs_info *fs_info, const char *function
 			sb->s_id, statestr, function, line, error, errstr, PV_VAL(vaf));
 		va_end(args);
 	} else {
-		pr_crit("BTRFS: error (device %s%s) in %s:%d: error=%d %s\n",
+		pr_crit("BTRFS: error (device %s%s) in %s:%d: errno=%d %s\n",
 			sb->s_id, statestr, function, line, error, errstr);
 	}
 #endif

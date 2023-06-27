@@ -27,6 +27,7 @@
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/messages.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -117,7 +118,7 @@ int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
 }
 
 int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
-		u64 subid)
+			u64 subid)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *uuid_root = fs_info->uuid_root;
@@ -148,7 +149,8 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 
 	ret = btrfs_search_slot(trans, uuid_root, &key, path, -1, 1);
 	if (ret < 0) {
-		warning("error %d while searching for uuid item!", ret);
+		btrfs_warn(fs_info, "error %d while searching for uuid item!",
+			   ret);
 		goto out;
 	}
 	if (ret > 0) {
@@ -161,7 +163,8 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 	offset = btrfs_item_ptr_offset(eb, slot);
 	item_size = btrfs_item_size(eb, slot);
 	if (!IS_ALIGNED(item_size, sizeof(u64))) {
-		warning("uuid item with illegal size %u!", item_size);
+		btrfs_warn(fs_info, "uuid item with illegal size %lu!",
+			   (unsigned long)item_size);
 		ret = -ENOENT;
 		goto out;
 	}

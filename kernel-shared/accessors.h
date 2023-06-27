@@ -98,7 +98,7 @@ static inline void btrfs_set_token_##name(struct btrfs_map_token *token,\
 
 /*
  * MODIFIED:
- *  - We have eb->data, not eb->pages[0]
+ *  - We have eb->data, not eb->folios[0]
  */
 #define BTRFS_SETGET_HEADER_FUNCS(name, type, member, bits)		\
 static inline u##bits btrfs_##name(const struct extent_buffer *eb)	\
@@ -126,10 +126,8 @@ static inline void btrfs_set_##name(type *s, u##bits val)		\
 static inline u64 btrfs_device_total_bytes(const struct extent_buffer *eb,
 					   struct btrfs_dev_item *s)
 {
-	_static_assert(sizeof(u64) ==
-		       sizeof(((struct btrfs_dev_item *)0))->total_bytes);
-	return btrfs_get_64(eb, s, offsetof(struct btrfs_dev_item,
-					    total_bytes));
+	_static_assert(sizeof(u64) == sizeof(((struct btrfs_dev_item *)0))->total_bytes);
+	return btrfs_get_64(eb, s, offsetof(struct btrfs_dev_item, total_bytes));
 }
 
 /*
@@ -140,8 +138,7 @@ static inline void btrfs_set_device_total_bytes(const struct extent_buffer *eb,
 						struct btrfs_dev_item *s,
 						u64 val)
 {
-	_static_assert(sizeof(u64) ==
-		       sizeof(((struct btrfs_dev_item *)0))->total_bytes);
+	_static_assert(sizeof(u64) == sizeof(((struct btrfs_dev_item *)0))->total_bytes);
 	btrfs_set_64(eb, s, offsetof(struct btrfs_dev_item, total_bytes), val);
 }
 
@@ -257,7 +254,7 @@ static inline void btrfs_set_stripe_devid_nr(struct extent_buffer *eb,
 					     struct btrfs_chunk *c, int nr,
 					     u64 val)
 {
-       btrfs_set_stripe_devid(eb, btrfs_stripe_nr(c, nr), val);
+	btrfs_set_stripe_devid(eb, btrfs_stripe_nr(c, nr), val);
 }
 
 /* struct btrfs_block_group_item */
@@ -277,36 +274,6 @@ BTRFS_SETGET_STACK_FUNCS(stack_block_group_flags,
 BTRFS_SETGET_FUNCS(free_space_extent_count, struct btrfs_free_space_info,
 		   extent_count, 32);
 BTRFS_SETGET_FUNCS(free_space_flags, struct btrfs_free_space_info, flags, 32);
-
-/* struct btrfs_stripe_extent */
-BTRFS_SETGET_FUNCS(stripe_extent_encoding, struct btrfs_stripe_extent, encoding, 8);
-BTRFS_SETGET_FUNCS(raid_stride_devid, struct btrfs_raid_stride, devid, 64);
-BTRFS_SETGET_FUNCS(raid_stride_offset, struct btrfs_raid_stride, offset, 64);
-
-static inline struct btrfs_raid_stride *btrfs_raid_stride_nr(
-						 struct btrfs_stripe_extent *dps,
-						 int nr)
-{
-	unsigned long offset = (unsigned long)dps;
-
-	offset += offsetof(struct btrfs_stripe_extent, strides);
-	offset += nr * sizeof(struct btrfs_raid_stride);
-	return (struct btrfs_raid_stride *)offset;
-}
-
-static inline u64 btrfs_raid_stride_devid_nr(struct extent_buffer *eb,
-					     struct btrfs_stripe_extent *dps,
-					     int nr)
-{
-	return btrfs_raid_stride_devid(eb, btrfs_raid_stride_nr(dps, nr));
-}
-
-static inline u64 btrfs_raid_stride_offset_nr(struct extent_buffer *eb,
-					      struct btrfs_stripe_extent *dps,
-					      int nr)
-{
-	return btrfs_raid_stride_offset(eb, btrfs_raid_stride_nr(dps, nr));
-}
 
 /* struct btrfs_inode_ref */
 BTRFS_SETGET_FUNCS(inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
@@ -355,6 +322,38 @@ BTRFS_SETGET_FUNCS(timespec_nsec, struct btrfs_timespec, nsec, 32);
 BTRFS_SETGET_STACK_FUNCS(stack_timespec_sec, struct btrfs_timespec, sec, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_timespec_nsec, struct btrfs_timespec, nsec, 32);
 
+BTRFS_SETGET_FUNCS(stripe_extent_encoding, struct btrfs_stripe_extent, encoding, 8);
+BTRFS_SETGET_FUNCS(raid_stride_devid, struct btrfs_raid_stride, devid, 64);
+BTRFS_SETGET_FUNCS(raid_stride_offset, struct btrfs_raid_stride, offset, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_stripe_extent_encoding,
+			 struct btrfs_stripe_extent, encoding, 8);
+BTRFS_SETGET_STACK_FUNCS(stack_raid_stride_devid, struct btrfs_raid_stride, devid, 64);
+
+static inline struct btrfs_raid_stride *btrfs_raid_stride_nr(
+						 struct btrfs_stripe_extent *dps,
+						 int nr)
+{
+	unsigned long offset = (unsigned long)dps;
+
+	offset += offsetof(struct btrfs_stripe_extent, strides);
+	offset += nr * sizeof(struct btrfs_raid_stride);
+	return (struct btrfs_raid_stride *)offset;
+}
+
+static inline u64 btrfs_raid_stride_devid_nr(struct extent_buffer *eb,
+					     struct btrfs_stripe_extent *dps,
+					     int nr)
+{
+	return btrfs_raid_stride_devid(eb, btrfs_raid_stride_nr(dps, nr));
+}
+
+static inline u64 btrfs_raid_stride_offset_nr(struct extent_buffer *eb,
+					      struct btrfs_stripe_extent *dps,
+					      int nr)
+{
+	return btrfs_raid_stride_offset(eb, btrfs_raid_stride_nr(dps, nr));
+}
+
 /* struct btrfs_dev_extent */
 BTRFS_SETGET_FUNCS(dev_extent_chunk_tree, struct btrfs_dev_extent, chunk_tree, 64);
 BTRFS_SETGET_FUNCS(dev_extent_chunk_objectid, struct btrfs_dev_extent,
@@ -399,6 +398,9 @@ BTRFS_SETGET_FUNCS(extent_data_ref_count, struct btrfs_extent_data_ref, count, 3
 
 BTRFS_SETGET_FUNCS(shared_data_ref_count, struct btrfs_shared_data_ref, count, 32);
 
+BTRFS_SETGET_FUNCS(extent_owner_ref_root_id, struct btrfs_extent_owner_ref,
+		   root_id, 64);
+
 BTRFS_SETGET_FUNCS(extent_inline_ref_type, struct btrfs_extent_inline_ref,
 		   type, 8);
 BTRFS_SETGET_FUNCS(extent_inline_ref_offset, struct btrfs_extent_inline_ref,
@@ -419,8 +421,6 @@ static inline u32 btrfs_extent_inline_ref_size(int type)
 		return sizeof(struct btrfs_extent_inline_ref);
 	return 0;
 }
-
-BTRFS_SETGET_FUNCS(extent_owner_ref_root_id, struct btrfs_extent_owner_ref, root_id, 64);
 
 /* struct btrfs_node */
 BTRFS_SETGET_FUNCS(key_blockptr, struct btrfs_key_ptr, blockptr, 64);

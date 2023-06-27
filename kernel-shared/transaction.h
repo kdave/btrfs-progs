@@ -34,6 +34,7 @@ struct btrfs_root;
 
 enum btrfs_trans_state {
 	TRANS_STATE_RUNNING,
+	TRANS_STATE_COMMIT_PREP,
 	TRANS_STATE_COMMIT_START,
 	TRANS_STATE_COMMIT_DOING,
 	TRANS_STATE_UNBLOCKED,
@@ -113,9 +114,6 @@ struct btrfs_transaction {
 	 */
 	atomic_t pending_ordered;
 	wait_queue_head_t pending_wait;
-
-	spinlock_t releasing_ebs_lock;
-	struct list_head releasing_ebs;
 };
 
 enum {
@@ -175,7 +173,7 @@ struct btrfs_pending_snapshot {
 	struct list_head list;
 };
 
-bool __cold abort_should_print_stack(int errno);
+bool __cold abort_should_print_stack(int error);
 
 void btrfs_abort_transaction(struct btrfs_trans_handle *trans, int error);
 int btrfs_end_transaction(struct btrfs_trans_handle *trans);
@@ -215,7 +213,7 @@ void btrfs_add_dropped_root(struct btrfs_trans_handle *trans,
 void btrfs_trans_release_chunk_metadata(struct btrfs_trans_handle *trans);
 void __cold __btrfs_abort_transaction(struct btrfs_trans_handle *trans,
 				      const char *function,
-				      unsigned int line, int errno, bool first_hit);
+				      unsigned int line, int error, bool first_hit);
 
 int __init btrfs_transaction_init(void);
 void __cold btrfs_transaction_exit(void);
