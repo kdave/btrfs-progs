@@ -27,6 +27,7 @@
 #include "common/messages.h"
 #include "common/internal.h"
 #include "common/utils.h"
+#include "common/inject-error.h"
 #include "tune/tune.h"
 
 static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_csum_type)
@@ -283,6 +284,8 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 		if (converted_bytes >= CSUM_CHANGE_BYTES_THRESHOLD) {
 			converted_bytes = 0;
 			ret = btrfs_commit_transaction(trans, csum_root);
+			if (inject_error(0xfc35ae54))
+				return -EUCLEAN;
 			if (ret < 0)
 				goto out;
 			trans = btrfs_start_transaction(csum_root,
@@ -296,6 +299,8 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 		cur = start + len;
 	}
 	ret = btrfs_commit_transaction(trans, csum_root);
+	if (inject_error(0x4de02239))
+		return -EUCLEAN;
 out:
 	free(csum_buffer);
 	return ret;
@@ -331,6 +336,8 @@ static int generate_new_data_csums(struct btrfs_fs_info *fs_info, u16 new_csum_t
 			      btrfs_super_flags(fs_info->super_copy) |
 			      BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM);
 	ret = btrfs_commit_transaction(trans, tree_root);
+	if (inject_error(0x3964edd9))
+		return -EUCLEAN;
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to commit the initial transaction: %m");
@@ -394,6 +401,8 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 	if (ret < 0)
 		btrfs_abort_transaction(trans, ret);
 	ret = btrfs_commit_transaction(trans, csum_root);
+	if (inject_error(0x55fb4d13))
+		return -EUCLEAN;
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to commit transaction after deleting the old data csums: %m");
@@ -477,6 +486,8 @@ out:
 	super_flags |= BTRFS_SUPER_FLAG_CHANGING_META_CSUM;
 	btrfs_set_super_flags(fs_info->super_copy, super_flags);
 	ret = btrfs_commit_transaction(trans, csum_root);
+	if (inject_error(0x2628b3fe))
+		return -EUCLEAN;
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to commit transaction after changing data csum objectids: %m");
@@ -657,6 +668,8 @@ out:
 		}
 		btrfs_release_path(&path);
 		ret = btrfs_commit_transaction(trans, tree_root);
+		if (inject_error(0x9f0ca518))
+			return -EUCLEAN;
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to finalize the csum change: %m");
