@@ -41,7 +41,8 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		if (ret == 0 && errno == 0)
 			return 0;
 
-		error("failed to read the superblock on %s at %llu", filename, sb_bytenr);
+		error("failed to read the superblock on %s at %llu read %llu/%d bytes",
+		       filename, sb_bytenr, ret, BTRFS_SUPER_INFO_SIZE);
 		error("error = '%m', errno = %d", errno);
 		return 1;
 	}
