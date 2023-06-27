@@ -84,7 +84,6 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 	char *filename;
 	int fd = -1;
 	int i;
-	int ret = 0;
 	u64 arg;
 	u64 sb_bytenr = btrfs_sb_offset(0);
 
@@ -156,8 +155,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 		fd = open(filename, O_RDONLY);
 		if (fd < 0) {
 			error("cannot open %s: %m", filename);
-			ret = 1;
-			goto out;
+			return 1;
 		}
 
 		if (all) {
@@ -168,8 +166,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 				if (load_and_dump_sb(filename, fd,
 						sb_bytenr, full, force)) {
 					close(fd);
-					ret = 1;
-					goto out;
+					return 1;
 				}
 
 				putchar('\n');
@@ -177,15 +174,13 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 		} else {
 			if (load_and_dump_sb(filename, fd, sb_bytenr, full, force)) {
 				close(fd);
-				ret = 1;
-				goto out;
+				return 1;
 			}
 			putchar('\n');
 		}
 		close(fd);
 	}
 
-out:
-	return ret;
+	return 0;
 }
 DEFINE_SIMPLE_COMMAND(inspect_dump_super, "dump-super");
