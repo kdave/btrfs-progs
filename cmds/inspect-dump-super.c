@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <getopt.h>
+#include <sys/stat.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
@@ -33,7 +34,26 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		int force)
 {
 	struct btrfs_super_block sb;
+	struct stat st;
 	u64 ret;
+
+	if (fstat(fd, &st) < 0) {
+		error("unable to stat %s to when loading superblock: %m", filename);
+		return 1;
+	}
+
+	if (S_ISBLK(st.st_mode) || S_ISREG(st.st_mode)) {
+		off_t last_byte;
+
+		last_byte = lseek(fd, 0, SEEK_END);
+		if (last_byte == -1) {
+			error("cannot read end of file %s: %m", filename);
+			return 1;
+		}
+
+		if (sb_bytenr > last_byte)
+			return 0;
+	}
 
 	ret = sbread(fd, &sb, sb_bytenr);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
@@ -54,6 +74,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		return 1;
 	}
 	btrfs_print_superblock(&sb, full);
+	putchar('\n');
 	return 0;
 }
 
@@ -168,15 +189,12 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 					close(fd);
 					return 1;
 				}
-
-				putchar('\n');
 			}
 		} else {
 			if (load_and_dump_sb(filename, fd, sb_bytenr, full, force)) {
 				close(fd);
 				return 1;
 			}
-			putchar('\n');
 		}
 		close(fd);
 	}
