@@ -1,0 +1,60 @@
+#!/usr/bin/python3
+
+import random
+import re
+import subprocess
+import sys
+
+found = {}
+
+def do_new_cookie() -> str:
+    global found
+    cookie = hex(random.randrange(1, 2**32))
+    while cookie in found:
+        cookie = hex(random.randrange(1, 2**32))
+    return cookie
+
+pipe = subprocess.Popen("git grep -n 'inject_error(0x'", shell=True,
+    stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True);
+
+ch_stdout = pipe.stdout
+ch_lines = [str(x.decode()).strip('\n') for x in ch_stdout.readlines()]
+
+#print("STDOUT", "\n".join(ch_lines))
+
+for l in ch_lines:
+    m = re.search(r'^([^:]+):(\d+):.*inject_error\((0x[0-9a-fA-F]+)\)', l)
+    if m:
+        fn = m.group(1)
+        line = m.group(2)
+        c = m.group(3)
+        #print(f"MATCH: {c}")
+        if not c in found:
+            found[c] = fn + ":" + line
+        else:
+            print(f"ERROR: cookie {c} in {fn}:{line} not uniqe, please fix it first")
+
+if len(sys.argv) == 1:
+    cookie = do_new_cookie()
+    print(cookie)
+
+if len(sys.argv) == 2:
+    cmd = sys.argv[1]
+    if cmd == 'new':
+        cookie = do_new_cookie()
+        print(cookie)
+    elif cmd == 'known':
+        for k, v in found.items():
+            print(f"{k}\t{v}")
+    else:
+        print(f"ERROR: unknown command {cmd} or wrong number of arguments")
+
+if len(sys.argv) == 3:
+    cmd = sys.argv[1]
+    if cmd == 'file':
+        regex = sys.argv[2]
+        for k, v in found.items():
+            if re.search(r'' + regex, v):
+                print(f"{k}\t{v}")
+    else:
+        print(f"ERROR: unknown command {cmd} or wrong number of arguments")
