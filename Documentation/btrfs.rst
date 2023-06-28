@@ -13,13 +13,13 @@ The :command:`btrfs` utility is a toolbox for managing btrfs filesystems.  There
 command groups to work with subvolumes, devices, for whole filesystem or other
 specific actions. See section :ref:`COMMANDS<man-btrfs8-commands>`.
 
-There are also standalone tools for some tasks like :command:`btrfs-convert` or
-:command:`btrfstune` that were separate historically and/or haven't been merged to the
+There are also standalone tools for some tasks like :doc:`btrfs-convert` or
+:doc:`btrfstune` that were separate historically and/or haven't been merged to the
 main utility. See section :ref:`STANDALONE TOOLS<man-btrfs8-standalone-tools>`
 for more details.
 
 For other topics (mount options, etc) please refer to the separate manual
-page :doc:`btrfs(5)<btrfs-man5>`.
+page :doc:`btrfs-man5`.
 
 COMMAND SYNTAX
 --------------
@@ -53,13 +53,13 @@ of the output.
         if supported by the command, print subcommand output in that format (text, json)
 
 -v|--verbose
-        increase verbosity of the subcommand\n"
+        increase verbosity of the subcommand
 
 -q|--quiet
-        print only errors\n"
+        print only errors
 
 --log <level>
-        set log level (default, info, verbose, debug, quiet)\n"
+        set log level (default, info, verbose, debug, quiet)
 
 The remaining options are relevant only for the main tool:
 
@@ -76,63 +76,63 @@ COMMANDS
 
 balance
 	Balance btrfs filesystem chunks across single or several devices.
-	See :doc:`btrfs-balance(8)<btrfs-balance>` for details.
+	See :doc:`btrfs-balance` for details.
 
 check
 	Do off-line check on a btrfs filesystem.
-	See :doc:`btrfs-check(8)<btrfs-check>` for details.
+	See :doc:`btrfs-check` for details.
 
 device
 	Manage devices managed by btrfs, including add/delete/scan and so
-	on.  See :doc:`btrfs-device(8)<btrfs-device>` for details.
+	on.  See :doc:`btrfs-device` for details.
 
 filesystem
 	Manage a btrfs filesystem, including label setting/sync and so on.
-        See :doc:`btrfs-filesystem(8)<btrfs-filesystem>` for details.
+        See :doc:`btrfs-filesystem` for details.
 
 inspect-internal
 	Debug tools for developers/hackers.
-	See :doc:`btrfs-inspect-internal(8)<btrfs-inspect-internal>` for details.
+	See :doc:`btrfs-inspect-internal` for details.
 
 property
 	Get/set a property from/to a btrfs object.
-	See :doc:`btrfs-property(8)<btrfs-property>` for details.
+	See :doc:`btrfs-property` for details.
 
 qgroup
 	Manage quota group(qgroup) for btrfs filesystem.
-	See :doc:`btrfs-qgroup(8)<btrfs-qgroup>` for details.
+	See :doc:`btrfs-qgroup` for details.
 
 quota
 	Manage quota on btrfs filesystem like enabling/rescan and etc.
-	See :doc:`btrfs-quota(8)<btrfs-quota>` and :doc:`btrfs-qgroup(8)<btrfs-qgroup>` for details.
+	See :doc:`btrfs-quota` and :doc:`btrfs-qgroup` for details.
 
 receive
 	Receive subvolume data from stdin/file for restore and etc.
-	See :doc:`btrfs-receive(8)<btrfs-receive>` for details.
+	See :doc:`btrfs-receive` for details.
 
 replace
 	Replace btrfs devices.
-	See :doc:`btrfs-replace(8)<btrfs-replace>` for details.
+	See :doc:`btrfs-replace` for details.
 
 rescue
 	Try to rescue damaged btrfs filesystem.
-	See :doc:`btrfs-rescue(8)<btrfs-rescue>` for details.
+	See :doc:`btrfs-rescue` for details.
 
 restore
 	Try to restore files from a damaged btrfs filesystem.
-	See :doc:`btrfs-restore(8)<btrfs-restore>` for details.
+	See :doc:`btrfs-restore` for details.
 
 scrub
 	Scrub a btrfs filesystem.
-	See :doc:`btrfs-scrub(8)<btrfs-scrub>` for details.
+	See :doc:`btrfs-scrub` for details.
 
 send
 	Send subvolume data to stdout/file for backup and etc.
-	See :doc:`btrfs-send(8)<btrfs-send>` for details.
+	See :doc:`btrfs-send` for details.
 
 subvolume
 	Create/delete/list/manage btrfs subvolume.
-	See :doc:`btrfs-subvolume(8)<btrfs-subvolume>` for details.
+	See :doc:`btrfs-subvolume` for details.
 
 .. _man-btrfs8-standalone-tools:
 
@@ -175,22 +175,22 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs(5)<btrfs-man5>`,
-:doc:`btrfs-balance(8)<btrfs-balance>`,
-:doc:`btrfs-check(8)<btrfs-check>`,
-:doc:`btrfs-convert(8)<btrfs-convert>`,
-:doc:`btrfs-device(8)<btrfs-device>`,
-:doc:`btrfs-filesystem(8)<btrfs-filesystem>`,
-:doc:`btrfs-inspect-internal(8)<btrfs-inspect-internal>`,
-:doc:`btrfs-property(8)<btrfs-property>`,
-:doc:`btrfs-qgroup(8)<btrfs-qgroup>`,
-:doc:`btrfs-quota(8)<btrfs-quota>`,
-:doc:`btrfs-receive(8)<btrfs-receive>`,
-:doc:`btrfs-replace(8)<btrfs-replace>`,
-:doc:`btrfs-rescue(8)<btrfs-rescue>`,
-:doc:`btrfs-restore(8)<btrfs-restore>`,
-:doc:`btrfs-scrub(8)<btrfs-scrub>`,
-:doc:`btrfs-send(8)<btrfs-send>`,
-:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
-:doc:`btrfstune(8)<btrfstune>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-man5`,
+:doc:`btrfs-balance`,
+:doc:`btrfs-check`,
+:doc:`btrfs-convert`,
+:doc:`btrfs-device`,
+:doc:`btrfs-filesystem`,
+:doc:`btrfs-inspect-internal`,
+:doc:`btrfs-property`,
+:doc:`btrfs-qgroup`,
+:doc:`btrfs-quota`,
+:doc:`btrfs-receive`,
+:doc:`btrfs-replace`,
+:doc:`btrfs-rescue`,
+:doc:`btrfs-restore`,
+:doc:`btrfs-scrub`,
+:doc:`btrfs-send`,
+:doc:`btrfs-subvolume`,
+:doc:`btrfstune`,
+:doc:`mkfs.btrfs`

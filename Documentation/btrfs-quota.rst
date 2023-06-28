@@ -11,7 +11,7 @@ DESCRIPTION
 
 The commands under :command:`btrfs quota` are used to affect the global status of quotas
 of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
-:doc:`btrfs-qgroup(8)<btrfs-qgroup>`.
+:doc:`btrfs-qgroup`.
 
 .. note::
         Qgroups are different than the traditional user quotas and designed
@@ -77,6 +77,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-qgroup(8)<btrfs-qgroup>`,
-:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-qgroup`,
+:doc:`btrfs-subvolume`,
+:doc:`mkfs.btrfs`

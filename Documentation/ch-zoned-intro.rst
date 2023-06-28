@@ -92,7 +92,7 @@ testing. There are some quirks setting up the devices. The module must be
 loaded with *nr_devices=0* or the numbering of device nodes will be offset. The
 *configfs* must be mounted at */sys/kernel/config* and the administration of
 the null_blk devices is done in */sys/kernel/config/nullb*. The device nodes
-are named like */dev/nullb0* and are numbered sequentially. NOTE: the device
+are named like :file:`/dev/nullb0` and are numbered sequentially. NOTE: the device
 name may be different than the named directory in sysfs!
 
 Setup:
@@ -117,7 +117,7 @@ example taking defaults:
         echo 256 > zone_size
         echo 1 > power
 
-This will create a device */dev/nullb0* and the value of file *index* will
+This will create a device :file:`/dev/nullb0` and the value of file *index* will
 match the ending number of the device node.
 
 Remove the device:
@@ -126,7 +126,7 @@ Remove the device:
 
    rmdir /sys/kernel/config/nullb/mydev
 
-Then continue with *mkfs.btrfs /dev/nullb0*, the zoned mode is auto-detected.
+Then continue with :command:`mkfs.btrfs /dev/nullb0`, the zoned mode is auto-detected.
 
 For convenience, there's a script wrapping the basic null_blk management operations
 https://github.com/kdave/nullb.git, the above commands become:

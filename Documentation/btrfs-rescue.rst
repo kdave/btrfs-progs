@@ -119,6 +119,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-check(8)<btrfs-check>`,
-:doc:`btrfs-scrub(8)<btrfs-scrub>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-check`,
+:doc:`btrfs-scrub`,
+:doc:`mkfs.btrfs`

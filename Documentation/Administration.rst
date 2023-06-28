@@ -1,7 +1,7 @@
 Administration
 ==============
 
-The main administration tool for BTRFS filesystems is :doc:`btrfs(8)<btrfs>`.
+The main administration tool for BTRFS filesystems is :doc:`btrfs`.
 Please refer to the manual pages of the subcommands for further documentation.
 
 Mount options

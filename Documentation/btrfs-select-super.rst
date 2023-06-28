@@ -43,4 +43,4 @@ OPTIONS
 SEE ALSO
 --------
 
-:doc:`btrfs(8)<btrfs>`
+:doc:`btrfs`

@@ -18,7 +18,7 @@ filesystem was not unmounted cleanly and the log needs to be replayed before
 mount. This is not needed for BTRFS. You should set fs_passno to 0.
 
 If you wish to check the consistency of a BTRFS filesystem or repair a damaged
-filesystem, see :doc:`btrfs-check(8)<btrfs-check>`. By default filesystem consistency is checked,
+filesystem, see :doc:`btrfs-check`. By default filesystem consistency is checked,
 the repair mode is enabled via the *--repair* option (use with care!).
 
 OPTIONS
@@ -47,6 +47,6 @@ FILES
 SEE ALSO
 --------
 
-:doc:`btrfs(8)<btrfs>`,
+:doc:`btrfs`,
 ``fsck(8)``,
 ``fstab(5)``

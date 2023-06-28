@@ -45,7 +45,7 @@ author is also recorded in git log history.
 
 Then, each maintainer that processed the patch adds his sob line.
 
-*Reference:* Section 11 of SubmittingPatches
+*Reference:* `Section of SubmittingPatches <https://docs.kernel.org/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin>`__.
 
 **Do**: Always send a patch with at least one such line with your name and email.
 If more people contributed to the patch, add their names and addresses too.
@@ -60,7 +60,7 @@ The patch has been reviewed and the singed person is putting his hand into
 fire. If there's a bug found in this patch, the person is usually a good
 candidate for a CC: of the bugreport.
 
-*Reference:* Section 13 of SubmittingPatches
+*Reference:* `Section of SubmittingPatches <https://docs.kernel.org/process/submitting-patches.html#using-reported-by-tested-by-reviewed-by-suggested-by-and-fixes>`__.
 
 **Do**: talk to the maintainer if he forgot to add this tag to the final patch.
 Reviews do take time and the patches land in various branches early after
@@ -83,7 +83,7 @@ Tested-by:
 Indicates that the patch has been successfully tested in some environment,
 usually follows a proposed fix and closes the feedback loop.
 
-*Reference:* Section 13 of SubmittingPatches
+*Reference:* `Section of SubmittingPatches <https://docs.kernel.org/process/submitting-patches.html#using-reported-by-tested-by-reviewed-by-suggested-by-and-fixes>`_.
 
 **Do**: or rather you're encouraged to add this tag to a patch that you've
 tested.

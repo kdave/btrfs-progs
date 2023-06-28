@@ -1,5 +1,5 @@
-btrfs-man5(5)
-=============
+btrfs(5)
+========
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ tools.  Currently covers:
 #. RAID56 status and recommended practices
 #. storage model, hardware considerations
 
-.. _man-btrfs5-mount-option:
+.. _man-btrfs5-mount-options:
 
 MOUNT OPTIONS
 -------------
@@ -43,26 +43,26 @@ There are several classes and the respective tools to manage the features:
 
 at mkfs time only
         This is namely for core structures, like the b-tree nodesize or checksum
-        algorithm, see :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more details.
+        algorithm, see :doc:`mkfs.btrfs` for more details.
 
 after mkfs, on an unmounted filesystem
         Features that may optimize internal structures or add new structures to support
-        new functionality, see :doc:`btrfstune(8)<btrfstune>`. The command
+        new functionality, see :doc:`btrfstune`. The command
         :command:`btrfs inspect-internal dump-super /dev/sdx`
         will dump a superblock, you can map the value of
         *incompat_flags* to the features listed below
 
 after mkfs, on a mounted filesystem
         The features of a filesystem (with a given UUID) are listed in
-        */sys/fs/btrfs/UUID/features/*, one file per feature. The status is stored
+        :file:`/sys/fs/btrfs/UUID/features/`, one file per feature. The status is stored
         inside the file. The value *1* is for enabled and active, while *0* means the
         feature was enabled at mount time but turned off afterwards.
 
         Whether a particular feature can be turned on a mounted filesystem can be found
-        in the directory */sys/fs/btrfs/features/*, one file per feature. The value *1*
+        in the directory :file:`/sys/fs/btrfs/features/`, one file per feature. The value *1*
         means the feature can be enabled.
 
-List of features (see also :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section
+List of features (see also :doc:`mkfs.btrfs` section
 :ref:`FILESYSTEM FEATURES<man-mkfs-filesystem-features>`):
 
 big_metadata
@@ -111,7 +111,7 @@ metadata_uuid
 
         the main filesystem UUID is the metadata_uuid, which stores the new UUID only
         in the superblock while all metadata blocks still have the UUID set at mkfs
-        time, see :doc:`btrfstune(8)<btrfstune>` for more
+        time, see :doc:`btrfstune` for more
 
 mixed_backref
         (since: 2.6.31)
@@ -167,7 +167,7 @@ supported_checksums
 
         list of checksum algorithms supported by the kernel module, the respective
         modules or built-in implementing the algorithms need to be present to mount
-        the filesystem, see *CHECKSUM ALGORITHMS*
+        the filesystem, see section :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`.
 
 supported_sectorsizes
         (since: 5.13)
@@ -179,14 +179,14 @@ supported_rescue_options
         (since: 5.11)
 
         list of values for the mount option *rescue* that are supported by the running
-        kernel, see :doc:`btrfs(5)<btrfs-man5>`
+        kernel, see :doc:`btrfs-man5`
 
 zoned
         (since: 5.12)
 
         zoned mode is allocation/write friendly to host-managed zoned devices,
         allocation space is partitioned into fixed-size zones that must be updated
-        sequentially, see *ZONED MODE*
+        sequentially, see section :ref:`ZONED MODE<man-btrfs5-zoned-mode>`
 
 SWAPFILE SUPPORT
 ----------------
@@ -220,7 +220,7 @@ in parallel. Attempt to start one while another is running will fail (see
 exceptions below).
 
 Since kernel 5.10 the currently running operation can be obtained from
-*/sys/fs/UUID/exclusive_operation* with following values and operations:
+:file:`/sys/fs/UUID/exclusive_operation` with following values and operations:
 
 * balance
 * balance paused (since 5.17)
@@ -264,8 +264,8 @@ ZONED MODE
 CONTROL DEVICE
 --------------
 
-There's a character special device */dev/btrfs-control* with major and minor
-numbers 10 and 234 (the device can be found under the 'misc' category).
+There's a character special device :file:`/dev/btrfs-control` with major and minor
+numbers 10 and 234 (the device can be found under the *misc* category).
 
 .. code-block:: none
 
@@ -279,7 +279,7 @@ filesystem module:
   automatically) and register them with the kernel module
 * similar to scan, but also wait until the device scanning process is finished
   for a given filesystem
-* get the supported features (can be also found under */sys/fs/btrfs/features*)
+* get the supported features (can be also found under :file:`/sys/fs/btrfs/features`)
 
 The device is created when btrfs is initialized, either as a module or a
 built-in functionality and makes sense only in connection with that. Running
@@ -311,7 +311,7 @@ FILESYSTEM WITH MULTIPLE PROFILES
 
 It is possible that a btrfs filesystem contains multiple block group profiles
 of the same type.  This could happen when a profile conversion using balance
-filters is interrupted (see :doc:`btrfs-balance(8)<btrfs-balance>`).  Some
+filters is interrupted (see :doc:`btrfs-balance`).  Some
 :command:`btrfs` commands perform
 a test to detect this kind of condition and print a warning like this:
 
@@ -441,10 +441,10 @@ SEE ALSO
 --------
 
 ``acl(5)``,
-:doc:`btrfs(8)<btrfs>`,
+:doc:`btrfs`,
 ``chattr(1)``,
 ``fstrim(8)``,
 ``ioctl(2)``,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`mkfs.btrfs`,
 ``mount(8)``,
 ``swapon(8)``

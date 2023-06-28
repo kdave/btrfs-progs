@@ -59,7 +59,7 @@ Please note that the UUID returned by the *mkswap* utility identifies the swap
 "filesystem" and because it's stored in a file, it's not generally visible and
 usable as an identifier unlike if it was on a block device.
 
-Once activated the file will appear in */proc/swaps*:
+Once activated the file will appear in :file:`/proc/swaps`:
 
 .. code-block:: none
 
@@ -103,9 +103,10 @@ the physical can still map to one or more device-specific physical block
 addresses. It's the device-specific physical offset that is suitable as resume
 offset.
 
-Since version 6.1 there's a command :command:`btrfs inspect-internal map-swapfile` that will
-print the device physical offset and the adjusted value for */sys/power/resume_offset*.
-Note that the value is divided by page size, i.e. it's not the offset itself.
+Since version 6.1 there's a command :ref:`btrfs inspect-internal map-swapfile<man-inspect-map-swapfile>`
+that will print the device physical offset and the adjusted value for
+:file:`/sys/power/resume_offset`.  Note that the value is divided by page size, i.e.
+it's not the offset itself.
 
 .. code-block:: bash
 
@@ -121,7 +122,7 @@ For scripting and convenience the option *-r* will print just the offset:
         # btrfs inspect-internal map-swapfile -r swapfile
         198122980
 
-The command *map-swapfile* also verifies all the requirements, i.e. no holes,
+The command :command:`map-swapfile` also verifies all the requirements, i.e. no holes,
 single device, etc.
 
 

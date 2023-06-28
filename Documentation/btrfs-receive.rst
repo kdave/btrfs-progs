@@ -53,13 +53,13 @@ A subvolume is made read-only after the receiving process finishes successfully 
 -m <ROOTMOUNT>
         the root mount point of the destination filesystem
 
-        By default the mount point is searched in */proc/self/mounts*.
-        If */proc* is not accessible, e.g. in a chroot environment, use this option to
+        By default the mount point is searched in :file:/proc/self/mounts`.
+        If :file:`/proc` is not accessible, e.g. in a chroot environment, use this option to
         tell us where this filesystem is mounted.
 
 --force-decompress
         if the stream contains compressed data (see *--compressed-data* in
-        :doc:`btrfs-send(8)<btrfs-send>`), always decompress it instead of writing it with
+        :doc:`btrfs-send`), always decompress it instead of writing it with
         encoded I/O
 
 --dump
@@ -117,5 +117,5 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-send(8)<btrfs-send>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-send`,
+:doc:`mkfs.btrfs`

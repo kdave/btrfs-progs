@@ -12,7 +12,7 @@ on the fly.
 On the other hand, the traditional approach has only a poor solution to
 restrict directories.
 At installation time, the harddisk can be partitioned so that every directory
-(e.g. /usr, /var/, ...) that needs a limit gets its own partition.  The obvious
+(e.g. :file:`/usr`, :file:`/var`, ...) that needs a limit gets its own partition.  The obvious
 problem is that those limits cannot be changed without a reinstallation.  The
 btrfs subvolume feature builds a bridge.  Subvolumes correspond in many ways to
 partitions, as every subvolume looks like its own filesystem.  With subvolume
@@ -47,7 +47,7 @@ Subvolume quota groups
 
 The basic notion of the Subvolume Quota feature is the quota group, short
 qgroup.  Qgroups are notated as *level/id*, e.g.  the qgroup 3/2 is a qgroup of
-level 3. For level 0, the leading '0/' can be omitted.
+level 3. For level 0, the leading *0/* can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
 is the qgroup for the root subvolume.
@@ -142,55 +142,49 @@ own way how to integrate qgroups.
 Single-user machine
 """""""""""""""""""
 
-``Replacement for partitions``
-
+**Replacement for partitions.**
 The simplest use case is to use qgroups as simple replacement for partitions.
-Btrfs takes the disk as a whole, and /, /usr, /var, etc. are created as
+Btrfs takes the disk as a whole, and :file:`/`, :file:`/usr`, :file:`/var`, etc. are created as
 subvolumes.  As each subvolume gets it own qgroup automatically, they can
 simply be restricted.  No hierarchy is needed for that.
 
-``Track usage of snapshots``
-
+**Track usage of snapshots.**
 When a snapshot is taken, a qgroup for it will automatically be created with
-the correct values.  'Referenced' will show how much is in it, possibly shared
-with other subvolumes.  'Exclusive' will be the amount of space that gets freed
+the correct values.  *Referenced* will show how much is in it, possibly shared
+with other subvolumes.  *Exclusive* will be the amount of space that gets freed
 when the subvolume is deleted.
 
 Multi-user machine
 """"""""""""""""""
 
-``Restricting homes``
-
+**Restricting homes.**
 When you have several users on a machine, with home directories probably under
-/home, you might want to restrict /home as a whole, while restricting every
+:file:`/home`, you might want to restrict :file:`/home` as a whole, while restricting every
 user to an individual limit as well.  This is easily accomplished by creating a
-qgroup for /home , e.g. 1/1, and assigning all user subvolumes to it.
+qgroup for :file:`/home` , e.g. 1/1, and assigning all user subvolumes to it.
 Restricting this qgroup will limit /home, while every user subvolume can get
 its own (lower) limit.
 
-``Accounting snapshots to the user``
-
+**Accounting snapshots to the user.**
 Let's say the user is allowed to create snapshots via some mechanism.  It would
 only be fair to account space used by the snapshots to the user.  This does not
 mean the user doubles his usage as soon as he takes a snapshot.  Of course,
 files that are present in his home and the snapshot should only be accounted
 once.  This can be accomplished by creating a qgroup for each user, say
-'1/UID'.  The user home and all snapshots are assigned to this qgroup.
+*1/UID*.  The user home and all snapshots are assigned to this qgroup.
 Limiting it will extend the limit to all snapshots, counting files only once.
-To limit /home as a whole, a higher level group 2/1 replacing 1/1 from the
+To limit :file:`/home` as a whole, a higher level group 2/1 replacing 1/1 from the
 previous example is needed, with all user qgroups assigned to it.
 
-``Do not account snapshots``
-
+**Do not account snapshots.**
 On the other hand, when the snapshots get created automatically, the user has
 no chance to control them, so the space used by them should not be accounted to
 him.  This is already the case when creating snapshots in the example from
 the previous section.
 
-``Snapshots for backup purposes``
-
+**Snapshots for backup purposes.**
 This scenario is a mixture of the previous two.  The user can create snapshots,
 but some snapshots for backup purposes are being created by the system.  The
 user's snapshots should be accounted to the user, not the system.  The solution
-is similar to the one from section 'Accounting snapshots to the user', but do
+is similar to the one from section *Accounting snapshots to the user*, but do
 not assign system snapshots to user's qgroup.

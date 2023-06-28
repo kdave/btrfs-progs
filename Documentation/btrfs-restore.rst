@@ -14,7 +14,7 @@ restore them into *path* or just list the subvolume tree roots. The filesystem
 image is not modified.
 
 If the filesystem is damaged and cannot be repaired by the other tools
-(:doc:`btrfs-check(8)<btrfs-check>` or :doc:`btrfs-rescue(8)<btrfs-rescue>`),
+(:doc:`btrfs-check` or :doc:`btrfs-rescue`),
 :command:`btrfs restore` could be used to
 retrieve file data, as far as the metadata are readable. The checks done by
 restore are less strict and the process is usually able to get far enough to
@@ -27,12 +27,6 @@ options to extend the set of restored metadata.
 
 For images with damaged tree structures, there are several options to point the
 process to some spare copy.
-
-.. note::
-        It is recommended to read the following btrfs wiki page if your data is
-        not salvaged with default option:
-
-        https://btrfs.wiki.kernel.org/index.php/Restore
 
 OPTIONS
 -------
@@ -112,6 +106,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-check(8)<btrfs-check>`,
-:doc:`btrfs-rescue(8)<btrfs-rescue>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-check`,
+:doc:`btrfs-rescue`,
+:doc:`mkfs.btrfs`

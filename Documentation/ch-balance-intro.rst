@@ -1,6 +1,6 @@
 The primary purpose of the balance feature is to spread block groups across
 all devices so they match constraints defined by the respective profiles. See
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>` section :ref:`PROFILES<man-mkfs-profiles>`
+:doc:`mkfs.btrfs` section :ref:`PROFILES<man-mkfs-profiles>`
 for more details.
 The scope of the balancing process can be further tuned by use of filters that
 can select the block groups to process. Balance works only on a mounted

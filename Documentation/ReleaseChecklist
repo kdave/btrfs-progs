@@ -32,6 +32,4 @@ Release:
 Post-release:
 
 * write and send announcement mail to mailinglist
-* update wiki://Main_page#News
-* update wiki://Changelog#btrfs-progs
 * update title on IRC

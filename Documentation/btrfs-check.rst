@@ -12,7 +12,7 @@ DESCRIPTION
 The filesystem checker is used to verify structural integrity of a filesystem
 and attempt to repair it if requested.  It is recommended to unmount the
 filesystem prior to running the check, but it is possible to start checking a
-mounted filesystem (see *--force*).
+mounted filesystem (see :ref:`--force<man-check-option-force>`).
 
 By default, :command:`btrfs check` will not modify the device but you can reaffirm that
 by the option *--readonly*.
@@ -128,6 +128,8 @@ DANGEROUS OPTIONS
                 *lowmem* mode does not work with *--repair* yet, and is still considered
                 experimental.
 
+.. _man-check-option-force:
+
 --force
         allow work on a mounted filesystem and skip mount checks. Note that
         this should work fine on a quiescent or read-only mounted filesystem
@@ -157,6 +159,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
-:doc:`btrfs-scrub(8)<btrfs-scrub>`,
-:doc:`btrfs-rescue(8)<btrfs-rescue>`
+:doc:`mkfs.btrfs`,
+:doc:`btrfs-scrub`,
+:doc:`btrfs-rescue`

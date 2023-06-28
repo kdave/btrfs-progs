@@ -9,7 +9,7 @@ Adding a new ioctl, extending an existing one
 
 -  add code to `strace <https://github.com/strace/strace>`__ so the ioctl calls
    are parsed into a human readable form. Most of the ioctls are already
-   `implemented <https://github.com/strace/strace/blob/master/btrfs.c>`__ and
+   `implemented <https://github.com/strace/strace/blob/master/src/btrfs.c>`__ and
    can be used a reference.
 
 Tracepoints
@@ -134,8 +134,8 @@ helpers (e.g. memory allocation), you can use something like
 
 Resources:
 
--  eBPF
--  BCC tools
+-  `eBPF <https://ebpf.io/>`_
+-  `BCC tools <https://github.com/iovisor/bcc>`_
 
 Warnings and issues found by static checkers and similar tools
 --------------------------------------------------------------
@@ -206,7 +206,7 @@ Patches
     -  steps to reproduce a bug (that will also get turned to a proper fstests
        case)
     -  sample output before/after if it could have impact on userspace
-    -  *pahole* output if structure is being reorganized and optimized
+    -  `pahole <https://linux.die.net/man/1/pahole>`_ output if structure is being reorganized and optimized
 
 Function declarations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -410,13 +410,16 @@ Please refer to the option documentation for further details.
 BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Not a bug. Increase the config value of LOCKDEP_CHAINS_BITS, default is
+Not a bug. The lockdep structures can get in some cases full and cannot
+properly track locks anymore. There's only a workaround to increase the kernel
+config value of CONFIG_LOCKDEP_CHAINS_BITS, default is
 16, 18 tends to work, increase if needed.
 
 fstests setup
 -------------
 
-The fstests suite has very few "hard" requirements and will succeed without
+The `fstests <https://git.kernel.org/pub/scm/fs/xfs/xfstests-dev.git/>`_
+suite has very few "hard" requirements and will succeed without
 actually running many tests. In order to ensure full test coverage, your test
 environment should provide the settings from the following sections. Please
 note that newly added tests silently add new dependencies, so you should always
@@ -471,7 +474,7 @@ Storage environment
 ^^^^^^^^^^^^^^^^^^^
 
 -  At least 4 identically sized partitions/disks/virtual disks, specified using
-   ``$SCRATCH_DEV_POOL``, some tests may require 6 such partitions
+   ``$SCRATCH_DEV_POOL``, some tests may require 8 such partitions
 -  some tests need at least 10G of free space, as determined by ``df``, i.e.
    the size of the device may need to be larger
 -  some tests require ``$LOGWRITES_DEV``, yet another separate block device,

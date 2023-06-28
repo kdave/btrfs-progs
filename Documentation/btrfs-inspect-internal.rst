@@ -165,6 +165,8 @@ logical-resolve [-Pvo] [-s <bufsize>] <logical> <path>
         -v
                 (deprecated) alias for global *-v* option
 
+.. _man-inspect-map-swapfile:
+
 map-swapfile [options] <file>
         (needs root privileges)
 
@@ -193,6 +195,8 @@ min-dev-size [options] <path>
 
         --id <id>
                 specify the device *id* to query, default is 1 if this option is not used
+
+.. _man-inspect-rootid:
 
 rootid <path>
         for a given file or directory, return the containing tree root id, but for a
@@ -239,4 +243,4 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`mkfs.btrfs`

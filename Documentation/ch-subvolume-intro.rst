@@ -24,7 +24,7 @@ similar to a bind mount, and in fact the subvolume mount does exactly that.
 A freshly created filesystem is also a subvolume, called *top-level*,
 internally has an id 5. This subvolume cannot be removed or replaced by another
 subvolume. This is also the subvolume that will be mounted by default, unless
-the default subvolume has been changed (see :command:`btrfs subvolume set-default`).
+the default subvolume has been changed (see :ref:`btrfs subvolume set-default<man-subvolume-set-default>`).
 
 A snapshot is a subvolume like any other, with given initial content. By
 default, snapshots are created read-write. File modifications in a snapshot
@@ -54,7 +54,7 @@ In addition to that, a plain snapshot will also have last change generation and
 creation generation equal.
 
 Read-only snapshots are building blocks of incremental send (see
-:doc:`btrfs-send(8)<btrfs-send>`) and the whole use case relies on unmodified snapshots where
+:doc:`btrfs-send`) and the whole use case relies on unmodified snapshots where
 the relative changes are generated from. Thus, changing the subvolume flags
 from read-only to read-write will break the assumptions and may lead to
 unexpected changes in the resulting incremental stream.
@@ -85,7 +85,7 @@ descendants of the toplevel one), or nested.
 What should be mentioned early is that a snapshotting is not recursive, so a
 subvolume or a snapshot is effectively a barrier and no files in the nested
 appear in the snapshot. Instead there's a stub subvolume (also sometimes
-:command:`empty subvolume` with the same name as original subvolume, with inode number
+*empty subvolume* with the same name as original subvolume, with inode number
 2).  This can be used intentionally but could be confusing in case of nested
 layouts.
 
@@ -94,7 +94,7 @@ Case study: system root layouts
 
 There are two ways how the system root directory and subvolume layout could be
 organized. The interesting use case for root is to allow rollbacks to previous
-version, as one atomic step. If the entire filesystem hierarchy starting in "/"
+version, as one atomic step. If the entire filesystem hierarchy starting in :file:`/`
 is in one subvolume, taking snapshot will encompass all files. This is easy for
 the snapshotting part but has undesirable consequences for rollback. For example,
 log files would get rolled back too, or any data that are stored on the root
@@ -103,8 +103,8 @@ images, ...).
 
 Here we could utilize the snapshotting barrier mentioned above, each directory
 that stores data to be preserved across rollbacks is it's own subvolume. This
-could be e.g. ``/var``. Further more-fine grained partitioning could be done, e.g.
-adding separate subvolumes for ``/var/log``, ``/var/cache`` etc.
+could be e.g. :file:`/var`. Further more-fine grained partitioning could be done, e.g.
+adding separate subvolumes for :file:`/var/log`, :file:`/var/cache` etc.
 
 That there are separate subvolumes requires separate actions to take the
 snapshots (here it gets disconnected from the system root snapshots). This needs
@@ -134,7 +134,7 @@ may change in the future.
 Mounting a read-write snapshot as read-only is possible and will not change the
 *ro* property and flag of the subvolume.
 
-The name of the mounted subvolume is stored in file ``/proc/self/mountinfo`` in
+The name of the mounted subvolume is stored in file :file:`/proc/self/mountinfo` in
 the 4th column:
 
 .. code-block::

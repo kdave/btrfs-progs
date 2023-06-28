@@ -16,10 +16,10 @@ The common use case is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
 :doc:`Feature by version<Feature-by-version>` page.  Also, the manual page
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>` contains more details about the features.
+:doc:`mkfs.btrfs` contains more details about the features.
 
 Some of the features could be also enabled on a mounted filesystem by other
-means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs(5)<btrfs-man5>`.
+means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs-man5`.
 
 OPTIONS
 -------
@@ -35,7 +35,7 @@ OPTIONS
         (since kernel 6.1)
 
         Convert block groups tracked in standalone block group tree back to
-        extent tree and remove 'block-group-tree' feature bit from the filesystem.
+        extent tree and remove *block-group-tree* feature bit from the filesystem.
 
 --convert-to-free-space-tree
         (since kernel 4.5)
@@ -49,8 +49,8 @@ OPTIONS
 -m
         (since kernel: 5.0)
 
-        change fsid stored as 'metadata_uuid' to a randomly generated UUID,
-        see also '-U'
+        change fsid stored as *metadata_uuid* to a randomly generated UUID,
+        see also *-U*
 
 -M <UUID>
         (since kernel: 5.0)
@@ -83,7 +83,7 @@ OPTIONS
         new device can be added to the filesystem and will capture all writes
         keeping the seeding device intact.  See also section
         :ref:`SEEDING DEVICE<man-btrfs5-seeding-device>`
-        in :doc:`btrfs(5)<btrfs-man5>`.
+        in :doc:`btrfs-man5`.
 
         .. warning::
                 Clearing the seeding flag on a device may be dangerous.  If a
@@ -91,7 +91,7 @@ OPTIONS
                 that device will become unmountable. Setting the seeding flag
                 back will not fix that.
 
-                A valid usecase is 'seeding device as a base image'. Clear the
+                A valid usecase is *seeding device as a base image*. Clear the
                 seeding flag, update the filesystem and make it seeding again,
                 provided that it's OK to throw away all filesystems built on
                 top of the previous base.
@@ -101,10 +101,10 @@ OPTIONS
         change operation in case it was interrupted.
 
 -U <UUID>
-        Change fsid to 'UUID' in all metadata blocks.
+        Change fsid to *UUID* in all metadata blocks.
 
         The *UUID* should be a 36 bytes string in ``printf(3)`` format
-        *"%08x-%04x-%04x-%04x-%012x"*.
+        ``%08x-%04x-%04x-%04x-%012x``.
         If there is a previous unfinished fsid change, it will continue only if the
         *UUID* matches the unfinished one or if you use the option *-u*.
 
@@ -124,7 +124,7 @@ OPTIONS
 
         All newly created extents will use the new representation. To
         completely switch the entire filesystem, run a full balance of the
-        metadata. Please refer to :doc:`btrfs-balance(8)<btrfs-balance>`.
+        metadata. Please refer to :doc:`btrfs-balance`.
 
 
 EXIT STATUS
@@ -142,6 +142,6 @@ will be declared obsolete and scheduled for removal.
 SEE ALSO
 --------
 
-:doc:`btrfs(5)<btrfs-man5>`,
-:doc:`btrfs-balance(8)<btrfs-balance>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-man5`,
+:doc:`btrfs-balance`,
+:doc:`mkfs.btrfs`

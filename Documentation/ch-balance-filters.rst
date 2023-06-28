@@ -123,5 +123,5 @@ Profile names, used in ``profiles`` and ``convert`` are one of:
 
 The mixed data/metadata profiles can be converted in the same way, but conversion
 between mixed and non-mixed is not implemented. For the constraints of the
-profiles please refer to :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section
+profiles please refer to :doc:`mkfs.btrfs` section
 :ref:`PROFILES<man-mkfs-profiles>`.

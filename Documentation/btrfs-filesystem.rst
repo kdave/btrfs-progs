@@ -78,6 +78,8 @@ df [options] <path>
 
         If conflicting options are passed, the last one takes precedence.
 
+.. _man-filesystem-cmd-defragment:
+
 defragment [options] <file>|<dir> [<file>|<dir>...]
         Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 
@@ -215,6 +217,8 @@ mkswapfile [-s size] file
                 specify UUID to use, or a special value: clear (all zeros), random,
                 time (time-based random)
 
+.. _man-filesystem-resize:
+
 resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         Resize a mounted filesystem identified by *path*. A particular device
         can be resized by specifying a *devid*.
@@ -268,8 +272,8 @@ show [options] [<path>|<uuid>|<device>|<label>]
         -m|--mounted
                 probe kernel for mounted BTRFS filesystems
         -d|--all-devices
-                scan all devices under */dev*, otherwise the devices list is extracted from the
-                */proc/partitions* file. This is a fallback option if there's no device node
+                scan all devices under :file:`/dev`, otherwise the devices list is extracted from the
+                :file:`/proc/partitions` file. This is a fallback option if there's no device node
                 manager (like udev) available in the system.
 
         --raw
@@ -350,7 +354,7 @@ usage [options] <path> [<path>...]
           block reserve, used for emergency purposes (like deletion on a full
           filesystem)
         * *Multiple profiles* -- what block group types (data, metadata) have
-          more than one profile (single, raid1, ...), see :doc:`btrfs(5)<btrfs-man5>` section
+          more than one profile (single, raid1, ...), see :doc:`btrfs-man5` section
           :ref:`FILESYSTEMS WITH MULTIPLE PROFILES<man-btrfs5-filesystem-with-multiple-profiles>`.
 
         And on a zoned filesystem there are two more lines in the *Device* section:
@@ -419,7 +423,7 @@ EXAMPLES
 
 **$ btrfs filesystem defrag -v -r dir/**
 
-Recursively defragment files under *dir/*, print files as they are processed.
+Recursively defragment files under :file:`dir/`, print files as they are processed.
 The file names will be printed in batches, similarly the amount of data triggered
 by defragmentation will be proportional to last N printed files. The system dirty
 memory throttling will slow down the defragmentation but there can still be a lot
@@ -427,18 +431,18 @@ of IO load and the system may stall for a moment.
 
 **$ btrfs filesystem defrag -v -r -f dir/**
 
-Recursively defragment files under *dir/*, be verbose and wait until all blocks
+Recursively defragment files under :file:`dir/`, be verbose and wait until all blocks
 are flushed before processing next file. You can note slower progress of the
 output and lower IO load (proportional to currently defragmented file).
 
 **$ btrfs filesystem defrag -v -r -f -clzo dir/**
 
-Recursively defragment files under *dir/*, be verbose, wait until all blocks are
+Recursively defragment files under :file:`dir/`, be verbose, wait until all blocks are
 flushed and force file compression.
 
 **$ btrfs filesystem defrag -v -r -t 64M dir/**
 
-Recursively defragment files under *dir/*, be verbose and try to merge extents
+Recursively defragment files under :file:`dir/`, be verbose and try to merge extents
 to be about 64MiB. As stated above, the success rate depends on actual free
 space fragmentation and the final result is not guaranteed to meet the target
 even if run repeatedly.
@@ -479,5 +483,5 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-subvolume`,
+:doc:`mkfs.btrfs`

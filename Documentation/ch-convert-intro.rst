@@ -8,7 +8,7 @@ Supported filesystems:
 
 * reiserfs -- since version 4.13, optionally built, requires libreiserfscore 3.6.27
 
-* ntfs -- external tool https://github.com/maharmstone/ntfs2btrfs
+* NTFS -- external tool https://github.com/maharmstone/ntfs2btrfs
 
 The list of supported source filesystem by a given binary is listed at the end
 of help (option *--help*).
@@ -89,7 +89,7 @@ lack of enough work space. This is a soft error leaving the filesystem usable
 but the block group layout may remain unchanged.
 
 Note that balance operation takes a lot of time, please see also
-:doc:`btrfs-balance(8)<btrfs-balance>`.
+:doc:`btrfs-balance`.
 
 .. code-block:: bash
 

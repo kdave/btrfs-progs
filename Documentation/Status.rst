@@ -306,7 +306,7 @@ Defrag
 
 The data affected by the defragmentation process will be newly written
 and will consume new space, the links to the original extents will not
-be kept. See also :doc:`btrfs-filesystem<btrfs-filesystem>` . Though
+be kept. See also :doc:`btrfs-filesystem` . Though
 autodefrag affects newly written data, it can read a few adjacent blocks
 (up to 64KiB) and write the contiguous extent to a new location. The
 adjacent blocks will be unshared. This happens on a smaller scale than

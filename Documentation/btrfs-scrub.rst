@@ -34,6 +34,8 @@ resume [-BdqrR] <path>|<device>
 
         see :command:`scrub start`.
 
+.. _man-scrub-start:
+
 start [-BdrRf] <path>|<device>
         Start a scrub on all devices of the mounted filesystem identified by
         *path* or on a single *device*. If a scrub is already running, the new
@@ -166,4 +168,4 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`mkfs.btrfs`

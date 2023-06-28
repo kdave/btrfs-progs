@@ -175,7 +175,7 @@ EXAMPLES
 Make a parent group that has two quota group children
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given the following filesystem mounted at `/mnt/my-vault`
+Given the following filesystem mounted at :file:`/mnt/my-vault`
 
 .. code-block:: none
 
@@ -234,6 +234,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-quota(8)<btrfs-quota>`,
-:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`btrfs-quota`,
+:doc:`btrfs-subvolume`,
+:doc:`mkfs.btrfs`

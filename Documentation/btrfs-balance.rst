@@ -56,11 +56,11 @@ start [options] <path>
         ``Options``
 
         -d[<filters>]
-                act on data block groups, see *FILTERS* section for details about *filters*
+                act on data block groups, see section :ref:`FILTERS<man-balance-filters>` for details about *filters*
         -m[<filters>]
-                act on metadata chunks, see *FILTERS* section for details about *filters*
+                act on metadata chunks, see :ref:`FILTERS<man-balance-filters>` for details about *filters*
         -s[<filters>]
-                act on system chunks (requires *-f*), see *FILTERS* section for details about *filters*.
+                act on system chunks (requires *-f*), see :ref:`FILTERS<man-balance-filters>` for details about *filters*.
 
         -f
                 force a reduction of metadata integrity, e.g. when going from *raid1* to
@@ -83,6 +83,8 @@ status [-v] <path>
 
         -v
                 (deprecated) alias for global *-v* option
+
+.. _man-balance-filters:
 
 FILTERS
 -------
@@ -127,7 +129,7 @@ EXAMPLES
 --------
 
 A more comprehensive example when going from one to multiple devices, and back,
-can be found in section *TYPICAL USECASES* of :doc:`btrfs-device(8)<btrfs-device>`.
+can be found in section *TYPICAL USECASES* of :doc:`btrfs-device`.
 
 MAKING BLOCK GROUP LAYOUT MORE COMPACT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -268,5 +270,5 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
-:doc:`btrfs-device(8)<btrfs-device>`
+:doc:`mkfs.btrfs`,
+:doc:`btrfs-device`

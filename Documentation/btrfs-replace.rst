@@ -58,7 +58,7 @@ start [options] <srcdev>|<devid> <targetdev> <path>
         -K|--nodiscard
                 Do not perform whole device TRIM operation on devices that are capable of that.
                 This does not affect discard/trim operation when the filesystem is mounted.
-                Please see the mount option *discard* for that in :doc:`btrfs(5)<btrfs-man5>`.
+                Please see the mount option *discard* for that in :doc:`btrfs-man5`.
 
 status [-1] <mount_point>
         Print status and progress information of a running device replace operation.
@@ -76,7 +76,7 @@ EXAMPLES
 Replacing an online drive with a bigger one
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given the following filesystem mounted at `/mnt/my-vault`
+Given the following filesystem mounted at :file:`/mnt/my-vault`
 
 
 .. code-block:: none
@@ -86,8 +86,8 @@ Given the following filesystem mounted at `/mnt/my-vault`
                 devid    1 size 1TiB used 500.00GiB path /dev/sda
                 devid    2 size 1TiB used 500.00GiB path /dev/sdb
 
-In order to replace */dev/sda* (*devid 1*) with a bigger drive located at
-*/dev/sdc* you would run the following:
+In order to replace :file:`/dev/sda` (*devid 1*) with a bigger drive located at
+:file:`/dev/sdc` you would run the following:
 
 .. code-block:: bash
 
@@ -99,7 +99,7 @@ You can monitor progress via:
 
         btrfs replace status /mnt/my-vault/
 
-After the replacement is complete, as per the docs at :doc:`btrfs-filesystem(8)<btrfs-filesystem>` in
+After the replacement is complete, as per the docs at :doc:`btrfs-filesystem` in
 order to use the entire storage space of the new drive you need to run:
 
 .. code-block:: bash
@@ -121,6 +121,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-device(8)<btrfs-device>`,
-:doc:`btrfs-filesystem(8)<btrfs-filesystem>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-device`,
+:doc:`btrfs-filesystem`,
+:doc:`mkfs.btrfs`

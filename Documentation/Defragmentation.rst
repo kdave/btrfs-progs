@@ -28,3 +28,4 @@ space layout and fragmentation.
 
 Defragmentation can be started together with compression on the given range,
 and takes precedence over per-file compression property or mount options.
+See command :ref:`btrfs filesystem defrag<man-filesystem-cmd-defragment>`.

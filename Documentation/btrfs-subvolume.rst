@@ -40,7 +40,7 @@ similar to a bind mount, and in fact the subvolume mount does exactly that.
 A freshly created filesystem is also a subvolume, called *top-level*,
 internally has an id 5. This subvolume cannot be removed or replaced by another
 subvolume. This is also the subvolume that will be mounted by default, unless
-the default subvolume has been changed (see subcommand *set-default*).
+the default subvolume has been changed (see subcommand :ref:`set-default<man-subvolume-set-default>`).
 
 A snapshot is a subvolume like any other, with given initial content. By
 default, snapshots are created read-write. File modifications in a snapshot
@@ -68,12 +68,13 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         there are more arguments to process.
 
         If *--subvolid* is used, *path* must point to a btrfs filesystem. See
-        :command:`btrfs subvolume list` or :command:`btrfs inspect-internal rootid`
+        :ref:`btrfs subvolume list<man-subvolume-list>` or
+        :ref:`btrfs inspect-internal rootid<man-inspect-rootid>`
         how to get the subvolume id.
 
         The corresponding directory is removed instantly but the data blocks are
         removed later in the background. The command returns immediately. See
-        :command:`btrfs subvolume sync` how to wait until the subvolume gets completely removed.
+        :ref:`btrfs subvolume sync<man-subvolume-sync>` how to wait until the subvolume gets completely removed.
 
         The deletion does not involve full transaction commit by default due to
         performance reasons.  As a consequence, the subvolume may appear again after a
@@ -83,9 +84,11 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         Deleting subvolume needs sufficient permissions, by default the owner
         cannot delete it unless it's enabled by a mount option
         *user_subvol_rm_allowed*, or deletion is run as root.
-        The default subvolume (see :command:`btrfs subvolume set-default`) cannot be deleted and
+        The default subvolume (see :ref:`btrfs subvolume set-default<man-subvolume-set-default>`)
+        cannot be deleted and
         returns error (EPERM) and this is logged to the system log. A subvolume that's
-        currently involved in send (see :command:`btrfs send`) also cannot be deleted until the
+        currently involved in send (see :doc:`btrfs-send`)
+        also cannot be deleted until the
         send is finished. This is also logged in the system log.
 
         ``Options``
@@ -109,6 +112,8 @@ get-default <path>
         Get the default subvolume of the filesystem *path*.
 
         The output format is similar to :command:`subvolume list` command.
+
+.. _man-subvolume-list:
 
 list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path] <path>
         List the subvolumes present in the filesystem *path*.
@@ -183,6 +188,8 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
                 for *--sort* you can combine some items together by *,*, just like
                 *--sort=+ogen,-gen,path,rootid*.
 
+.. _man-subvolume-set-default:
+
 set-default [<subvolume>|<id> <path>]
         Set the default subvolume for the (mounted) filesystem.
 
@@ -192,8 +199,11 @@ set-default [<subvolume>|<id> <path>]
 
         There are two ways how to specify the subvolume, by *id* or by the *subvolume*
         path.
-        The id can be obtained from :command:`btrfs subvolume list`,
-        :command:`btrfs subvolume show` or :command:`btrfs inspect-internal rootid`.
+        The id can be obtained from :ref:`btrfs subvolume list<man-subvolume-list>`
+        :ref:`btrfs subvolume show<man-subvolume-show>` or
+        :ref:`btrfs inspect-internal rootid<man-inspect-rootid>`.
+
+.. _man-subvolume-show:
 
 show [options] <path>
         Show more information about a subvolume (UUIDs, generations, times, flags,
@@ -237,6 +247,8 @@ snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>
                 Add the newly created subvolume to a qgroup. This option can be given multiple
                 times.
 
+.. _man-subvolume-sync:
+
 sync <path> [subvolid...]
         Wait until given subvolume(s) are completely removed from the filesystem after
         deletion. If no subvolume id is given, wait until all current deletion requests
@@ -254,7 +266,7 @@ Deleting a subvolume
 ^^^^^^^^^^^^^^^^^^^^
 
 If we want to delete a subvolume called *foo* from a btrfs volume mounted at
-*/mnt/bar* we could run the following:
+:file:`/mnt/bar` we could run the following:
 
 .. code-block:: bash
 
@@ -275,8 +287,8 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-qgroup(8)<btrfs-qgroup>`,
-:doc:`btrfs-quota(8)<btrfs-quota>`,
-:doc:`btrfs-send(8)<btrfs-send>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`btrfs-qgroup`,
+:doc:`btrfs-quota`,
+:doc:`btrfs-send`,
+:doc:`mkfs.btrfs`,
 ``mount(8)``

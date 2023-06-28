@@ -51,11 +51,11 @@ BLAKE2b          19000        11  libsodium/AVX2
 
 Many kernels are configured with SHA256 as built-in and not as a module.
 The accelerated versions are however provided by the modules and must be loaded
-explicitly (**modprobe sha256**) before mounting the filesystem to make use of
-them. You can check in */sys/fs/btrfs/FSID/checksum* which one is used. If you
+explicitly (:command:`modprobe sha256`) before mounting the filesystem to make use of
+them. You can check in :file:`/sys/fs/btrfs/FSID/checksum` which one is used. If you
 see *sha256-generic*, then you may want to unmount and mount the filesystem
 again, changing that on a mounted filesystem is not possible.
-Check the file */proc/crypto*, when the implementation is built-in, you'd find
+Check the file :file:`/proc/crypto`, when the implementation is built-in, you'd find
 
 .. code-block:: none
 

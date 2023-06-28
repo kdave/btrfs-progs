@@ -47,7 +47,7 @@ remove [options] <device>|<devid> [<device>|<devid>...] <path>
         Device removal must satisfy the profile constraints, otherwise the command
         fails. The filesystem must be converted to profile(s) that would allow the
         removal. This can typically happen when going down from 2 devices to 1 and
-        using the RAID1 profile. See the section *TYPICAL USECASES*.
+        using the RAID1 profile. See the section :ref:`Typical use cases<man-device-typical-use-cases>`.
 
         The operation can take long as it needs to move all data from the device.
 
@@ -76,7 +76,7 @@ delete <device>|<devid> [<device>|<devid>...] <path>
 
 replace <command> [options] <path>
         Alias of whole command group *btrfs replace* for convenience. See
-        :doc:`btrfs-replace(8)<btrfs-replace>`.
+        :doc:`btrfs-replace`.
 
 ready <device>
         Wait until all devices of a multiple-device filesystem are scanned and
@@ -99,7 +99,7 @@ scan [options] [<device> [<device>...]]
         The command can be run repeatedly. Devices that have been already registered
         remain as such. Reloading the kernel module will drop this information. There's
         an alternative way of mounting multiple-device filesystem without the need for
-        prior scanning. See the mount option *device*.
+        prior scanning. See the mount option :ref:`device<mount-option-device>`.
 
         ``Options``
 
@@ -250,7 +250,7 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-balance(8)<btrfs-balance>`
-:doc:`btrfs-device(8)<btrfs-device>`,
-:doc:`btrfs-replace(8)<btrfs-replace>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`btrfs-balance`
+:doc:`btrfs-device`,
+:doc:`btrfs-replace`,
+:doc:`mkfs.btrfs`

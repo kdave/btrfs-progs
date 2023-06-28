@@ -35,13 +35,13 @@ the clone sources.
 You must not specify clone sources unless you guarantee that these snapshots
 are exactly in the same state on both sides--both for the sender and the
 receiver. For implications of changed read-write status of a received snapshot
-please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume(8)<btrfs-subvolume>`.
+please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume`.
 
 ``Options``
 
 -e
         if sending multiple subvolumes at once, use the new format and omit the
-        'end cmd' marker in the stream separating the subvolumes
+        *end cmd* marker in the stream separating the subvolumes
 
 -p <parent>
         send an incremental stream from *parent* to *subvol*
@@ -113,6 +113,6 @@ AVAILABILITY
 SEE ALSO
 --------
 
-:doc:`btrfs-receive(8)<btrfs-receive>`,
-:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
-:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
+:doc:`btrfs-receive`,
+:doc:`btrfs-subvolume`,
+:doc:`mkfs.btrfs`

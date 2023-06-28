@@ -3,7 +3,7 @@ Devices can be then added, removed or replaced on demand.  Data and metadata are
 organized in allocation profiles with various redundancy policies.  There's some
 similarity with traditional RAID levels, but this could be confusing to users
 familiar with the traditional meaning. Due to the similarity, the RAID
-terminology is widely used in the documentation.  See :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more
+terminology is widely used in the documentation.  See :doc:`mkfs.btrfs` for more
 details and the exact profile capabilities and constraints.
 
 The device management works on a mounted filesystem. Devices can be added,
@@ -27,15 +27,17 @@ RAID level
         standard RAID levels. At the moment the supported ones are: RAID0, RAID1,
         RAID10, RAID5 and RAID6.
 
+.. _man-device-typical-use-cases:
+
 Typical use cases
 -----------------
 
 Starting with a single-device filesystem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Assume we've created a filesystem on a block device */dev/sda* with profile
+Assume we've created a filesystem on a block device :file:`/dev/sda` with profile
 *single/single* (data/metadata), the device size is 50GiB and we've used the
-whole device for the filesystem. The mount point is */mnt*.
+whole device for the filesystem. The mount point is :file:`/mnt`.
 
 The amount of data stored is 16GiB, metadata have allocated 2GiB.
 
@@ -43,7 +45,7 @@ Add new device
 """"""""""""""
 
 We want to increase the total size of the filesystem and keep the profiles. The
-size of the new device */dev/sdb* is 100GiB.
+size of the new device :file:`/dev/sdb` is 100GiB.
 
 .. code-block:: bash
 
@@ -94,7 +96,7 @@ The balance process needs some workspace (i.e. a free device space without any
 data or metadata block groups) so the command could fail if there's too much
 data or the block groups occupy the whole first device.
 
-The device size of */dev/sdb* as seen by the filesystem remains unchanged, but
+The device size of :file:`/dev/sdb` as seen by the filesystem remains unchanged, but
 the logical space from 50-100GiB will be unused.
 
 Remove device

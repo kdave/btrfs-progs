@@ -26,8 +26,8 @@ There are some constraints:
   - works since 5.18
 - reflink requires source and target file that have the same status regarding
   NOCOW and checksums, for example if the source file is NOCOW (once created
-  with the chattr +C attribute) then the above command won't work unless the
+  with the :command:`chattr +C` attribute) then the above command won't work unless the
   target file is pre-created with the +C attribute as well, or the NOCOW
-  attribute is inherited from the parent directory (chattr +C on the directory)
+  attribute is inherited from the parent directory (:command:`chattr +C` on the directory)
   or if the whole filesystem is mounted with *-o nodatacow* that would create
   the NOCOW files by default

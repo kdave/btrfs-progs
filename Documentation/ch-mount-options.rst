@@ -182,13 +182,15 @@ degraded
         filesystems with mixed RAID profiles for data and metadata, even if the
         device number constraints would not be satisfied for some of the profiles.
 
-        Example: metadata -- raid1, data -- single, devices -- /dev/sda, /dev/sdb
+        Example: metadata -- raid1, data -- single, devices -- :file:`/dev/sda`, :file:`/dev/sdb`
 
         Suppose the data are completely stored on *sda*, then missing *sdb* will not
         prevent the mount, even if 1 missing device would normally prevent (any)
         *single* profile to mount. In case some of the data chunks are stored on *sdb*,
         then the constraint of single/data is not satisfied and the filesystem
         cannot be mounted.
+
+.. _mount-option-device:
 
 device=<devicepath>
         Specify a path to a device that will be scanned for BTRFS filesystem during
@@ -369,7 +371,7 @@ space_cache, space_cache=<version>, nospace_cache
         On an unmounted filesystem the caches (both versions) can be cleared by
         "btrfs check --clear-space-cache".
 
-        The :doc:`btrfs-check(8)<btrfs-check>` and `:doc:`mkfs.btrfs(8)<mkfs.btrfs>` commands have full *v2* free space
+        The :doc:`btrfs-check` and `:doc:`mkfs.btrfs` commands have full *v2* free space
         cache support since v4.19.
 
         If a version is not explicitly specified, the default implementation will be

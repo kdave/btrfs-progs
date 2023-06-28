@@ -5,7 +5,9 @@ imagine an immutable golden image of an operating system enhanced with another
 device that allows to use the data from the golden image and normal operation.
 This idea originated on CD-ROMs with base OS and allowing to use them for live
 systems, but this became obsolete. There are technologies providing similar
-functionality, like *unionmount*, *overlayfs* or *qcow2* image snapshot.
+functionality, like `unionmount <https://en.wikipedia.org/wiki/Union_mount>`_,
+`overlayfs <https://en.wikipedia.org/wiki/OverlayFS>`_ or
+`qcow2 <https://en.wikipedia.org/wiki/Qcow#qcow2>`_ image snapshot.
 
 The seeding device starts as a normal filesystem, once the contents is ready,
 :command:`btrfstune -S 1` is used to flag it as a seeding device. Mounting such device
@@ -56,7 +58,7 @@ Example how to create and use one seeding device:
         # mount /dev/sdb /mnt/mnt1
         ... /mnt/mnt1 is now writable
 
-Now */mnt/mnt1* can be used normally. The device */dev/sda* can be mounted
+Now :file:`/mnt/mnt1` can be used normally. The device :file:`/dev/sda` can be mounted
 again with a another writable device:
 
 .. code-block:: bash
@@ -67,7 +69,7 @@ again with a another writable device:
         # mount /dev/sdc /mnt/mnt2
         ... /mnt/mnt2 is now writable
 
-The writable device (*/dev/sdb*) can be decoupled from the seeding device and
+The writable device (file:`/dev/sdb`) can be decoupled from the seeding device and
 used independently:
 
 .. code-block:: bash
@@ -75,7 +77,7 @@ used independently:
         # btrfs device delete /dev/sda /mnt/mnt1
 
 As the contents originated in the seeding device, it's possible to turn
-*/dev/sdb* to a seeding device again and repeat the whole process.
+:file:`/dev/sdb` to a seeding device again and repeat the whole process.
 
 A few things to note:
 
@@ -95,9 +97,9 @@ Chained seeding devices
 
 Though it's not recommended and is rather an obscure and untested use case,
 chaining seeding devices is possible. In the first example, the writable device
-*/dev/sdb* can be turned onto another seeding device again, depending on the
-unchanged seeding device */dev/sda*. Then using */dev/sdb* as the primary
-seeding device it can be extended with another writable device, say */dev/sdd*,
+:file:`/dev/sdb` can be turned onto another seeding device again, depending on the
+unchanged seeding device :file:`/dev/sda`. Then using :file:`/dev/sdb` as the primary
+seeding device it can be extended with another writable device, say :file:`/dev/sdd`,
 and it continues as before as a simple tree structure on devices.
 
 .. code-block:: bash
