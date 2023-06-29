@@ -28,3 +28,9 @@ jobs:
         run: ci/ci-build-musl-i386
       - name: CI Tumbleweed
         run: ci/ci-build-tumbleweed
+      - name: CI Tumbleweed (libgcrypt)
+        run: ci/ci-build-tumbleweed HEAD --with-crypto=libgcrypt
+      - name: CI Tumbleweed (libsodium)
+        run: ci/ci-build-tumbleweed HEAD --with-crypto=libsodium
+      - name: CI Tumbleweed (libkcapi)
+        run: ci/ci-build-tumbleweed HEAD --with-crypto=libkcapi
