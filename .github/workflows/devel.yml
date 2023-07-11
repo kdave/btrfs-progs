@@ -32,6 +32,8 @@ jobs:
         run: sudo make TEST_LOG=dump test-check-lowmem
       - name: Tests misc
         run: sudo make TEST_LOG=dump test-misc
+      - name: Tests fuzz
+        run: sudo make TEST_LOG=dump test-fuzz
       - name: Tests json formatter
         run: make test-json
       - name: Tests string-table formatter
