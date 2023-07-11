@@ -30,6 +30,7 @@
 #                  tsan    - enable thread sanitizer compiler feature
 #                  ubsan   - undefined behaviour sanitizer compiler feature
 #                  bcheck  - extended build checks
+#                  gcov    - enable GCOV support during build
 #   W=123          build with warnings (default: off)
 #   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
@@ -281,6 +282,11 @@ endif
 ifeq ("$(origin D)", "command line")
   DEBUG_CFLAGS_INTERNAL = $(DEBUG_CFLAGS_DEFAULT) $(DEBUG_CFLAGS)
   DEBUG_LDFLAGS_INTERNAL = $(DEBUG_LDFLAGS_DEFAULT) $(DEBUG_LDFLAGS)
+endif
+
+ifneq (,$(findstring gcov,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -fprofile-arcs -ftest-coverage --coverage
+  DEBUG_LDFLAGS_INTERNAL += -fprofile-generate --coverage
 endif
 
 ifneq (,$(findstring verbose,$(D)))
@@ -840,6 +846,7 @@ clean: $(CLEANDIRS)
 		crypto/*.o crypto/.deps/*.o.d \
 		tune/*.o tune/.deps/*.o.d \
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
+		*.gcno *.gcda *.gcov */*.gcno */*.gcda */*/.gcov \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      btrfs.box btrfs.box.static json-formatter-test \
