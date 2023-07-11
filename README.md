@@ -1,6 +1,10 @@
-[![devel](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml)
 Btrfs-progs
 ===========
+
+![devel](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml/badge.svg)
+![coverage](https://github.com/kdave/btrfs-progs/actions/workflows/coverage.yml/badge.svg)
+![static](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml/badge.svg)
+![release](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml/badge.svg)
 
 Userspace utilities to manage btrfs filesystems.
 License: GPLv2.
