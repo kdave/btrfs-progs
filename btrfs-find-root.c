@@ -25,6 +25,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "common/box.h"
 #include "common/utils.h"
 #include "common/extent-cache.h"
 #include "common/help.h"
@@ -329,7 +330,7 @@ static const struct cmd_struct btrfs_find_root_cmd = {
 	"btrfs-find-root", NULL, btrfs_find_root_usage, NULL, 0,
 };
 
-int main(int argc, char **argv)
+int BOX_MAIN(find_root)(int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_find_root_filter filter = {0};

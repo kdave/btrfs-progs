@@ -420,6 +420,8 @@ int main(int argc, char **argv)
 		return convert_main(argc, argv);
 	} else if (!strcmp(bname, "btrfstune")) {
 		return btrfstune_main(argc, argv);
+	} else if (!strcmp(bname, "btrfs-find-root")) {
+		return find_root_main(argc, argv);
 #endif
 	} else {
 		int shift;
