@@ -1,0 +1,52 @@
+# Code coverage when running all the tests, lcov published as artifacts
+
+name: Code coverage tests
+run-name: Code coverage tests
+on:
+  push:
+    branches:
+      - coverage-test
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: uname -a
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq lcov
+      - name: Configure
+        run: ./autogen.sh && ./configure
+      - name: Make
+        run: make V=1 D=gcov
+      - name: Tests cli
+        run: sudo make D=gcov TEST_LOG=dump test-cli
+      - name: Tests mkfs
+        run: sudo make D=gcov TEST_LOG=dump test-mkfs
+      - name: Tests check
+        run: sudo make D=gcov TEST_LOG=dump test-check
+      - name: Tests check (lowmem)
+        run: sudo make D=gcov TEST_LOG=dump test-check-lowmem
+      - name: Tests misc
+        run: sudo make D=gcov TEST_LOG=dump test-misc
+      - name: Tests fuzz
+        run: sudo make D=gcov TEST_LOG=dump test-fuzz
+      - name: Tests json formatter
+        run: make D=gcov test-json
+      - name: Tests string-table formatter
+        run: make D=gcov test-string-table
+      - name: Libbtrfsutil test
+        run: make D=gcov test-libbtrfsutil
+      - name: Libbtrfs build test
+        run: make D=gcov library-test
+      - name: Tests hash (correctness)
+        run: make D=gcov hash-vectest && ./hash-vectest
+      - name: Generate lcov results
+        run: |
+          lcov -c -d . -o lcov-info
+          genhtml -o lcov-out lcov-info
+      - name: Save lcov results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lcov-out
+          path: lcov-out
