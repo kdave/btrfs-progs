@@ -699,7 +699,14 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"Show chunks (block groups) layout for all devices",
 	"",
 	HELPINFO_UNITS_LONG,
-	OPTLINE("--sort MODE", "sort by a column ascending: pstart, lstart, usage (default: pstart)"),
+	OPTLINE("--sort MODE", "sort by a column ascending (default: pstart), "
+			"MODE can be one of: "
+			"pstart - physical offset, grouped by device, "
+			"lstart - logical offset, "
+			"usage - by chunk usage (implies --usage), "
+			"length_p - by chunk length, secondary by physical offset, "
+			"length_l - by chunk length, secondary by logical offset"
+	       ),
 	OPTLINE("--usage", "show usage per block group (note: this can be slow)"),
 	OPTLINE("--no-usage", "don't show usage per block group"),
 	OPTLINE("--empty", "show empty space between block groups"),
@@ -711,6 +718,10 @@ enum {
 	CHUNK_SORT_PSTART,
 	CHUNK_SORT_LSTART,
 	CHUNK_SORT_USAGE,
+	/* Length, secondary physical start */
+	CHUNK_SORT_LENGTH_P,
+	/* Length, secondary logical start */
+	CHUNK_SORT_LENGTH_L,
 	CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
 };
 
@@ -789,6 +800,40 @@ static int cmp_cse_devid_usage(const void *va, const void *vb)
 	return 0;
 }
 
+static int cmp_cse_length_physical(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+
+	if (a->length < b->length)
+		return -1;
+	if (a->length > b->length)
+		return 1;
+
+	if (a->start < b->start)
+		return -1;
+	if (a->start > b->start)
+		return 1;
+	return 0;
+}
+
+static int cmp_cse_length_logical(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+
+	if (a->length < b->length)
+		return -1;
+	if (a->length > b->length)
+		return 1;
+
+	if (a->lstart < b->lstart)
+		return -1;
+	if (a->lstart > b->lstart)
+		return 1;
+	return 0;
+}
+
 static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 			     unsigned unit_mode, bool with_usage, bool with_empty)
 {
@@ -830,6 +875,12 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 	else if (sort_mode == CHUNK_SORT_USAGE)
 		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
 				cmp_cse_devid_usage);
+	else if (sort_mode == CHUNK_SORT_LENGTH_P)
+		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
+				cmp_cse_length_physical);
+	else if (sort_mode == CHUNK_SORT_LENGTH_L)
+		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
+				cmp_cse_length_logical);
 
 	/* Optional usage, two rows for header and separator, gaps */
 	table = table_create(7 + (int)with_usage, 2 + ctx->length + gaps);
@@ -992,6 +1043,10 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 			} else if (strcmp(optarg, "usage") == 0) {
 				sort_mode = CHUNK_SORT_USAGE;
 				with_usage = true;
+			} else if (strcmp(optarg, "length_p") == 0) {
+				sort_mode = CHUNK_SORT_LENGTH_P;
+			} else if (strcmp(optarg, "length_l") == 0) {
+				sort_mode = CHUNK_SORT_LENGTH_L;
 			} else {
 				error("unknown sort mode: %s", optarg);
 				exit(1);
