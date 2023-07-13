@@ -1,10 +1,10 @@
 Btrfs-progs
 ===========
 
-![devel](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml/badge.svg)
-![coverage](https://github.com/kdave/btrfs-progs/actions/workflows/coverage.yml/badge.svg)
-![static](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml/badge.svg)
-![release](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml/badge.svg)
+[![devel](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/devel.yml)
+[![coverage](https://github.com/kdave/btrfs-progs/actions/workflows/coverage.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/coverage.yml)
+[![static](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml)
+[![release](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml)
 
 Userspace utilities to manage btrfs filesystems.
 License: GPLv2.
