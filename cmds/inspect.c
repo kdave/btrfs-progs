@@ -699,7 +699,7 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"Show chunks (block groups) layout for all devices",
 	"",
 	HELPINFO_UNITS_LONG,
-	OPTLINE("--sort MODE", "sort by the physical or logical chunk start MODE is one of pstart or lstart (default: pstart)"),
+	OPTLINE("--sort MODE", "sort by a column ascending: pstart, lstart, usage (default: pstart)"),
 	OPTLINE("--usage", "show usage per block group (note: this can be slow)"),
 	OPTLINE("--no-usage", "don't show usage per block group"),
 	OPTLINE("--empty", "show empty space between block groups"),
@@ -710,6 +710,7 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 enum {
 	CHUNK_SORT_PSTART,
 	CHUNK_SORT_LSTART,
+	CHUNK_SORT_USAGE,
 	CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
 };
 
@@ -772,6 +773,22 @@ static int cmp_cse_devid_lstart(const void *va, const void *vb)
 	return 1;
 }
 
+/* Compare entries by usage percent, descending. */
+static int cmp_cse_devid_usage(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+	const float usage_a = (float)a->used / a->length * 100;
+	const float usage_b = (float)b->used / b->length * 100;
+	const float epsilon = 1e-8;
+
+	if (usage_b - usage_a < epsilon)
+		return 1;
+	if (usage_a - usage_b < epsilon)
+		return -1;
+	return 0;
+}
+
 static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 			     unsigned unit_mode, bool with_usage, bool with_empty)
 {
@@ -810,6 +827,9 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 	if (sort_mode == CHUNK_SORT_LSTART)
 		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
 				cmp_cse_devid_lstart);
+	else if (sort_mode == CHUNK_SORT_USAGE)
+		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
+				cmp_cse_devid_usage);
 
 	/* Optional usage, two rows for header and separator, gaps */
 	table = table_create(7 + (int)with_usage, 2 + ctx->length + gaps);
@@ -969,6 +989,9 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 				sort_mode = CHUNK_SORT_PSTART;
 			} else if (strcmp(optarg, "lstart") == 0) {
 				sort_mode = CHUNK_SORT_LSTART;
+			} else if (strcmp(optarg, "usage") == 0) {
+				sort_mode = CHUNK_SORT_USAGE;
+				with_usage = true;
 			} else {
 				error("unknown sort mode: %s", optarg);
 				exit(1);
