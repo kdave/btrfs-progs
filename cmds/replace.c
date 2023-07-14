@@ -197,6 +197,14 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	}
 	zoned = (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
 
+	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REPLACE, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
+		close_file_or_dir(fdmnt, dirstream);
+		goto leave_with_error;
+	}
+
 	/* check for possible errors before backgrounding */
 	status_args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
 	status_args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
@@ -284,15 +292,6 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	fddstdev = open(dstdev, O_RDWR);
 	if (fddstdev < 0) {
 		error("unable to open %s: %m", dstdev);
-		goto leave_with_error;
-	}
-
-	/* Check status before any potentially destructive operation */
-	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REPLACE, enqueue);
-	if (ret != 0) {
-		if (ret < 0)
-			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fdmnt, dirstream);
 		goto leave_with_error;
 	}
 
