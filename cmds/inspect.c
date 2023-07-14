@@ -731,9 +731,9 @@ struct list_chunks_entry {
 	u64 lstart;
 	u64 length;
 	u64 flags;
-	u64 age;
+	u64 lnumber;
 	u64 used;
-	u32 pnumber;
+	u32 number;
 };
 
 struct list_chunks_ctx {
@@ -843,7 +843,7 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 	int i;
 	int chidx;
 	u64 lastend;
-	u64 age;
+	u64 number;
 	u32 gaps;
 	u32 tabidx;
 
@@ -853,17 +853,17 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 	 */
 	qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), cmp_cse_devid_start);
 	devid = 0;
-	age = 0;
+	number = 0;
 	gaps = 0;
 	lastend = 0;
 	for (i = 0; i < ctx->length; i++) {
 		e = ctx->stats[i];
 		if (e.devid != devid) {
 			devid = e.devid;
-			age = 0;
+			number = 0;
 		}
-		ctx->stats[i].pnumber = age;
-		age++;
+		ctx->stats[i].number = number;
+		number++;
 		if (with_empty && sort_mode == CHUNK_SORT_PSTART && e.start != lastend)
 			gaps++;
 		lastend = e.start + e.length;
@@ -937,7 +937,7 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 		table_printf(table, 2, tabidx, ">%s", pretty_size_mode(e.start, unit_mode));
 		table_printf(table, 3, tabidx, ">%s", pretty_size_mode(e.length, unit_mode));
 		table_printf(table, 4, tabidx, ">%s", pretty_size_mode(e.start + e.length, unit_mode));
-		table_printf(table, 5, tabidx, ">%llu", e.age);
+		table_printf(table, 5, tabidx, ">%llu", e.lnumber + 1);
 		table_printf(table, 6, tabidx, ">%s", pretty_size_mode(e.lstart, unit_mode));
 		if (with_usage)
 			table_printf(table, 7, tabidx, ">%6.2f",
@@ -995,8 +995,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	struct btrfs_ioctl_search_key *sk = &args.key;
 	struct btrfs_ioctl_search_header sh;
 	unsigned long off = 0;
-	u64 *age = NULL;
-	unsigned age_size = 128;
+	u64 *lnumber = NULL;
+	unsigned lnumber_size = 128;
 	int ret;
 	int fd;
 	int i;
@@ -1091,8 +1091,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	sk->max_type = BTRFS_CHUNK_ITEM_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
-	age = calloc(age_size, sizeof(u64));
-	if (!age) {
+	lnumber = calloc(lnumber_size, sizeof(u64));
+	if (!lnumber) {
 		ret = 1;
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		goto out_nomem;
@@ -1133,22 +1133,22 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 				e->lstart = sh.offset;
 				e->length = item->length;
 				e->flags = item->type;
-				e->pnumber = -1;
-				while (devid > age_size) {
+				e->number = -1;
+				while (devid > lnumber_size) {
 					u64 *tmp;
-					unsigned old_size = age_size;
+					unsigned old_size = lnumber_size;
 
-					age_size += 128;
-					tmp = calloc(age_size, sizeof(u64));
+					lnumber_size += 128;
+					tmp = calloc(lnumber_size, sizeof(u64));
 					if (!tmp) {
 						ret = 1;
 						error_msg(ERROR_MSG_MEMORY, NULL);
 						goto out_nomem;
 					}
-					memcpy(tmp, age, sizeof(u64) * old_size);
-					age = tmp;
+					memcpy(tmp, lnumber, sizeof(u64) * old_size);
+					lnumber = tmp;
 				}
-				e->age = age[devid]++;
+				e->lnumber = lnumber[devid]++;
 				if (with_usage) {
 					if (used == (u64)-1)
 						used = fill_usage(fd, sh.offset);
@@ -1186,7 +1186,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 out_nomem:
 	free(ctx.stats);
-	free(age);
+	free(lnumber);
 
 	return !!ret;
 }
