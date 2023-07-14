@@ -699,12 +699,12 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"Show chunks (block groups) layout for all devices",
 	"",
 	HELPINFO_UNITS_LONG,
-	OPTLINE("--sort MODE", "sort by a column ascending (default: pstart), "
-			"MODE can be one of: "
-			"pstart - physical offset, grouped by device, "
-			"lstart - logical offset, "
-			"usage - by chunk usage (implies --usage), "
-			"length_p - by chunk length, secondary by physical offset, "
+	OPTLINE("--sort MODE", "sort by a column ascending (default: pstart),\n"
+			"MODE can be one of:\n"
+			"pstart - physical offset, grouped by device\n"
+			"lstart - logical offset\n"
+			"usage - by chunk usage (implies --usage)\n"
+			"length_p - by chunk length, secondary by physical offset\n"
 			"length_l - by chunk length, secondary by logical offset"
 	       ),
 	OPTLINE("--usage", "show usage per block group (note: this can be slow)"),
