@@ -898,12 +898,12 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 			int j;
 
 			devid = e.devid;
-			table_printf(table, 0, tabidx, ">PNumber");
-			table_printf(table, 1, tabidx, ">Type");
+			table_printf(table, 0, tabidx, ">Number");
+			table_printf(table, 1, tabidx, ">Type/profile");
 			table_printf(table, 2, tabidx, ">PStart");
 			table_printf(table, 3, tabidx, ">Length");
 			table_printf(table, 4, tabidx, ">PEnd");
-			table_printf(table, 5, tabidx, ">Age");
+			table_printf(table, 5, tabidx, ">LNumber");
 			table_printf(table, 6, tabidx, ">LStart");
 			if (with_usage) {
 				table_printf(table, 7, tabidx, ">Usage%%");
