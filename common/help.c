@@ -156,11 +156,13 @@ static void format_text(const char *line, FILE *outf)
 		while (*line && *line == ' ')
 			line++;
 		while (*line && *line != ' ') {
+			if (*line == '\n')
+				break;
 			fputc(*line, outf);
 			line++;
 			i++;
 		}
-		if (i > HELPINFO_DESC_WIDTH) {
+		if (i > HELPINFO_DESC_WIDTH || (*line == '\n')) {
 			if (*line) {
 				fputc('\n', outf);
 				line++;
