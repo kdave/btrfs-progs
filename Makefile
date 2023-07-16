@@ -194,6 +194,7 @@ objects = \
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\
 	kernel-shared/zoned.o	\
+	common/array.o		\
 	common/cpu-utils.o	\
 	common/device-scan.o	\
 	common/device-utils.o	\
