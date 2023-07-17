@@ -43,6 +43,7 @@
 #include "common/units.h"
 #include "common/string-utils.h"
 #include "common/string-table.h"
+#include "common/sort-utils.h"
 #include "cmds/commands.h"
 
 static const char * const inspect_cmd_group_usage[] = {
@@ -714,17 +715,6 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	NULL
 };
 
-enum {
-	CHUNK_SORT_PSTART,
-	CHUNK_SORT_LSTART,
-	CHUNK_SORT_USAGE,
-	/* Length, secondary physical start */
-	CHUNK_SORT_LENGTH_P,
-	/* Length, secondary logical start */
-	CHUNK_SORT_LENGTH_L,
-	CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
-};
-
 struct list_chunks_entry {
 	u64 devid;
 	u64 start;
@@ -834,7 +824,7 @@ static int cmp_cse_length_logical(const void *va, const void *vb)
 	return 0;
 }
 
-static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
+static int print_list_chunks(struct list_chunks_ctx *ctx, const char* sortmode,
 			     unsigned unit_mode, bool with_usage, bool with_empty)
 {
 	u64 devid;
@@ -846,6 +836,47 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 	u64 number;
 	u32 gaps;
 	u32 tabidx;
+	static const struct sortdef sortit[] = {
+		{ .name = "pstart", .comp = (sort_cmp_t)cmp_cse_devid_start,
+		  .desc = "sort by physical srart offset, group by device" },
+		{ .name = "lstart", .comp = (sort_cmp_t)cmp_cse_devid_lstart,
+		  .desc = "sort by logical offset" },
+		{ .name = "usage", .comp = (sort_cmp_t)cmp_cse_devid_usage,
+		  .desc = "sort by chunk usage" },
+		{ .name = "length_p", .comp = (sort_cmp_t)cmp_cse_length_physical,
+		  .desc = "sort by lentgh, secondary by physical offset" },
+		{ .name = "length_l", .comp = (sort_cmp_t)cmp_cse_length_logical,
+		  .desc = "sort by lentgh, secondary by logical offset" },
+	};
+	enum {
+		CHUNK_SORT_PSTART,
+		CHUNK_SORT_LSTART,
+		CHUNK_SORT_USAGE,
+		CHUNK_SORT_LENGTH_P,
+		CHUNK_SORT_LENGTH_L,
+		CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
+	};
+	unsigned int sort_mode;
+	struct compare comp;
+
+	if (!sortmode) {
+		sort_mode = CHUNK_SORT_DEFAULT;
+		sortmode = "pstart";
+	} else if (strcmp(sortmode, "pstart") == 0) {
+		sort_mode = CHUNK_SORT_PSTART;
+	} else if (strcmp(sortmode, "lstart") == 0) {
+		sort_mode = CHUNK_SORT_LSTART;
+	} else if (strcmp(sortmode, "usage") == 0) {
+		sort_mode = CHUNK_SORT_USAGE;
+		with_usage = true;
+	} else if (strcmp(sortmode, "length_p") == 0) {
+		sort_mode = CHUNK_SORT_LENGTH_P;
+	} else if (strcmp(sortmode, "length_l") == 0) {
+		sort_mode = CHUNK_SORT_LENGTH_L;
+	} else {
+		error("unknown sort mode: %s", sortmode);
+		exit(1);
+	}
 
 	/*
 	 * Chunks are sorted logically as found by the ioctl, we need to sort
@@ -869,18 +900,10 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
 		lastend = e.start + e.length;
 	}
 
-	if (sort_mode == CHUNK_SORT_LSTART)
-		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
-				cmp_cse_devid_lstart);
-	else if (sort_mode == CHUNK_SORT_USAGE)
-		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
-				cmp_cse_devid_usage);
-	else if (sort_mode == CHUNK_SORT_LENGTH_P)
-		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
-				cmp_cse_length_physical);
-	else if (sort_mode == CHUNK_SORT_LENGTH_L)
-		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
-				cmp_cse_length_logical);
+	compare_init(&comp, sortit);
+	compare_add_sort_key(&comp, sortmode);
+	qsort_r(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_r_cmp_t)compare_cmp_multi,
+		&comp);
 
 	/* Optional usage, two rows for header and separator, gaps */
 	table = table_create(7 + (int)with_usage, 2 + ctx->length + gaps);
@@ -1003,7 +1026,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	int e;
 	DIR *dirstream = NULL;
 	unsigned unit_mode;
-	unsigned sort_mode = 0;
+	char *sortmode = NULL;
 	bool with_usage = true;
 	bool with_empty = true;
 	const char *path;
@@ -1036,21 +1059,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 		switch (c) {
 		case GETOPT_VAL_SORT:
-			if (strcmp(optarg, "pstart") == 0) {
-				sort_mode = CHUNK_SORT_PSTART;
-			} else if (strcmp(optarg, "lstart") == 0) {
-				sort_mode = CHUNK_SORT_LSTART;
-			} else if (strcmp(optarg, "usage") == 0) {
-				sort_mode = CHUNK_SORT_USAGE;
-				with_usage = true;
-			} else if (strcmp(optarg, "length_p") == 0) {
-				sort_mode = CHUNK_SORT_LENGTH_P;
-			} else if (strcmp(optarg, "length_l") == 0) {
-				sort_mode = CHUNK_SORT_LENGTH_L;
-			} else {
-				error("unknown sort mode: %s", optarg);
-				exit(1);
-			}
+			free(sortmode);
+			sortmode = strdup(optarg);
 			break;
 		case GETOPT_VAL_USAGE:
 		case GETOPT_VAL_NO_USAGE:
@@ -1181,7 +1191,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 			break;
 	}
 
-	ret = print_list_chunks(&ctx, sort_mode, unit_mode, with_usage, with_empty);
+	ret = print_list_chunks(&ctx, sortmode, unit_mode, with_usage, with_empty);
 	close_file_or_dir(fd, dirstream);
 
 out_nomem:
