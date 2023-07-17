@@ -45,11 +45,10 @@ struct chunk_info {
 	u64	num_stripes;
 };
 
-int load_chunk_and_device_info(int fd, struct array *chunkinfos,
-		struct device_info **devinfo_ret, int *devcount_ret);
-void print_device_chunks(struct device_info *devinfo,
+int load_chunk_and_device_info(int fd, struct array *chunkinfos, struct array *devinfos);
+void print_device_chunks(const struct device_info *devinfo,
 			 const struct array *chunkinfos, unsigned unit_mode);
-void print_device_sizes(struct device_info *devinfo, unsigned unit_mode);
+void print_device_sizes(const struct device_info *devinfo, unsigned unit_mode);
 int dev_to_fsid(const char *dev, u8 *fsid);
 
 #endif

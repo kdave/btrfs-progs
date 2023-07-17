@@ -834,25 +834,26 @@ static const char * const cmd_device_usage_usage[] = {
 
 static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 {
-	int i;
 	int ret = 0;
 	struct array chunkinfos = { 0 };
-	struct device_info *devinfo = NULL;
-	int devcount = 0;
+	struct array devinfos = { 0 };
 
-	ret = load_chunk_and_device_info(fd, &chunkinfos, &devinfo, &devcount);
+	ret = load_chunk_and_device_info(fd, &chunkinfos, &devinfos);
 	if (ret)
 		goto out;
 
-	for (i = 0; i < devcount; i++) {
-		pr_verbose(LOG_DEFAULT, "%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
-		print_device_sizes(&devinfo[i], unit_mode);
-		print_device_chunks(&devinfo[i], &chunkinfos, unit_mode);
+	for (int i = 0; i < devinfos.length; i++) {
+		const struct device_info *devinfo = devinfos.data[i];
+
+		pr_verbose(LOG_DEFAULT, "%s, ID: %llu\n", devinfo->path, devinfo->devid);
+		print_device_sizes(devinfo, unit_mode);
+		print_device_chunks(devinfo, &chunkinfos, unit_mode);
 		pr_verbose(LOG_DEFAULT, "\n");
 	}
 
 out:
-	free(devinfo);
+	array_free_elements(&devinfos);
+	array_free(&devinfos);
 	array_free_elements(&chunkinfos);
 	array_free(&chunkinfos);
 
