@@ -836,27 +836,25 @@ static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 {
 	int i;
 	int ret = 0;
-	struct chunk_info *chunkinfo = NULL;
+	struct array chunkinfos = { 0 };
 	struct device_info *devinfo = NULL;
-	int chunkcount = 0;
 	int devcount = 0;
 
-	ret = load_chunk_and_device_info(fd, &chunkinfo, &chunkcount, &devinfo,
-			&devcount);
+	ret = load_chunk_and_device_info(fd, &chunkinfos, &devinfo, &devcount);
 	if (ret)
 		goto out;
 
 	for (i = 0; i < devcount; i++) {
 		pr_verbose(LOG_DEFAULT, "%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
 		print_device_sizes(&devinfo[i], unit_mode);
-		print_device_chunks(&devinfo[i], chunkinfo, chunkcount,
-				unit_mode);
+		print_device_chunks(&devinfo[i], &chunkinfos, unit_mode);
 		pr_verbose(LOG_DEFAULT, "\n");
 	}
 
 out:
 	free(devinfo);
-	free(chunkinfo);
+	array_free_elements(&chunkinfos);
+	array_free(&chunkinfos);
 
 	return ret;
 }

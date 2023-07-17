@@ -50,9 +50,7 @@
 /*
  * Add the chunk info to the chunk_info list
  */
-static int add_info_to_list(struct chunk_info **chunkinfo_ret,
-			int *info_count,
-			struct btrfs_chunk *chunk)
+static int add_info_to_list(struct array *chunkinfos, struct btrfs_chunk *chunk)
 {
 
 	u64 type = btrfs_stack_chunk_type(chunk);
@@ -69,32 +67,35 @@ static int add_info_to_list(struct chunk_info **chunkinfo_ret,
 		stripe = btrfs_stripe_nr(chunk, j);
 		devid = btrfs_stack_stripe_devid(stripe);
 
-		for (i = 0 ; i < *info_count ; i++)
-			if ((*chunkinfo_ret)[i].type == type &&
-			    (*chunkinfo_ret)[i].devid == devid &&
-			    (*chunkinfo_ret)[i].num_stripes == num_stripes ) {
-				p = (*chunkinfo_ret) + i;
+		for (i = 0; i < chunkinfos->length; i++) {
+			struct chunk_info *cinfo = chunkinfos->data[i];
+
+			if (cinfo->type == type &&
+			    cinfo->devid == devid &&
+			    cinfo->num_stripes == num_stripes ) {
+				p = cinfo;
 				break;
 			}
+		}
 
 		if (!p) {
-			int tmp = sizeof(struct btrfs_chunk) * (*info_count + 1);
-			struct chunk_info *res = realloc(*chunkinfo_ret, tmp);
+			int ret;
 
-			if (!res) {
-				free(*chunkinfo_ret);
+			p = calloc(1, sizeof(struct chunk_info));
+			if (!p) {
 				error_msg(ERROR_MSG_MEMORY, NULL);
 				return -ENOMEM;
 			}
-
-			*chunkinfo_ret = res;
-			p = res + *info_count;
-			(*info_count)++;
-
 			p->devid = devid;
 			p->type = type;
 			p->size = 0;
 			p->num_stripes = num_stripes;
+
+			ret = array_append(chunkinfos, p);
+			if (ret < 0) {
+				error_msg(ERROR_MSG_MEMORY, NULL);
+				return -ENOMEM;
+			}
 		}
 
 		p->size += size;
@@ -109,7 +110,6 @@ static int add_info_to_list(struct chunk_info **chunkinfo_ret,
  */
 static int cmp_chunk_block_group(u64 f1, u64 f2)
 {
-
 	u64 mask;
 
 	if ((f1 & BTRFS_BLOCK_GROUP_TYPE_MASK) ==
@@ -135,13 +135,13 @@ static int cmp_chunk_block_group(u64 f1, u64 f2)
  */
 static int cmp_chunk_info(const void *a, const void *b)
 {
-	return cmp_chunk_block_group(
-		((struct chunk_info *)a)->type,
-		((struct chunk_info *)b)->type);
+	const struct chunk_info * const *pa = a;
+	const struct chunk_info * const *pb = b;
+
+	return cmp_chunk_block_group((*pa)->type, (*pb)->type);
 }
 
-static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
-		int *chunkcount_ret)
+static int load_chunk_info(int fd, struct array *chunkinfos)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;
@@ -191,11 +191,9 @@ static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
 			off += sizeof(*sh);
 			item = (struct btrfs_chunk *)(args.buf + off);
 
-			ret = add_info_to_list(chunkinfo_ret, chunkcount_ret, item);
-			if (ret) {
-				*chunkinfo_ret = NULL;
+			ret = add_info_to_list(chunkinfos, item);
+			if (ret)
 				return 1;
-			}
 
 			off += btrfs_search_header_len(sh);
 
@@ -218,8 +216,8 @@ static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
 			break;
 	}
 
-	qsort(*chunkinfo_ret, *chunkcount_ret, sizeof(struct chunk_info),
-		cmp_chunk_info);
+	qsort(chunkinfos->data, chunkinfos->length, sizeof(struct chunk_info *),
+	      cmp_chunk_info);
 
 	return 0;
 }
@@ -339,13 +337,12 @@ static void get_raid56_logical_ratio(struct btrfs_ioctl_space_args *sargs,
  * and the "raw" space used by a chunk (r_*_used)
  */
 static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
-				  struct chunk_info *chunkinfo, int chunkcount,
+				  const struct array *chunkinfos,
 				  double *max_data_ratio,
 				  u64 *r_data_chunks, u64 *r_data_used,
 				  u64 *r_metadata_chunks, u64 *r_metadata_used,
 				  u64 *r_system_chunks, u64 *r_system_used)
 {
-	struct chunk_info *info_ptr;
 	double l_data_ratio_r5, l_metadata_ratio_r5, l_system_ratio_r5;
 	double l_data_ratio_r6, l_metadata_ratio_r6, l_system_ratio_r6;
 
@@ -354,7 +351,8 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 	get_raid56_logical_ratio(sargs, BTRFS_BLOCK_GROUP_RAID6,
 		 &l_data_ratio_r6, &l_metadata_ratio_r6, &l_system_ratio_r6);
 
-	for(info_ptr = chunkinfo; chunkcount > 0; chunkcount--, info_ptr++) {
+	for (int i = 0; i < chunkinfos->length; i++) {
+		const struct chunk_info *info_ptr = chunkinfos->data[i];
 		int parities_count;
 		u64 size;
 		double l_data_ratio, l_metadata_ratio, l_system_ratio, rt;
@@ -440,8 +438,8 @@ static u64 calc_slack_size(const struct device_info *devinfo)
 }
 
 #define	MIN_UNALOCATED_THRESH	SZ_16M
-static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
-		int chunkcount, struct device_info *devinfo, int devcount,
+static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos,
+		struct device_info *devinfo, int devcount,
 		const char *path, unsigned unit_mode)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
@@ -503,7 +501,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		goto exit;
 	}
 
-	get_raid56_space_info(sargs, chunkinfo, chunkcount, &max_data_ratio,
+	get_raid56_space_info(sargs, chunkinfos, &max_data_ratio,
 			      &r_data_chunks, &r_data_used,
 			      &r_metadata_chunks, &r_metadata_used,
 			      &r_system_chunks, &r_system_used);
@@ -829,13 +827,12 @@ out:
 	return ret;
 }
 
-int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo_ret,
-		int *chunkcount_ret, struct device_info **devinfo_ret,
-		int *devcount_ret)
+int load_chunk_and_device_info(int fd, struct array *chunkinfos,
+		struct device_info **devinfo_ret, int *devcount_ret)
 {
 	int ret;
 
-	ret = load_chunk_info(fd, chunkinfo_ret, chunkcount_ret);
+	ret = load_chunk_info(fd, chunkinfos);
 	if (ret == -EPERM) {
 		warning(
 "cannot read detailed chunk info, per-device usage will not be shown, run as root");
@@ -856,7 +853,7 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo_ret,
 /*
  *  This function computes the size of a chunk in a disk
  */
-static u64 calc_chunk_size(struct chunk_info *ci)
+static u64 calc_chunk_size(const struct chunk_info *ci)
 {
 	u32 div = 1;
 
@@ -879,8 +876,7 @@ static u64 calc_chunk_size(struct chunk_info *ci)
  */
 static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 					struct btrfs_ioctl_space_args *sargs,
-					struct chunk_info *chunks_info_ptr,
-					int chunks_info_count,
+					const struct array *chunkinfos,
 					struct device_info *devinfo,
 					int devcount)
 {
@@ -966,19 +962,20 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		for (col = spaceinfos_col, k = 0; k < sargs->total_spaces; k++) {
 			u64	flags = sargs->spaces[k].flags;
 			u64 devid = devinfo[i].devid;
-			int	j;
 			u64 size = 0;
 
 			if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 				continue;
 
-			for (j = 0 ; j < chunks_info_count ; j++) {
-				if (chunks_info_ptr[j].type != flags )
-						continue;
-				if (chunks_info_ptr[j].devid != devid)
-						continue;
+			for (int j = 0; j < chunkinfos->length; j++) {
+				const struct chunk_info *chunk = chunkinfos->data[j];
 
-				size += calc_chunk_size(chunks_info_ptr+j);
+				if (chunk->type != flags)
+					continue;
+				if (chunk->devid != devid)
+					continue;
+
+				size += calc_chunk_size(chunk);
 			}
 
 			if (size)
@@ -1073,20 +1070,20 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 /*
  *  This function prints the unused space per every disk
  */
-static void print_unused(struct chunk_info *info_ptr,
-			  int info_count,
-			  struct device_info *devinfo,
-			  int devcount,
-			  unsigned unit_mode)
+static void print_unused(const struct array *chunkinfos, struct device_info *devinfo,
+			 int devcount, unsigned unit_mode)
 {
 	int i;
+
 	for (i = 0; i < devcount; i++) {
-		int	j;
 		u64	total = 0;
 
-		for (j = 0; j < info_count; j++)
-			if (info_ptr[j].devid == devinfo[i].devid)
-				total += calc_chunk_size(info_ptr+j);
+		for (int j = 0; j < chunkinfos->length; j++) {
+			const struct chunk_info *chunk = chunkinfos->data[j];
+
+			if (chunk->devid == devinfo[i].devid)
+				total += calc_chunk_size(chunk);
+		}
 
 		pr_verbose(LOG_DEFAULT, "   %s\t%10s\n",
 			devinfo[i].path,
@@ -1097,28 +1094,24 @@ static void print_unused(struct chunk_info *info_ptr,
 /*
  *  This function prints the allocated chunk per every disk
  */
-static void print_chunk_device(u64 chunk_type,
-				struct chunk_info *chunks_info_ptr,
-				int chunks_info_count,
-				struct device_info *devinfo,
-				int devcount,
-				unsigned unit_mode)
+static void print_chunk_device(u64 chunk_type, const struct array *chunkinfos,
+			       struct device_info *devinfo, int devcount,
+			       unsigned unit_mode)
 {
 	int i;
 
 	for (i = 0; i < devcount; i++) {
-		int	j;
 		u64	total = 0;
 
-		for (j = 0; j < chunks_info_count; j++) {
+		for (int j = 0; j < chunkinfos->length; j++) {
+			const struct chunk_info *chunk = chunkinfos->data[j];
 
-			if (chunks_info_ptr[j].type != chunk_type)
+			if (chunk->type != chunk_type)
 				continue;
-			if (chunks_info_ptr[j].devid != devinfo[i].devid)
+			if (chunk->devid != devinfo[i].devid)
 				continue;
 
-			total += calc_chunk_size(&(chunks_info_ptr[j]));
-			//total += chunks_info_ptr[j].size;
+			total += calc_chunk_size(chunk);
 		}
 
 		if (total > 0)
@@ -1134,8 +1127,7 @@ static void print_chunk_device(u64 chunk_type,
  */
 static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 					struct btrfs_ioctl_space_args *sargs,
-					struct chunk_info *info_ptr,
-					int info_count,
+					const struct array *chunkinfos,
 					struct device_info *devinfo,
 					int devcount)
 {
@@ -1161,20 +1153,18 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode),
 			100.0f * sargs->spaces[i].used_bytes /
 			(sargs->spaces[i].total_bytes + 1));
-		print_chunk_device(flags, info_ptr, info_count,
-				devinfo, devcount, unit_mode);
+		print_chunk_device(flags, chunkinfos, devinfo, devcount, unit_mode);
 		pr_verbose(LOG_DEFAULT, "\n");
 	}
 
-	if (info_count) {
+	if (chunkinfos->length > 0) {
 		pr_verbose(LOG_DEFAULT, "Unallocated:\n");
-		print_unused(info_ptr, info_count, devinfo,
-				devcount, unit_mode | UNITS_NEGATIVE);
+		print_unused(chunkinfos, devinfo, devcount, unit_mode | UNITS_NEGATIVE);
 	}
 }
 
 static int print_filesystem_usage_by_chunk(int fd,
-		struct chunk_info *chunkinfo, int chunkcount,
+		const struct array *chunkinfos,
 		struct device_info *devinfo, int devcount,
 		const char *path, unsigned unit_mode, int tabular)
 {
@@ -1188,11 +1178,11 @@ static int print_filesystem_usage_by_chunk(int fd,
 	}
 
 	if (tabular)
-		_cmd_filesystem_usage_tabular(unit_mode, sargs, chunkinfo,
-				chunkcount, devinfo, devcount);
+		_cmd_filesystem_usage_tabular(unit_mode, sargs, chunkinfos,
+				devinfo, devcount);
 	else
-		_cmd_filesystem_usage_linear(unit_mode, sargs, chunkinfo,
-				chunkcount, devinfo, devcount);
+		_cmd_filesystem_usage_linear(unit_mode, sargs, chunkinfos,
+				devinfo, devcount);
 
 	free(sargs);
 out:
@@ -1242,9 +1232,8 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 	for (i = optind; i < argc; i++) {
 		int fd;
 		DIR *dirstream = NULL;
-		struct chunk_info *chunkinfo = NULL;
+		struct array chunkinfos = { 0 };
 		struct device_info *devinfo = NULL;
-		int chunkcount = 0;
 		int devcount = 0;
 
 		fd = btrfs_open_dir(argv[i], &dirstream, 1);
@@ -1255,21 +1244,22 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 		if (more_than_one)
 			pr_verbose(LOG_DEFAULT, "\n");
 
-		ret = load_chunk_and_device_info(fd, &chunkinfo, &chunkcount,
-				&devinfo, &devcount);
+		ret = load_chunk_and_device_info(fd, &chunkinfos,
+						 &devinfo, &devcount);
 		if (ret)
 			goto cleanup;
 
-		ret = print_filesystem_usage_overall(fd, chunkinfo, chunkcount,
+		ret = print_filesystem_usage_overall(fd, &chunkinfos,
 				devinfo, devcount, argv[i], unit_mode);
 		if (ret)
 			goto cleanup;
 		pr_verbose(LOG_DEFAULT, "\n");
-		ret = print_filesystem_usage_by_chunk(fd, chunkinfo, chunkcount,
+		ret = print_filesystem_usage_by_chunk(fd, &chunkinfos,
 				devinfo, devcount, argv[i], unit_mode, tabular);
 cleanup:
 		close_file_or_dir(fd, dirstream);
-		free(chunkinfo);
+		array_free_elements(&chunkinfos);
+		array_free(&chunkinfos);
 		free(devinfo);
 
 		if (ret)
@@ -1283,30 +1273,31 @@ out:
 DEFINE_SIMPLE_COMMAND(filesystem_usage, "usage");
 
 void print_device_chunks(struct device_info *devinfo,
-		struct chunk_info *chunks_info_ptr,
-		int chunks_info_count, unsigned unit_mode)
+			 const struct array *chunkinfos, unsigned unit_mode)
 {
 	int i;
 	u64 allocated = 0;
 
-	for (i = 0 ; i < chunks_info_count ; i++) {
+	for (i = 0; i < chunkinfos->length; i++) {
 		const char *description;
 		const char *r_mode;
+		const struct chunk_info *chunk_info;
 		u64 flags;
 		u64 size;
 		u64 num_stripes;
 		u64 profile;
 
-		if (chunks_info_ptr[i].devid != devinfo->devid)
+		chunk_info = chunkinfos->data[i];
+		if (chunk_info->devid != devinfo->devid)
 			continue;
 
-		flags = chunks_info_ptr[i].type;
+		flags = chunk_info->type;
 		profile = (flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 
 		description = btrfs_group_type_str(flags);
 		r_mode = btrfs_group_profile_str(flags);
-		size = calc_chunk_size(chunks_info_ptr+i);
-		num_stripes = chunks_info_ptr[i].num_stripes;
+		size = calc_chunk_size(chunk_info);
+		num_stripes = chunk_info->num_stripes;
 
 		if (btrfs_bg_type_is_stripey(profile)) {
 			pr_verbose(LOG_DEFAULT, "   %s,%s/%llu:%*s%10s\n",
