@@ -38,6 +38,7 @@
 
 /libbtrfsutil/libbtrfsutil.pc
 
+/fsstress
 /fssum
 /testsuite-id
 /tests/*-tests-results.txt
@@ -57,6 +58,9 @@
 /include/config.h
 /include/config.h.in
 /include/config.h.in~
+/config/config.guess
+/config/config.sub
+/config/install-sh
 /config.log
 /config.status
 /configure
