@@ -195,12 +195,41 @@ check_multi_fsid_unchanged() {
 	check_flag_cleared "$1" "$2"
 }
 
-failure_recovery() {
+failure_recovery_progs() {
 	local image1
 	local image2
 	local loop1
 	local loop2
 	local devcount
+
+	image1=$(extract_image "$1")
+	image2=$(extract_image "$2")
+	loop1=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image1")
+	loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image2")
+
+	run_check $SUDO_HELPER udevadm settle
+
+	# Scan to make sure btrfs detects both devices before trying to mount
+	#run_check "$TOP/btrfstune" -m --noscan --device="$loop1" "$loop2"
+	run_check "$TOP/btrfstune" -m "$loop2"
+
+	# perform any specific check
+	"$3" "$loop1" "$loop2"
+
+	# cleanup
+	run_check $SUDO_HELPER losetup -d "$loop1"
+	run_check $SUDO_HELPER losetup -d "$loop2"
+	rm -f -- "$image1" "$image2"
+}
+
+failure_recovery_kernel() {
+	local image1
+	local image2
+	local loop1
+	local loop2
+	local devcount
+
+	reload_btrfs
 
 	image1=$(extract_image "$1")
 	image2=$(extract_image "$2")
@@ -226,47 +255,55 @@ failure_recovery() {
 	rm -f -- "$image1" "$image2"
 }
 
+failure_recovery() {
+	failure_recovery_progs $@
+	failure_recovery_kernel $@
+}
+
 reload_btrfs() {
 	run_check $SUDO_HELPER rmmod btrfs
 	run_check $SUDO_HELPER modprobe btrfs
 }
 
-# for full coverage we need btrfs to actually be a module
-modinfo btrfs > /dev/null 2>&1 || _not_run "btrfs must be a module"
-run_mayfail $SUDO_HELPER modprobe -r btrfs || _not_run "btrfs must be unloadable"
-run_mayfail $SUDO_HELPER modprobe btrfs || _not_run "loading btrfs module failed"
+test_progs() {
+	run_check_mkfs_test_dev
+	check_btrfstune
 
-run_check_mkfs_test_dev
-check_btrfstune
+	run_check_mkfs_test_dev
+	check_dump_super_output
 
-run_check_mkfs_test_dev
-check_dump_super_output
+	run_check_mkfs_test_dev
+	check_image_restore
+}
 
-run_check_mkfs_test_dev
-check_image_restore
+check_kernel_reloadable() {
+	# for full coverage we need btrfs to actually be a module
+	modinfo btrfs > /dev/null 2>&1 || _not_run "btrfs must be a module"
+	run_mayfail $SUDO_HELPER modprobe -r btrfs || _not_run "btrfs must be unloadable"
+	run_mayfail $SUDO_HELPER modprobe btrfs || _not_run "loading btrfs module failed"
+}
+
+check_kernel_reloadable
+
+test_progs
 
 # disk1 is an image which has no metadata uuid flags set and disk2 is part of
 # the same fs but has the in-progress flag set. Test that whicever is scanned
 # first will result in consistent filesystem.
 failure_recovery "./disk1.raw.xz" "./disk2.raw.xz" check_inprogress_flag
-reload_btrfs
 failure_recovery "./disk2.raw.xz" "./disk1.raw.xz" check_inprogress_flag
 
 # disk4 contains an image in with the in-progress flag set and disk 3 is part
 # of the same filesystem but has both METADATA_UUID incompat and a new
 # metadata uuid set. So disk 3 must always take precedence
-reload_btrfs
 failure_recovery "./disk3.raw.xz" "./disk4.raw.xz" check_completed
-reload_btrfs
 failure_recovery "./disk4.raw.xz" "./disk3.raw.xz" check_completed
 
 # disk5 contains an image which has undergone a successful fsid change more
 # than once, disk6 on the other hand is member of the same filesystem but
 # hasn't completed its last change. Thus it has both the FSID_CHANGING flag set
 # and METADATA_UUID flag set.
-reload_btrfs
 failure_recovery "./disk5.raw.xz" "./disk6.raw.xz" check_multi_fsid_change
-reload_btrfs
 failure_recovery "./disk6.raw.xz" "./disk5.raw.xz" check_multi_fsid_change
 
 # disk7 contains an image which has undergone a successful fsid change once to
@@ -275,5 +312,4 @@ failure_recovery "./disk6.raw.xz" "./disk5.raw.xz" check_multi_fsid_change
 # during the process change. So disk 7 looks as if it never underwent fsid change
 # and disk 8 has FSID_CHANGING_FLAG and METADATA_UUID but is stale.
 failure_recovery "./disk7.raw.xz" "./disk8.raw.xz" check_multi_fsid_unchanged
-reload_btrfs
 failure_recovery "./disk8.raw.xz" "./disk7.raw.xz" check_multi_fsid_unchanged
