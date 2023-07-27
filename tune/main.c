@@ -391,6 +391,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		if (!ret)
 			success++;
 		total++;
+		btrfs_register_all_devices();
 	}
 
 	if (random_fsid || (new_fsid_str && !change_metadata_uuid)) {
