@@ -51,6 +51,15 @@ btrfs-progs-6.3.2 (2023-06-15)
      metadata_uuid change in progress)
    * other: documentation updates
 
+btrfs-progs-6.3.3 (2023-07-27)
+""""""""""""""""""""""""""""""
+   * add btrfs-find-root to btrfs.box
+   * replace: properly enqueue if there's another replace running
+   * other:
+      * CI updates, more tests enabled, code coverage, badges
+      * documentation updates
+      * build warning fixes
+
 btrfs-progs-6.2 (2023-02-28)
 ----------------------------
    * receive: fix a corruption when decompressing zstd extents
