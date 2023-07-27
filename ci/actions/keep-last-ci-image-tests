@@ -1,13 +1,16 @@
 #!/bin/sh -xe
+#
+# Keep last runs of master and release-test
+
+workflow='CI image tests'
+repo="kdave/btrfs-progs"
 
 type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
 type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
 
-repo="kdave/btrfs-progs"
-
-from=3
-
-for id in $(gh run -R "$repo" list -w 'CI image tests' --json databaseId | jq '.[].databaseId' | tail -n +${from}); do
-	echo "Delete run $id"
-	gh run -R "$repo" delete "$id"
+for branch in master release-test; do
+	for id in $(gh run -R "$repo" list --workflow "$workflow" --branch "$branch" --json databaseId | jq '.[1:] | .[].databaseId'); do
+		echo "Delete run $id"
+		gh run -R "$repo" delete "$id"
+	done
 done

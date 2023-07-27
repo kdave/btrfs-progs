@@ -1,4 +1,6 @@
 #!/bin/sh -e
+#
+# Keep only last week worth of CI runs, selected workflows
 
 type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
 type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
@@ -9,7 +11,7 @@ daysmax=8
 
 clean_workflow() {
 	local wf="$1"
-	local json=$(gh run -R "$repo" list -w "$wf" --json databaseId,startedAt)
+	local json=$(gh run -R "$repo" list --workflow "$wf" --json databaseId,startedAt)
 
 	echo "Cleaning workflow $wf"
 	i=0
@@ -37,4 +39,3 @@ clean_workflow() {
 
 clean_workflow "Testing CI build"
 clean_workflow "Devel build and tests"
-clean_workflow "CI image tests"
