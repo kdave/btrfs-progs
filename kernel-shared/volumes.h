@@ -91,6 +91,7 @@ struct btrfs_fs_devices {
 	u64 missing_devices;
 	u64 total_rw_bytes;
 
+	u64 total_devices;
 	int latest_bdev;
 	int lowest_bdev;
 	struct list_head devices;
