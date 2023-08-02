@@ -342,6 +342,9 @@ static int device_list_add(const char *path,
 	u64 devid = btrfs_stack_device_id(&disk_super->dev_item);
 	bool metadata_uuid = (btrfs_super_incompat_flags(disk_super) &
 		BTRFS_FEATURE_INCOMPAT_METADATA_UUID);
+	bool changing_fsid = (btrfs_super_flags(disk_super) &
+			      (BTRFS_SUPER_FLAG_CHANGING_FSID |
+			       BTRFS_SUPER_FLAG_CHANGING_FSID_V2));
 
 	if (metadata_uuid)
 		fs_devices = find_fsid(disk_super->fsid,
@@ -424,6 +427,12 @@ static int device_list_add(const char *path,
                 device->name = name;
         }
 
+	/*
+	 * If changing_fsid the fs_devices will still hold the status from
+	 * the other devices.
+	 */
+	if (changing_fsid)
+		fs_devices->changing_fsid = true;
 
 	if (found_transid > fs_devices->latest_trans) {
 		fs_devices->latest_devid = devid;

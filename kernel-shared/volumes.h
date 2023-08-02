@@ -99,6 +99,8 @@ struct btrfs_fs_devices {
 	struct btrfs_fs_devices *seed;
 
 	enum btrfs_chunk_allocation_policy chunk_alloc_policy;
+
+	bool changing_fsid;
 };
 
 struct btrfs_bio_stripe {

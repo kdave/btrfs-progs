@@ -214,10 +214,8 @@ int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
 				 uuid_t fsid_ret, uuid_t chunk_id_ret)
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
-	u64 flags = btrfs_super_flags(fs_info->super_copy);
 
-	if (flags & (BTRFS_SUPER_FLAG_CHANGING_FSID |
-		     BTRFS_SUPER_FLAG_CHANGING_FSID_V2)) {
+	if (fs_info->fs_devices->changing_fsid) {
 		memcpy(fsid_ret, fs_info->super_copy->fsid, BTRFS_FSID_SIZE);
 		read_extent_buffer(tree_root->node, chunk_id_ret,
 				btrfs_header_chunk_tree_uuid(tree_root->node),
