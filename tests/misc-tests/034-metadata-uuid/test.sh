@@ -15,6 +15,19 @@ if [ ! -f /sys/fs/btrfs/features/metadata_uuid ] ; then
 	_not_run "METADATA_UUID feature not supported"
 fi
 
+has_metadata_uuid_flag() {
+	local dev="$1"
+
+	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
+		dump-super "$dev" | grep -E -q METADATA_UUID
+
+	if [ $? -eq 0 ]; then
+		echo true
+	else
+		echo false
+	fi
+}
+
 read_fsid() {
 	local dev="$1"
 
@@ -24,9 +37,14 @@ read_fsid() {
 
 read_metadata_uuid() {
 	local dev="$1"
+	local flag=$(has_metadata_uuid_flag "$dev")
 
-	echo $(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
-		dump-super "$dev" | awk '/metadata_uuid/ {print $2}')
+	if [ "$flag" == "true" ]; then
+		echo $(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
+			dump-super "$dev" | awk '/metadata_uuid/ {print $2}')
+	else
+		read_fsid $dev
+	fi
 }
 
 check_btrfstune() {
