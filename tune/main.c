@@ -287,6 +287,25 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		return 1;
 	}
 
+	/*
+	 * As we increment the generation number here, it is unlikely that the
+	 * missing device will have a higher generation number, and the kernel
+	 * won't use its super block for any further commits, even if it is not
+	 * missing during mount.
+	 *
+	 * So, we allow all operations except for -m, -M, -u, and -U, as these
+	 * operations also change the fsid/metadata_uuid, which are key
+	 * parameters for assembling the devices and need to be consistent on
+	 * all the partner devices.
+	 */
+	if ((change_metadata_uuid || random_fsid || new_fsid_str) &&
+	     root->fs_info->fs_devices->missing_devices > 0) {
+		error("missing %lld device(s), failing the command",
+		       root->fs_info->fs_devices->missing_devices);
+		ret = 1;
+		goto out;
+	}
+
  	if (to_bg_tree) {
 		if (to_extent_tree) {
 			error("option --convert-to-block-group-tree conflicts with --convert-from-block-group-tree");
