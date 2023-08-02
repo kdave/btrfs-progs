@@ -232,19 +232,23 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
 	set_argv0(argv);
 	device = argv[optind];
-	if (check_argc_exact(argc - optind, 1))
-		return 1;
+	if (check_argc_exact(argc - optind, 1)) {
+		ret = 1;
+		goto free_out;
+	}
 
 	if (random_fsid && new_fsid_str) {
 		error("random fsid can't be used with specified fsid");
-		return 1;
+		ret = 1;
+		goto free_out;
 	}
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
 	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree &&
 	    !to_extent_tree && !to_fst) {
 		error("at least one option should be specified");
 		usage(&tune_cmd, 1);
-		return 1;
+		ret = 1;
+		goto free_out;
 	}
 
 	if (new_fsid_str) {
@@ -253,18 +257,21 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		ret = uuid_parse(new_fsid_str, tmp);
 		if (ret < 0) {
 			error("could not parse UUID: %s", new_fsid_str);
-			return 1;
+			ret = 1;
+			goto free_out;
 		}
 		if (!test_uuid_unique(new_fsid_str)) {
 			error("fsid %s is not unique", new_fsid_str);
-			return 1;
+			ret = 1;
+			goto free_out;
 		}
 	}
 
 	fd = open(device, O_RDWR);
 	if (fd < 0) {
 		error("mount check: cannot open %s: %m", device);
-		return 1;
+		ret = 1;
+		goto free_out;
 	}
 
 	ret = check_mounted_where(fd, device, NULL, 0, NULL,
@@ -273,18 +280,21 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		errno = -ret;
 		error("could not check mount status of %s: %m", device);
 		close(fd);
-		return 1;
+		ret = 1;
+		goto free_out;
 	} else if (ret) {
 		error("%s is mounted", device);
 		close(fd);
-		return 1;
+		ret = 1;
+		goto free_out;
 	}
 
 	root = open_ctree_fd(fd, device, 0, ctree_flags);
 
 	if (!root) {
 		error("open ctree failed");
-		return 1;
+		ret = 1;
+		goto free_out;
 	}
 
 	/*
@@ -451,5 +461,6 @@ out:
 	close_ctree(root);
 	btrfs_close_all_devices();
 
+free_out:
 	return ret;
 }
