@@ -434,6 +434,8 @@ static int device_list_add(const char *path,
 	 */
 	if (changing_fsid)
 		fs_devices->changing_fsid = true;
+	if (metadata_uuid)
+		fs_devices->active_metadata_uuid = true;
 
 	if (found_transid > fs_devices->latest_trans) {
 		fs_devices->latest_devid = devid;

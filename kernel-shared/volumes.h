@@ -102,6 +102,7 @@ struct btrfs_fs_devices {
 	enum btrfs_chunk_allocation_policy chunk_alloc_policy;
 
 	bool changing_fsid;
+	bool active_metadata_uuid;
 };
 
 struct btrfs_bio_stripe {
