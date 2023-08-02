@@ -2156,6 +2156,7 @@ static int read_one_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 			       (unsigned long long)devid);
 			list_add(&map->stripes[i].dev->dev_list,
 				 &fs_info->fs_devices->devices);
+			fs_info->fs_devices->missing_devices++;
 		}
 
 	}
@@ -2258,6 +2259,7 @@ static int read_one_dev(struct btrfs_fs_info *fs_info,
 		device->fd = -1;
 		list_add(&device->dev_list,
 			 &fs_info->fs_devices->devices);
+		fs_info->fs_devices->missing_devices++;
 	}
 
 	fill_device_from_item(leaf, dev_item, device);
