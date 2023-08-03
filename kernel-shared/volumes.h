@@ -104,6 +104,7 @@ struct btrfs_fs_devices {
 
 	bool changing_fsid;
 	bool active_metadata_uuid;
+	bool inconsistent_super;
 };
 
 struct btrfs_bio_stripe {
