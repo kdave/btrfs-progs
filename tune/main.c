@@ -290,6 +290,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		goto free_out;
 	}
 
+	if (change_metadata_uuid || random_fsid || new_fsid_str)
+		ctree_flags |= OPEN_CTREE_USE_LATEST_BDEV;
+
 	root = open_ctree_fd(fd, device, 0, ctree_flags);
 
 	if (!root) {
