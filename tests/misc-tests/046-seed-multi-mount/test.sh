@@ -42,9 +42,11 @@ nextdevice() {
 	run_check mkdir -p "$mnt"
 	TEST_MNT="$mnt"
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER "$TOP/btrfs" device add ${loopdevs[$nextdev]} "$TEST_MNT"
 	run_mustfail "writable file despite read-only mount" \
 		$SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/file$nextdevice" bs=1M count=1 status=none
+	run_check $SUDO_HELPER "$TOP/btrfs" device add ${loopdevs[$nextdev]} "$TEST_MNT"
+	# Although seed sprout would make the fs RW, explicitly remount it RW
+	# just in case of future behavior change.
 	run_check $SUDO_HELPER mount -o remount,rw "$TEST_MNT"
 	# Rewrite the file
 	md5sum=$(run_check_stdout md5sum "$TEST_MNT/file$nextdev" | awk '{print $1}')
