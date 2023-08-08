@@ -21,16 +21,15 @@ run_check_mount_test_dev
 run_check $SUDO_HELPER "$TOP/btrfs" device remove "$REPLACE1" "$TEST_MNT"
 run_check $SUDO_HELPER "$TOP/btrfs" device remove "$REPLACE2" "$TEST_MNT"
 
-for i in `seq 48`; do
+for i in `seq 16`; do
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/file$i" bs=1M count=128 status=noxfer
 done
 # Sync so replace start does not block in unwritten IO
 run_check "$TOP/btrfs" filesystem sync "$TEST_MNT"
 run_check "$TOP/btrfs" filesystem usage -T "$TEST_MNT"
 
-# Go background, should not be that fast, estimated 10 seconds
+# Go background, should not be that fast.
 run_check $SUDO_HELPER "$TOP/btrfs" replace start 2 "$REPLACE1" "$TEST_MNT"
-run_check sleep 1
 # No background, should wait
 run_check $SUDO_HELPER "$TOP/btrfs" replace start --enqueue 3 "$REPLACE2" "$TEST_MNT"
 run_check $SUDO_HELPER "$TOP/btrfs" replace status "$TEST_MNT"
