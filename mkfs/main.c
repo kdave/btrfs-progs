@@ -1217,6 +1217,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "verbose", 0, NULL, 'v' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 #if EXPERIMENTAL
+			{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 			{ "num-global-roots", required_argument, NULL, GETOPT_VAL_GLOBAL_ROOTS },
 #endif
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP },
@@ -1349,6 +1350,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case GETOPT_VAL_GLOBAL_ROOTS:
 				btrfs_warn_experimental("Feature: num-global-roots is part of exten-tree-v2");
 				nr_global_roots = (int)arg_strtou64(optarg);
+				break;
+			case GETOPT_VAL_PARAM:
+				bconf_save_param(optarg);
 				break;
 			case GETOPT_VAL_HELP:
 			default:
