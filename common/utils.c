@@ -944,6 +944,7 @@ void btrfs_config_init(void)
 {
 	bconf.output_format = CMD_FORMAT_TEXT;
 	bconf.verbose = BTRFS_BCONF_UNSET;
+	INIT_LIST_HEAD(&bconf.params);
 }
 
 void bconf_be_verbose(void)
@@ -958,6 +959,47 @@ void bconf_be_quiet(void)
 {
 	bconf.verbose = BTRFS_BCONF_QUIET;
 }
+
+void bconf_add_param(const char *key, const char *value)
+{
+	struct config_param *param;
+
+	param = calloc(sizeof(*param), 1);
+	if (!param)
+		return;
+	param->key = strdup(key);
+	if (value)
+		param->value = strdup(value);
+	list_add(&param->list, &bconf.params);
+}
+
+const char *bconf_param_value(const char *key)
+{
+	struct config_param *param;
+
+	list_for_each_entry(param, &bconf.params, list) {
+		if (strcmp(key, param->key) == 0)
+			return param->value;
+	}
+	return NULL;
+}
+
+void bconf_save_param(const char *str)
+{
+	char *tmp;
+
+	tmp = strchr(str, '=');
+	if (!tmp) {
+		bconf_add_param(str, NULL);
+		printf("Global param: %s\n", str);
+	} else {
+		*tmp = 0;
+		bconf_add_param(str, tmp + 1);
+		printf("Global param: %s=%s\n", str, tmp + 1);
+		*tmp = '=';
+	}
+}
+
 
 /* Returns total size of main memory in bytes, -1UL if error. */
 unsigned long total_memory(void)

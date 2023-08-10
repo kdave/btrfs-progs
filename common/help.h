@@ -36,6 +36,7 @@ struct cmd_group;
 #define GETOPT_VAL_TBYTES			519
 
 #define GETOPT_VAL_HELP				520
+#define GETOPT_VAL_PARAM			521
 
 #define ARGV0_BUF_SIZE	PATH_MAX
 

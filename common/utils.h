@@ -22,6 +22,7 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include "kernel-lib/list.h"
 #include "kernel-shared/volumes.h"
 #include "common/fsfeatures.h"
 
@@ -86,12 +87,22 @@ struct btrfs_config {
 	 *   > 0: verbose level
 	 */
 	int verbose;
+	struct list_head params;
 };
 extern struct btrfs_config bconf;
+
+struct config_param {
+	struct list_head list;
+	const char *key;
+	const char *value;
+};
 
 void btrfs_config_init(void);
 void bconf_be_verbose(void);
 void bconf_be_quiet(void);
+void bconf_add_param(const char *key, const char *value);
+void bconf_save_param(const char *str);
+const char *bconf_param_value(const char *key);
 
 /* Pseudo random number generator wrappers */
 int rand_int(void);

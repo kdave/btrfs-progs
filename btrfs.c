@@ -287,6 +287,7 @@ static int handle_global_options(int argc, char **argv)
 		{ "verbose", no_argument, NULL, 'v' },
 		{ "quiet", no_argument, NULL, 'q' },
 		{ "log", required_argument, NULL, OPT_LOG },
+		{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 		{ NULL, 0, NULL, 0}
 	};
 	int shift;
@@ -311,6 +312,9 @@ static int handle_global_options(int argc, char **argv)
 			break;
 		case OPT_LOG:
 			handle_log_level(optarg);
+			break;
+		case GETOPT_VAL_PARAM:
+			bconf_save_param(optarg);
 			break;
 		case 'v':
 			bconf_be_verbose();
