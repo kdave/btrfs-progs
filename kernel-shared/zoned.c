@@ -34,6 +34,7 @@
 #include "common/device-utils.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
+#include "common/parse-utils.h"
 #include "common/messages.h"
 #include "mkfs/common.h"
 
@@ -44,7 +45,9 @@
 /* Pseudo write pointer value for conventional zone */
 #define WP_CONVENTIONAL			((u64)-2)
 
-#define EMULATED_ZONE_SIZE		SZ_256M
+#define DEFAULT_EMULATED_ZONE_SIZE		SZ_256M
+
+static u64 emulated_zone_size = DEFAULT_EMULATED_ZONE_SIZE;
 
 /*
  * Minimum / maximum supported zone size. Currently, SMR disks have a zone size
@@ -93,8 +96,22 @@ u64 zone_size(const char *file)
 	int ret;
 
 	/* Zoned emulation on regular device */
-	if (zoned_model(file) == ZONED_NONE)
-		return EMULATED_ZONE_SIZE;
+	if (zoned_model(file) == ZONED_NONE) {
+		const char *tmp;
+		u64 size = DEFAULT_EMULATED_ZONE_SIZE;
+
+		tmp = bconf_param_value("zone-size");
+		if (tmp) {
+			size = parse_size_from_string(tmp);
+			if (!is_power_of_2(size) || size < BTRFS_MIN_ZONE_SIZE ||
+			    size > BTRFS_MAX_ZONE_SIZE) {
+				error("invalid emulated zone size %llu", size);
+				exit(1);
+			}
+		}
+		emulated_zone_size = size;
+		return emulated_zone_size;
+	}
 
 	ret = device_get_queue_param(file, "chunk_sectors", chunk, sizeof(chunk));
 	if (ret <= 0)
@@ -125,7 +142,7 @@ static u64 max_zone_append_size(const char *file)
 static int emulate_report_zones(const char *file, int fd, u64 pos,
 				struct blk_zone *zones, unsigned int nr_zones)
 {
-	const sector_t zone_sectors = EMULATED_ZONE_SIZE >> SECTOR_SHIFT;
+	const sector_t zone_sectors = emulated_zone_size >> SECTOR_SHIFT;
 	struct stat st;
 	sector_t bdev_size;
 	unsigned int i;
