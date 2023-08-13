@@ -28,6 +28,8 @@ struct rowspec {
 	 *   (values: va_args)
 	 * - uuid: format UUID as text
 	 *   (value: u8 *uuid)
+	 * - time-long: pretty print timestamp, including timezone
+	 *   (values: time_t)
 	 * - list: print list opening bracket [
 	 *   (values printed separately)
 	 * - map:  start a new group, opens {
