@@ -41,8 +41,33 @@
 #include "common/open-utils.h"
 #include "common/string-utils.h"
 #include "common/units.h"
+#include "common/format-output.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
+
+const struct rowspec btrfs_subvolume_rowspec[] = {
+	{ .key = "ID", .fmt = "%llu", .out_json = "id" },
+	{ .key = "name", .fmt = "%s", .out_json = "name" },
+	{ .key = "gen", .fmt = "%llu", .out_json = "gen" },
+	{ .key = "cgen", .fmt = "%llu", .out_json = "cgen" },
+	{ .key = "parent", .fmt = "%llu", .out_json = "parent" },
+	{ .key = "top level", .fmt = "%llu", .out_json = "top_level" },
+	{ .key = "otime", .fmt = "time-long", .out_json = "otime" },
+	{ .key = "parent_uuid", .fmt = "uuid", .out_json = "parent_uuid" },
+	{ .key = "received_uuid", .fmt = "uuid", .out_json = "received_uuid" },
+	{ .key = "uuid", .fmt = "uuid", .out_json = "uuid" },
+	{ .key = "path", .fmt = "%s", .out_json = "path" },
+	{ .key = "flag-list-item", .fmt = "%s" },
+	{ .key = "stransid", .fmt = "%llu", .out_json = "stransid" },
+	{ .key = "stime", .fmt = "time-long", .out_json = "stime" },
+	{ .key = "rtransid", .fmt = "%llu", .out_json = "rtransid" },
+	{ .key = "rtime", .fmt = "time-long", .out_json = "rtime" },
+	{ .key = "snapshot-list-item", .fmt = "%s" },
+	{ .key = "quota-group", .fmt = "qgroupid", .out_json = "group" },
+	{ .key = "quota-ref", .fmt = "%llu", .out_json = "referenced" },
+	{ .key = "quota-excl", .fmt = "%llu", .out_json = "exclusive" },
+	ROWSPEC_END
+};
 
 static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				       int sleep_interval)
