@@ -701,6 +701,8 @@ static DEFINE_SIMPLE_COMMAND(subvolume_snapshot, "snapshot");
 static const char * const cmd_subvolume_get_default_usage[] = {
 	"btrfs subvolume get-default <path>",
 	"Get the default subvolume of a filesystem",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	NULL
 };
 
@@ -712,6 +714,7 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 	struct btrfs_util_subvolume_info subvol;
+	struct format_ctx fctx;
 	char *path;
 
 	clean_args_no_options(cmd, argc, argv);
@@ -731,7 +734,14 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 
 	/* no need to resolve roots if FS_TREE is default */
 	if (default_id == BTRFS_FS_TREE_OBJECTID) {
-		pr_verbose(LOG_DEFAULT, "ID 5 (FS_TREE)\n");
+		if (bconf.output_format == CMD_FORMAT_JSON) {
+			fmt_start(&fctx, btrfs_subvolume_rowspec, 1, 0);
+			fmt_print(&fctx, "ID", 5);
+			fmt_end(&fctx);
+		} else {
+			pr_verbose(LOG_DEFAULT, "ID 5 (FS_TREE)\n");
+		}
+
 		ret = 0;
 		goto out;
 	}
@@ -748,8 +758,17 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 		goto out;
 	}
 
-	pr_verbose(LOG_DEFAULT, "ID %" PRIu64 " gen %" PRIu64 " top level %" PRIu64 " path %s\n",
-	       subvol.id, subvol.generation, subvol.parent_id, path);
+	if (bconf.output_format == CMD_FORMAT_JSON) {
+		fmt_start(&fctx, btrfs_subvolume_rowspec, 1, 0);
+		fmt_print(&fctx, "ID", subvol.id);
+		fmt_print(&fctx, "gen", subvol.generation);
+		fmt_print(&fctx, "top level", subvol.parent_id);
+		fmt_print(&fctx, "path", path);
+		fmt_end(&fctx);
+	} else {
+		pr_verbose(LOG_DEFAULT, "ID %" PRIu64 " gen %" PRIu64 " top level %" PRIu64 " path %s\n",
+		       subvol.id, subvol.generation, subvol.parent_id, path);
+	}
 
 	free(path);
 
@@ -758,7 +777,7 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvolume_get_default, "get-default");
+static DEFINE_COMMAND_WITH_FLAGS(subvolume_get_default, "get-default", CMD_FORMAT_JSON);
 
 static const char * const cmd_subvolume_set_default_usage[] = {
 	"btrfs subvolume set-default <subvolume>\n"
