@@ -35,7 +35,9 @@
 #include "common/open-utils.h"
 #include "common/string-utils.h"
 #include "common/utils.h"
+#include "common/format-output.h"
 #include "cmds/commands.h"
+#include "cmds/subvolume.h"
 
 /*
  * Naming of options:
@@ -75,6 +77,8 @@ static const char * const cmd_subvolume_list_usage[] = {
 	OPTLINE("--sort=gen,ogen,rootid,path", "list the subvolume in order of gen, ogen, rootid or path "
 		"you also can add '+' or '-' in front of each items. "
 		"(+:ascending, -:descending, ascending default)"),
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	NULL,
 };
 
@@ -84,7 +88,8 @@ static const char * const cmd_subvolume_list_usage[] = {
 enum btrfs_list_layout {
 	BTRFS_LIST_LAYOUT_DEFAULT = 0,
 	BTRFS_LIST_LAYOUT_TABLE,
-	BTRFS_LIST_LAYOUT_RAW
+	BTRFS_LIST_LAYOUT_RAW,
+	BTRFS_LIST_LAYOUT_JSON
 };
 
 /*
@@ -1269,14 +1274,83 @@ static void print_all_subvol_info_tab_head(void)
 	}
 }
 
+static void print_subvol_json_key(struct format_ctx *fctx,
+				  const struct root_info *subv,
+				  const enum btrfs_list_column_enum column)
+{
+	const char *column_name;
+
+	UASSERT(0 <= column && column < BTRFS_LIST_ALL);
+
+	column_name = btrfs_list_columns[column].name;
+	switch (column) {
+	case BTRFS_LIST_OBJECTID:
+		fmt_print(fctx, column_name, subv->root_id);
+		break;
+	case BTRFS_LIST_GENERATION:
+		fmt_print(fctx, column_name, subv->gen);
+		break;
+	case BTRFS_LIST_OGENERATION:
+		fmt_print(fctx, column_name, subv->ogen);
+		break;
+	case BTRFS_LIST_PARENT:
+		fmt_print(fctx, column_name, subv->ref_tree);
+		break;
+	case BTRFS_LIST_TOP_LEVEL:
+		fmt_print(fctx, column_name, subv->top_id);
+		break;
+	case BTRFS_LIST_OTIME:
+		fmt_print(fctx, column_name, subv->otime);
+		break;
+	case BTRFS_LIST_UUID:
+		fmt_print(fctx, column_name, subv->uuid);
+		break;
+	case BTRFS_LIST_PUUID:
+		fmt_print(fctx, column_name, subv->puuid);
+		break;
+	case BTRFS_LIST_RUUID:
+		fmt_print(fctx, column_name, subv->ruuid);
+		break;
+	case BTRFS_LIST_PATH:
+		BUG_ON(!subv->full_path);
+		fmt_print(fctx, column_name, subv->full_path);
+		break;
+	default:
+		break;
+	}
+}
+
+static void print_one_subvol_info_json(struct format_ctx *fctx,
+				struct root_info *subv)
+{
+	int i;
+
+	fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
+
+	for (i = 0; i < BTRFS_LIST_ALL; i++) {
+		if (!btrfs_list_columns[i].need_print)
+			continue;
+
+		print_subvol_json_key(fctx, subv, i);
+	}
+
+	fmt_print_end_group(fctx, NULL);
+}
+
+
 static void print_all_subvol_info(struct rb_root *sorted_tree,
 		  enum btrfs_list_layout layout, const char *raw_prefix)
 {
 	struct rb_node *n;
 	struct root_info *entry;
+	struct format_ctx fctx;
 
-	if (layout == BTRFS_LIST_LAYOUT_TABLE)
+	if (layout == BTRFS_LIST_LAYOUT_TABLE) {
 		print_all_subvol_info_tab_head();
+	} else if (layout == BTRFS_LIST_LAYOUT_JSON) {
+		fmt_start(&fctx, btrfs_subvolume_rowspec, 1, 0);
+		fmt_print_start_group(&fctx, "subvolume-list", JSON_TYPE_ARRAY);
+	}
 
 	n = rb_first(sorted_tree);
 	while (n) {
@@ -1296,9 +1370,17 @@ static void print_all_subvol_info(struct rb_root *sorted_tree,
 		case BTRFS_LIST_LAYOUT_RAW:
 			print_one_subvol_info_raw(entry, raw_prefix);
 			break;
+		case BTRFS_LIST_LAYOUT_JSON:
+			print_one_subvol_info_json(&fctx, entry);
+			break;
 		}
 next:
 		n = rb_next(n);
+	}
+
+	if (layout == BTRFS_LIST_LAYOUT_JSON) {
+		fmt_print_end_group(&fctx, "subvolume-list");
+		fmt_end(&fctx);
 	}
 }
 
@@ -1631,6 +1713,9 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 	btrfs_list_setup_print_column(BTRFS_LIST_TOP_LEVEL);
 	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 
+	if (bconf.output_format == CMD_FORMAT_JSON)
+		layout = BTRFS_LIST_LAYOUT_JSON;
+
 	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
 			layout, !is_list_all && !is_only_in_path, NULL);
 
@@ -1644,4 +1729,4 @@ out:
 		usage(cmd, 1);
 	return !!ret;
 }
-DEFINE_SIMPLE_COMMAND(subvolume_list, "list");
+DEFINE_COMMAND_WITH_FLAGS(subvolume_list, "list", CMD_FORMAT_JSON);
