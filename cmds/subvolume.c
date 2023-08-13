@@ -1232,6 +1232,105 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 }
 static DEFINE_SIMPLE_COMMAND(subvolume_find_new, "find-new");
 
+static void print_subvolume_show_text(const struct btrfs_util_subvolume_info *subvol,
+				      const char *subvol_path, const char *subvol_name)
+{
+	char tstr[256];
+	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
+
+	/* Warn if it's a read-write subvolume with received_uuid */
+	if (!uuid_is_null(subvol->received_uuid) &&
+	    !(subvol->flags & BTRFS_ROOT_SUBVOL_RDONLY)) {
+		warning("the subvolume is read-write and has received_uuid set,\n"
+			"\t don't use it for incremental send. Please see section\n"
+			"\t 'SUBVOLUME FLAGS' in manual page btrfs-subvolume for\n"
+			"\t further information.");
+	}
+
+	/* print the info */
+	pr_verbose(LOG_DEFAULT, "%s\n",
+		   subvol->id == BTRFS_FS_TREE_OBJECTID ? "/" : subvol_path);
+	pr_verbose(LOG_DEFAULT, "\tName: \t\t\t%s\n", subvol_name);
+
+	if (uuid_is_null(subvol->uuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(subvol->uuid, uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tUUID: \t\t\t%s\n", uuidparse);
+
+	if (uuid_is_null(subvol->parent_uuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(subvol->parent_uuid, uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tParent UUID: \t\t%s\n", uuidparse);
+
+	if (uuid_is_null(subvol->received_uuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(subvol->received_uuid, uuidparse);
+	pr_verbose(LOG_DEFAULT, "\tReceived UUID: \t\t%s\n", uuidparse);
+
+	if (subvol->otime.tv_sec) {
+		struct tm tm;
+
+		localtime_r(&subvol->otime.tv_sec, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	} else
+		strcpy(tstr, "-");
+	pr_verbose(LOG_DEFAULT, "\tCreation time: \t\t%s\n", tstr);
+
+	pr_verbose(LOG_DEFAULT, "\tSubvolume ID: \t\t%" PRIu64 "\n", subvol->id);
+	pr_verbose(LOG_DEFAULT, "\tGeneration: \t\t%" PRIu64 "\n", subvol->generation);
+	pr_verbose(LOG_DEFAULT, "\tGen at creation: \t%" PRIu64 "\n", subvol->otransid);
+	pr_verbose(LOG_DEFAULT, "\tParent ID: \t\t%" PRIu64 "\n", subvol->parent_id);
+	pr_verbose(LOG_DEFAULT, "\tTop level ID: \t\t%" PRIu64 "\n", subvol->parent_id);
+
+	if (subvol->flags & BTRFS_ROOT_SUBVOL_RDONLY)
+		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\treadonly\n");
+	else
+		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\t-\n");
+
+	pr_verbose(LOG_DEFAULT, "\tSend transid: \t\t%" PRIu64 "\n", subvol->stransid);
+	pr_verbose(LOG_DEFAULT, "\tSend time: \t\t%s\n", tstr);
+	if (subvol->stime.tv_sec) {
+		struct tm tm;
+
+		localtime_r(&subvol->stime.tv_sec, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	} else {
+		strcpy(tstr, "-");
+	}
+	pr_verbose(LOG_DEFAULT, "\tReceive transid: \t%" PRIu64 "\n", subvol->rtransid);
+	if (subvol->rtime.tv_sec) {
+		struct tm tm;
+
+		localtime_r(&subvol->rtime.tv_sec, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	} else {
+		strcpy(tstr, "-");
+	}
+	pr_verbose(LOG_DEFAULT, "\tReceive time: \t\t%s\n", tstr);
+}
+
+static void print_subvolume_show_quota_text(const struct btrfs_util_subvolume_info *subvol,
+					    const struct btrfs_qgroup_stats *stats,
+					    unsigned int unit_mode)
+{
+	pr_verbose(LOG_DEFAULT, "\tQuota group:\t\t0/%" PRIu64 "\n", subvol->id);
+	fflush(stdout);
+
+	pr_verbose(LOG_DEFAULT, "\t  Limit referenced:\t%s\n",
+			stats->limit.max_referenced == 0 ? "-" :
+			pretty_size_mode(stats->limit.max_referenced, unit_mode));
+	pr_verbose(LOG_DEFAULT, "\t  Limit exclusive:\t%s\n",
+			stats->limit.max_exclusive == 0 ? "-" :
+			pretty_size_mode(stats->limit.max_exclusive, unit_mode));
+	pr_verbose(LOG_DEFAULT, "\t  Usage referenced:\t%s\n",
+			pretty_size_mode(stats->info.referenced, unit_mode));
+	pr_verbose(LOG_DEFAULT, "\t  Usage exclusive:\t%s\n",
+			pretty_size_mode(stats->info.exclusive, unit_mode));
+}
+
 static const char * const cmd_subvolume_show_usage[] = {
 	"btrfs subvolume show [options] <path>",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
@@ -1247,7 +1346,6 @@ static const char * const cmd_subvolume_show_usage[] = {
 
 static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	char tstr[256];
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 	char *fullpath = NULL;
 	int fd = -1;
@@ -1260,6 +1358,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	struct btrfs_util_subvolume_iterator *iter;
 	struct btrfs_util_subvolume_info subvol;
 	char *subvol_path = NULL;
+	char *subvol_name = NULL;
 	enum btrfs_util_error err;
 	struct btrfs_qgroup_stats stats;
 	unsigned int unit_mode;
@@ -1365,78 +1464,15 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 
 	}
 
-	/* Warn if it's a read-write subvolume with received_uuid */
-	if (!uuid_is_null(subvol.received_uuid) &&
-	    !(subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)) {
-		warning("the subvolume is read-write and has received_uuid set,\n"
-			"\t don't use it for incremental send. Please see section\n"
-			"\t 'SUBVOLUME FLAGS' in manual page btrfs-subvolume for\n"
-			"\t further information.");
-	}
-	/* print the info */
-	pr_verbose(LOG_DEFAULT, "%s\n", subvol.id == BTRFS_FS_TREE_OBJECTID ? "/" : subvol_path);
-	pr_verbose(LOG_DEFAULT, "\tName: \t\t\t%s\n",
-	       (subvol.id == BTRFS_FS_TREE_OBJECTID ? "<FS_TREE>" :
-		basename(subvol_path)));
-
-	if (uuid_is_null(subvol.uuid))
-		strcpy(uuidparse, "-");
-	else
-		uuid_unparse(subvol.uuid, uuidparse);
-	pr_verbose(LOG_DEFAULT, "\tUUID: \t\t\t%s\n", uuidparse);
-
-	if (uuid_is_null(subvol.parent_uuid))
-		strcpy(uuidparse, "-");
-	else
-		uuid_unparse(subvol.parent_uuid, uuidparse);
-	pr_verbose(LOG_DEFAULT, "\tParent UUID: \t\t%s\n", uuidparse);
-
-	if (uuid_is_null(subvol.received_uuid))
-		strcpy(uuidparse, "-");
-	else
-		uuid_unparse(subvol.received_uuid, uuidparse);
-	pr_verbose(LOG_DEFAULT, "\tReceived UUID: \t\t%s\n", uuidparse);
-
-	if (subvol.otime.tv_sec) {
-		struct tm tm;
-
-		localtime_r(&subvol.otime.tv_sec, &tm);
-		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
-	} else
-		strcpy(tstr, "-");
-	pr_verbose(LOG_DEFAULT, "\tCreation time: \t\t%s\n", tstr);
-
-	pr_verbose(LOG_DEFAULT, "\tSubvolume ID: \t\t%" PRIu64 "\n", subvol.id);
-	pr_verbose(LOG_DEFAULT, "\tGeneration: \t\t%" PRIu64 "\n", subvol.generation);
-	pr_verbose(LOG_DEFAULT, "\tGen at creation: \t%" PRIu64 "\n", subvol.otransid);
-	pr_verbose(LOG_DEFAULT, "\tParent ID: \t\t%" PRIu64 "\n", subvol.parent_id);
-	pr_verbose(LOG_DEFAULT, "\tTop level ID: \t\t%" PRIu64 "\n", subvol.parent_id);
-
-	if (subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)
-		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\treadonly\n");
-	else
-		pr_verbose(LOG_DEFAULT, "\tFlags: \t\t\t-\n");
-
-	pr_verbose(LOG_DEFAULT, "\tSend transid: \t\t%" PRIu64 "\n", subvol.stransid);
-	pr_verbose(LOG_DEFAULT, "\tSend time: \t\t%s\n", tstr);
-	if (subvol.stime.tv_sec) {
-		struct tm tm;
-
-		localtime_r(&subvol.stime.tv_sec, &tm);
-		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	if (subvol.id == BTRFS_FS_TREE_OBJECTID) {
+		free(subvol_path);
+		subvol_path = strdup("/");
+		subvol_name = "<FS_TREE>";
 	} else {
-		strcpy(tstr, "-");
+		subvol_name = basename(subvol_path);
 	}
-	pr_verbose(LOG_DEFAULT, "\tReceive transid: \t%" PRIu64 "\n", subvol.rtransid);
-	if (subvol.rtime.tv_sec) {
-		struct tm tm;
 
-		localtime_r(&subvol.rtime.tv_sec, &tm);
-		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
-	} else {
-		strcpy(tstr, "-");
-	}
-	pr_verbose(LOG_DEFAULT, "\tReceive time: \t\t%s\n", tstr);
+	print_subvolume_show_text(&subvol, subvol_path, subvol_name);
 
 	/* print the snapshots of the given subvol if any*/
 	pr_verbose(LOG_DEFAULT, "\tSnapshot(s):\n");
@@ -1478,19 +1514,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 	}
 
-	pr_verbose(LOG_DEFAULT, "\tQuota group:\t\t0/%" PRIu64 "\n", subvol.id);
-	fflush(stdout);
-
-	pr_verbose(LOG_DEFAULT, "\t  Limit referenced:\t%s\n",
-			stats.limit.max_referenced == 0 ? "-" :
-			pretty_size_mode(stats.limit.max_referenced, unit_mode));
-	pr_verbose(LOG_DEFAULT, "\t  Limit exclusive:\t%s\n",
-			stats.limit.max_exclusive == 0 ? "-" :
-			pretty_size_mode(stats.limit.max_exclusive, unit_mode));
-	pr_verbose(LOG_DEFAULT, "\t  Usage referenced:\t%s\n",
-			pretty_size_mode(stats.info.referenced, unit_mode));
-	pr_verbose(LOG_DEFAULT, "\t  Usage exclusive:\t%s\n",
-			pretty_size_mode(stats.info.exclusive, unit_mode));
+	print_subvolume_show_quota_text(&subvol, &stats, unit_mode);
 
 out:
 	free(subvol_path);
