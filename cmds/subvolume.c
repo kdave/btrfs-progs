@@ -1375,6 +1375,64 @@ static void print_subvolume_show_quota_text(const struct btrfs_util_subvolume_in
 			pretty_size_mode(stats->info.exclusive, unit_mode));
 }
 
+static void print_subvolume_show_json(struct format_ctx *fctx,
+				      const struct btrfs_util_subvolume_info *subvol,
+				      const char *subvol_path, const char *subvol_name)
+{
+	fmt_print(fctx, "name", subvol_name);
+
+	if (!uuid_is_null(subvol->uuid))
+		fmt_print(fctx, "uuid", subvol->uuid);
+	if (!uuid_is_null(subvol->parent_uuid))
+		fmt_print(fctx, "parent_uuid", subvol->parent_uuid);
+	if (!uuid_is_null(subvol->received_uuid))
+		fmt_print(fctx, "received_uuid", subvol->received_uuid);
+
+	fmt_print(fctx, "otime", subvol->otime);
+	fmt_print(fctx, "ID", subvol->id);
+	fmt_print(fctx, "gen", subvol->generation);
+	fmt_print(fctx, "cgen", subvol->otransid);
+	fmt_print(fctx, "parent", subvol->parent_id);
+	fmt_print(fctx, "top level", subvol->parent_id);
+
+	fmt_print_start_group(fctx, "flags", JSON_TYPE_ARRAY);
+	if (subvol->flags & BTRFS_ROOT_SUBVOL_RDONLY)
+		fmt_print(fctx, "flag-list-item", "readonly");
+	fmt_print_end_group(fctx, "flags");
+
+	if (subvol->stransid)
+		fmt_print(fctx, "stransid", subvol->stransid);
+
+	if (subvol->stime.tv_sec)
+		fmt_print(fctx, "stime", subvol->stime);
+
+	if (subvol->rtransid)
+		fmt_print(fctx, "rtransid", subvol->rtransid);
+
+	if (subvol->rtime.tv_sec)
+		fmt_print(fctx, "rtime", subvol->rtime);
+}
+
+static void print_subvolume_show_quota_json(struct format_ctx *fctx,
+					     const struct btrfs_util_subvolume_info *subvol,
+					     const struct btrfs_qgroup_stats *stats)
+{
+	fmt_print_start_group(fctx, "quota", JSON_TYPE_MAP);
+	fmt_print(fctx, "quota-group", 0, subvol->id);
+
+	fmt_print_start_group(fctx, "limit", JSON_TYPE_MAP);
+	fmt_print(fctx, "quota-ref", stats->limit.max_referenced);
+	fmt_print(fctx, "quota-excl", stats->limit.max_exclusive);
+	fmt_print_end_group(fctx, "limit");
+
+	fmt_print_start_group(fctx, "usage", JSON_TYPE_MAP);
+	fmt_print(fctx, "quota-ref", stats->info.referenced);
+	fmt_print(fctx, "quota-excl", stats->info.exclusive);
+	fmt_print_end_group(fctx, "usage");
+
+	fmt_print_end_group(fctx, "quota");
+}
+
 static const char * const cmd_subvolume_show_usage[] = {
 	"btrfs subvolume show [options] <path>",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
@@ -1385,6 +1443,8 @@ static const char * const cmd_subvolume_show_usage[] = {
 	OPTLINE("-r|--rootid ID", "root id of the subvolume"),
 	OPTLINE("-u|--uuid UUID", "UUID of the subvolum"),
 	HELPINFO_UNITS_SHORT_LONG,
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	NULL
 };
 
@@ -1406,6 +1466,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	enum btrfs_util_error err;
 	struct btrfs_qgroup_stats stats;
 	unsigned int unit_mode;
+	struct format_ctx fctx;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
@@ -1516,10 +1577,19 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		subvol_name = basename(subvol_path);
 	}
 
-	print_subvolume_show_text(&subvol, subvol_path, subvol_name);
+	if (bconf.output_format == CMD_FORMAT_JSON) {
+		fmt_start(&fctx, btrfs_subvolume_rowspec, 1, 0);
+		fmt_print_start_group(&fctx, subvol_path, JSON_TYPE_MAP);
+		print_subvolume_show_json(&fctx, &subvol, subvol_path, subvol_name);
+	} else {
+		print_subvolume_show_text(&subvol, subvol_path, subvol_name);
+	}
 
 	/* print the snapshots of the given subvol if any*/
-	pr_verbose(LOG_DEFAULT, "\tSnapshot(s):\n");
+	if (bconf.output_format == CMD_FORMAT_JSON)
+		fmt_print_start_group(&fctx, "snapshots", JSON_TYPE_ARRAY);
+	else
+		pr_verbose(LOG_DEFAULT, "\tSnapshot(s):\n");
 
 	err = btrfs_util_create_subvolume_iterator_fd(fd,
 						      BTRFS_FS_TREE_OBJECTID, 0,
@@ -1535,30 +1605,48 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		} else if (err) {
 			error_btrfs_util(err);
 			btrfs_util_destroy_subvolume_iterator(iter);
-			goto out;
+			goto out2;
 		}
 
-		if (uuid_compare(subvol2.parent_uuid, subvol.uuid) == 0)
-			pr_verbose(LOG_DEFAULT, "\t\t\t\t%s\n", path);
+		if (uuid_compare(subvol2.parent_uuid, subvol.uuid) == 0) {
+			if (bconf.output_format == CMD_FORMAT_JSON)
+				fmt_print(&fctx, "snapshot-list-item", path);
+			else
+				pr_verbose(LOG_DEFAULT, "\t\t\t\t%s\n", path);
+		}
 
 		free(path);
 	}
+
+	if (bconf.output_format == CMD_FORMAT_JSON)
+		fmt_print_end_group(&fctx, "snapshots");
+
 	btrfs_util_destroy_subvolume_iterator(iter);
 
 	ret = btrfs_qgroup_query(fd, subvol.id, &stats);
 	if (ret == -ENOTTY) {
 		/* Quota information not available, not fatal */
-		pr_verbose(LOG_DEFAULT, "\tQuota group:\t\tn/a\n");
+		if (bconf.output_format == CMD_FORMAT_TEXT)
+			pr_verbose(LOG_DEFAULT, "\tQuota group:\t\tn/a\n");
 		ret = 0;
-		goto out;
+		goto out2;
 	}
 
 	if (ret) {
 		error("quota query failed: %m");
-		goto out;
+		goto out2;
 	}
 
-	print_subvolume_show_quota_text(&subvol, &stats, unit_mode);
+	if (bconf.output_format == CMD_FORMAT_JSON)
+		print_subvolume_show_quota_json(&fctx, &subvol, &stats);
+	else
+		print_subvolume_show_quota_text(&subvol, &stats, unit_mode);
+
+out2:
+	if (bconf.output_format == CMD_FORMAT_JSON) {
+		fmt_print_end_group(&fctx, subvol_path);
+		fmt_end(&fctx);
+	}
 
 out:
 	free(subvol_path);
@@ -1566,7 +1654,7 @@ out:
 	free(fullpath);
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvolume_show, "show");
+static DEFINE_COMMAND_WITH_FLAGS(subvolume_show, "show", CMD_FORMAT_JSON);
 
 static const char * const cmd_subvolume_sync_usage[] = {
 	"btrfs subvolume sync <path> [<subvolid>...]",
