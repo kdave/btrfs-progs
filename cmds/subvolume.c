@@ -1467,11 +1467,6 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 
 	ret = btrfs_qgroup_query(fd, subvol.id, &stats);
 	if (ret == -ENOTTY) {
-		/* Quotas not enabled */
-		ret = 0;
-		goto out;
-	}
-	if (ret == -ENOTTY) {
 		/* Quota information not available, not fatal */
 		pr_verbose(LOG_DEFAULT, "\tQuota group:\t\tn/a\n");
 		ret = 0;
