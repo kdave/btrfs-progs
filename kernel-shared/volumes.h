@@ -88,6 +88,7 @@ struct btrfs_fs_devices {
 	u64 latest_trans;
 	u64 lowest_devid;
 
+	u64 num_devices;
 	u64 missing_devices;
 	u64 total_rw_bytes;
 
