@@ -96,7 +96,7 @@ struct btrfs_fs_devices {
 	int latest_bdev;
 	int lowest_bdev;
 	struct list_head devices;
-	struct list_head list;
+	struct list_head fs_list;
 
 	struct btrfs_fs_devices *seed;
 
