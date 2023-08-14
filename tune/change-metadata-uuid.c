@@ -24,7 +24,7 @@
 #include "common/messages.h"
 #include "tune/tune.h"
 
-int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
+int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 {
 	struct btrfs_super_block *disk_super;
 	uuid_t new_fsid, unused1, unused2;
@@ -50,8 +50,8 @@ int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
 		return 1;
 	}
 
-	if (uuid_string)
-		uuid_parse(uuid_string, new_fsid);
+	if (new_fsid_string)
+		uuid_parse(new_fsid_string, new_fsid);
 	else
 		uuid_generate(new_fsid);
 
