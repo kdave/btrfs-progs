@@ -133,6 +133,7 @@ static const struct cmd_struct tune_cmd = {
 int BOX_MAIN(btrfstune)(int argc, char *argv[])
 {
 	struct btrfs_root *root;
+	struct btrfs_fs_info *fs_info;
 	unsigned ctree_flags = OPEN_CTREE_WRITES;
 	int success = 0;
 	int total = 0;
@@ -296,6 +297,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		ret = 1;
 		goto free_out;
 	}
+	fs_info = root->fs_info;
 
 	/*
 	 * As we increment the generation number here, it is unlikely that the
@@ -309,9 +311,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	 * all the partner devices.
 	 */
 	if ((change_metadata_uuid || random_fsid || new_fsid_str) &&
-	     root->fs_info->fs_devices->missing_devices > 0) {
+	     fs_info->fs_devices->missing_devices > 0) {
 		error("missing %lld device(s), failing the command",
-		       root->fs_info->fs_devices->missing_devices);
+		       fs_info->fs_devices->missing_devices);
 		ret = 1;
 		goto out;
 	}
@@ -322,17 +324,17 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			ret = 1;
 			goto out;
 		}
-		if (btrfs_fs_compat_ro(root->fs_info, BLOCK_GROUP_TREE)) {
+		if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
 			error("the filesystem already has block group tree feature");
 			ret = 1;
 			goto out;
 		}
-		if (!btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE_VALID)) {
+		if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE_VALID)) {
 			error("the filesystem doesn't have space cache v2, needs to be mounted with \"-o space_cache=v2\" first");
 			ret = 1;
 			goto out;
 		}
-		ret = convert_to_bg_tree(root->fs_info);
+		ret = convert_to_bg_tree(fs_info);
 		if (ret < 0) {
 			error("failed to convert the filesystem to block group tree feature");
 			goto out;
@@ -340,12 +342,12 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		goto out;
 	}
 	if (to_fst) {
-		if (btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE_VALID)) {
+		if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE_VALID)) {
 			error("filesystem already has free-space-tree feature");
 			ret = 1;
 			goto out;
 		}
-		ret = convert_to_fst(root->fs_info);
+		ret = convert_to_fst(fs_info);
 		if (ret < 0)
 			error("failed to convert the filesystem to free-space-tree feature");
 		goto out;
@@ -356,12 +358,12 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			ret = 1;
 			goto out;
 		}
-		if (!btrfs_fs_compat_ro(root->fs_info, BLOCK_GROUP_TREE)) {
+		if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
 			error("filesystem doesn't have block-group-tree feature");
 			ret = 1;
 			goto out;
 		}
-		ret = convert_to_extent_tree(root->fs_info);
+		ret = convert_to_extent_tree(fs_info);
 		if (ret < 0) {
 			error("failed to convert the filesystem from block group tree feature");
 			goto out;
@@ -369,7 +371,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		goto out;
 	}
 	if (seeding_flag) {
-		if (btrfs_fs_incompat(root->fs_info, METADATA_UUID)) {
+		if (btrfs_fs_incompat(fs_info, METADATA_UUID)) {
 			error("SEED flag cannot be changed on a metadata-uuid changed fs");
 			ret = 1;
 			goto out;
@@ -402,7 +404,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	if (csum_type != -1) {
 		/* TODO: check conflicting flags */
 		pr_verbose(LOG_DEFAULT, "Proceed to switch checksums\n");
-		ret = btrfs_change_csum_type(root->fs_info, csum_type);
+		ret = btrfs_change_csum_type(fs_info, csum_type);
 	}
 
 	if (change_metadata_uuid) {
@@ -424,8 +426,8 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 
 	if (random_fsid || (new_fsid_str && !change_metadata_uuid)) {
-		if (btrfs_fs_incompat(root->fs_info, METADATA_UUID) ||
-		    root->fs_info->fs_devices->active_metadata_uuid) {
+		if (btrfs_fs_incompat(fs_info, METADATA_UUID) ||
+		    fs_info->fs_devices->active_metadata_uuid) {
 			error(
 		"Cannot rewrite fsid while METADATA_UUID flag is active. \n"
 		"Ensure fsid and metadata_uuid match before retrying.");
@@ -445,7 +447,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 				goto out;
 			}
 		}
-		ret = change_uuid(root->fs_info, new_fsid_str);
+		ret = change_uuid(fs_info, new_fsid_str);
 		if (!ret)
 			success++;
 		total++;
@@ -454,7 +456,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	if (success == total) {
 		ret = 0;
 	} else {
-		root->fs_info->readonly = 1;
+		fs_info->readonly = 1;
 		ret = 1;
 		error("btrfstune failed");
 	}
