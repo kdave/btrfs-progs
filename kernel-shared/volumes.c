@@ -406,6 +406,7 @@ static int device_list_add(const char *path,
 			btrfs_stack_device_bytes_used(&disk_super->dev_item);
 		list_add(&device->dev_list, &fs_devices->devices);
 		device->fs_devices = fs_devices;
+		fs_devices->num_devices++;
 	} else if (!device->name || strcmp(device->name, path)) {
 		char *name;
 
