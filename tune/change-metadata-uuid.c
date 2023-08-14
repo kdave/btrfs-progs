@@ -92,9 +92,6 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		memcpy(disk_super->metadata_uuid, disk_super->fsid,
 		       BTRFS_FSID_SIZE);
 		memcpy(disk_super->fsid, &fsid, BTRFS_FSID_SIZE);
-	} else {
-		/* Setting the same fsid as current, do nothing */
-		return 0;
 	}
 
 	trans = btrfs_start_transaction(root, 1);
