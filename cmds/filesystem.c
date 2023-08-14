@@ -485,7 +485,7 @@ static void free_fs_devices(struct btrfs_fs_devices *fs_devices)
 		cur_seed = next_seed;
 	}
 
-	list_del(&fs_devices->list);
+	list_del(&fs_devices->fs_list);
 	free(fs_devices);
 }
 
@@ -555,7 +555,7 @@ static int find_and_copy_seed(struct btrfs_fs_devices *seed,
 			      struct list_head *fs_uuids) {
 	struct btrfs_fs_devices *cur_fs;
 
-	list_for_each_entry(cur_fs, fs_uuids, list)
+	list_for_each_entry(cur_fs, fs_uuids, fs_list)
 		if (!memcmp(seed->fsid, cur_fs->fsid, BTRFS_FSID_SIZE))
 			return copy_fs_devices(copy, cur_fs);
 
@@ -591,7 +591,7 @@ static int search_umounted_fs_uuids(struct list_head *all_uuids,
 	 * The fs_uuids list is global, and open_ctree_* will
 	 * modify it, make a private copy here
 	 */
-	list_for_each_entry(cur_fs, fs_uuids, list) {
+	list_for_each_entry(cur_fs, fs_uuids, fs_list) {
 		/* don't bother handle all fs, if search target specified */
 		if (search) {
 			if (uuid_search(cur_fs, search) == 0)
@@ -616,7 +616,7 @@ static int search_umounted_fs_uuids(struct list_head *all_uuids,
 			goto out;
 		}
 
-		list_add(&fs_copy->list, all_uuids);
+		list_add(&fs_copy->fs_list, all_uuids);
 	}
 
 out:
@@ -635,7 +635,7 @@ static int map_seed_devices(struct list_head *all_uuids)
 
 	fs_uuids = btrfs_scanned_uuids();
 
-	list_for_each_entry(cur_fs, all_uuids, list) {
+	list_for_each_entry(cur_fs, all_uuids, fs_list) {
 		struct open_ctree_args oca = { 0 };
 
 		device = list_first_entry(&cur_fs->devices,
@@ -837,7 +837,7 @@ devs_only:
 		goto out;
 	}
 
-	list_for_each_entry(fs_devices, &all_uuids, list)
+	list_for_each_entry(fs_devices, &all_uuids, fs_list)
 		print_one_uuid(fs_devices, unit_mode);
 
 	if (search && !found) {
@@ -846,7 +846,7 @@ devs_only:
 	}
 	while (!list_empty(&all_uuids)) {
 		fs_devices = list_entry(all_uuids.next,
-					struct btrfs_fs_devices, list);
+					struct btrfs_fs_devices, fs_list);
 		free_fs_devices(fs_devices);
 	}
 out:

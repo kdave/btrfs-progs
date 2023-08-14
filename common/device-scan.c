@@ -257,7 +257,7 @@ int btrfs_register_all_devices(void)
 
 	all_uuids = btrfs_scanned_uuids();
 
-	list_for_each_entry(fs_devices, all_uuids, list) {
+	list_for_each_entry(fs_devices, all_uuids, fs_list) {
 		list_for_each_entry(device, &fs_devices->devices, dev_list) {
 			if (*device->name)
 				err = btrfs_register_one_device(device->name);

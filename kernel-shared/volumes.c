@@ -319,7 +319,7 @@ static struct btrfs_fs_devices *find_fsid(u8 *fsid, u8 *metadata_uuid)
 {
 	struct btrfs_fs_devices *fs_devices;
 
-	list_for_each_entry(fs_devices, &fs_uuids, list) {
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
 		if (metadata_uuid && (memcmp(fsid, fs_devices->fsid,
 					     BTRFS_FSID_SIZE) == 0) &&
 		    (memcmp(metadata_uuid, fs_devices->metadata_uuid,
@@ -357,7 +357,7 @@ static int device_list_add(const char *path,
 		if (!fs_devices)
 			return -ENOMEM;
 		INIT_LIST_HEAD(&fs_devices->devices);
-		list_add(&fs_devices->list, &fs_uuids);
+		list_add(&fs_devices->fs_list, &fs_uuids);
 		memcpy(fs_devices->fsid, disk_super->fsid, BTRFS_FSID_SIZE);
 		if (metadata_uuid)
 			memcpy(fs_devices->metadata_uuid,
@@ -489,11 +489,11 @@ again:
 
 		orig = fs_devices;
 		fs_devices = seed_devices;
-		list_del(&orig->list);
+		list_del(&orig->fs_list);
 		free(orig);
 		goto again;
 	} else {
-		list_del(&fs_devices->list);
+		list_del(&fs_devices->fs_list);
 		free(fs_devices);
 	}
 
@@ -506,7 +506,7 @@ void btrfs_close_all_devices(void)
 
 	while (!list_empty(&fs_uuids)) {
 		fs_devices = list_entry(fs_uuids.next, struct btrfs_fs_devices,
-					list);
+					fs_list);
 		btrfs_close_devices(fs_devices);
 	}
 }
@@ -2227,7 +2227,7 @@ static int open_seed_devices(struct btrfs_fs_info *fs_info, u8 *fsid)
 			goto out;
 		}
 		INIT_LIST_HEAD(&fs_devices->devices);
-		list_add(&fs_devices->list, &fs_uuids);
+		list_add(&fs_devices->fs_list, &fs_uuids);
 		memcpy(fs_devices->fsid, fsid, BTRFS_FSID_SIZE);
 	}
 
