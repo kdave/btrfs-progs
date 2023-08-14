@@ -27,7 +27,7 @@
 int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 {
 	struct btrfs_super_block *disk_super;
-	uuid_t new_fsid, unused1, unused2;
+	uuid_t fsid, unused1, unused2;
 	struct btrfs_trans_handle *trans;
 	bool new_uuid = true;
 	u64 incompat_flags;
@@ -51,11 +51,11 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 	}
 
 	if (new_fsid_string)
-		uuid_parse(new_fsid_string, new_fsid);
+		uuid_parse(new_fsid_string, fsid);
 	else
-		uuid_generate(new_fsid);
+		uuid_generate(fsid);
 
-	new_uuid = (memcmp(new_fsid, disk_super->fsid, BTRFS_FSID_SIZE) != 0);
+	new_uuid = (memcmp(fsid, disk_super->fsid, BTRFS_FSID_SIZE) != 0);
 
 	/* Step 1 sets the in progress flag */
 	trans = btrfs_start_transaction(root, 1);
@@ -66,23 +66,23 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		return ret;
 
 	if (new_uuid && uuid_changed && memcmp(disk_super->metadata_uuid,
-					       new_fsid, BTRFS_FSID_SIZE) == 0) {
+					       fsid, BTRFS_FSID_SIZE) == 0) {
 		/*
 		 * Changing fsid to be the same as metadata uuid, so just
 		 * disable the flag
 		 */
-		memcpy(disk_super->fsid, &new_fsid, BTRFS_FSID_SIZE);
+		memcpy(disk_super->fsid, &fsid, BTRFS_FSID_SIZE);
 		incompat_flags &= ~BTRFS_FEATURE_INCOMPAT_METADATA_UUID;
 		btrfs_set_super_incompat_flags(disk_super, incompat_flags);
 		memset(disk_super->metadata_uuid, 0, BTRFS_FSID_SIZE);
 	} else if (new_uuid && uuid_changed && memcmp(disk_super->metadata_uuid,
-						new_fsid, BTRFS_FSID_SIZE)) {
+						      fsid, BTRFS_FSID_SIZE)) {
 		/*
 		 * Changing fsid on an already changed FS, in this case we
 		 * only change the fsid and don't touch metadata uuid as it
 		 * has already the correct value
 		 */
-		memcpy(disk_super->fsid, &new_fsid, BTRFS_FSID_SIZE);
+		memcpy(disk_super->fsid, &fsid, BTRFS_FSID_SIZE);
 	} else if (new_uuid && !uuid_changed) {
 		/*
 		 * First time changing the fsid, copy the fsid to metadata_uuid
@@ -91,7 +91,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		btrfs_set_super_incompat_flags(disk_super, incompat_flags);
 		memcpy(disk_super->metadata_uuid, disk_super->fsid,
 		       BTRFS_FSID_SIZE);
-		memcpy(disk_super->fsid, &new_fsid, BTRFS_FSID_SIZE);
+		memcpy(disk_super->fsid, &fsid, BTRFS_FSID_SIZE);
 	} else {
 		/* Setting the same fsid as current, do nothing */
 		return 0;
