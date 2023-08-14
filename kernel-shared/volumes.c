@@ -368,7 +368,7 @@ static int device_list_add(const char *path,
 
 		fs_devices->latest_devid = devid;
 		/* Below we would set this to found_transid */
-		fs_devices->latest_trans = 0;
+		fs_devices->latest_generation = 0;
 		fs_devices->lowest_devid = (u64)-1;
 		fs_devices->chunk_alloc_policy = BTRFS_CHUNK_ALLOC_REGULAR;
 		device = NULL;
@@ -438,9 +438,9 @@ static int device_list_add(const char *path,
 	if (metadata_uuid)
 		fs_devices->active_metadata_uuid = true;
 
-	if (found_transid > fs_devices->latest_trans) {
+	if (found_transid > fs_devices->latest_generation) {
 		fs_devices->latest_devid = devid;
-		fs_devices->latest_trans = found_transid;
+		fs_devices->latest_generation = found_transid;
 		fs_devices->total_devices = device->total_devs;
 	}
 	if (fs_devices->lowest_devid > devid) {

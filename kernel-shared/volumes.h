@@ -85,7 +85,7 @@ struct btrfs_fs_devices {
 
 	/* the device with this id has the most recent copy of the super */
 	u64 latest_devid;
-	u64 latest_trans;
+	u64 latest_generation;
 	u64 lowest_devid;
 
 	u64 num_devices;
