@@ -104,6 +104,11 @@ enum btrfs_open_ctree_flags {
 	 * specific checks and only do the superficial checks.
 	 */
 	OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS	= (1U << 17),
+
+	/*
+	 * Use the superblock of the latest device for the transaction commit.
+	 */
+	OPEN_CTREE_USE_LATEST_BDEV		= (1U << 18),
 };
 
 /*

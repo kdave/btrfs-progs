@@ -1513,6 +1513,9 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 	if (flags & OPEN_CTREE_RECOVER_SUPER)
 		ret = btrfs_read_dev_super(fs_devices->latest_bdev, disk_super,
 				sb_bytenr, SBREAD_RECOVER);
+	else if (flags & OPEN_CTREE_USE_LATEST_BDEV)
+		ret = btrfs_read_dev_super(fs_devices->latest_bdev, disk_super,
+					   sb_bytenr, sbflags);
 	else
 		ret = btrfs_read_dev_super(fp, disk_super, sb_bytenr,
 				sbflags);
