@@ -27,7 +27,7 @@
 int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 {
 	struct btrfs_super_block *disk_super;
-	uuid_t fsid, unused2;
+	uuid_t fsid, metadata_uuid;
 	struct btrfs_trans_handle *trans;
 	bool new_fsid = true;
 	u64 incompat_flags;
@@ -45,7 +45,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		return 1;
 	}
 
-	if (check_unfinished_fsid_change(root->fs_info, fsid, unused2)) {
+	if (check_unfinished_fsid_change(root->fs_info, fsid, metadata_uuid)) {
 		error("UUID rewrite in progress, cannot change metadata_uuid");
 		return 1;
 	}
