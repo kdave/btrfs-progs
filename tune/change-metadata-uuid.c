@@ -31,14 +31,14 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 	struct btrfs_trans_handle *trans;
 	bool new_fsid = true;
 	u64 incompat_flags;
-	bool uuid_changed;
+	bool fsid_changed;
 	u64 super_flags;
 	int ret;
 
 	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_flags(disk_super);
 	incompat_flags = btrfs_super_incompat_flags(disk_super);
-	uuid_changed = incompat_flags & BTRFS_FEATURE_INCOMPAT_METADATA_UUID;
+	fsid_changed = incompat_flags & BTRFS_FEATURE_INCOMPAT_METADATA_UUID;
 
 	if (super_flags & BTRFS_SUPER_FLAG_SEEDING) {
 		error("cannot set metadata UUID on a seed device");
@@ -65,7 +65,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 	if (ret < 0)
 		return ret;
 
-	if (new_fsid && uuid_changed && memcmp(disk_super->metadata_uuid,
+	if (new_fsid && fsid_changed && memcmp(disk_super->metadata_uuid,
 					       fsid, BTRFS_FSID_SIZE) == 0) {
 		/*
 		 * Changing fsid to be the same as metadata uuid, so just
@@ -75,7 +75,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		incompat_flags &= ~BTRFS_FEATURE_INCOMPAT_METADATA_UUID;
 		btrfs_set_super_incompat_flags(disk_super, incompat_flags);
 		memset(disk_super->metadata_uuid, 0, BTRFS_FSID_SIZE);
-	} else if (new_fsid && uuid_changed && memcmp(disk_super->metadata_uuid,
+	} else if (new_fsid && fsid_changed && memcmp(disk_super->metadata_uuid,
 						      fsid, BTRFS_FSID_SIZE)) {
 		/*
 		 * Changing fsid on an already changed FS, in this case we
@@ -83,7 +83,7 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		 * has already the correct value
 		 */
 		memcpy(disk_super->fsid, &fsid, BTRFS_FSID_SIZE);
-	} else if (new_fsid && !uuid_changed) {
+	} else if (new_fsid && !fsid_changed) {
 		/*
 		 * First time changing the fsid, copy the fsid to metadata_uuid
 		 */
