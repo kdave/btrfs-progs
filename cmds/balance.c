@@ -366,7 +366,7 @@ static const char * const cmd_balance_start_usage[] = {
 	"a delay to stop it.",
 	"",
 	OPTLINE("-d[filters]", "act on data chunks with optional filters (no space in between)"),
-	OPTLINE("-m[filters]", "act on metadata chunks with optimal filters (no space in between)"),
+	OPTLINE("-m[filters]", "act on metadata chunks with optional filters (no space in between)"),
 	OPTLINE("-s[filters]", "act on system chunks (only under -f) with optional filters (no space in between)"),
 	OPTLINE("-f", "force a reduction of metadata integrity, or skip timeout when converting to RAID56 profiles"),
 	OPTLINE("--full-balance", "do not print warning and do not delay start"),
