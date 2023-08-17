@@ -145,8 +145,11 @@ static void fmt_separator(struct format_ctx *fctx)
 /* Detect formats or values that must not be quoted (null, bool) */
 static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row)
 {
-	if (strcmp(row->fmt, "bool") == 0)
-		return true;
+	static const char *types[] = { "%llu", "bool" };
+
+	for (int i = 0; i < sizeof(types) / sizeof(types[0]); i++)
+		if (strcmp(types[i], row->fmt) == 0)
+			return true;
 	return false;
 }
 
