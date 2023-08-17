@@ -18,6 +18,7 @@
 #define __BTRFS_FORMAT_OUTPUT_H__
 
 #include <stddef.h>
+#include <stdbool.h>
 
 struct rowspec {
 	/* Identifier for the row */
@@ -73,6 +74,8 @@ struct format_ctx {
 
 	char jtype[JSON_NESTING_LIMIT];
 	enum json_type memb[JSON_NESTING_LIMIT];
+	/* Set if the value needs to be printed unquoted */
+	bool unquoted;
 };
 
 void fmt_start(struct format_ctx *fctx, const struct rowspec *spec, int width,
