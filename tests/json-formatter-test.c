@@ -37,7 +37,7 @@
 #include "cmds/commands.h"
 
 /* Default empty output */
-void test_simple_empty()
+static void test_simple_empty()
 {
 	static const struct rowspec rows[] = {
 		ROWSPEC_END
@@ -49,7 +49,7 @@ void test_simple_empty()
 }
 
 /* Single object with a few members */
-void test1()
+static void test1()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "device", .fmt = "%s", .out_text = "device", .out_json = "device" },
@@ -67,7 +67,7 @@ void test1()
 }
 
 /* Escaped strings */
-void test2_escape()
+static void test2_escape()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "devid", .fmt = "%llu", .out_text = "devid", .out_json = "devid" },
@@ -91,7 +91,7 @@ void test2_escape()
 	fmt_end(&fctx);
 }
 
-void test3_unquoted_bool()
+static void test3_unquoted_bool()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "readonly", .fmt = "bool", .out_text = "readonly", .out_json = "readonly" },
