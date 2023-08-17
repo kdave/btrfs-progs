@@ -350,7 +350,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		const u8 *uuid = va_arg(args, const u8*);
 
 		print_uuid(uuid);
-	} else if (strcmp(row->fmt, "time-long") == 0) {
+	} else if (strcmp(row->fmt, "date-time") == 0) {
 		const time_t ts = va_arg(args, time_t);
 
 		if (ts) {

@@ -33,7 +33,7 @@ struct rowspec {
 	 *   (values: const char *)
 	 * - uuid: format UUID as text
 	 *   (value: u8 *uuid)
-	 * - time-long: pretty print timestamp, including timezone
+	 * - date-time: pretty print timestamp, date, time and timezone
 	 *   (values: time_t)
 	 * - list: print list opening bracket [
 	 *   (values printed separately)
