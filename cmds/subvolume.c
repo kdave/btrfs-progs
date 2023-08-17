@@ -701,8 +701,10 @@ static DEFINE_SIMPLE_COMMAND(subvolume_snapshot, "snapshot");
 static const char * const cmd_subvolume_get_default_usage[] = {
 	"btrfs subvolume get-default <path>",
 	"Get the default subvolume of a filesystem",
+#if EXPERIMENTAL
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
+#endif
 	NULL
 };
 
@@ -777,7 +779,11 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+#if EXPERIMENTAL
 static DEFINE_COMMAND_WITH_FLAGS(subvolume_get_default, "get-default", CMD_FORMAT_JSON);
+#else
+DEFINE_SIMPLE_COMMAND(subvolume_get_default, "get-default");
+#endif
 
 static const char * const cmd_subvolume_set_default_usage[] = {
 	"btrfs subvolume set-default <subvolume>\n"
@@ -1443,8 +1449,10 @@ static const char * const cmd_subvolume_show_usage[] = {
 	OPTLINE("-r|--rootid ID", "root id of the subvolume"),
 	OPTLINE("-u|--uuid UUID", "UUID of the subvolum"),
 	HELPINFO_UNITS_SHORT_LONG,
+#if EXPERIMENTAL
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
+#endif
 	NULL
 };
 
@@ -1654,7 +1662,11 @@ out:
 	free(fullpath);
 	return !!ret;
 }
+#if EXPERIMENTAL
 static DEFINE_COMMAND_WITH_FLAGS(subvolume_show, "show", CMD_FORMAT_JSON);
+#else
+DEFINE_SIMPLE_COMMAND(subvolume_show, "show");
+#endif
 
 static const char * const cmd_subvolume_sync_usage[] = {
 	"btrfs subvolume sync <path> [<subvolid>...]",

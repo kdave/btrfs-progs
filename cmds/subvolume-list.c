@@ -77,8 +77,10 @@ static const char * const cmd_subvolume_list_usage[] = {
 	OPTLINE("--sort=gen,ogen,rootid,path", "list the subvolume in order of gen, ogen, rootid or path "
 		"you also can add '+' or '-' in front of each items. "
 		"(+:ascending, -:descending, ascending default)"),
+#if EXPERIMENTAL
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
+#endif
 	NULL,
 };
 
@@ -1729,4 +1731,8 @@ out:
 		usage(cmd, 1);
 	return !!ret;
 }
+#if EXPERIMENTAL
 DEFINE_COMMAND_WITH_FLAGS(subvolume_list, "list", CMD_FORMAT_JSON);
+#else
+DEFINE_SIMPLE_COMMAND(subvolume_list, "list");
+#endif
