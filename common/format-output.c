@@ -142,6 +142,12 @@ static void fmt_separator(struct format_ctx *fctx)
 	}
 }
 
+/* Detect formats or values that must not be quoted (null, bool) */
+static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row)
+{
+	return false;
+}
+
 void fmt_start(struct format_ctx *fctx, const struct rowspec *spec, int width,
 		int indent)
 {
@@ -206,6 +212,7 @@ void fmt_start_value(struct format_ctx *fctx, const struct rowspec *row)
 	} else if (bconf.output_format == CMD_FORMAT_JSON) {
 		if (strcmp(row->fmt, "list") == 0) {
 		} else if (strcmp(row->fmt, "map") == 0) {
+		} else if (fctx->unquoted) {
 		} else {
 			putchar('"');
 		}
@@ -224,6 +231,7 @@ void fmt_end_value(struct format_ctx *fctx, const struct rowspec *row)
 	if (bconf.output_format == CMD_FORMAT_JSON) {
 		if (strcmp(row->fmt, "list") == 0) {
 		} else if (strcmp(row->fmt, "map") == 0) {
+		} else if (fctx->unquoted) {
 		} else {
 			putchar('"');
 		}
@@ -319,6 +327,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		}
 	}
 
+	fctx->unquoted = fmt_set_unquoted(fctx, row);
 	fmt_start_value(fctx, row);
 
 	if (row->fmt[0] == '%') {
