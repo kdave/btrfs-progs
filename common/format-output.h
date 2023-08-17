@@ -27,6 +27,8 @@ struct rowspec {
 	 * Format to print:
 	 * - starting with %: must be a valid printf spec
 	 *   (values: va_args)
+	 * - bool: print boolean value true/false (unquoted, native type)
+	 *   (values: bool or int)
 	 * - uuid: format UUID as text
 	 *   (value: u8 *uuid)
 	 * - time-long: pretty print timestamp, including timezone
