@@ -29,6 +29,8 @@ struct rowspec {
 	 *   (values: va_args)
 	 * - bool: print boolean value true/false (unquoted, native type)
 	 *   (values: bool or int)
+	 * - str: string type with quoted special characters (use for unknown input source)
+	 *   (values: const char *)
 	 * - uuid: format UUID as text
 	 *   (value: u8 *uuid)
 	 * - time-long: pretty print timestamp, including timezone
