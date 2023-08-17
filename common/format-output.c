@@ -145,6 +145,8 @@ static void fmt_separator(struct format_ctx *fctx)
 /* Detect formats or values that must not be quoted (null, bool) */
 static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row)
 {
+	if (strcmp(row->fmt, "bool") == 0)
+		return true;
 	return false;
 }
 
@@ -332,6 +334,11 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 
 	if (row->fmt[0] == '%') {
 		vprintf(row->fmt, args);
+	} else if (strcmp(row->fmt, "bool") == 0) {
+		/* Bool is passed as int to varargs */
+		bool value = va_arg(args, int);
+
+		printf("%s", value ? "true" : "false");
 	} else if (strcmp(row->fmt, "str") == 0) {
 		const char *str = va_arg(args, const char *);
 

@@ -91,6 +91,30 @@ void test2_escape()
 	fmt_end(&fctx);
 }
 
+void test3_unquoted_bool()
+{
+	static const struct rowspec rows1[] = {
+		{ .key = "readonly", .fmt = "bool", .out_text = "readonly", .out_json = "readonly" },
+		ROWSPEC_END
+	};
+	struct format_ctx fctx;
+
+	fmt_start(&fctx, rows1, 32, 0);
+	fmt_print_start_group(&fctx, "flags1", JSON_TYPE_MAP);
+	fmt_print(&fctx, "readonly", 0);
+	fmt_print_end_group(&fctx, NULL);
+	fmt_print_start_group(&fctx, "flags2", JSON_TYPE_MAP);
+	fmt_print(&fctx, "readonly", 1);
+	fmt_print_end_group(&fctx, NULL);
+	fmt_print_start_group(&fctx, "flags3", JSON_TYPE_MAP);
+	fmt_print(&fctx, "readonly", false);
+	fmt_print_end_group(&fctx, NULL);
+	fmt_print_start_group(&fctx, "flags4", JSON_TYPE_MAP);
+	fmt_print(&fctx, "readonly", true);
+	fmt_print_end_group(&fctx, NULL);
+	fmt_end(&fctx);
+}
+
 int main(int argc, char **argv)
 {
 	int testno;
@@ -98,6 +122,7 @@ int main(int argc, char **argv)
 		test_simple_empty,
 		test1,
 		test2_escape,
+		test3_unquoted_bool,
 	};
 
 	btrfs_config_init();
