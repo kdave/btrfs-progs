@@ -1387,13 +1387,9 @@ static void print_subvolume_show_json(struct format_ctx *fctx,
 {
 	fmt_print(fctx, "name", subvol_name);
 
-	if (!uuid_is_null(subvol->uuid))
-		fmt_print(fctx, "uuid", subvol->uuid);
-	if (!uuid_is_null(subvol->parent_uuid))
-		fmt_print(fctx, "parent_uuid", subvol->parent_uuid);
-	if (!uuid_is_null(subvol->received_uuid))
-		fmt_print(fctx, "received_uuid", subvol->received_uuid);
-
+	fmt_print(fctx, "uuid", subvol->uuid);
+	fmt_print(fctx, "parent_uuid", subvol->parent_uuid);
+	fmt_print(fctx, "received_uuid", subvol->received_uuid);
 	fmt_print(fctx, "otime", subvol->otime);
 	fmt_print(fctx, "ID", subvol->id);
 	fmt_print(fctx, "gen", subvol->generation);
@@ -1406,17 +1402,10 @@ static void print_subvolume_show_json(struct format_ctx *fctx,
 		fmt_print(fctx, "flag-list-item", "readonly");
 	fmt_print_end_group(fctx, "flags");
 
-	if (subvol->stransid)
-		fmt_print(fctx, "stransid", subvol->stransid);
-
-	if (subvol->stime.tv_sec)
-		fmt_print(fctx, "stime", subvol->stime);
-
-	if (subvol->rtransid)
-		fmt_print(fctx, "rtransid", subvol->rtransid);
-
-	if (subvol->rtime.tv_sec)
-		fmt_print(fctx, "rtime", subvol->rtime);
+	fmt_print(fctx, "stransid", subvol->stransid);
+	fmt_print(fctx, "stime", subvol->stime);
+	fmt_print(fctx, "rtransid", subvol->rtransid);
+	fmt_print(fctx, "rtime", subvol->rtime);
 }
 
 static void print_subvolume_show_quota_json(struct format_ctx *fctx,
