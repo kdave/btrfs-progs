@@ -48,8 +48,8 @@
 const struct rowspec btrfs_subvolume_rowspec[] = {
 	{ .key = "ID", .fmt = "%llu", .out_json = "id" },
 	{ .key = "name", .fmt = "%s", .out_json = "name" },
-	{ .key = "gen", .fmt = "%llu", .out_json = "gen" },
-	{ .key = "cgen", .fmt = "%llu", .out_json = "cgen" },
+	{ .key = "gen", .fmt = "%llu", .out_json = "generation" },
+	{ .key = "cgen", .fmt = "%llu", .out_json = "cgeneration" },
 	{ .key = "parent", .fmt = "%llu", .out_json = "parent" },
 	{ .key = "top level", .fmt = "%llu", .out_json = "top_level" },
 	{ .key = "otime", .fmt = "time-long", .out_json = "otime" },
@@ -63,7 +63,7 @@ const struct rowspec btrfs_subvolume_rowspec[] = {
 	{ .key = "rtransid", .fmt = "%llu", .out_json = "rtransid" },
 	{ .key = "rtime", .fmt = "time-long", .out_json = "rtime" },
 	{ .key = "snapshot-list-item", .fmt = "%s" },
-	{ .key = "quota-group", .fmt = "qgroupid", .out_json = "group" },
+	{ .key = "quota-qgroup", .fmt = "qgroupid", .out_json = "qgroupid" },
 	{ .key = "quota-ref", .fmt = "%llu", .out_json = "referenced" },
 	{ .key = "quota-excl", .fmt = "%llu", .out_json = "exclusive" },
 	ROWSPEC_END
@@ -1423,8 +1423,8 @@ static void print_subvolume_show_quota_json(struct format_ctx *fctx,
 					     const struct btrfs_util_subvolume_info *subvol,
 					     const struct btrfs_qgroup_stats *stats)
 {
-	fmt_print_start_group(fctx, "quota", JSON_TYPE_MAP);
-	fmt_print(fctx, "quota-group", 0, subvol->id);
+	fmt_print_start_group(fctx, "qgroup", JSON_TYPE_MAP);
+	fmt_print(fctx, "quota-qgroup", 0, subvol->id);
 
 	fmt_print_start_group(fctx, "limit", JSON_TYPE_MAP);
 	fmt_print(fctx, "quota-ref", stats->limit.max_referenced);
@@ -1436,7 +1436,7 @@ static void print_subvolume_show_quota_json(struct format_ctx *fctx,
 	fmt_print(fctx, "quota-excl", stats->info.exclusive);
 	fmt_print_end_group(fctx, "usage");
 
-	fmt_print_end_group(fctx, "quota");
+	fmt_print_end_group(fctx, "qgroup");
 }
 
 static const char * const cmd_subvolume_show_usage[] = {
