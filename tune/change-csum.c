@@ -105,7 +105,7 @@ static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
 	if (ret < 0)
 		return ret;
 	/*
-	 * Emptry csum tree, set last csum byte to 0 so we can skip new data
+	 * Empty csum tree, set last csum byte to 0 so we can skip new data
 	 * csum generation.
 	 */
 	if (ret > 0) {
