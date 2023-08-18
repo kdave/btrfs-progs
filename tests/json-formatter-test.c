@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <uuid/uuid.h>
 #include "common/utils.h"
 #include "common/format-output.h"
 #include "cmds/commands.h"
@@ -115,6 +116,25 @@ static void test3_unquoted_bool()
 	fmt_end(&fctx);
 }
 
+static void test4_uuid()
+{
+	static const struct rowspec rows1[] = {
+		{ .key = "randomuuid", .fmt = "uuid", .out_text = "randomuuid", .out_json = "randomuuid" },
+		{ .key = "nulluuid", .fmt = "uuid", .out_text = "nulluuid", .out_json = "nulluuid" },
+		ROWSPEC_END
+	};
+	struct format_ctx fctx;
+	uuid_t randomuuid, nulluuid;
+
+	uuid_generate(randomuuid);
+	uuid_clear(nulluuid);
+
+	fmt_start(&fctx, rows1, 32, 0);
+	fmt_print(&fctx, "randomuuid", randomuuid);
+	fmt_print(&fctx, "nulluuid", nulluuid);
+	fmt_end(&fctx);
+}
+
 int main(int argc, char **argv)
 {
 	int testno;
@@ -123,6 +143,7 @@ int main(int argc, char **argv)
 		test1,
 		test2_escape,
 		test3_unquoted_bool,
+		test4_uuid,
 	};
 
 	btrfs_config_init();
