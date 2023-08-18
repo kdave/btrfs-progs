@@ -25,7 +25,7 @@ void test_simple_create_free()
 
 	tab = table_create(2, 2);
 	if (!tab) {
-		fprintf(stderr, "ERROR: cannot alocate table\n");
+		fprintf(stderr, "ERROR: cannot allocate table\n");
 		return;
 	}
 	table_printf(tab, 0, 0, ">00");
@@ -45,7 +45,7 @@ void test_simple_header()
 
 	tab = table_create(2, 6);
 	if (!tab) {
-		fprintf(stderr, "ERROR: cannot alocate table\n");
+		fprintf(stderr, "ERROR: cannot allocate table\n");
 		return;
 	}
 	tab->hrows = 2;
@@ -77,7 +77,7 @@ void test_simple_paginate()
 
 	tab = table_create(2, 2 + page_size * pages);
 	if (!tab) {
-		fprintf(stderr, "ERROR: cannot alocate table\n");
+		fprintf(stderr, "ERROR: cannot allocate table\n");
 		return;
 	}
 	tab->hrows = 2;

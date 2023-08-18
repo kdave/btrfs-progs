@@ -2208,7 +2208,7 @@ static int __count_dir_isize(struct btrfs_root *root, u64 ino, int type,
 		ret = -EIO;
 		goto out;
 	}
-	/* if found, go to spacial case */
+	/* If found, go to special case. */
 	if (ret == 0)
 		goto special_case;
 

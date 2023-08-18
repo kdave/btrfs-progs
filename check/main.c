@@ -5327,7 +5327,7 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 	 * Do extra check for this chunk item,
 	 *
 	 * It's still possible one can craft a leaf with CHUNK_ITEM, with
-	 * wrong onwer(3) out of chunk tree, to pass both chunk tree check
+	 * wrong owner(3) out of chunk tree, to pass both chunk tree check
 	 * and owner<->key_type check.
 	 */
 	ret = btrfs_check_chunk_valid(eb, chunk, key->offset);
