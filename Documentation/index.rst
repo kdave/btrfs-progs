@@ -59,6 +59,7 @@ Welcome to BTRFS documentation!
    dev/dev-btrees
    dev/On-disk-format
    dev/dev-send-stream
+   dev/dev-json
    btrfs-ioctl
 
 .. toctree::
