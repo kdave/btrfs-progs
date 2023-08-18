@@ -33,7 +33,7 @@ static void print_uuid(const u8 *uuid)
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 
 	if (uuid_is_null(uuid)) {
-		putchar('-');
+		printf("null");
 	} else {
 		uuid_unparse(uuid, uuidparse);
 		printf("%s", uuidparse);
@@ -143,13 +143,26 @@ static void fmt_separator(struct format_ctx *fctx)
 }
 
 /* Detect formats or values that must not be quoted (null, bool) */
-static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row)
+static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row,
+			     va_list args)
 {
 	static const char *types[] = { "%llu", "bool" };
 
 	for (int i = 0; i < sizeof(types) / sizeof(types[0]); i++)
 		if (strcmp(types[i], row->fmt) == 0)
 			return true;
+
+	/* Null value */
+	if (strcmp("uuid", row->fmt) == 0) {
+		va_list tmpargs;
+		const u8 *uuid;
+
+		va_copy(tmpargs, args);
+		uuid = va_arg(tmpargs, const u8 *);
+
+		if (uuid_is_null(uuid))
+			return true;
+	}
 	return false;
 }
 
@@ -332,7 +345,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		}
 	}
 
-	fctx->unquoted = fmt_set_unquoted(fctx, row);
+	fctx->unquoted = fmt_set_unquoted(fctx, row, args);
 	fmt_start_value(fctx, row);
 
 	if (row->fmt[0] == '%') {
