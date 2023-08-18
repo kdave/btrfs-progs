@@ -38,7 +38,7 @@
 #include "cmds/commands.h"
 
 /* Default empty output */
-static void test_simple_empty()
+static void test1_simple_empty()
 {
 	static const struct rowspec rows[] = {
 		ROWSPEC_END
@@ -50,7 +50,7 @@ static void test_simple_empty()
 }
 
 /* Single object with a few members */
-static void test1()
+static void test2()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "device", .fmt = "%s", .out_text = "device", .out_json = "device" },
@@ -68,7 +68,7 @@ static void test1()
 }
 
 /* Escaped strings */
-static void test2_escape()
+static void test3_escape()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "devid", .fmt = "%llu", .out_text = "devid", .out_json = "devid" },
@@ -92,7 +92,7 @@ static void test2_escape()
 	fmt_end(&fctx);
 }
 
-static void test3_unquoted_bool()
+static void test4_unquoted_bool()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "readonly", .fmt = "bool", .out_text = "readonly", .out_json = "readonly" },
@@ -116,7 +116,7 @@ static void test3_unquoted_bool()
 	fmt_end(&fctx);
 }
 
-static void test4_uuid()
+static void test5_uuid()
 {
 	static const struct rowspec rows1[] = {
 		{ .key = "randomuuid", .fmt = "uuid", .out_text = "randomuuid", .out_json = "randomuuid" },
@@ -139,27 +139,27 @@ int main(int argc, char **argv)
 {
 	int testno;
 	static void (*tests[])() = {
-		test_simple_empty,
-		test1,
-		test2_escape,
-		test3_unquoted_bool,
-		test4_uuid,
+		NULL,
+		test1_simple_empty,
+		test2,
+		test3_escape,
+		test4_unquoted_bool,
+		test5_uuid,
 	};
+	const int testmax = ARRAY_SIZE(tests) - 1;
 
 	btrfs_config_init();
 	bconf.output_format = CMD_FORMAT_JSON;
 
 	/* Without arguments, print the number of tests available */
 	if (argc == 1) {
-		printf("%zu\n", ARRAY_SIZE(tests));
+		printf("%d\n", testmax);
 		return 0;
 	}
 	testno = atoi(argv[1]);
-	testno--;
-
-	if (testno < 0 || testno >= ARRAY_SIZE(tests)) {
-		fprintf(stderr, "ERROR: test number %d is out of range (max %zu)\n",
-				testno + 1, ARRAY_SIZE(tests));
+	if (testno < 1 || testno > ARRAY_SIZE(tests)) {
+		fprintf(stderr, "ERROR: test number %d is out of range (min 1, max %d)\n",
+				testno, testmax);
 		return 1;
 	}
 	tests[testno]();
