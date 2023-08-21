@@ -214,6 +214,7 @@ objects = \
 	common/sort-utils.o	\
 	common/string-table.o	\
 	common/string-utils.o	\
+	common/sysfs-utils.o	\
 	common/task-utils.o \
 	common/units.o	\
 	common/utils.o	\

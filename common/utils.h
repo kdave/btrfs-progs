@@ -112,11 +112,6 @@ char *btrfs_test_for_multiple_profiles(int fd);
 int btrfs_warn_multiple_profiles(int fd);
 void btrfs_warn_experimental(const char *str);
 
-int sysfs_open_file(const char *name);
-int sysfs_open_fsid_file(int fd, const char *filename);
-int sysfs_read_file(int fd, char *buf, size_t size);
-int sysfs_open_fsid_dir(int fd, const char *dirname);
-
 /* An error code to error string mapping for the kernel error codes */
 static inline char *btrfs_err_str(enum btrfs_err_code err_code)
 {

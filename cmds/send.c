@@ -33,6 +33,7 @@
 #include "common/send-utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/string-utils.h"
 #include "common/messages.h"
 #include "cmds/commands.h"

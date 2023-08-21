@@ -36,6 +36,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/open-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/messages.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
@@ -1158,78 +1159,6 @@ void btrfs_warn_experimental(const char *str)
 	warning("Experimental build with unstable or unfinished features");
 	warning_on(str != NULL, "%s\n", str);
 #endif
-}
-
-/*
- * Open a file in fsid directory in sysfs and return the file descriptor or
- * error
- */
-int sysfs_open_fsid_file(int fd, const char *filename)
-{
-	u8 fsid[BTRFS_UUID_SIZE];
-	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
-	char sysfs_file[PATH_MAX];
-	int ret;
-
-	ret = get_fsid_fd(fd, fsid);
-	if (ret < 0)
-		return ret;
-	uuid_unparse(fsid, fsid_str);
-
-	ret = path_cat3_out(sysfs_file, "/sys/fs/btrfs", fsid_str, filename);
-	if (ret < 0)
-		return ret;
-
-	return open(sysfs_file, O_RDONLY);
-}
-
-/*
- * Open a file in the toplevel sysfs directory and return the file descriptor
- * or error.
- */
-int sysfs_open_file(const char *name)
-{
-	char path[PATH_MAX];
-	int ret;
-
-	ret = path_cat_out(path, "/sys/fs/btrfs", name);
-	if (ret < 0)
-		return ret;
-	return open(path, O_RDONLY);
-}
-
-/*
- * Open a directory by name in fsid directory in sysfs and return the file
- * descriptor or error, filedescriptor suitable for fdreaddir. The @dirname
- * must be a directory name.
- */
-int sysfs_open_fsid_dir(int fd, const char *dirname)
-{
-	u8 fsid[BTRFS_UUID_SIZE];
-	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
-	char sysfs_file[PATH_MAX];
-	int ret;
-
-	ret = get_fsid_fd(fd, fsid);
-	if (ret < 0)
-		return ret;
-	uuid_unparse(fsid, fsid_str);
-
-	ret = path_cat3_out(sysfs_file, "/sys/fs/btrfs", fsid_str, dirname);
-	if (ret < 0)
-		return ret;
-
-	return open(sysfs_file, O_DIRECTORY | O_RDONLY);
-}
-
-/*
- * Read up to @size bytes to @buf from @fd
- */
-int sysfs_read_file(int fd, char *buf, size_t size)
-{
-	lseek(fd, 0, SEEK_SET);
-	memset(buf, 0, size);
-	return read(fd, buf, size);
 }
 
 static const char exclop_def[][16] = {
