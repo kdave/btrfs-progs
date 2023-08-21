@@ -94,3 +94,41 @@ int sysfs_read_file(int fd, char *buf, size_t size)
 	return read(fd, buf, size);
 }
 
+int sysfs_read_file_u64(const char *name, u64 *value)
+{
+	int fd = -1;
+	int ret;
+	char str[32] = { 0 };
+
+	fd = sysfs_open_file(name);
+	if (fd < 0)
+		return fd;
+
+	ret = sysfs_read_file(fd, str, sizeof(str));
+	if (ret < 0)
+		goto out;
+	/* Raw value in any numeric format should work, followed by a newline. */
+	*value = strtoull(str, NULL, 0);
+out:
+	close(fd);
+	return ret;
+}
+
+int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
+{
+	int ret;
+	char str[32] = { 0 };
+
+	fd = sysfs_open_fsid_file(fd, name);
+	if (fd < 0)
+		return fd;
+
+	ret = sysfs_read_file(fd, str, sizeof(str));
+	if (ret < 0)
+		goto out;
+	/* Raw value in any numeric format should work, followed by a newline. */
+	*value = strtoull(str, NULL, 0);
+out:
+	close(fd);
+	return ret;
+}
