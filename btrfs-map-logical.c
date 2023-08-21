@@ -201,7 +201,7 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 
 static const char * const map_logical_usage[] = {
 	"btrfs-map-logical [options] device",
-	"Map logical addres on a device",
+	"Map logical address on a device",
 	"",
 	OPTLINE("-l OFFSET", "logical extent to map"),
 	OPTLINE("-c COPY", "copy of the extent to read (usually 1 or 2)"),
