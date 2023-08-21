@@ -28,6 +28,7 @@
 #include "kernel-shared/ctree.h"
 #include "common/fsfeatures.h"
 #include "common/string-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/utils.h"
 #include "common/messages.h"
 

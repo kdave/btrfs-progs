@@ -36,6 +36,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/zoned.h"
 #include "common/device-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/path-utils.h"
 #include "common/internal.h"
 #include "common/messages.h"

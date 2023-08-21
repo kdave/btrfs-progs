@@ -38,6 +38,7 @@
 #include "common/units.h"
 #include "common/help.h"
 #include "common/device-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/messages.h"
 #include "common/path-utils.h"
 #include "cmds/filesystem-usage.h"
