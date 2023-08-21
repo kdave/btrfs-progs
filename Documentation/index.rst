@@ -60,6 +60,7 @@ Welcome to BTRFS documentation!
    dev/On-disk-format
    dev/dev-send-stream
    dev/dev-json
+   dev/dev-internal-apis
    btrfs-ioctl
 
 .. toctree::
