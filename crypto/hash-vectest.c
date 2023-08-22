@@ -549,7 +549,7 @@ static const struct hash_testspec test_spec[] = {
 	}
 };
 
-int test_hash(const struct hash_testspec *spec)
+static int test_hash(const struct hash_testspec *spec)
 {
 	int i;
 	bool header = false;
