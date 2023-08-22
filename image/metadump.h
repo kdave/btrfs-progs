@@ -165,5 +165,8 @@ struct mdrestore_struct {
 int create_metadump(const char *input, FILE *out, int num_threads, int
 		    compress_level, enum sanitize_mode sanitize, int
 		    walk_trees, bool dump_data);
+int restore_metadump(const char *input, FILE *out, int old_restore,
+		     int num_threads, int fixup_offset, const char *target,
+		     int multi_devices);
 
 #endif

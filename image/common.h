@@ -18,7 +18,12 @@
 #define __BTRFS_IMAGE_COMMON_H__
 
 #include "kerncompat.h"
+#include <stdio.h>
 
 void csum_block(u8 *buf, size_t len);
+int detect_version(FILE *in);
+int update_disk_super_on_device(struct btrfs_fs_info *info,
+				const char *other_dev, u64 cur_devid);
+void write_backup_supers(int fd, u8 *buf);
 
 #endif
