@@ -59,8 +59,6 @@ int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
 int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount);
 int find_mount_root(const char *path, char **mount_root);
-int get_device_info(int fd, u64 devid,
-		struct btrfs_ioctl_dev_info_args *di_args);
 int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);

@@ -34,6 +34,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "common/utils.h"
+#include "common/device-utils.h"
 #include "common/path-utils.h"
 #include "common/open-utils.h"
 #include "common/sysfs-utils.h"
@@ -65,18 +66,6 @@ void btrfs_format_csum(u16 csum_type, const u8 *data, char *output)
 			 data[i]);
 		cur += 2;
 	}
-}
-
-int get_device_info(int fd, u64 devid,
-		struct btrfs_ioctl_dev_info_args *di_args)
-{
-	int ret;
-
-	di_args->devid = devid;
-	memset(&di_args->uuid, '\0', sizeof(di_args->uuid));
-
-	ret = ioctl(fd, BTRFS_IOC_DEV_INFO, di_args);
-	return ret < 0 ? -errno : 0;
 }
 
 int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
@@ -281,7 +270,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		 * search_chunk_tree_for_fs_info() will lacks the devid 0
 		 * so manual probe for it here.
 		 */
-		ret = get_device_info(fd, 0, &tmp);
+		ret = device_get_info(fd, 0, &tmp);
 		if (!ret) {
 			fi_args->num_devices++;
 			ndevs++;
@@ -304,7 +293,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		memcpy(di_args, &tmp, sizeof(tmp));
 	for (; last_devid <= fi_args->max_id && ndevs < fi_args->num_devices;
 	     last_devid++) {
-		ret = get_device_info(fd, last_devid, &di_args[ndevs]);
+		ret = device_get_info(fd, last_devid, &di_args[ndevs]);
 		if (ret == -ENODEV)
 			continue;
 		if (ret)

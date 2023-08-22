@@ -776,7 +776,7 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 			goto out;
 		}
 		memset(&dev_info, 0, sizeof(dev_info));
-		ret = get_device_info(fd, i, &dev_info);
+		ret = device_get_info(fd, i, &dev_info);
 
 		if (ret == -ENODEV)
 			continue;
