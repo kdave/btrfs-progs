@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/list.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "image/sanitize.h"
 
@@ -160,5 +161,9 @@ struct mdrestore_struct {
 	int clear_space_cache;
 	struct btrfs_fs_info *info;
 };
+
+int create_metadump(const char *input, FILE *out, int num_threads, int
+		    compress_level, enum sanitize_mode sanitize, int
+		    walk_trees, bool dump_data);
 
 #endif
