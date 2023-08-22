@@ -18,9 +18,11 @@
 #define __BTRFS_IMAGE_METADUMP_H__
 
 #include "kerncompat.h"
+#include <pthread.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
+#include "image/sanitize.h"
 
 #define IMAGE_BLOCK_SIZE		SZ_1K
 #define IMAGE_BLOCK_MASK		(IMAGE_BLOCK_SIZE - 1)
@@ -31,6 +33,8 @@
 #define COMPRESS_NONE		0
 #define COMPRESS_ZLIB		1
 
+#define MAX_WORKER_THREADS	(32)
+
 struct dump_version {
 	u64 magic_cpu;
 	int version;
@@ -40,6 +44,16 @@ struct dump_version {
 
 extern const struct dump_version dump_versions[];
 const extern struct dump_version *current_version;
+
+struct async_work {
+	struct list_head list;
+	struct list_head ordered;
+	u64 start;
+	u64 size;
+	u8 *buffer;
+	size_t bufsize;
+	int error;
+};
 
 struct meta_cluster_item {
 	__le64 bytenr;
@@ -73,6 +87,78 @@ struct fs_chunk {
 	struct rb_node l;
 	struct rb_node p;
 	struct list_head list;
+};
+
+struct metadump_struct {
+	struct btrfs_root *root;
+	FILE *out;
+
+	pthread_t threads[MAX_WORKER_THREADS];
+	size_t num_threads;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	struct rb_root name_tree;
+
+	struct extent_io_tree seen;
+
+	struct list_head list;
+	struct list_head ordered;
+	size_t num_items;
+	size_t num_ready;
+
+	u64 pending_start;
+	u64 pending_size;
+
+	int compress_level;
+	int done;
+	int data;
+	enum sanitize_mode sanitize_names;
+
+	int error;
+
+	union {
+		struct meta_cluster cluster;
+		char meta_cluster_bytes[IMAGE_BLOCK_SIZE];
+	};
+};
+
+struct mdrestore_struct {
+	FILE *in;
+	FILE *out;
+
+	pthread_t threads[MAX_WORKER_THREADS];
+	size_t num_threads;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+
+	/*
+	 * Records system chunk ranges, so restore can use this to determine
+	 * if an item is in chunk tree range.
+	 */
+	struct cache_tree sys_chunks;
+	struct rb_root chunk_tree;
+	struct rb_root physical_tree;
+	struct list_head list;
+	struct list_head overlapping_chunks;
+	struct btrfs_super_block *original_super;
+	size_t num_items;
+	u32 nodesize;
+	u64 devid;
+	u64 alloced_chunks;
+	u64 last_physical_offset;
+	/* An quicker checker for if a item is in sys chunk range */
+	u64 sys_chunk_end;
+	u8 uuid[BTRFS_UUID_SIZE];
+	u8 fsid[BTRFS_FSID_SIZE];
+
+	int compress_method;
+	int done;
+	int error;
+	int old_restore;
+	int fixup_offset;
+	int multi_devices;
+	int clear_space_cache;
+	struct btrfs_fs_info *info;
 };
 
 #endif
