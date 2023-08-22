@@ -515,7 +515,7 @@ void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 
 	for (i = 0; grp->commands[i]; i++) {
 		const struct cmd_struct *cmd = grp->commands[i];
-		if (!prefixcmp(cmd->token, arg))
+		if (!string_has_prefix(cmd->token, arg))
 			fprintf(stderr, "\t%s\n", cmd->token);
 	}
 
