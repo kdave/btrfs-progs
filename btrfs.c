@@ -71,7 +71,7 @@ static int parse_one_token(const char *arg, const struct cmd_group *grp,
 
 		rest = skip_prefix(arg, cmd->token);
 		if (!rest) {
-			if (!prefixcmp(cmd->token, arg)) {
+			if (!string_has_prefix(cmd->token, arg)) {
 				if (abbrev_cmd) {
 					/*
 					 * If this is abbreviated, it is

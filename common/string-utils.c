@@ -34,7 +34,7 @@ int string_is_numerical(const char *str)
 	return 1;
 }
 
-int prefixcmp(const char *str, const char *prefix)
+int string_has_prefix(const char *str, const char *prefix)
 {
 	for (; ; str++, prefix++)
 		if (!*prefix)
