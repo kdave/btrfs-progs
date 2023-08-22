@@ -58,7 +58,6 @@ void cpu_print_flags(void) {
 	FLAG(SHA);
 	FLAG(AVX);
 	FLAG(AVX2);
-	FLAG(CRC32C_PCL);
 	putchar(10);
 }
 #undef FLAG
@@ -89,7 +88,6 @@ void cpu_detect_flags(void)
 	if (b & (1UL << 29))
 		__cpu_flags |= CPU_FLAG_SHA;
 
-	__cpu_flags |= CPU_FLAG_CRC32C_PCL;
 	__cpu_flags_orig = __cpu_flags;
 }
 

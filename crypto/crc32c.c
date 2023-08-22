@@ -13,7 +13,7 @@
 #include "crypto/crc32c.h"
 #include "common/cpu-utils.h"
 
-uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length);
+static uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length);
 static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_t length) = __crc32c_le;
 
 #ifdef __x86_64__
@@ -96,7 +96,7 @@ void crc32c_init_accel(void)
 	 */
 	if (0) {
 #ifdef __GLIBC__
-	} else if (cpu_has_feature(CPU_FLAG_CRC32C_PCL)) {
+	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
 		/* printf("CRC32C: pcl\n"); */
 		crc_function = crc32c_pcl;
 #else
@@ -196,11 +196,11 @@ static const uint32_t crc32c_table[256] = {
 };
 
 /*
- * Steps through buffer one byte at at time, calculates reflected 
- * crc using table.
+ * Steps through buffer one byte at at time, calculates reflected crc using
+ * table.
  */
 
-uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length)
+static uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	while (length--)
 		crc =

@@ -37,9 +37,6 @@ enum cpu_feature {
 	ENUM_CPU_BIT(CPU_FLAG_SHA),
 	ENUM_CPU_BIT(CPU_FLAG_AVX),
 	ENUM_CPU_BIT(CPU_FLAG_AVX2),
-
-	/* Special features */
-	ENUM_CPU_BIT(CPU_FLAG_CRC32C_PCL),
 };
 
 #undef ENUM_CPU_BIT
