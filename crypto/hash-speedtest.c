@@ -191,8 +191,6 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_SSE42 },
-		{ .name = "CRC32C-PCL", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_CRC32C_PCL },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
