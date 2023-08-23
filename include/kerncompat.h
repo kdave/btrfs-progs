@@ -201,6 +201,10 @@ typedef struct spinlock_struct {
 	unsigned long lock;
 } spinlock_t;
 
+struct rw_semaphore {
+	long lock;
+};
+
 #define mutex_init(m)						\
 do {								\
 	(m)->lock = 1;						\
@@ -241,6 +245,27 @@ static inline void spin_unlock(spinlock_t *lock)
 static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
 {
 	spin_unlock(lock);
+}
+
+static inline void init_rwsem(struct rw_semaphore *sem)
+{
+	sem->lock = 0;
+}
+
+static inline bool down_read_trylock(struct rw_semaphore *sem)
+{
+	sem->lock++;
+	return true;
+}
+
+static inline void down_read(struct rw_semaphore *sem)
+{
+	sem->lock++;
+}
+
+static inline void up_read(struct rw_semaphore *sem)
+{
+	sem->lock--;
 }
 
 #define cond_resched()		do { } while (0)
@@ -398,6 +423,11 @@ static inline void kmem_cache_destroy(struct kmem_cache *cache)
 static inline void *kmem_cache_alloc(struct kmem_cache *cache, gfp_t mask)
 {
 	return malloc(cache->size);
+}
+
+static inline void *kmem_cache_zalloc(struct kmem_cache *cache, gfp_t mask)
+{
+	return calloc(1, cache->size);
 }
 
 static inline void kmem_cache_free(struct kmem_cache *cache, void *ptr)
@@ -704,6 +734,10 @@ static inline bool sb_rdonly(struct super_block *sb)
 
 #define unlikely(cond) (cond)
 
+#define rcu_dereference(c) (c)
+
+#define rcu_assign_pointer(p, v) do { (p) = (v); } while (0)
+
 static inline void atomic_set(atomic_t *a, int val)
 {
 	*a = val;
@@ -722,6 +756,15 @@ static inline void atomic_inc(atomic_t *a)
 static inline void atomic_dec(atomic_t *a)
 {
 	(*a)--;
+}
+
+static inline bool atomic_inc_not_zero(atomic_t *a)
+{
+	if (*a) {
+		atomic_inc(a);
+		return true;
+	}
+	return false;
 }
 
 static inline struct workqueue_struct *alloc_workqueue(const char *name,
@@ -766,6 +809,10 @@ static inline void lockdep_set_class(spinlock_t *lock, struct lock_class_key *lc
 {
 }
 
+static inline void lockdep_assert_held_read(struct rw_semaphore *sem)
+{
+}
+
 static inline bool cond_resched_lock(spinlock_t *lock)
 {
 	return false;
@@ -800,11 +847,26 @@ static inline void schedule(void)
 {
 }
 
+static inline void rcu_read_lock(void)
+{
+}
+
+static inline void rcu_read_unlock(void)
+{
+}
+
+static inline void synchronize_rcu(void)
+{
+}
+
 /*
  * Temporary definitions while syncing.
  */
 struct btrfs_inode;
 struct extent_state;
+struct extent_buffer;
+struct btrfs_root;
+struct btrfs_trans_handle;
 
 static inline void btrfs_merge_delalloc_extent(struct btrfs_inode *inode,
 					       struct extent_state *state,
@@ -827,6 +889,20 @@ static inline void btrfs_split_delalloc_extent(struct btrfs_inode *inode,
 static inline void btrfs_clear_delalloc_extent(struct btrfs_inode *inode,
 					       struct extent_state *state,
 					       u32 bits)
+{
+}
+
+static inline int btrfs_reloc_cow_block(struct btrfs_trans_handle *trans,
+					struct btrfs_root *root,
+					struct extent_buffer *buf,
+					struct extent_buffer *cow)
+{
+	return 0;
+}
+
+static inline void btrfs_qgroup_trace_subtree_after_cow(struct btrfs_trans_handle *trans,
+							struct btrfs_root *root,
+							struct extent_buffer *buf)
 {
 }
 
