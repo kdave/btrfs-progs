@@ -2343,7 +2343,14 @@ struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 
 	extent_buffer_get(root->node);
-	root->commit_root = root->node;
+
+	/*
+	 * MODIFIED:
+	 *  - In the kernel we set ->commit_root here, however in btrfs-progs
+	 *    confuses the transaction code.  For now don't set the commit_root
+	 *    here, if we update transaction.c to match the kernel version we
+	 *    need to revisit this.
+	 */
 	set_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state);
 
 	root->root_item.flags = 0;
