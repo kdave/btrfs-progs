@@ -881,10 +881,12 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	key.offset = num_bytes;
 
 	want = extent_ref_type(parent, owner);
-	if (insert)
+	if (insert) {
 		extra_size = btrfs_extent_inline_ref_size(want);
-	else
+		path->search_for_extension = 1;
+	} else {
 		extra_size = -1;
+	}
 
 	if (owner < BTRFS_FIRST_FREE_OBJECTID && skinny_metadata) {
 		key.type = BTRFS_METADATA_ITEM_KEY;
@@ -1022,6 +1024,8 @@ again:
 	}
 	*ref_ret = (struct btrfs_extent_inline_ref *)ptr;
 out:
+	if (insert)
+		path->search_for_extension = 0;
 	return err;
 }
 
