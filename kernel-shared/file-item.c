@@ -346,7 +346,6 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 	u64 csum_end;
 	u64 end_byte = bytenr + len;
 	u32 blocksize = root->fs_info->sectorsize;
-	int ret;
 
 	leaf = path->nodes[0];
 	csum_end = btrfs_item_size(leaf, path->slots[0]) / csum_size;
@@ -362,8 +361,7 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 		 */
 		u32 new_size = (bytenr - key->offset) / blocksize;
 		new_size *= csum_size;
-		ret = btrfs_truncate_item(path, new_size, 1);
-		BUG_ON(ret);
+		btrfs_truncate_item(path, new_size, 1);
 	} else if (key->offset >= bytenr && csum_end > end_byte &&
 		   end_byte > key->offset) {
 		/*
@@ -375,8 +373,7 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 		u32 new_size = (csum_end - end_byte) / blocksize;
 		new_size *= csum_size;
 
-		ret = btrfs_truncate_item(path, new_size, 0);
-		BUG_ON(ret);
+		btrfs_truncate_item(path, new_size, 0);
 
 		key->offset = end_byte;
 		btrfs_set_item_key_safe(root->fs_info, path, key);
