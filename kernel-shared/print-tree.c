@@ -1568,7 +1568,7 @@ static int search_leftmost_tree_block(struct btrfs_fs_info *fs_info,
 		struct extent_buffer *eb;
 
 		path->slots[i] = 0;
-		eb = read_node_slot(fs_info, path->nodes[i], 0);
+		eb = btrfs_read_node_slot(path->nodes[i], 0);
 		if (!extent_buffer_uptodate(eb)) {
 			ret = -EIO;
 			goto out;
