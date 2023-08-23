@@ -100,7 +100,8 @@ int commit_tree_roots(struct btrfs_trans_handle *trans,
 
 	eb = fs_info->tree_root->node;
 	extent_buffer_get(eb);
-	ret = btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
+	ret = btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb,
+			      BTRFS_NESTING_NORMAL);
 	free_extent_buffer(eb);
 	if (ret)
 		return ret;
