@@ -262,7 +262,7 @@ bool __cold abort_should_print_stack(int errno)
 	return true;
 }
 
-void add_root_to_dirty_list(struct btrfs_root *root)
+static void add_root_to_dirty_list(struct btrfs_root *root)
 {
 	if (test_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state) &&
 	    list_empty(&root->dirty_list)) {
