@@ -1057,8 +1057,9 @@ static inline int btrfs_insert_empty_item(struct btrfs_trans_handle *trans,
 	return btrfs_insert_empty_items(trans, root, path, &batch);
 }
 
-int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
-				  struct btrfs_path *path);
+int btrfs_next_old_leaf(struct btrfs_root *root, struct btrfs_path *path,
+			u64 time_seq);
+int btrfs_next_old_item(struct btrfs_root *root, struct btrfs_path *path, u64 time_seq);
 
 /*
  * Walk up the tree as far as necessary to find the next leaf.
@@ -1069,33 +1070,48 @@ int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
 static inline int btrfs_next_leaf(struct btrfs_root *root,
 				  struct btrfs_path *path)
 {
-	path->lowest_level = 0;
-	return btrfs_next_sibling_tree_block(root->fs_info, path);
+	return btrfs_next_old_leaf(root, path, 0);
 }
 
 static inline int btrfs_next_item(struct btrfs_root *root,
 				  struct btrfs_path *p)
 {
-	++p->slots[0];
-	if (p->slots[0] >= btrfs_header_nritems(p->nodes[0])) {
-		int ret;
-		ret = btrfs_next_leaf(root, p);
-		/*
-		 * Revert the increased slot, or the path may point to
-		 * an invalid item.
-		 */
-		if (ret)
-			p->slots[0]--;
-		return ret;
-	}
-	return 0;
+	return btrfs_next_old_item(root, p, 0);
 }
 
+int btrfs_block_can_be_shared(struct btrfs_root *root,
+			      struct extent_buffer *buf);
 int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_leaf_free_space(const struct extent_buffer *leaf);
 void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
 			     struct btrfs_path *path,
 			     const struct btrfs_key *new_key);
+struct extent_buffer *btrfs_root_node(struct btrfs_root *root);
+int btrfs_realloc_node(struct btrfs_trans_handle *trans,
+		       struct btrfs_root *root, struct extent_buffer *parent,
+		       int start_slot, u64 *last_ret,
+		       struct btrfs_key *progress);
+int btrfs_search_old_slot(struct btrfs_root *root, const struct btrfs_key *key,
+			  struct btrfs_path *p, u64 time_seq);
+int btrfs_search_backwards(struct btrfs_root *root, struct btrfs_key *key,
+			   struct btrfs_path *path);
+int btrfs_get_next_valid_item(struct btrfs_root *root, struct btrfs_key *key,
+			      struct btrfs_path *path);
+void btrfs_setup_item_for_insert(struct btrfs_root *root,
+				 struct btrfs_path *path,
+				 const struct btrfs_key *key,
+				 u32 data_size);
+int btrfs_duplicate_item(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root,
+			 struct btrfs_path *path,
+			 const struct btrfs_key *new_key);
+int btrfs_search_forward(struct btrfs_root *root, struct btrfs_key *min_key,
+			 struct btrfs_path *path,
+			 u64 min_trans);
+int btrfs_find_next_key(struct btrfs_root *root, struct btrfs_path *path,
+			struct btrfs_key *key, int level, u64 min_trans);
+int __init btrfs_ctree_init(void);
+void __cold btrfs_ctree_exit(void);
 
 int btrfs_super_csum_size(const struct btrfs_super_block *sb);
 const char *btrfs_super_csum_name(u16 csum_type);
