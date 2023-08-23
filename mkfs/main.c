@@ -789,7 +789,6 @@ static int create_uuid_tree(struct btrfs_trans_handle *trans)
 		goto out;
 	}
 
-	add_root_to_dirty_list(root);
 	fs_info->uuid_root = root;
 	ret = btrfs_uuid_tree_add(trans, fs_info->fs_root->root_item.uuid,
 				  BTRFS_UUID_KEY_SUBVOL,
