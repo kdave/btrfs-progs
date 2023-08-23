@@ -3462,7 +3462,7 @@ int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_block_group *block_group;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	int ret = 0;
 
 	block_group = btrfs_lookup_block_group(fs_info, bytenr);
@@ -3484,7 +3484,6 @@ int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
 	 */
 	btrfs_pin_extent(fs_info, bytenr, len);
 
-	btrfs_init_path(&path);
 	/* delete block group item and chunk item */
 	ret = remove_block_group_item(trans, &path, block_group);
 	btrfs_release_path(&path);

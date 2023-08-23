@@ -556,15 +556,13 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 	int ret;
 	int i;
 	int slot;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct btrfs_root *dev_root;
 	struct stripe *stripe;
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_block_group_item *bg_ptr;
 	struct extent_buffer *l;
-
-	btrfs_init_path(&path);
 
 	if (bg_only)
 		goto bg_check;
@@ -985,7 +983,7 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct extent_buffer *leaf;
 	u64 start = bg->objectid;
 	u64 end = bg->objectid + bg->offset;
@@ -995,7 +993,6 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 	int i;
 	int del_s, del_nr;
 
-	btrfs_init_path(&path);
 	root = btrfs_extent_root(fs_info, start);
 
 	key.objectid = start;
@@ -1384,14 +1381,13 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct chunk_record *chunk_rec;
 	struct btrfs_key search_key;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	u64 used = 0;
 	int ret = 0;
 
 	if (list_empty(&rc->rebuild_chunks))
 		return 0;
 
-	btrfs_init_path(&path);
 	list_for_each_entry(chunk_rec, &rc->rebuild_chunks, list) {
 		search_key.objectid = chunk_rec->offset;
 		search_key.type = BTRFS_EXTENT_ITEM_KEY;
@@ -1968,7 +1964,7 @@ static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
 	int i;
 	int ret = 0;
 	int slot;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key prev_key;
 	struct btrfs_key key;
 	struct btrfs_root *csum_root;
@@ -1988,7 +1984,6 @@ static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
 	LIST_HEAD(unordered);
 	LIST_HEAD(candidates);
 
-	btrfs_init_path(&path);
 	list_splice_init(&chunk->dextents, &candidates);
 again:
 	if (list_is_last(candidates.next, &candidates))

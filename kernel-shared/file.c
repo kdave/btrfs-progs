@@ -187,7 +187,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct extent_buffer *leaf;
 	struct btrfs_inode_item *ii;
 	u64 isize;
@@ -203,7 +203,6 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		return -EINVAL;
 	}
 
-	btrfs_init_path(&path);
 	key.objectid = ino;
 	key.offset = start;
 	key.type = BTRFS_EXTENT_DATA_KEY;

@@ -52,10 +52,9 @@ static int check_prealloc_data_ref(u64 disk_bytenr,
 	u64 offset = btrfs_extent_data_ref_offset(eb, dref);
 	struct btrfs_root *root;
 	struct btrfs_key key;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = rootid;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
@@ -190,7 +189,7 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 {
 	struct btrfs_root *extent_root = btrfs_extent_root(gfs_info,
 							   disk_bytenr);
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	int ret;
 	struct btrfs_extent_item *ei;
@@ -202,7 +201,6 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = num_bytes;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
 	if (ret > 0) {
 		fprintf(stderr,
@@ -303,15 +301,13 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(gfs_info, start);
 	struct btrfs_key key;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct extent_buffer *leaf;
 	int ret;
 	size_t size;
 	*found = 0;
 	u64 csum_end;
 	u16 csum_size = gfs_info->csum_size;
-
-	btrfs_init_path(&path);
 
 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 	key.offset = start;
@@ -416,7 +412,6 @@ static int get_highest_inode(struct btrfs_trans_handle *trans,
 	struct btrfs_key key, found_key;
 	int ret;
 
-	btrfs_init_path(path);
 	key.objectid = BTRFS_LAST_FREE_OBJECTID;
 	key.offset = -1;
 	key.type = BTRFS_INODE_ITEM_KEY;
@@ -654,10 +649,9 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 			      u32 namelen)
 {
 	struct btrfs_dir_item *di_item;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	int ret;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(trans, root, di_key, &path, 0, 1);
 	if (ret > 0) {
 		error("key (%llu %u %llu) doesn't exist in root %llu",
@@ -736,7 +730,7 @@ static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
 				    u64 index, const char *name, u32 name_len,
 				    u32 *imode_ret)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct btrfs_key location;
 	struct btrfs_dir_item *di;
@@ -746,7 +740,6 @@ static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
 	u32 len;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = dirid;
 	key.offset = index;
 	key.type = BTRFS_DIR_INDEX_KEY;
@@ -788,7 +781,7 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 				   const char *name, u32 name_len,
 				   u32 *imode_ret)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct btrfs_key location;
 	struct btrfs_dir_item *di;
@@ -800,7 +793,6 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 	u32 len;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = dirid;
 	key.offset = btrfs_name_hash(name, name_len);
 	key.type = BTRFS_DIR_INDEX_KEY;
@@ -1056,7 +1048,7 @@ int check_repair_free_space_inode(struct btrfs_path *path)
 
 int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
 	int ret;
@@ -1077,7 +1069,6 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 	if (IS_ERR(trans))
 		return PTR_ERR(trans);
 
-	btrfs_init_path(&path);
 	path.lowest_level = btrfs_header_level(eb);
 	if (path.lowest_level)
 		btrfs_node_key_to_cpu(eb, &key, 0);
@@ -1100,7 +1091,7 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 {
 	struct btrfs_root *root = btrfs_extent_root(gfs_info, bytenr);
 	struct btrfs_extent_item *ei;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	int ret;
 
@@ -1108,7 +1099,6 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 	key.type = BTRFS_METADATA_ITEM_KEY;
 	key.offset = (u64)-1;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	/* Not possible */
 	if (ret == 0)
@@ -1233,7 +1223,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 					   struct btrfs_root *cur_root)
 {
 	struct btrfs_root *csum_root;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct extent_buffer *node;
 	struct btrfs_file_extent_item *fi;
@@ -1248,7 +1238,6 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 	if (!buf)
 		return -ENOMEM;
 
-	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.offset = 0;
 	key.type = 0;
@@ -1340,7 +1329,7 @@ out:
 
 static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_root *tree_root = gfs_info->tree_root;
 	struct btrfs_root *cur_root;
 	struct extent_buffer *node;
@@ -1348,7 +1337,6 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans)
 	int slot = 0;
 	int ret = 0;
 
-	btrfs_init_path(&path);
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -1487,14 +1475,13 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *extent_root)
 {
 	struct btrfs_root *csum_root;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_extent_item *ei;
 	struct extent_buffer *leaf;
 	char *buf;
 	struct btrfs_key key;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = 0;

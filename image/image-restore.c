@@ -1426,7 +1426,7 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *root = fs_info->dev_root;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	int slot;
@@ -1435,7 +1435,6 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 	key.objectid = 1;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	key.offset = 0;
-	btrfs_init_path(&path);
 
 	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0) {
@@ -1574,7 +1573,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_ext;
 	struct btrfs_device *dev;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_key key;
@@ -1585,7 +1584,6 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 
 	dev_item = &fs_info->super_copy->dev_item;
 
-	btrfs_init_path(&path);
 	devid = btrfs_stack_device_id(dev_item);
 
 	key.objectid = devid;

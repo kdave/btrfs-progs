@@ -910,7 +910,7 @@ int btrfs_clear_free_space_cache(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
-	struct btrfs_path path;
+	struct btrfs_path path = {};
 	struct btrfs_key key;
 	struct btrfs_disk_key location;
 	struct btrfs_free_space_header *sc_header;
@@ -918,8 +918,6 @@ int btrfs_clear_free_space_cache(struct btrfs_trans_handle *trans,
 	u64 ino;
 	int slot;
 	int ret;
-
-	btrfs_init_path(&path);
 
 	key.objectid = BTRFS_FREE_SPACE_OBJECTID;
 	key.type = 0;
