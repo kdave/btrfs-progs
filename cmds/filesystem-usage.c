@@ -145,7 +145,7 @@ static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
 	struct btrfs_ioctl_search_key *sk = &args.key;
 	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
-	int i, e;
+	int i;
 
 	memset(&args, 0, sizeof(args));
 
@@ -168,11 +168,9 @@ static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
 
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		e = errno;
-		if (e == EPERM)
-			return -e;
-
 		if (ret < 0) {
+			if (errno == EPERM)
+				return -errno;
 			error("cannot look up chunk tree info: %m");
 			return 1;
 		}
