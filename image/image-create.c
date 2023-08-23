@@ -753,7 +753,7 @@ int create_metadump(const char *input, FILE *out, int num_threads,
 		    int walk_trees, bool dump_data)
 {
 	struct btrfs_root *root;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct metadump_struct metadump;
 	int ret;
 	int err = 0;
@@ -780,8 +780,6 @@ int create_metadump(const char *input, FILE *out, int num_threads,
 		err = ret;
 		goto out;
 	}
-
-	btrfs_init_path(&path);
 
 	if (walk_trees) {
 		ret = copy_tree_blocks(root, root->fs_info->chunk_root->node,
