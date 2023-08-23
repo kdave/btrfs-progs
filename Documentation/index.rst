@@ -61,6 +61,7 @@ Welcome to BTRFS documentation!
    dev/dev-send-stream
    dev/dev-json
    dev/dev-internal-apis
+   dev/ReleaseChecklist
    btrfs-ioctl
 
 .. toctree::

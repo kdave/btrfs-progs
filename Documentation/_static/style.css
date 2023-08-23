@@ -16,6 +16,14 @@
 	color: darkorange;
 }
 
-.statusunst {
+.statusunstable {
 	color: red;
 }
+
+.statusunsupp {
+	color: darkorange;
+}
+
+.statusincompat {
+	color: goldenrod;
+};
