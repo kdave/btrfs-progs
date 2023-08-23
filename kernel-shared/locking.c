@@ -5,15 +5,18 @@
 
 struct extent_buffer *btrfs_read_lock_root_node(struct btrfs_root *root)
 {
+	root->node->refs++;
 	return root->node;
 }
 
 struct extent_buffer *btrfs_try_read_lock_root_node(struct btrfs_root *root)
 {
+	root->node->refs++;
 	return root->node;
 }
 
 struct extent_buffer *btrfs_lock_root_node(struct btrfs_root *root)
 {
+	root->node->refs++;
 	return root->node;
 }
