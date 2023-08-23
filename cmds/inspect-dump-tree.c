@@ -32,6 +32,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
@@ -58,10 +59,14 @@ static void print_extents(struct extent_buffer *eb)
 
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
+		struct btrfs_tree_parent_check check = {
+			.owner_root = btrfs_header_owner(eb),
+			.transid = btrfs_node_ptr_generation(eb, i),
+			.level = btrfs_header_level(eb) - 1,
+		};
+
 		next = read_tree_block(fs_info, btrfs_node_blockptr(eb, i),
-				       btrfs_header_owner(eb),
-				       btrfs_node_ptr_generation(eb, i),
-				       btrfs_header_level(eb) - 1, NULL);
+				       &check);
 		if (!extent_buffer_uptodate(next))
 			continue;
 		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
@@ -270,6 +275,7 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 {
 	struct cache_extent *ce;
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = { 0 };
 	u64 bytenr;
 	int ret = 0;
 
@@ -290,7 +296,7 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 			goto next;
 		}
 
-		eb = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+		eb = read_tree_block(fs_info, bytenr, &check);
 		if (!extent_buffer_uptodate(eb)) {
 			error("failed to read tree block %llu", bytenr);
 			ret = -EIO;
@@ -593,12 +599,14 @@ again:
 		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			struct extent_buffer *buf;
+			struct btrfs_tree_parent_check check = {
+				.owner_root = key.objectid,
+			};
 			bool skip = (extent_only || device_only || uuid_tree_only);
 
 			offset = btrfs_item_ptr_offset(leaf, slot);
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
-			buf = read_tree_block(info, btrfs_root_bytenr(&ri),
-					      key.objectid, 0, 0, NULL);
+			buf = read_tree_block(info, btrfs_root_bytenr(&ri), &check);
 			if (!extent_buffer_uptodate(buf))
 				goto next;
 			if (tree_id && found_key.objectid != tree_id) {

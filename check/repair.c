@@ -132,6 +132,8 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 
 	nritems = btrfs_header_nritems(eb);
 	for (i = 0; i < nritems; i++) {
+		struct btrfs_tree_parent_check check = { 0 };
+
 		if (level == 0) {
 			bool is_extent_root;
 			btrfs_item_key_to_cpu(eb, &key, i);
@@ -145,15 +147,16 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
 			bytenr = btrfs_disk_root_bytenr(eb, ri);
 
+			check.owner_root = key.objectid;
+			check.level = btrfs_disk_root_level(eb, ri);
+
 			/*
 			 * If at any point we start needing the real root we
 			 * will have to build a stump root for the root we are
 			 * in, but for now this doesn't actually use the root so
 			 * just pass in extent_root.
 			 */
-			tmp = read_tree_block(fs_info, bytenr, key.objectid, 0,
-					      btrfs_disk_root_level(eb, ri),
-					      NULL);
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
@@ -178,9 +181,10 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 				continue;
 			}
 
-			tmp = read_tree_block(fs_info, bytenr,
-					      btrfs_header_owner(eb), 0,
-					      level - 1, NULL);
+			check.owner_root = btrfs_header_owner(eb);
+			check.level = level - 1;
+
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;

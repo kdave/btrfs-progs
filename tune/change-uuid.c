@@ -24,6 +24,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/defs.h"
 #include "common/messages.h"
 #include "tune/tune.h"
@@ -97,6 +98,7 @@ static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsi
 	while (1) {
 		struct btrfs_extent_item *ei;
 		struct extent_buffer *eb;
+		struct btrfs_tree_parent_check check = { 0 };
 		u64 flags;
 		u64 bytenr;
 
@@ -111,7 +113,7 @@ static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsi
 			goto next;
 
 		bytenr = key.objectid;
-		eb = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+		eb = read_tree_block(fs_info, bytenr, &check);
 		if (IS_ERR(eb)) {
 			error("failed to read tree block: %llu", bytenr);
 			ret = PTR_ERR(eb);

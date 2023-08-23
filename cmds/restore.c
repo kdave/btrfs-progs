@@ -45,6 +45,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
@@ -1241,15 +1242,17 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 	 * the fs_root.
 	 */
 	if (!extent_buffer_uptodate(fs_info->tree_root->node)) {
+		struct btrfs_tree_parent_check check = { 0 };
 		u64 generation;
 
 		root = fs_info->tree_root;
 		if (!root_location)
 			root_location = btrfs_super_root(fs_info->super_copy);
 		generation = btrfs_super_generation(fs_info->super_copy);
-		root->node = read_tree_block(fs_info, root_location,
-					     btrfs_root_id(root), generation,
-					     0, NULL);
+
+		check.owner_root = btrfs_root_id(root);
+		check.transid = generation;
+		root->node = read_tree_block(fs_info, root_location, &check);
 		if (!extent_buffer_uptodate(root->node)) {
 			error("opening tree root failed");
 			close_ctree(root);
@@ -1514,9 +1517,9 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 
 	if (fs_location != 0) {
+		struct btrfs_tree_parent_check check = { 0 };
 		free_extent_buffer(root->node);
-		root->node = read_tree_block(root->fs_info, fs_location, 0, 0,
-					     0, NULL);
+		root->node = read_tree_block(root->fs_info, fs_location, &check);
 		if (!extent_buffer_uptodate(root->node)) {
 			error("failed to read fs location");
 			ret = 1;

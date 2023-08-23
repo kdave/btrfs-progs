@@ -30,6 +30,7 @@
 #include "kernel-shared/ulist.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/messages.h"
 #include "common/rbtree-utils.h"
 #include "check/repair.h"
@@ -716,14 +717,16 @@ static int travel_tree(struct btrfs_fs_info *info, struct btrfs_root *root,
 {
 	int ret, nr, i;
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = {
+		.owner_root = btrfs_root_id(root),
+	};
 	u64 new_bytenr;
 	u64 new_num_bytes;
 
 //	printf("travel_tree: bytenr: %llu\tnum_bytes: %llu\tref_parent: %llu\n",
 //	       bytenr, num_bytes, ref_parent);
 
-	eb = read_tree_block(info, bytenr, btrfs_root_id(root), 0,
-			     0, NULL);
+	eb = read_tree_block(info, bytenr, &check);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;
 
@@ -1056,7 +1059,6 @@ static int simple_quota_account_extent(struct btrfs_fs_info *info,
 	struct ulist *roots = ulist_alloc(0);
 	int ret;
 	struct extent_buffer *node_eb;
-	u64 extent_root;
 
 	generation = btrfs_extent_generation(leaf, ei);
 	if (generation < counts.enable_gen)
@@ -1073,8 +1075,10 @@ static int simple_quota_account_extent(struct btrfs_fs_info *info,
 			return 0;
 		}
 	} else {
-		extent_root = btrfs_root_id(btrfs_extent_root(info, key->objectid));
-		node_eb = read_tree_block(info, key->objectid, extent_root, 0, 0, NULL);
+		struct btrfs_tree_parent_check check = { 0 };
+
+		check.owner_root = btrfs_root_id(btrfs_extent_root(info, key->objectid));
+		node_eb = read_tree_block(info, key->objectid, &check);
 		if (!extent_buffer_uptodate(node_eb))
 			return -EIO;
 		root = btrfs_header_owner(node_eb);
