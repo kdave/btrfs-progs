@@ -23,6 +23,8 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-lib/sizes.h"
 
+struct btrfs_tree_parent_check;
+
 #define BTRFS_SUPER_MIRROR_MAX	 3
 #define BTRFS_SUPER_MIRROR_SHIFT 12
 
@@ -243,8 +245,8 @@ int btrfs_global_root_insert(struct btrfs_fs_info *fs_info,
 int btrfs_find_and_setup_root(struct btrfs_root *tree_root,
 			      struct btrfs_fs_info *fs_info,
 			      u64 objectid, struct btrfs_root *root);
-int btrfs_read_extent_buffer(struct extent_buffer *eb, u64 parent_transid,
-			     int level, struct btrfs_key *first_key);
+int btrfs_read_extent_buffer(struct extent_buffer *eb,
+			     struct btrfs_tree_parent_check *check);
 
 static inline struct btrfs_root *btrfs_block_group_root(
 						struct btrfs_fs_info *fs_info)
