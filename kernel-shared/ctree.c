@@ -2576,8 +2576,7 @@ void btrfs_extend_item(struct btrfs_path *path, u32 data_size)
 int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 			    struct btrfs_root *root,
 			    struct btrfs_path *path,
-			    struct btrfs_key *cpu_key, u32 *data_size,
-			    int nr)
+			    const struct btrfs_item_batch *batch)
 {
 	struct extent_buffer *leaf;
 	int ret = 0;
@@ -2585,20 +2584,16 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	int i;
 	u32 nritems;
 	u32 total_size = 0;
-	u32 total_data = 0;
 	unsigned int data_end;
 	struct btrfs_disk_key disk_key;
-
-	for (i = 0; i < nr; i++) {
-		total_data += data_size[i];
-	}
 
 	/* create a root if there isn't one */
 	if (!root->node)
 		BUG();
 
-	total_size = total_data + nr * sizeof(struct btrfs_item);
-	ret = btrfs_search_slot(trans, root, cpu_key, path, total_size, 1);
+	total_size = batch->total_data_size +
+		(batch->nr * sizeof(struct btrfs_item));
+	ret = btrfs_search_slot(trans, root, &batch->keys[0], path, total_size, 1);
 	if (ret == 0) {
 		return -EEXIST;
 	}
@@ -2637,35 +2632,38 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 			u32 ioff;
 
 			ioff = btrfs_item_offset(leaf, i);
-			btrfs_set_item_offset(leaf, i, ioff - total_data);
+			btrfs_set_item_offset(leaf, i,
+					      ioff - batch->total_data_size);
 		}
 
 		/* shift the items */
-		memmove_extent_buffer(leaf, btrfs_item_nr_offset(leaf, slot + nr),
+		memmove_extent_buffer(leaf,
+			      btrfs_item_nr_offset(leaf, slot + batch->nr),
 			      btrfs_item_nr_offset(leaf, slot),
 			      (nritems - slot) * sizeof(struct btrfs_item));
 
 		/* shift the data */
 		memmove_extent_buffer(leaf, btrfs_item_nr_offset(leaf, 0) +
-			      data_end - total_data, btrfs_item_nr_offset(leaf, 0) +
+			      data_end - batch->total_data_size,
+			      btrfs_item_nr_offset(leaf, 0) +
 			      data_end, old_data - data_end);
 		data_end = old_data;
 	}
 
 	/* setup the item for the new data */
-	for (i = 0; i < nr; i++) {
-		btrfs_cpu_key_to_disk(&disk_key, cpu_key + i);
+	for (i = 0; i < batch->nr; i++) {
+		btrfs_cpu_key_to_disk(&disk_key, &batch->keys[i]);
 		btrfs_set_item_key(leaf, &disk_key, slot + i);
-		btrfs_set_item_offset(leaf, slot + i, data_end - data_size[i]);
-		data_end -= data_size[i];
-		btrfs_set_item_size(leaf, slot + i, data_size[i]);
+		data_end -= batch->data_sizes[i];
+		btrfs_set_item_offset(leaf, slot + i, data_end);
+		btrfs_set_item_size(leaf, slot + i, batch->data_sizes[i]);
 	}
-	btrfs_set_header_nritems(leaf, nritems + nr);
+	btrfs_set_header_nritems(leaf, nritems + batch->nr);
 	btrfs_mark_buffer_dirty(leaf);
 
 	ret = 0;
 	if (slot == 0) {
-		btrfs_cpu_key_to_disk(&disk_key, cpu_key);
+		btrfs_cpu_key_to_disk(&disk_key, &batch->keys[0]);
 		fixup_low_keys(path, &disk_key, 1);
 	}
 
