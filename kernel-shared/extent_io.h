@@ -121,6 +121,9 @@ void copy_extent_buffer(const struct extent_buffer *dst,
 			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len);
+void memcpy_extent_buffer(const struct extent_buffer *dst,
+			  unsigned long dst_offset, unsigned long src_offset,
+			  unsigned long len);
 void memmove_extent_buffer(const struct extent_buffer *dst,
 			   const unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len);
