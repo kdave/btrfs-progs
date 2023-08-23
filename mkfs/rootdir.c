@@ -40,6 +40,7 @@
 #include "common/messages.h"
 #include "common/path-utils.h"
 #include "common/utils.h"
+#include "common/extent-tree-utils.h"
 #include "mkfs/rootdir.h"
 
 static u32 fs_block_size;
