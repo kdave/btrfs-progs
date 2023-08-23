@@ -816,8 +816,8 @@ static int generic_bin_search(struct extent_buffer *eb, unsigned long p,
  * simple bin_search frontend that does the right thing for
  * leaves vs nodes
  */
-int btrfs_bin_search(struct extent_buffer *eb, const struct btrfs_key *key,
-		     int *slot)
+int btrfs_bin_search(struct extent_buffer *eb, int first_slot,
+		     const struct btrfs_key *key, int *slot)
 {
 	if (btrfs_header_level(eb) == 0)
 		return generic_bin_search(eb,
@@ -1355,7 +1355,7 @@ again:
 		ret = check_block(fs_info, p, level);
 		if (ret)
 			return -1;
-		ret = btrfs_bin_search(b, key, &slot);
+		ret = btrfs_bin_search(b, 0, key, &slot);
 		if (level != 0) {
 			if (ret && slot > 0)
 				slot -= 1;

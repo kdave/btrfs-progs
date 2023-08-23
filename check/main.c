@@ -6533,7 +6533,7 @@ static int run_next_block(struct btrfs_root *root,
 		 * technically unreferenced and don't need to be worried about.
 		 */
 		if (ri != NULL && ri->drop_level && level > ri->drop_level) {
-			ret = btrfs_bin_search(buf, &ri->drop_key, &i);
+			ret = btrfs_bin_search(buf, 0, &ri->drop_key, &i);
 			if (ret && i > 0)
 				i--;
 		}
