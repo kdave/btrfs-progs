@@ -33,6 +33,48 @@
 
 int opt_check_repair = 0;
 
+/*
+ * Adjust the pointers going up the tree, starting at level making sure the
+ * right key of each node is points to 'key'.  This is used after shifting
+ * pointers to the left, so it stops fixing up pointers when a given leaf/node
+ * is not in slot 0 of the higher levels.
+ */
+void btrfs_fixup_low_keys(struct btrfs_path *path, struct btrfs_disk_key *key,
+			  int level)
+{
+	for (int i = level; i < BTRFS_MAX_LEVEL; i++) {
+		int slot = path->slots[i];
+
+		if (!path->nodes[i])
+			break;
+		btrfs_set_node_key(path->nodes[i], key, slot);
+		btrfs_mark_buffer_dirty(path->nodes[i]);
+		if (slot != 0)
+			break;
+	}
+}
+
+/*
+ * Update an item key without the safety checks.  This is meant to be called by
+ * fsck only.
+ */
+void btrfs_set_item_key_unsafe(struct btrfs_root *root, struct btrfs_path *path,
+			       struct btrfs_key *new_key)
+{
+	struct btrfs_disk_key disk_key;
+	struct extent_buffer *eb;
+	int slot;
+
+	eb = path->nodes[0];
+	slot = path->slots[0];
+
+	btrfs_cpu_key_to_disk(&disk_key, new_key);
+	btrfs_set_item_key(eb, &disk_key, slot);
+	btrfs_mark_buffer_dirty(eb);
+	if (slot == 0)
+		btrfs_fixup_low_keys(path, &disk_key, 1);
+}
+
 int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 				    struct btrfs_key *first_key,
 				    u64 start, u64 len, int level)
