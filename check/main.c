@@ -3569,9 +3569,8 @@ static int repair_btree(struct btrfs_root *root,
 					     path.slots[level]);
 
 		/* Remove the ptr */
-		ret = btrfs_del_ptr(root, &path, level, path.slots[level]);
-		if (ret < 0)
-			goto out;
+		btrfs_del_ptr(root, &path, level, path.slots[level]);
+
 		/*
 		 * Remove the corresponding extent
 		 * return value is not concerned.
@@ -7829,7 +7828,7 @@ again:
 
 del_ptr:
 	printk("deleting pointer to block %llu\n", corrupt->cache.start);
-	ret = btrfs_del_ptr(extent_root, &path, level, slot);
+	btrfs_del_ptr(extent_root, &path, level, slot);
 
 out:
 	btrfs_release_path(&path);
