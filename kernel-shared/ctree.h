@@ -1056,8 +1056,9 @@ int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_leaf_free_space(struct extent_buffer *leaf);
 void btrfs_fixup_low_keys(struct btrfs_path *path, struct btrfs_disk_key *key,
 		int level);
-int btrfs_set_item_key_safe(struct btrfs_root *root, struct btrfs_path *path,
-			    struct btrfs_key *new_key);
+void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
+			     struct btrfs_path *path,
+			     const struct btrfs_key *new_key);
 void btrfs_set_item_key_unsafe(struct btrfs_root *root,
 			       struct btrfs_path *path,
 			       struct btrfs_key *new_key);
