@@ -57,4 +57,10 @@ static inline void trace_btrfs_convert_extent_bit(struct extent_io_tree *tree,
 {
 }
 
+static inline void trace_btrfs_cow_block(struct btrfs_root *root,
+					 struct extent_buffer *buf,
+					 struct extent_buffer *cow)
+{
+}
+
 #endif /* __PROGS_TRACE_H__ */
