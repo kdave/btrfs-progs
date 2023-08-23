@@ -120,7 +120,7 @@ int update_disk_super_on_device(struct btrfs_fs_info *info,
 {
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_super_block disk_super;
 	char dev_uuid[BTRFS_UUID_SIZE];
@@ -134,7 +134,6 @@ int update_disk_super_on_device(struct btrfs_fs_info *info,
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = cur_devid;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, info->chunk_root, &key, &path, 0, 0);
 	if (ret) {
 		error("search key failed: %d", ret);

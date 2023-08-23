@@ -41,7 +41,7 @@ int main(int ac, char **av) {
 	int run_size = 300000;
 	int max_key =  100000000;
 	int tree_size = 2;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 
@@ -86,7 +86,6 @@ int main(int ac, char **av) {
 	for (i = 0; i < run_size; i++) {
 		num = next_key(i, max_key);
 		ins.objectid = num;
-		btrfs_init_path(&path);
 		if (i % 10000 == 0)
 			fprintf(stderr, "search %d:%d\n", num, i);
 		ret = btrfs_search_slot(NULL, root, &ins, &path, 0, 0);
@@ -117,7 +116,6 @@ int main(int ac, char **av) {
 	for (i = 0 ; i < run_size/4; i++) {
 		num = next_key(i, max_key);
 		ins.objectid = num;
-		btrfs_init_path(&path);
 		ret = btrfs_search_slot(trans, root, &ins, &path, -1, 1);
 		if (!ret) {
 			if (i % 10000 == 0)
@@ -163,7 +161,6 @@ int main(int ac, char **av) {
 	for (i = 0; i < run_size; i++) {
 		num = next_key(i, max_key);
 		ins.objectid = num;
-		btrfs_init_path(&path);
 		if (i % 10000 == 0)
 			fprintf(stderr, "search %d:%d\n", num, i);
 		ret = btrfs_search_slot(NULL, root, &ins, &path, 0, 0);
@@ -181,7 +178,6 @@ int main(int ac, char **av) {
 		struct extent_buffer *leaf;
 		int slot;
 		ins.objectid = (u64)-1;
-		btrfs_init_path(&path);
 		ret = btrfs_search_slot(trans, root, &ins, &path, -1, 1);
 		if (ret == 0)
 			BUG();

@@ -172,12 +172,11 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *leaf;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	int slot;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
