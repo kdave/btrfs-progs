@@ -13,7 +13,7 @@ RUN yum -y install autoconf automake pkg-config
 RUN yum -y install libattr-devel libblkid-devel libuuid-devel
 RUN yum -y install e2fsprogs-libs e2fsprogs-devel
 RUN yum -y install zlib-devel lzo-devel libzstd-devel zstd
-RUN yum -y install make gcc tar gzip clang
+RUN yum -y install make gcc tar gzip clang dwarves
 RUN yum -y install python3 python3-devel python3-setuptools
 
 # For downloading fresh sources
