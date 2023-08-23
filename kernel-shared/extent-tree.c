@@ -936,7 +936,7 @@ again:
 		printf("Size is %u, needs to be %u, slot %d\n",
 		       (unsigned)item_size,
 		       (unsigned)sizeof(*ei), path->slots[0]);
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		return -EINVAL;
 	}
 
@@ -1427,7 +1427,7 @@ again:
 	}
 
 	if (ret != 0) {
-		btrfs_print_leaf(path->nodes[0], BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(path->nodes[0]);
 		printk("failed to find block number %llu\n",
 			(unsigned long long)bytenr);
 		BUG();
@@ -2033,7 +2033,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 				printk(KERN_ERR "umm, got %d back from search"
 				       ", was looking for %llu\n", ret,
 				       (unsigned long long)bytenr);
-				btrfs_print_leaf(path->nodes[0], BTRFS_PRINT_TREE_DEFAULT);
+				btrfs_print_leaf(path->nodes[0]);
 			}
 			BUG_ON(ret);
 			extent_slot = path->slots[0];
@@ -2047,7 +2047,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		       (unsigned long long)owner_objectid,
 		       (unsigned long long)owner_offset);
 		printf("path->slots[0]: %d path->nodes[0]:\n", path->slots[0]);
-		btrfs_print_leaf(path->nodes[0], BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(path->nodes[0]);
 		ret = -EIO;
 		goto fail;
 	}

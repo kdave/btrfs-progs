@@ -52,7 +52,7 @@ static void print_extents(struct extent_buffer *eb)
 		return;
 
 	if (btrfs_is_leaf(eb)) {
-		btrfs_print_leaf(eb, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(eb);
 		return;
 	}
 
