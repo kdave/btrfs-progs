@@ -2797,9 +2797,9 @@ out:
  * Given a key and some data, insert an item into the tree.
  * This does all the path init required, making room in the tree if needed.
  */
-int btrfs_insert_item(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_key *cpu_key, void *data, u32
-		      data_size)
+int btrfs_insert_item(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root, const struct btrfs_key *cpu_key,
+		      void *data, u32 data_size)
 {
 	int ret = 0;
 	struct btrfs_path *path;
