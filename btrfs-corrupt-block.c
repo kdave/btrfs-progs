@@ -35,6 +35,7 @@
 #include "common/messages.h"
 #include "common/string-utils.h"
 #include "cmds/commands.h"
+#include "check/repair.h"
 
 #define FIELD_BUF_LEN 80
 
