@@ -3196,30 +3196,6 @@ int btrfs_previous_extent_item(struct btrfs_root *root,
 }
 
 /*
- * Search in extent tree to found next meta/data extent
- * Caller needs to check for no-hole or skinny metadata features.
- */
-int btrfs_next_extent_item(struct btrfs_root *root,
-			struct btrfs_path *path, u64 max_objectid)
-{
-	struct btrfs_key found_key;
-	int ret;
-
-	while (1) {
-		ret = btrfs_next_item(root, path);
-		if (ret)
-			return ret;
-		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
-				      path->slots[0]);
-		if (found_key.objectid > max_objectid)
-			return 1;
-		if (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
-		    found_key.type == BTRFS_METADATA_ITEM_KEY)
-		return 0;
-	}
-}
-
-/*
  * Search uuid tree - unmounted
  *
  * return -ENOENT for !found, < 0 for errors, or 0 if an item was found

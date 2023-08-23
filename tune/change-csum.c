@@ -28,6 +28,7 @@
 #include "common/internal.h"
 #include "common/utils.h"
 #include "common/inject-error.h"
+#include "common/extent-tree-utils.h"
 #include "tune/tune.h"
 
 static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_csum_type)
