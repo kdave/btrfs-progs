@@ -33,6 +33,7 @@
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/extent-cache.h"
+#include "common/extent-tree-utils.h"
 #include "common/string-utils.h"
 #include "cmds/commands.h"
 

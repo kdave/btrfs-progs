@@ -115,6 +115,7 @@
 #include "common/device-scan.h"
 #include "common/box.h"
 #include "common/open-utils.h"
+#include "common/extent-tree-utils.h"
 #include "cmds/commands.h"
 #include "check/repair.h"
 #include "check/clear-cache.h"

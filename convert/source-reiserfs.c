@@ -35,6 +35,7 @@
 #include "common/extent-cache.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "common/extent-tree-utils.h"
 #include "convert/common.h"
 #include "convert/source-reiserfs.h"
 
