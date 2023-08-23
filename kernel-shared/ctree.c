@@ -972,7 +972,7 @@ static noinline int balance_level(struct btrfs_trans_handle *trans,
 			btrfs_clear_buffer_dirty(trans, right);
 			free_extent_buffer(right);
 			right = NULL;
-			btrfs_del_ptr(root, path, level + 1, pslot + 1);
+			btrfs_del_ptr(trans, root, path, level + 1, pslot + 1);
 
 			root_sub_used(root, blocksize);
 			wret = btrfs_free_extent(trans, bytenr, blocksize, 0,
@@ -1017,7 +1017,7 @@ static noinline int balance_level(struct btrfs_trans_handle *trans,
 		btrfs_clear_buffer_dirty(trans, mid);
 		free_extent_buffer(mid);
 		mid = NULL;
-		btrfs_del_ptr(root, path, level + 1, pslot);
+		btrfs_del_ptr(trans, root, path, level + 1, pslot);
 
 		root_sub_used(root, blocksize);
 		wret = btrfs_free_extent(trans, bytenr, blocksize, 0,
@@ -2828,8 +2828,8 @@ int btrfs_insert_item(struct btrfs_trans_handle *trans, struct btrfs_root
  * continuing all the way the root if required.  The root is converted into
  * a leaf if all the nodes are emptied.
  */
-void btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
-		int level, int slot)
+int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		  struct btrfs_path *path, int level, int slot)
 {
 	struct extent_buffer *parent = path->nodes[level];
 	u32 nritems;
@@ -2856,6 +2856,8 @@ void btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		fixup_low_keys(path, &disk_key, level + 1);
 	}
 	btrfs_mark_buffer_dirty(parent);
+
+	return 0;
 }
 
 /*
@@ -2876,7 +2878,7 @@ static noinline int btrfs_del_leaf(struct btrfs_trans_handle *trans,
 	int ret;
 
 	WARN_ON(btrfs_header_generation(leaf) != trans->transid);
-	btrfs_del_ptr(root, path, 1, path->slots[1]);
+	btrfs_del_ptr(trans, root, path, 1, path->slots[1]);
 
 	root_sub_used(root, leaf->len);
 
