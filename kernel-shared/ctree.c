@@ -24,7 +24,6 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/tree-checker.h"
 #include "kernel-shared/volumes.h"
-#include "crypto/crc32c.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -186,19 +185,6 @@ size_t __attribute_const__ btrfs_get_num_csums(void)
 u16 btrfs_csum_type_size(u16 csum_type)
 {
 	return btrfs_csums[csum_type].size;
-}
-
-u64 btrfs_name_hash(const char *name, int len)
-{
-	return crc32c((u32)~1, name, len);
-}
-
-/*
- * Figure the key offset of an extended inode ref
- */
-u64 btrfs_extref_hash(u64 parent_objectid, const char *name, int len)
-{
-	return (u64)crc32c(parent_objectid, name, len);
 }
 
 struct btrfs_path *btrfs_alloc_path(void)
