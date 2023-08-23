@@ -309,7 +309,7 @@ The tests assume write access to their directories.
   * there are exceptions:
     * `$SUDO_HELPER` as it might be intentionally unset
 * use `#!/bin/bash` explicitly
-* check for all external dependencies (`check_prereq_global`)
+* check for all external dependencies (`check_global_prereq`)
 * check for internal dependencies (`check_prereq`), though the basic set is
   always built when the tests are started through make
 * use functions instead of repeating code
