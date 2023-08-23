@@ -24,6 +24,7 @@
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/messages.h"
 #include "common/internal.h"
 #include "common/utils.h"
@@ -494,6 +495,7 @@ static int rewrite_tree_block_csum(struct btrfs_fs_info *fs_info, u64 logical,
 				   u16 new_csum_type)
 {
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = { 0 };
 	u8 result_old[BTRFS_CSUM_SIZE];
 	u8 result_new[BTRFS_CSUM_SIZE];
 	int ret;
@@ -502,7 +504,7 @@ static int rewrite_tree_block_csum(struct btrfs_fs_info *fs_info, u64 logical,
 	if (!eb)
 		return -ENOMEM;
 
-	ret = btrfs_read_extent_buffer(eb, 0, 0, NULL);
+	ret = btrfs_read_extent_buffer(eb, &check);
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to read tree block at logical %llu: %m", logical);
