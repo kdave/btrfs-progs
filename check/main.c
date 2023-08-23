@@ -9163,8 +9163,12 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 
 	free_extent_buffer(root->node);
 	root->node = c;
-	add_root_to_dirty_list(root);
-	return 0;
+
+	btrfs_set_root_bytenr(&root->root_item, c->start);
+	btrfs_set_root_generation(&root->root_item, trans->transid);
+
+	return btrfs_update_root(trans, gfs_info->tree_root, &root->root_key,
+				 &root->root_item);
 }
 
 static int reset_block_groups(void)
