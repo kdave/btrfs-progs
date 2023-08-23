@@ -1369,7 +1369,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	fflush(stdout);
 }
 
-void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
+void __btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_disk_key disk_key;
 	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(eb->fs_info);
@@ -1688,7 +1688,7 @@ void btrfs_print_tree(struct extent_buffer *eb, unsigned int mode)
 
 	nr = btrfs_header_nritems(eb);
 	if (btrfs_is_leaf(eb)) {
-		btrfs_print_leaf(eb, mode);
+		__btrfs_print_leaf(eb, mode);
 		return;
 	}
 	/* We are crossing eb boundary, this node must be corrupted */

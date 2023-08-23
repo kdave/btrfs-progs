@@ -2566,7 +2566,7 @@ split:
 
 	ret = 0;
 	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		BUG();
 	}
 	kfree(buf);
@@ -2658,7 +2658,7 @@ int btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end)
 
 	ret = 0;
 	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		BUG();
 	}
 	return ret;
@@ -2682,7 +2682,7 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 	data_end = leaf_data_end(leaf);
 
 	if (btrfs_leaf_free_space(leaf) < data_size) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		BUG();
 	}
 	slot = path->slots[0];
@@ -2690,7 +2690,7 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 
 	BUG_ON(slot < 0);
 	if (slot >= nritems) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		printk("slot %d too large, nritems %u\n", slot, nritems);
 		BUG_ON(1);
 	}
@@ -2717,7 +2717,7 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 
 	ret = 0;
 	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		BUG();
 	}
 	return ret;
@@ -2765,7 +2765,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	data_end = leaf_data_end(leaf);
 
 	if (btrfs_leaf_free_space(leaf) < total_size) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		printk("not enough freespace need %u have %d\n",
 		       total_size, btrfs_leaf_free_space(leaf));
 		BUG();
@@ -2778,7 +2778,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 		unsigned int old_data = btrfs_item_data_end(leaf, slot);
 
 		if (old_data < data_end) {
-			btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+			btrfs_print_leaf(leaf);
 			printk("slot %d old_data %u data_end %u\n",
 			       slot, old_data, data_end);
 			BUG_ON(1);
@@ -2824,7 +2824,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	}
 
 	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_leaf(leaf);
 		BUG();
 	}
 
