@@ -2661,10 +2661,8 @@ void btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end)
 	}
 }
 
-int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
-		      u32 data_size)
+void btrfs_extend_item(struct btrfs_path *path, u32 data_size)
 {
-	int ret = 0;
 	int slot;
 	struct extent_buffer *leaf;
 	u32 nritems;
@@ -2712,12 +2710,10 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 	btrfs_set_item_size(leaf, slot, old_size + data_size);
 	btrfs_mark_buffer_dirty(leaf);
 
-	ret = 0;
 	if (btrfs_leaf_free_space(leaf) < 0) {
 		btrfs_print_leaf(leaf);
 		BUG();
 	}
-	return ret;
 }
 
 /*
@@ -3366,7 +3362,7 @@ int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 		 * ret == -EEXIST case, An item with that type already exists.
 		 * Extend the item and store the new subvol_id at the end.
 		 */
-		btrfs_extend_item(uuid_root, path, sizeof(subvol_id_le));
+		btrfs_extend_item(path, sizeof(subvol_id_le));
 		eb = path->nodes[0];
 		slot = path->slots[0];
 		offset = btrfs_item_ptr_offset(eb, slot);
