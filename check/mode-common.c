@@ -29,6 +29,7 @@
 #include "kernel-shared/backref.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -127,11 +128,12 @@ next:
 static int check_prealloc_shared_data_ref(u64 parent, u64 disk_bytenr)
 {
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = { 0 };
 	u32 nr;
 	int i;
 	int ret = 0;
 
-	eb = read_tree_block(gfs_info, parent, 0, 0, 0, NULL);
+	eb = read_tree_block(gfs_info, parent, &check);
 	if (!extent_buffer_uptodate(eb)) {
 		ret = -EIO;
 		goto out;
@@ -1116,8 +1118,9 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 	if (btrfs_extent_flags(path.nodes[0], ei) &
 	    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
 		struct extent_buffer *eb;
+		struct btrfs_tree_parent_check check = { 0 };
 
-		eb = read_tree_block(gfs_info, bytenr, 0, 0, 0, NULL);
+		eb = read_tree_block(gfs_info, bytenr, &check);
 		if (extent_buffer_uptodate(eb)) {
 			*gen_ret = btrfs_header_generation(eb);
 			ret = 0;

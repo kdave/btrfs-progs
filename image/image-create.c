@@ -21,6 +21,7 @@
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/tree-checker.h"
 #include "crypto/crc32c.h"
 #include "common/internal.h"
 #include "common/messages.h"
@@ -437,11 +438,11 @@ static int flush_pending(struct metadump_struct *md, int done)
 		}
 
 		while (!md->data && size > 0) {
+			struct btrfs_tree_parent_check check = { 0 };
 			u64 this_read = min((u64)md->root->fs_info->nodesize,
 					size);
 
-			eb = read_tree_block(md->root->fs_info, start, 0, 0, 0,
-					     NULL);
+			eb = read_tree_block(md->root->fs_info, start, &check);
 			if (!extent_buffer_uptodate(eb)) {
 				free(async->buffer);
 				free(async);
@@ -510,6 +511,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 	struct btrfs_root_item *ri;
 	struct btrfs_key key;
 	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_tree_parent_check check = { 0 };
 	u64 bytenr;
 	int level;
 	int nritems = 0;
@@ -545,7 +547,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 				continue;
 			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
 			bytenr = btrfs_disk_root_bytenr(eb, ri);
-			tmp = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				error("unable to read log root block");
 				return -EIO;
@@ -556,7 +558,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 				return ret;
 		} else {
 			bytenr = btrfs_node_blockptr(eb, i);
-			tmp = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				error("unable to read log root block");
 				return -EIO;

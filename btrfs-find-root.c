@@ -25,6 +25,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/box.h"
 #include "common/utils.h"
 #include "common/extent-cache.h"
@@ -200,7 +201,9 @@ int btrfs_find_root_search(struct btrfs_fs_info *fs_info,
 		for (offset = chunk_offset;
 		     offset < chunk_offset + chunk_size;
 		     offset += nodesize) {
-			eb = read_tree_block(fs_info, offset, 0, 0, 0, NULL);
+			struct btrfs_tree_parent_check check = { 0 };
+
+			eb = read_tree_block(fs_info, offset, &check);
 			if (!eb || IS_ERR(eb))
 				continue;
 			ret = add_eb_to_result(eb, result, nodesize, filter,

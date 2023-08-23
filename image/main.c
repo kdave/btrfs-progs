@@ -41,6 +41,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "crypto/crc32c.h"
 #include "crypto/hash.h"
 #include "common/internal.h"

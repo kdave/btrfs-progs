@@ -29,6 +29,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/extent-cache.h"
@@ -172,8 +173,9 @@ static void corrupt_keys(struct btrfs_trans_handle *trans,
 static int corrupt_keys_in_block(struct btrfs_fs_info *fs_info, u64 bytenr)
 {
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = { 0 };
 
-	eb = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+	eb = read_tree_block(fs_info, bytenr, &check);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;;
 
@@ -301,11 +303,14 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 
 	for (i = 0; i < btrfs_header_nritems(eb); i++) {
 		struct extent_buffer *next;
+		struct btrfs_tree_parent_check check = {
+			.owner_root = btrfs_header_owner(eb),
+			.transid = btrfs_node_ptr_generation(eb, i),
+			.level = btrfs_header_level(eb) - 1,
+		};
 
 		next = read_tree_block(fs_info, btrfs_node_blockptr(eb, i),
-				       btrfs_header_owner(eb),
-				       btrfs_node_ptr_generation(eb, i),
-				       btrfs_header_level(eb) - 1, NULL);
+				       &check);
 		if (!extent_buffer_uptodate(next))
 			continue;
 		btrfs_corrupt_extent_tree(trans, root, next);
@@ -860,6 +865,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 				  char *field)
 {
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = { 0 };
 	enum btrfs_metadata_block_field corrupt_field;
 	int ret;
 
@@ -869,7 +875,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		return -EINVAL;
 	}
 
-	eb = read_tree_block(fs_info, block, 0, 0, 0, NULL);
+	eb = read_tree_block(fs_info, block, &check);
 	if (!extent_buffer_uptodate(eb)) {
 		error("couldn't read in tree block %s", field);
 		return -EINVAL;
