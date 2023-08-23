@@ -2316,7 +2316,7 @@ int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 		return ret;
 
 	list_del(&root->dirty_list);
-	ret = btrfs_clear_buffer_dirty(root->node);
+	ret = btrfs_clear_buffer_dirty(trans, root->node);
 	if (ret)
 		return ret;
 	ret = btrfs_free_tree_block(trans, btrfs_root_id(root), root->node, 0, 1);
