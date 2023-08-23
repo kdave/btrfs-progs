@@ -1505,6 +1505,57 @@ out:
 	return ret;
 }
 
+/*
+ * Walk up the tree as far as necessary to find the next sibling tree block.
+ * More generic version of btrfs_next_leaf(), as it could find sibling nodes if
+ * @path->lowest_level is not 0.
+ *
+ * Returns 0 if it found something or 1 if there are no greater leaves.
+ * Returns < 0 on io errors.
+ */
+static int next_sibling_tree_block(struct btrfs_fs_info *fs_info,
+				   struct btrfs_path *path)
+{
+	int slot;
+	int level = path->lowest_level + 1;
+	struct extent_buffer *eb;
+	struct extent_buffer *next = NULL;
+
+	BUG_ON(path->lowest_level + 1 >= BTRFS_MAX_LEVEL);
+	do {
+		if (!path->nodes[level])
+			return 1;
+
+		slot = path->slots[level] + 1;
+		eb = path->nodes[level];
+		if (slot >= btrfs_header_nritems(eb)) {
+			level++;
+			if (level == BTRFS_MAX_LEVEL)
+				return 1;
+			continue;
+		}
+
+		next = btrfs_read_node_slot(eb, slot);
+		if (!extent_buffer_uptodate(next))
+			return -EIO;
+		break;
+	} while (level < BTRFS_MAX_LEVEL);
+	path->slots[level] = slot;
+	while(1) {
+		level--;
+		eb = path->nodes[level];
+		free_extent_buffer(eb);
+		path->nodes[level] = next;
+		path->slots[level] = 0;
+		if (level == path->lowest_level)
+			break;
+		next = btrfs_read_node_slot(next, 0);
+		if (!extent_buffer_uptodate(next))
+			return -EIO;
+	}
+	return 0;
+}
+
 static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 {
 	struct btrfs_fs_info *fs_info = root_eb->fs_info;
@@ -1535,7 +1586,7 @@ static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 		/* Print all sibling tree blocks */
 		while (1) {
 			btrfs_print_tree(path.nodes[cur_level], mode);
-			ret = btrfs_next_sibling_tree_block(fs_info, &path);
+			ret = next_sibling_tree_block(fs_info, &path);
 			if (ret < 0)
 				goto out;
 			if (ret > 0) {
