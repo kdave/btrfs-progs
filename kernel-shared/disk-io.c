@@ -870,6 +870,8 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	INIT_LIST_HEAD(&fs_info->space_info);
 	INIT_LIST_HEAD(&fs_info->recow_ebs);
 
+	spin_lock_init(&fs_info->trans_lock);
+
 	if (!writable)
 		fs_info->readonly = 1;
 
