@@ -48,8 +48,8 @@ static struct btrfs_dir_item *insert_with_overflow(struct btrfs_trans_handle
 		di = btrfs_match_dir_item_name(root, path, name, name_len);
 		if (di)
 			return ERR_PTR(-EEXIST);
-		ret = btrfs_extend_item(root, path, data_size);
-		WARN_ON(ret > 0);
+		btrfs_extend_item(path, data_size);
+		ret = 0;
 	}
 	if (ret < 0)
 		return ERR_PTR(ret);

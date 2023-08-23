@@ -1039,7 +1039,6 @@ static int setup_inline_extent_backref(struct btrfs_root *root,
 	u64 refs;
 	int size;
 	int type;
-	int ret;
 
 	leaf = path->nodes[0];
 	ei = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
@@ -1048,8 +1047,7 @@ static int setup_inline_extent_backref(struct btrfs_root *root,
 	type = extent_ref_type(parent, owner);
 	size = btrfs_extent_inline_ref_size(type);
 
-	ret = btrfs_extend_item(root, path, size);
-	BUG_ON(ret);
+	btrfs_extend_item(path, size);
 
 	ei = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
 	refs = btrfs_extent_refs(leaf, ei);

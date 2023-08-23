@@ -78,8 +78,7 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 			goto out;
 
 		old_size = btrfs_item_size(path->nodes[0], path->slots[0]);
-		ret = btrfs_extend_item(root, path, ins_len);
-		BUG_ON(ret);
+		btrfs_extend_item(path, ins_len);
 		ref = btrfs_item_ptr(path->nodes[0], path->slots[0],
 				     struct btrfs_inode_ref);
 		ref = (struct btrfs_inode_ref *)((unsigned long)ref + old_size);
@@ -352,7 +351,7 @@ int btrfs_insert_inode_extref(struct btrfs_trans_handle *trans,
 						   name, name_len, NULL))
 			goto out;
 
-		btrfs_extend_item(root, path, ins_len);
+		btrfs_extend_item(path, ins_len);
 		ret = 0;
 	}
 
