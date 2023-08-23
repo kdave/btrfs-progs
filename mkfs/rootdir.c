@@ -444,7 +444,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ino_t parent_inum, cur_inum;
 	ino_t highest_inum = 0;
 	const char *parent_dir_name;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct extent_buffer *leaf;
 	struct btrfs_key root_dir_key;
 	u64 root_dir_inode_size = 0;
@@ -464,8 +464,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	parent_inum = highest_inum + BTRFS_FIRST_FREE_OBJECTID;
 	dir_entry->inum = parent_inum;
 	list_add_tail(&dir_entry->list, &dir_head->list);
-
-	btrfs_init_path(&path);
 
 	root_dir_key.objectid = btrfs_root_dirid(&root->root_item);
 	root_dir_key.offset = 0;
@@ -800,7 +798,7 @@ static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_root *dev_root = fs_info->dev_root;
 	struct btrfs_key key;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_dev_extent *de;
 	int ret;
 
@@ -808,7 +806,6 @@ static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	key.offset = (u64)-1;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
 	if (ret == 0) {
 		error("DEV_EXTENT for devid %llu not found", devid);
@@ -852,7 +849,7 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dev_item *di;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	int ret;
 
@@ -861,7 +858,6 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	 * super->dev_item will also get updated
 	 */
 	device->total_bytes = new_size;
-	btrfs_init_path(&path);
 
 	/* Update device item in chunk tree */
 	trans = btrfs_start_transaction(chunk_root, 1);

@@ -10,7 +10,7 @@ static int create_qgroup(struct btrfs_fs_info *fs_info,
 			 struct btrfs_trans_handle *trans,
 			 u64 qgroupid)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_root *quota_root = fs_info->quota_root;
 	struct btrfs_key key;
 	int ret;
@@ -24,7 +24,6 @@ static int create_qgroup(struct btrfs_fs_info *fs_info,
 	key.type = BTRFS_QGROUP_INFO_KEY;
 	key.offset = qgroupid;
 
-	btrfs_init_path(&path);
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(struct btrfs_qgroup_info_item));
 	btrfs_release_path(&path);
@@ -50,7 +49,7 @@ static int create_qgroups(struct btrfs_fs_info *fs_info,
 		.type = BTRFS_ROOT_REF_KEY,
 		.offset = 0,
 	};
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct extent_buffer *leaf;
 	int slot;
 	struct btrfs_root *tree_root = fs_info->tree_root;
@@ -61,7 +60,6 @@ static int create_qgroups(struct btrfs_fs_info *fs_info,
 	if (ret)
 		goto out;
 
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot_for_read(tree_root, &key, &path, 1, 0);
 	if (ret)
 		goto out;
@@ -96,7 +94,7 @@ int enable_quota(struct btrfs_fs_info *fs_info, bool simple)
 	int super_flags = btrfs_super_incompat_flags(sb);
 	struct btrfs_qgroup_status_item *qsi;
 	struct btrfs_root *quota_root;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	int flags;
 	int ret;
@@ -121,7 +119,6 @@ int enable_quota(struct btrfs_fs_info *fs_info, bool simple)
 	key.type = BTRFS_QGROUP_STATUS_KEY;
 	key.offset = 0;
 
-	btrfs_init_path(&path);
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(*qsi));
 	if (ret < 0) {

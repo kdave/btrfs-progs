@@ -1582,7 +1582,7 @@ out:
 static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 {
 	struct btrfs_fs_info *fs_info = root_eb->fs_info;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	int root_level = btrfs_header_level(root_eb);
 	int cur_level;
 	int ret;
@@ -1594,7 +1594,6 @@ static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 	mode |= BTRFS_PRINT_TREE_BFS;
 	mode &= ~(BTRFS_PRINT_TREE_DFS);
 
-	btrfs_init_path(&path);
 	/* For path */
 	extent_buffer_get(root_eb);
 	path.nodes[root_level] = root_eb;

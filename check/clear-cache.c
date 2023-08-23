@@ -130,10 +130,8 @@ static int check_free_space_tree(struct btrfs_root *root)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key = { 0 };
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	int ret = 0;
-
-	btrfs_init_path(&path);
 
 	while (1) {
 		struct btrfs_block_group *bg;
@@ -450,7 +448,6 @@ out:
 
 int truncate_free_ino_items(struct btrfs_root *root)
 {
-	struct btrfs_path path;
 	struct btrfs_key key = { .objectid = BTRFS_FREE_INO_OBJECTID,
 				 .type = (u8)-1,
 				 .offset = (u64)-1 };
@@ -468,9 +465,9 @@ int truncate_free_ino_items(struct btrfs_root *root)
 		struct btrfs_file_extent_item *fi;
 		struct btrfs_root *csum_root;
 		struct btrfs_key found_key;
+		struct btrfs_path path = { 0 };
 		u8 found_type;
 
-		btrfs_init_path(&path);
 		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret < 0) {
 			btrfs_abort_transaction(trans, ret);
@@ -551,15 +548,14 @@ out:
 int clear_ino_cache_items(struct btrfs_fs_info *fs_info)
 {
 	int ret;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = 0;
 
-	btrfs_init_path(&path);
-	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path,	0, 0);
+	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
 

@@ -311,7 +311,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	struct btrfs_root_item ri;
 	struct extent_buffer *leaf;
@@ -517,7 +517,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	}
 	tree_root_scan = info->tree_root;
 
-	btrfs_init_path(&path);
 again:
 	if (!extent_buffer_uptodate(tree_root_scan->node))
 		goto no_node;

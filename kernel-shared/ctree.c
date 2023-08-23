@@ -201,11 +201,6 @@ u64 btrfs_extref_hash(u64 parent_objectid, const char *name, int len)
 	return (u64)crc32c(parent_objectid, name, len);
 }
 
-inline void btrfs_init_path(struct btrfs_path *p)
-{
-	memset(p, 0, sizeof(*p));
-}
-
 struct btrfs_path *btrfs_alloc_path(void)
 {
 	might_sleep();

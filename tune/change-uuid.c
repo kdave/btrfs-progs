@@ -82,11 +82,10 @@ static int change_buffer_header_uuid(struct extent_buffer *eb, uuid_t new_fsid)
 static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {
 	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
 
-	btrfs_init_path(&path);
 	/*
 	 * Here we don't use transaction as it will takes a lot of reserve
 	 * space, and that will make a near-full btrfs unable to change uuid
@@ -162,11 +161,10 @@ static int change_device_uuid(struct extent_buffer *eb, int slot,
 
 static int change_chunk_tree_uuid(struct btrfs_root *root, uuid_t new_fsid)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
 
-	btrfs_init_path(&path);
 	/* No transaction again */
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)

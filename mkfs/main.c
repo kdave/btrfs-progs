@@ -237,11 +237,10 @@ err:
 
 static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *root)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = 0;
 	key.offset = 0;
@@ -592,10 +591,9 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *root = btrfs_block_group_root(fs_info);
 	struct btrfs_key key;
 	struct btrfs_key found_key;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	int ret = 0;
 
-	btrfs_init_path(&path);
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
@@ -709,7 +707,7 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans)
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_inode_item *inode;
 	struct btrfs_root *root;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key = {
 		.objectid = BTRFS_DATA_RELOC_TREE_OBJECTID,
 		.type = BTRFS_ROOT_ITEM_KEY,
@@ -751,7 +749,6 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans)
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
-	btrfs_init_path(&path);
 
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret > 0) {
@@ -854,7 +851,7 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 			       struct btrfs_fs_info *fs_info,
 			       u64 qgroupid)
 {
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_root *quota_root = fs_info->quota_root;
 	struct btrfs_key key;
 	int ret;
@@ -868,7 +865,6 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 	key.type = BTRFS_QGROUP_INFO_KEY;
 	key.offset = qgroupid;
 
-	btrfs_init_path(&path);
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(struct btrfs_qgroup_info_item));
 	btrfs_release_path(&path);
@@ -897,7 +893,7 @@ static int touch_root_subvol(struct btrfs_fs_info *fs_info)
 	};
 	struct extent_buffer *leaf;
 	int slot;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	int ret;
 
 	trans = btrfs_start_transaction(fs_info->fs_root, 1);
@@ -907,7 +903,6 @@ static int touch_root_subvol(struct btrfs_fs_info *fs_info)
 		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
-	btrfs_init_path(&path);
 	ret = btrfs_search_slot(trans, fs_info->fs_root, &key, &path, 0, 1);
 	if (ret)
 		goto fail;
@@ -934,7 +929,7 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	struct btrfs_trans_handle *trans;
 	struct btrfs_qgroup_status_item *qsi;
 	struct btrfs_root *quota_root;
-	struct btrfs_path path;
+	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	int qgroup_repaired = 0;
 	bool simple = btrfs_fs_incompat(fs_info, SIMPLE_QUOTA);
@@ -961,7 +956,6 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	key.type = BTRFS_QGROUP_STATUS_KEY;
 	key.offset = 0;
 
-	btrfs_init_path(&path);
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(*qsi));
 	if (ret < 0) {
