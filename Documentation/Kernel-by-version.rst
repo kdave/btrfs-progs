@@ -9,6 +9,14 @@ Summary of kernel changes for each version.
 6.0 (Oct 2022)
 ^^^^^^^^^^^^^^
 
+Pull requests:
+`v6.0-rc1 <https://git.kernel.org/linus/353767e4aaeb7bc818273dfacbb01dd36a9db47a>`__,
+`v6.0-rc1 <https://git.kernel.org/linus/2e4f8c729db5f3c0b8ea8b1b99f1ae124152e8cc>`__,
+`v6.0-rc2 <https://git.kernel.org/linus/42c54d5491ed7b9fe89a499224494277a33b23df>`__,
+`v6.0-rc3 <https://git.kernel.org/linus/8379c0b31fbc5d20946f617f8e2fe4791e6f58c1>`__,
+`v6.0-rc5 <https://git.kernel.org/linus/9b4509495418a0effe964b0aad9a522be5a3b6d5>`__,
+`v6.0-rc7 <https://git.kernel.org/linus/60891ec99e141b74544d11e897a245ef06263052>`__
+
 - sysfs updates:
 
   - export chunk size, in debug mode add tunable for setting its size
@@ -94,6 +102,15 @@ Notable fixes:
 6.1 (Dec 2022)
 ^^^^^^^^^^^^^^
 
+Pull requests:
+`v6.1-rc1 <https://git.kernel.org/linus/76e45035348c247a70ed50eb29a9906657e4444f>`__,
+`v6.1-rc1 <https://git.kernel.org/linus/7f198ba7ae9874c64ffe8cd3aa60cf5dab78ce3a>`__,
+`v6.1-rc2 <https://git.kernel.org/linus/aae703b02f92bde9264366c545e87cec451de471>`__,
+`v6.1-rc4 <https://git.kernel.org/linus/5aaef24b5c6d4246b2cac1be949869fa36577737>`__,
+`v6.1-rc4 <https://git.kernel.org/linus/f2f32f8af2b0ca9d619e5183eae3eed431793baf>`__,
+`v6.1-rc5 <https://git.kernel.org/linus/1767a722a708f1fa3b9af39eb091d79101f8c086>`__,
+`v6.1-rc7 <https://git.kernel.org/linus/3eaea0db25261f62e21229f5763728dac40a1058>`__
+
 Performance:
 
 - outstanding FIEMAP speed improvements:
@@ -170,6 +187,16 @@ Core:
 6.2 (Feb 2023)
 ^^^^^^^^^^^^^^
 
+Pull requests:
+`v6.2-rc1 <https://git.kernel.org/linus/149c51f876322d9bfbd5e2d6ffae7aff3d794384>`__,
+`v6.2-rc3 <https://git.kernel.org/linus/69b41ac87e4a664de78a395ff97166f0b2943210>`__,
+`v6.2-rc3 <https://git.kernel.org/linus/fc7b76c4a4d139ebcae2af3bd75215fc90834e3b>`__,
+`v6.2-rc5 <https://git.kernel.org/linus/d532dd102151cc69fcd00b13e5a9689b23c0c8d9>`__,
+`v6.2-rc5 <https://git.kernel.org/linus/7026172bc334300652cb36d59b392c1a6b20926a>`__,
+`v6.2-rc5 <https://git.kernel.org/linus/26e57507a0f04ae0e472afe4799784e2ed19e1b0>`__,
+`v6.2-rc8 <https://git.kernel.org/linus/66fcf74e5c0d771a456b96ec9aebfb53d648eede>`__,
+`v6.2-rc8 <https://git.kernel.org/linus/711e9a4d52bf4e477e51c7135e1e6188c42018d0>`__
+
 User visible features:
 
 - raid56 reliability vs performance trade off:
@@ -221,6 +248,14 @@ Fixes:
 
 6.3 (Apr 2023)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.3-rc1 <https://git.kernel.org/linus/885ce48739189fac6645ff42d736ee0de0b5917d>`__,
+`v6.3-rc2 <https://git.kernel.org/linus/ae195ca1a8a4af75073e82c485148897c923f88f>`__,
+`v6.3-rc4 <https://git.kernel.org/linus/285063049a65251aada1c34664de692dd083aa03>`__,
+`v6.3-rc5 <https://git.kernel.org/linus/6ab608fe852b50fe809b22cdf7db6cbe006d7cb3>`__,
+`v6.3-rc7 <https://git.kernel.org/linus/2c40519251d61590377b313379ae2d4d4ef28266>`__,
+`v6.3 <https://git.kernel.org/linus/c337b23f32c87320dffd389e4f0f793db35f0a9b>`__
 
 Features:
 
@@ -275,14 +310,103 @@ Fixes:
   new value for maximum active threads would not be set to the actual
   work queues (since 6.0)
 
-6.4 (Jun 2022)
+6.4 (Jun 2023)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.4-rc1 <https://git.kernel.org/linus/85d7ab2463822a4ab096c0b7b59feec962552572>`__,
+`v6.4-rc2 <https://git.kernel.org/linus/1dc3731daf1f350cfd631b5559aac865ab2fbb4c>`__,
+`v6.4-rc2 <https://git.kernel.org/linus/76c7f8873a7696dbd8f9cd844e30e5c84cbaba1a>`__,
+`v6.4-rc4 <https://git.kernel.org/linus/b158dd941b4f28e12c4f956caf2352febe09fe4e>`__,
+`v6.4-rc5 <https://git.kernel.org/linus/48b1320a674e1ff5de2fad8606bee38f724594dc>`__,
+`v6.4-rc5 <https://git.kernel.org/linus/e0178b546d24f42a85f4d4da080fb801e0d49107>`__,
+`v6.4-rc7 <https://git.kernel.org/linus/ace9e12da2f09faf85cd1904c14e1ab3ca49a590>`__,
+`v6.4-rc7 <https://git.kernel.org/linus/4973ca29552864a7a047ab8a15611a585827412f>`__,
+`v6.4 <https://git.kernel.org/linus/4b0c7a1ba09386e26cf9e55cd375af8e0f48662e>`__,
+`v6.4 <https://git.kernel.org/linus/569fa9392d2d48e35955b69775d11507ea96b36a>`__
+
+Performance improvements:
+
+-  improve logging changes in a directory during one transaction, avoid
+   iterating over items and reduce lock contention (fsync time 4x lower)
+-  when logging directory entries during one transaction, reduce locking
+   of subvolume trees by checking tree-log instead (improvement in
+   throughput and latency for concurrent access to a subvolume)
+
+Notable fixes:
+
+-  device replace:
+
+   -  properly honor read mode when requested to avoid reading from source device
+   -  target device won't be used for eventual read repair, this is
+      unreliable for NODATASUM files
+   -  when there are unpaired (and unrepairable) metadata during replace,
+      exit early with error and don't try to finish whole operation
+-  scrub ioctl properly rejects unknown flags
+-  fix partial direct io write when there's a page fault in the middle,
+   iomap will try to continue with partial request but the btrfs part did
+   not match that, this can lead to zeros written instead of data
+-  fix backref walking, this breaks a mode of LOGICAL_INO_V2 ioctl that
+   is used in deduplication tools
+-  make mount option clear_cache work with block-group-tree, to rebuild
+   free-space-tree instead of temporarily disabling it that would lead to
+   a forced read-only mount
+
+Core changes:
+
+-  io path
+
+   -  continued cleanups and refactoring around bio handling
+   -  extent io submit path simplifications and cleanups
+   -  flush write path simplifications and cleanups
+   -  rework logic of passing sync mode of bio, with further cleanups
+-  rewrite scrub code flow, restructure how the stripes are enumerated
+   and verified in a more unified way
+-  allow to set lower threshold for block group reclaim in debug mode to
+   aid zoned mode testing
+-  remove obsolete time-based delayed ref throttling logic when
+   truncating items
+
+6.5 (Aug? 2023)
+^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.5-rc1 <https://git.kernel.org/linus/cc423f6337d0a5ff1906f3b3d465d28c0d1705f6>`__,
+`v6.5-rc3 <https://git.kernel.org/linus/46670259519f4ee4ab378dc014798aabe77c5057>`__,
+`v6.5-rc4 <https://git.kernel.org/linus/64de76ce8e26fb0a5ca32ac2210ef99238c28525>`__,
+`v6.5-rc6 <https://git.kernel.org/linus/a785fd28d31f76d50004712b6e0b409d5a8239d8>`__,
+`v6.5-rc7 <https://git.kernel.org/linus/12e6ccedb311b32b16f767fdd606cc84630e45ae>`__
+
+Performance improvements:
+
+-  speedup in fsync(), better tracking of inode logged status can avoid
+   transaction commit
+-  IO path structures track logical offsets in data structures and does
+   not need to look it up
+-  submit IO synchronously for fast checksums (crc32c and xxhash), remove
+   high priority worker kthread
+
+User visible changes:
+
+-  don't commit transaction for every created subvolume, this can reduce
+   time when many subvolumes are created in a batch
+-  print affected files when relocation fails
+-  trigger orphan file cleanup during START_SYNC ioctl
+-  the ``async=discard`` has been enabled in 6.2 unconditionally, but for
+   zoned mode it does not make that much sense to do it asynchronously as
+   the zones are reset as needed
 
 5.x
 ---
 
 5.0 (Mar 2019)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.0-rc1 <https://git.kernel.org/linus/32ee34eddad13cd44ad0cb3e659fe6fd49143b62>`__,
+`v5.0-rc2 <https://git.kernel.org/linus/6b529fb0a3eabf9c4cc3e94c11477250379ce6d8>`__,
+`v5.0-rc3 <https://git.kernel.org/linus/1be969f4682b0aa1995e46fba51502de55f15ce8>`__,
+`v5.0-rc5 <https://git.kernel.org/linus/312b3a93dda6db9354b0c6b0f1868c1434e8c787>`__
 
 Features, hilights:
 
@@ -293,7 +417,7 @@ Features, hilights:
 Fixes:
 
 - improved check of filesystem id associated with a device during scan to
-  detect duplicate devices that could be mixed up during mount 
+  detect duplicate devices that could be mixed up during mount
 - fix device replace state transitions
 - fix a crash due to a race when quotas are enabled during snapshot creation
 - GFP_NOFS/memalloc_nofs_* fixes
@@ -308,6 +432,13 @@ Other:
 
 5.1 (May 2019)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.1-rc1 <https://git.kernel.org/linus/b1e243957e9b3ba8e820fb8583bdf18e7c737aa2>`__,
+`v5.1-rc1 <https://git.kernel.org/linus/92825b0298ca6822085ef483f914b6e0dea9bf66>`__,
+`v5.1-rc3 <https://git.kernel.org/linus/65ae689329c5d6a149b9201df9321368fbdb6a5c>`__,
+`v5.1-rc5 <https://git.kernel.org/linus/2d06b235815e6bd20395f3db9ada786a6f7a876e>`__,
+`v5.1-rc7 <https://git.kernel.org/linus/d0473f978e61557464daa8547008fa2cd0c63a17>`__
 
 New features, hilights:
 
@@ -326,6 +457,13 @@ Other changes:
 
 5.2 (Jul 2019)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.2-rc1 <https://git.kernel.org/linus/9f2e3a53f7ec9ef55e9d01bc29a6285d291c151e>`__,
+`v5.2-rc2 <https://git.kernel.org/linus/f49aa1de98363b6c5fba4637678d6b0ba3d18065>`__,
+`v5.2-rc3 <https://git.kernel.org/linus/318adf8e4bfdcb0bce1833824564b1f24278927b>`__,
+`v5.2-rc5 <https://git.kernel.org/linus/6fa425a2651515f8d262f2c1d972c6632e7c941d>`__,
+`v5.2-rc6 <https://git.kernel.org/linus/bed3c0d84e7e25c8e0964d297794f4c215b01f33>`__
 
 User visible changes, hilights:
 
@@ -353,10 +491,17 @@ Other:
 - new tracepoints for locking
 - async write preallocates memory to avoid failures deep in call chains
 - lots of cleanups
-- see [https://git.kernel.org/linus/9f2e3a53f7ec9ef55e9d01bc29a6285d291c151e pull request]
 
 5.3 (Sep 2019)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.3-rc1 <https://git.kernel.org/linus/a18f8775419d3df282dd83efdb51c5a64d092f31>`__,
+`v5.3-rc2 <https://git.kernel.org/linus/21c730d7347126886c40453feb973161f4ae3fb3>`__,
+`v5.3-rc2 <https://git.kernel.org/linus/4792ba1f1ff0db30369f7016c1611fda3f84b895>`__,
+`v5.3-rc3 <https://git.kernel.org/linus/d38c3fa6f959b8b5b167f120d70d66418714dbe4>`__,
+`v5.3-rc5 <https://git.kernel.org/linus/3039fadf2bfdc104dc963820c305778c7c1a6229>`__,
+`v5.3 <https://git.kernel.org/linus/1b304a1ae45de4df7d773f0a39d1100aabca615b>`__
 
 New features, hilights:
 
@@ -377,10 +522,17 @@ Other:
 - tree checker to verify lengths of various items
 - delayed iput happens at unlink time, not in cleaner thread
 - new tracepoints for space updates
-- see [https://git.kernel.org/linus/a18f8775419d3df282dd83efdb51c5a64d092f31 pull request]
 
 5.4 (Nov 2019)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.4-rc1 <https://git.kernel.org/linus/7d14df2d280fb7411eba2eb96682da0683ad97f6>`__,
+`v5.4-rc1 <https://git.kernel.org/linus/bb48a59135926ece9b1361e8b96b33fc658830bc>`__,
+`v5.4-rc3 <https://git.kernel.org/linus/f8779876d4a79d243870a5b5d60009e4ec6f22f4>`__,
+`v5.4-rc5 <https://git.kernel.org/linus/54955e3bfde54dcdd29694741f2ddfc6b763b193>`__,
+`v5.4-rc7 <https://git.kernel.org/linus/00aff6836241ae5654895dcea10e6d4fc5878ca6>`__,
+`v5.4-rc8 <https://git.kernel.org/linus/afd7a71872f14062cc12cac126bb8e219e7dacf6>`__
 
 - tree checker: adde sanity checks for tree items, extent items, and references
 - deprecated subvolume creation mode BTRFS_SUBVOL_CREATE_ASYNC
@@ -391,6 +543,15 @@ Other:
 
 5.5 (Jan 2020)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.5-rc1 <https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69>`__,
+`v5.5-rc1 <https://git.kernel.org/linus/ae36607b669eb28791b02097a87d3d2e1589e88f>`__,
+`v5.5-rc2 <https://git.kernel.org/linus/6794862a16ef41f753abd75c03a152836e4c8028>`__,
+`v5.5-rc3 <https://git.kernel.org/linus/2187f215ebaac73ddbd814696d7c7fa34f0c3de0>`__,
+`v5.5-rc5 <https://git.kernel.org/linus/3a562aee727a7bfbb3a37b1aa934118397dad701>`__,
+`v5.5-rc7 <https://git.kernel.org/linus/effaf90137e3a9bb9702746f993f369a53c4185f>`__,
+`v5.5 <https://git.kernel.org/linus/a075f23dd4b036ebaf918b3af477aa1f249ddfa0>`__
 
 - new block group profiles: RAID1 with 3- and 4- copies
 
@@ -413,10 +574,19 @@ Other:
 
 - error message improvements: device scan prints process name and PID
 - new tree-checker sanity tests (INODE_ITEM, DIR_ITEM, DIR_INDEX, INODE_REF, XATTR)
-- more in the [https://git.kernel.org/linus/97d0bf96a0d0986f466c3ff59f2ace801e33dc69 pull request]
 
 5.6 (Mar 2020)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.6-rc1 <https://git.kernel.org/linus/81a046b18b331ed6192e6fd9ff6d12a1f18058cf>`__,
+`v5.6-rc1 <https://git.kernel.org/linus/b5f7ab6b1c4ed967fb76258f79251193cb1ad41d>`__,
+`v5.6-rc1 <https://git.kernel.org/linus/ad801428366ebbd541a5b8a1bf4d8b57ee7a8200>`__,
+`v5.6-rc2 <https://git.kernel.org/linus/713db356041071d16360e82247de3107ec9ed57f>`__,
+`v5.6-rc3 <https://git.kernel.org/linus/eaea2947063ac694cddff1787d43e7807490dbc7>`__,
+`v5.6-rc3 <https://git.kernel.org/linus/d2eee25858f246051b49c42c411629c78513e2a8>`__,
+`v5.6-rc5 <https://git.kernel.org/linus/30fe0d07fd7b27d41d9b31a224052cc4e910947a>`__,
+`v5.6-rc7 <https://git.kernel.org/linus/67d584e33e54c3f33c8541928aa7115388c97433>`__
 
 Highlights:
 
@@ -455,10 +625,16 @@ Fixes:
 - writeback: range cyclic mode could miss some dirty pages and lead to OOM
 - two more corner cases for metadata_uuid change after power loss during the change
 - fix infinite loop during fsync after mix of rename operations
-- see [https://git.kernel.org/linus/81a046b18b331ed6192e6fd9ff6d12a1f18058cf pull request]
 
 5.7 (May 2020)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.7-rc1 <https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed>`__,
+`v5.7-rc2 <https://git.kernel.org/linus/6cc9306b8fc03019e81e4f10c93ff0528cba5217>`__,
+`v5.7-rc2 <https://git.kernel.org/linus/c5304dd59b0c26cd9744121b77ca61f014929ba8>`__,
+`v5.7-rc4 <https://git.kernel.org/linus/51184ae37e0518fd90cb437a2fbc953ae558cd0d>`__,
+`v5.7-rc4 <https://git.kernel.org/linus/262f7a6b8317a06e7d51befb690f0bca06a473ea>`__
 
 Hilights:
 
@@ -472,6 +648,14 @@ Hilights:
 5.8 (Aug 2020)
 ^^^^^^^^^^^^^^
 
+Pull requests:
+`v5.8-rc1 <https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac>`__,
+`v5.8-rc1 <https://git.kernel.org/linus/9d645db853a4cd1b7077931491d0055602d3d420>`__,
+`v5.8-rc3 <https://git.kernel.org/linus/3e08a95294a4fb3702bb3d35ed08028433c37fe6>`__,
+`v5.8-rc5 <https://git.kernel.org/linus/aa27b32b76d0b1b242d43977da0e5358da1c825f>`__,
+`v5.8-rc5 <https://git.kernel.org/linus/72c34e8d7099c329c2934c2ac9c886f638b6edaf>`__,
+`v5.8-rc7 <https://git.kernel.org/linus/0669704270e142483d80cfda5c526426c1a89711>`__
+
 Hilights:
 
 - speedup dead root detection during orphan cleanup
@@ -482,10 +666,20 @@ Core changes:
 - improved global block reserve utilization
 - direct io cleanups and fixes
 - refactored block group reading code
-- lots of other core changes see the [https://git.kernel.org/linus/f3cdc8ae116e27d84e1f33c7a2995960cebb73ac pull request]
 
 5.9 (Oct 2020)
 ^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.9-rc1 <https://git.kernel.org/linus/6dec9f406c1f2de6d750de0fc9d19872d9c4bf0d>`__,
+`v5.9-rc1 <https://git.kernel.org/linus/23c2c8c6fa325939f95d840f54bfdec3cb76906c>`__,
+`v5.9-rc3 <https://git.kernel.org/linus/9907ab371426da8b3cffa6cc3e4ae54829559207>`__,
+`v5.9-rc4 <https://git.kernel.org/linus/dcdfd9cc28ddd356d24d5461119e4c1d19284ff5>`__,
+`v5.9-rc4 <https://git.kernel.org/linus/26acd8b07a07000d9f61ee64dc6fde0494997b47>`__,
+`v5.9-rc5 <https://git.kernel.org/linus/edf6b0e1e4ddb12e022ce0c17829bad6d4161ea7>`__,
+`v5.9-rc6 <https://git.kernel.org/linus/fc4f28bb3daf3265d6bc5f73b497306985bb23ab>`__,
+`v5.9-rc7 <https://git.kernel.org/linus/bffac4b5435a07bf26604385ae533adff3cccf23>`__,
+`v5.9-rc8 <https://git.kernel.org/linus/4e3b9ce271b4b54d2293a3916d22e4ddc0c89aab>`__
 
 Hilights:
 
@@ -497,10 +691,15 @@ Hilights:
 - running balance detects Ctrl-C too
 - performance improvements in fsync
 - mount-time prefetch of chunk tree
-- for other changes see the [https://git.kernel.org/linus/6dec9f406c1f2de6d750de0fc9d19872d9c4bf0d pull request]
 
 5.10 (Dec 2020)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.10-rc1 <https://git.kernel.org/linus/11e3235b4399f7e626caa791a68a0ea8337f6683>`__,
+`v5.10-rc2 <https://git.kernel.org/linus/f5d808567a51d97e171e0a8111813f973bf4ac12>`__,
+`v5.10-rc4 <https://git.kernel.org/linus/e2f0c565ec70eb9e4d3b98deb5892af62de8b98d>`__,
+`v5.10-rc6 <https://git.kernel.org/linus/a17a3ca55e96d20e25e8b1a7cd08192ce2bac3cc>`__
 
 Hilights:
 
@@ -515,10 +714,17 @@ Core:
 - cleanups, refactoring, preparatory work
 - error handling improvements
 - fixes
-- for other changes see the [https://git.kernel.org/linus/11e3235b4399f7e626caa791a68a0ea8337f6683 pull request]
 
 5.11 (Feb 2021)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.11-rc1 <https://git.kernel.org/linus/f1ee3b8829006b3fda999f00f0059aa327e3f3d0>`__,
+`v5.11-rc3 <https://git.kernel.org/linus/71c061d2443814de15e177489d5cc00a4a253ef3>`__,
+`v5.11-rc4 <https://git.kernel.org/linus/6e68b9961ff690ace07fac22c3c7752882ecc40a>`__,
+`v5.11-rc5 <https://git.kernel.org/linus/9791581c049c10929e97098374dd1716a81fefcc>`__,
+`v5.11-rc6 <https://git.kernel.org/linus/c05d51c773fb365bdbd683b3e4e80679c8b8b176>`__,
+`v5.11 <https://git.kernel.org/linus/e42ee56fe59759023cb252fabb3d6f279fe8cec8>`__
 
 - new mount option ''rescue'', various modes how to access a damaged filesystem
 - sysfs updates: filesystem generation, supported ''rescue'' modes, read mirror policy
@@ -532,10 +738,19 @@ Core:
 - zoned allocation mode preparation
 - subpage blocksize preparation
 - various performance improvements (skipping unnecessary work)
-- for other changes see the [https://git.kernel.org/linus/f1ee3b8829006b3fda999f00f0059aa327e3f3d0 pull request]
 
 5.12 (Apr 2021)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.12-rc1 <https://git.kernel.org/linus/f9d58de23152f2c16f326d7e014cfa2933b00304>`__,
+`v5.12-rc1 <https://git.kernel.org/linus/6f3952cbe00b74739f540981d1afe84cd4dac879>`__,
+`v5.12-rc2 <https://git.kernel.org/linus/c608aca57dd034d09f307b109b670d1cfb829279>`__,
+`v5.12-rc2 <https://git.kernel.org/linus/7a7fd0de4a9804299793e564a555a49c1fc924cb>`__,
+`v5.12-rc2 <https://git.kernel.org/linus/f09b04cc6447331e731629e8b72587287f3a4490>`__,
+`v5.12-rc4 <https://git.kernel.org/linus/81aa0968b7ea6dbabcdcda37dc8434dca6e1565b>`__,
+`v5.12-rc5 <https://git.kernel.org/linus/701c09c988bd60d950d49c48993b6c06efbfba7f>`__,
+`v5.12-rc7 <https://git.kernel.org/linus/7d900724913cb293620a05c5a3134710db95d0d9>`__
 
 Features:
 
@@ -554,10 +769,19 @@ Core changes:
 Fixes:
 
 - swapfile fixes (vs scrub, activation vs snapshot creation)
-- for other changes see the [https://git.kernel.org/linus/6f3952cbe00b74739f540981d1afe84cd4dac879 pull request]
 
 5.13 (Jun 2021)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.13-rc1 <https://git.kernel.org/linus/55ba0fe059a577fa08f23223991b24564962620f>`__,
+`v5.13-rc2 <https://git.kernel.org/linus/142b507f911c5a502dbb8f603216cb0ea8a79a48>`__,
+`v5.13-rc2 <https://git.kernel.org/linus/88b06399c9c766c283e070b022b5ceafa4f63f19>`__,
+`v5.13-rc3 <https://git.kernel.org/linus/8ac91e6c6033ebc12c5c1e4aa171b81a662bd70f>`__,
+`v5.13-rc3 <https://git.kernel.org/linus/45af60e7ced07ae3def41368c3d260dbf496fbce>`__,
+`v5.13-rc5 <https://git.kernel.org/linus/fd2ff2774e90a0ba58f1158d7ea095af51f31644>`__,
+`v5.13-rc6 <https://git.kernel.org/linus/cc6cf827dd6858966cb5086703447cb68186650e>`__,
+`v5.13-rc7 <https://git.kernel.org/linus/6fab154a33ba9b3574ba74a86ed085e0ed8454cb>`__
 
 User visible improvements
 
@@ -594,10 +818,17 @@ Core changes
 - subpage support update: metadata changes now support read and write
 - error handling through out relocation call paths
 - many other cleanups and code simplifications
-- for other changes see the [https://git.kernel.org/linus/55ba0fe059a577fa08f23223991b24564962620f pull request]
 
 5.14 (Aug 2021)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.14-rc1 <https://git.kernel.org/linus/122fa8c588316aacafe7e5a393bb3e875eaf5b25>`__,
+`v5.14-rc2 <https://git.kernel.org/linus/f02bf8578bd8dd400903291ccebc69665adc911c>`__,
+`v5.14-rc3 <https://git.kernel.org/linus/f0fddcec6b6254b4b3611388786bbafb703ad257>`__,
+`v5.14-rc4 <https://git.kernel.org/linus/051df241e44693dba8f4e1e74184237f55dd811d>`__,
+`v5.14-rc7 <https://git.kernel.org/linus/d6d09a6942050f21b065a134169002b4d6b701ef>`__,
+`v5.14 <https://git.kernel.org/linus/9b49ceb8545b8eca68c03388a07ecca7caa5d9c1>`__
 
 Hilights:
 
@@ -612,10 +843,16 @@ Hilights:
 - performance improvements (xattrs, truncate)
 - space handling improvements, preemptive flushing
 - more subpage support preparation
-- for other changes see the [https://git.kernel.org/linus/122fa8c588316aacafe7e5a393bb3e875eaf5b25 pull request]
 
 5.15 (Nov 2021)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.15-rc1 <https://git.kernel.org/linus/87045e6546078dae215d1bd3b2bc82b3ada3ca77>`__,
+`v5.15-rc1 <https://git.kernel.org/linus/8dde20867c443aedf6d64d8a494e8703d7ba53cb>`__,
+`v5.15-rc3 <https://git.kernel.org/linus/f9e36107ec70445fbdc2562ba5b60c0a7ed57c20>`__,
+`v5.15-rc6 <https://git.kernel.org/linus/1986c10acc9c906e453fb19d86e6342e8e525824>`__,
+`v5.15 <https://git.kernel.org/linus/fd919bbd334f22486ee2e9c16ceefe833bb9e32f>`__
 
 Features:
 
@@ -657,10 +894,17 @@ Core:
 - new tree items for fs-verity: descriptor item, Merkle tree item
 - inode operations extended to be namespace-aware
 - cleanups and refactoring
-- for other changes see the [https://git.kernel.org/linus/87045e6546078dae215d1bd3b2bc82b3ada3ca77 pull request]
 
 5.16 (Jan 2022)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.16-rc1 <https://git.kernel.org/linus/037c50bfbeb33b4c74e120eef5b8b99d8f025418>`__,
+`v5.16-rc1 <https://git.kernel.org/linus/6070dcc8e5b1495e11ffd467c77eaeac40f95a93>`__,
+`v5.16-rc2 <https://git.kernel.org/linus/6fdf886424cf8c4fff96a20189c00606327e5df6>`__,
+`v5.16-rc3 <https://git.kernel.org/linus/7e63545264c3d1844189e47ac8a4dabc03e11d8b>`__,
+`v5.16-rc5 <https://git.kernel.org/linus/6f513529296fd4f696afb4354c46508abe646541>`__,
+`v5.16-rc6 <https://git.kernel.org/linus/9609134186b710fa2104ac153bcc27b11c3e8c21>`__
 
 Related projects: kernel port of zstd 1.4.10 also
 [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=c8c109546a19613d323a319d0c921cb1f317e629
@@ -691,10 +935,17 @@ Core:
 - preparatory work for send protocol updates
 - error handling improvements
 - cleanups and refactoring
-- for other changes see the [https://git.kernel.org/linus/037c50bfbeb33b4c74e120eef5b8b99d8f025418 pull request]
 
 5.17 (Mar 2022)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.17-rc1 <https://git.kernel.org/linus/d601e58c5f2901783428bc1181e83ff783592b6b>`__,
+`v5.17-rc2 <https://git.kernel.org/linus/49d766f3a0e49624c4cf83909d56c68164e7c545>`__,
+`v5.17-rc3 <https://git.kernel.org/linus/86286e486cbdd68f01d330409307f6a6efcd4298>`__,
+`v5.17-rc5 <https://git.kernel.org/linus/705d84a366cfccda1e7aec1113a5399cd2ffee7d>`__,
+`v5.17-rc6 <https://git.kernel.org/linus/c0419188b5c1a7735b12cf1405cafc3f8d722819>`__,
+`v5.17-rc7 <https://git.kernel.org/linus/3ee65c0f0778b8fa95381cd7676cde2c03e0f889>`__
 
 Features:
 
@@ -729,6 +980,14 @@ Core:
 
 5.18 (May 2022)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.18-rc1 <https://git.kernel.org/linus/5191290407668028179f2544a11ae9b57f0bcf07>`__,
+`v5.18-rc2 <https://git.kernel.org/linus/ce4c854ee8681bc66c1c369518b6594e93b11ee5>`__,
+`v5.18-rc3 <https://git.kernel.org/linus/722985e2f6ec9127064771ba526578ea8275834d>`__,
+`v5.18-rc5 <https://git.kernel.org/linus/fd574a2f841c8f07b20e5b55391e0af5d39d82ff>`__,
+`v5.18-rc6 <https://git.kernel.org/linus/9050ba3a61a4b5bd84c2cde092a100404f814f31>`__,
+`v5.18-rc6 <https://git.kernel.org/linus/4b97bac0756a81cda5afd45417a99b5bccdcff67>`__
 
 - encoded read/write ioctls, allows user space to read or write raw data
   directly to extents (now compressed, encrypted in the future), will be
@@ -776,6 +1035,13 @@ Core, fixes:
 
 5.19 (Jul 2022)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v5.19-rc1 <https://git.kernel.org/linus/bd1b7c1384ec15294ee45bf3add7b7036e146dad>`__,
+`v5.19-rc4 <https://git.kernel.org/linus/ff872b76b3d89a09a997cc45c133e4a3ddc12f90>`__,
+`v5.19-rc4 <https://git.kernel.org/linus/82708bb1eb9ebc2d1e296f2c919685761f2fa8dd>`__,
+`v5.19-rc7 <https://git.kernel.org/linus/5a29232d870d9e63fe5ff30b081be6ea7cc2465d>`__,
+`v5.19-rc7 <https://git.kernel.org/linus/972a278fe60c361eb8f37619f562f092e8786d7c>`__
 
 Features:
 
