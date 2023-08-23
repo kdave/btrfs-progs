@@ -340,7 +340,7 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 	if (ret < 0)
 		goto out;
 	list_del(&uuid_root->dirty_list);
-	ret = btrfs_clear_buffer_dirty(uuid_root->node);
+	ret = btrfs_clear_buffer_dirty(trans, uuid_root->node);
 	if (ret < 0)
 		goto out;
 	ret = btrfs_free_tree_block(trans, btrfs_root_id(uuid_root),

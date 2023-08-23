@@ -54,6 +54,7 @@ static inline int le_test_bit(int nr, const u8 *addr)
 }
 
 struct btrfs_fs_info;
+struct btrfs_trans_handle;
 
 struct extent_buffer {
 	struct cache_extent cache_node;
@@ -128,7 +129,8 @@ void memset_extent_buffer(const struct extent_buffer *eb, char c,
 int extent_buffer_test_bit(const struct extent_buffer *eb, unsigned long start,
 			   unsigned long nr);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
-int btrfs_clear_buffer_dirty(struct extent_buffer *eb);
+int btrfs_clear_buffer_dirty(struct btrfs_trans_handle *trans,
+			     struct extent_buffer *eb);
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 			u64 *len, int mirror);
 int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
