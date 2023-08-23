@@ -417,22 +417,11 @@ int btrfs_read_extent_buffer(struct extent_buffer *eb,
 }
 
 struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-				      u64 owner_root, u64 parent_transid,
-				      int level, struct btrfs_key *first_key)
+				      struct btrfs_tree_parent_check *check)
 {
-	struct btrfs_tree_parent_check check = {
-		.owner_root = owner_root,
-		.transid = parent_transid,
-		.level = level,
-	};
 	int ret;
 	struct extent_buffer *eb;
 	u32 sectorsize = fs_info->sectorsize;
-
-	if (first_key) {
-		check.has_first_key = true;
-		memcpy(&check.first_key, first_key, sizeof(*first_key));
-	}
 
 	/*
 	 * Don't even try to create tree block for unaligned tree block
@@ -450,10 +439,10 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	if (!eb)
 		return ERR_PTR(-ENOMEM);
 
-	if (btrfs_buffer_uptodate(eb, parent_transid, 0))
+	if (btrfs_buffer_uptodate(eb, check->transid, 0))
 		return eb;
 
-	ret = btrfs_read_extent_buffer(eb, &check);
+	ret = btrfs_read_extent_buffer(eb, check);
 	if (ret) {
 		/*
 		 * We failed to read this tree block, it be should deleted right
@@ -508,8 +497,13 @@ static int read_root_node(struct btrfs_fs_info *fs_info,
 			  struct btrfs_root *root, u64 bytenr, u64 gen,
 			  int level)
 {
-	root->node = read_tree_block(fs_info, bytenr, btrfs_root_id(root),
-				     gen, level, NULL);
+	struct btrfs_tree_parent_check check = {
+		.owner_root = btrfs_root_id(root),
+		.transid = gen,
+		.level = level,
+	};
+
+	root->node = read_tree_block(fs_info, bytenr, &check);
 	if (!extent_buffer_uptodate(root->node))
 		goto err;
 	if (btrfs_header_level(root->node) != level) {
