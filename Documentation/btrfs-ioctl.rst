@@ -25,91 +25,130 @@ DATA STRUCTURES AND DEFINITIONS
 
 .. code-block:: c
 
-   struct btrfs_ioctl_vol_args {
-           __s64 fd;
-           char name[BTRFS_PATH_NAME_MAX + 1];
-   };
+        struct btrfs_ioctl_vol_args {
+                __s64 fd;
+                char name[BTRFS_PATH_NAME_MAX + 1];
+        };
 
 .. _struct_btrfs_ioctl_vol_args_v2:
 
 .. code-block:: c
 
-   struct btrfs_ioctl_vol_args_v2 {
-           __s64 fd;
-           __u64 transid;
-           __u64 flags;
-           union {
-                   struct {
-                           __u64 size;
-                           struct btrfs_qgroup_inherit __user *qgroup_inherit;
-                   };
-                   __u64 unused[4];
-           };
-           union {
-               char name[BTRFS_SUBVOL_NAME_MAX + 1];
-               __u64 devid;
-               __u64 subvolid;
-            };
-   };
+        #define BTRFS_SUBVOL_RDONLY                  (1ULL << 1)
+        #define BTRFS_SUBVOL_QGROUP_INHERIT          (1ULL << 2)
+        #define BTRFS_DEVICE_SPEC_BY_ID              (1ULL << 3)
+        #define BTRFS_SUBVOL_SPEC_BY_ID              (1ULL << 4)
+
+        struct btrfs_ioctl_vol_args_v2 {
+                __s64 fd;
+                __u64 transid;
+                __u64 flags;
+                union {
+                        struct {
+                                __u64 size;
+                                struct btrfs_qgroup_inherit __user *qgroup_inherit;
+                        };
+                        __u64 unused[4];
+                };
+                union {
+                        char name[BTRFS_SUBVOL_NAME_MAX + 1];
+                        __u64 devid;
+                        __u64 subvolid;
+                };
+        };
 
 .. _struct_btrfs_ioctl_get_subvol_info_args:
 
 .. code-block:: c
 
-   struct btrfs_ioctl_get_subvol_info_args {
-        /* Id of this subvolume */
-        __u64 treeid;
+        struct btrfs_ioctl_get_subvol_info_args {
+                /* Id of this subvolume */
+                __u64 treeid;
 
-        /* Name of this subvolume, used to get the real name at mount point */
-        char name[BTRFS_VOL_NAME_MAX + 1];
+                /* Name of this subvolume, used to get the real name at mount point */
+                char name[BTRFS_VOL_NAME_MAX + 1];
 
-        /*
-         * Id of the subvolume which contains this subvolume.
-         * Zero for top-level subvolume or a deleted subvolume.
-         */
-        __u64 parent_id;
+                /*
+                 * Id of the subvolume which contains this subvolume.
+                 * Zero for top-level subvolume or a deleted subvolume.
+                 */
+                __u64 parent_id;
 
-        /*
-         * Inode number of the directory which contains this subvolume.
-         * Zero for top-level subvolume or a deleted subvolume
-         */
-        __u64 dirid;
+                /*
+                 * Inode number of the directory which contains this subvolume.
+                 * Zero for top-level subvolume or a deleted subvolume
+                 */
+                __u64 dirid;
 
-        /* Latest transaction id of this subvolume */
-        __u64 generation;
+                /* Latest transaction id of this subvolume */
+                __u64 generation;
 
-        /* Flags of this subvolume */
-        __u64 flags;
+                /* Flags of this subvolume */
+                __u64 flags;
 
-        /* UUID of this subvolume */
-        __u8 uuid[BTRFS_UUID_SIZE];
+                /* UUID of this subvolume */
+                __u8 uuid[BTRFS_UUID_SIZE];
 
-        /*
-         * UUID of the subvolume of which this subvolume is a snapshot.
-         * All zero for a non-snapshot subvolume.
-         */
-        __u8 parent_uuid[BTRFS_UUID_SIZE];
+                /*
+                 * UUID of the subvolume of which this subvolume is a snapshot.
+                 * All zero for a non-snapshot subvolume.
+                 */
+                __u8 parent_uuid[BTRFS_UUID_SIZE];
 
-        /*
-         * UUID of the subvolume from which this subvolume was received.
-         * All zero for non-received subvolume.
-         */
-        __u8 received_uuid[BTRFS_UUID_SIZE];
+                /*
+                 * UUID of the subvolume from which this subvolume was received.
+                 * All zero for non-received subvolume.
+                 */
+                __u8 received_uuid[BTRFS_UUID_SIZE];
 
-        /* Transaction id indicating when change/create/send/receive happened */
-        __u64 ctransid;
-        __u64 otransid;
-        __u64 stransid;
-        __u64 rtransid;
-        /* Time corresponding to c/o/s/rtransid */
-        struct btrfs_ioctl_timespec ctime;
-        struct btrfs_ioctl_timespec otime;
-        struct btrfs_ioctl_timespec stime;
-        struct btrfs_ioctl_timespec rtime;
+                /* Transaction id indicating when change/create/send/receive happened */
+                __u64 ctransid;
+                __u64 otransid;
+                __u64 stransid;
+                __u64 rtransid;
+                /* Time corresponding to c/o/s/rtransid */
+                struct btrfs_ioctl_timespec ctime;
+                struct btrfs_ioctl_timespec otime;
+                struct btrfs_ioctl_timespec stime;
+                struct btrfs_ioctl_timespec rtime;
 
-        /* Must be zero */
-        __u64 reserved[8];
-   };
+                /* Must be zero */
+                __u64 reserved[8];
+        };
+
+.. _struct_btrfs_qgroup_inherit:
+
+.. code-block:: c
+
+        #define BTRFS_QGROUP_INHERIT_SET_LIMITS         (1ULL << 0)
+
+        struct btrfs_qgroup_inherit {
+                __u64 flags;
+                __u64 num_qgroups;
+                __u64 num_ref_copies;
+                __u64 num_excl_copies;
+                struct btrfs_qgroup_limit lim;
+                __u64 qgroups[];
+        };
+
+.. _struct_btrfs_qgroup_limit:
+
+.. code-block:: c
+
+	#define BTRFS_QGROUP_LIMIT_MAX_RFER             (1ULL << 0)
+	#define BTRFS_QGROUP_LIMIT_MAX_EXCL             (1ULL << 1)
+	#define BTRFS_QGROUP_LIMIT_RSV_RFER             (1ULL << 2)
+	#define BTRFS_QGROUP_LIMIT_RSV_EXCL             (1ULL << 3)
+	#define BTRFS_QGROUP_LIMIT_RFER_CMPR            (1ULL << 4)
+	#define BTRFS_QGROUP_LIMIT_EXCL_CMPR            (1ULL << 5)
+
+	struct btrfs_qgroup_limit {
+		__u64 flags;
+		__u64 max_rfer;
+		__u64 max_excl;
+		__u64 rsv_rfer;
+		__u64 rsv_excl;
+	};
 
 .. list-table::
    :header-rows: 1
@@ -150,7 +189,7 @@ The 'BTRFS_IOC_NUMBER' is says which operation should be done on the given
 arguments. Some ioctls take a specific data structure, some of them share a
 common one, no argument structure ioctls exist too.
 
-The library 'libbtrfsutil' wraps a few ioctls for convenience. Using raw ioctls
+The library *libbtrfsutil* wraps a few ioctls for convenience. Using raw ioctls
 is not discouraged but may be cumbersome though it does not need additional
 library dependency. Backward compatibility is guaranteed and incompatible
 changes usually lead to a new version of the ioctl. Enhancements of existing
@@ -174,8 +213,8 @@ LIST OF IOCTLS
      - (obsolete) create a subvolume
      - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - BTRFS_IOC_SNAP_CREATE
-     -
-     -
+     - (obsolete) create a snapshot of a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - BTRFS_IOC_DEFRAG
      -
      -
@@ -185,9 +224,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_SCAN_DEV
      -
      -
-   * - BTRFS_IOC_SYNC
-     -
-     -
+   * - :ref:`BTRFS_IOC_SYNC<BTRFS_IOC_SYNC>`
+     - Sync the filesystem, possibly process queued up work
+     - NULL
    * - BTRFS_IOC_CLONE
      -
      -
@@ -375,6 +414,50 @@ BTRFS_IOC_SUBVOL_CREATE
        size is limited by Linux VFS to 255 characters and must not contain a slash
        ('/')
 
+BTRFS_IOC_SNAP_CREATE
+~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   obsoleted by :ref:`BTRFS_IOC_SNAP_CREATE_V2<BTRFS_IOC_SNAP_CREATE_V2>`
+
+*(since: 3.0, obsoleted: 4.0)* Create a snapshot of a subvolume.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the parent directory of the new subvolume
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - file descriptor of any directory inside the subvolume to snapshot,
+       must be on the same filesystem
+   * - args.name
+     - name of the subvolume, although the buffer can be almost 4k, the file
+       size is limited by Linux VFS to 255 characters and must not contain a slash
+       ('/')
+
+.. _BTRFS_IOC_SYNC:
+
+BTRFS_IOC_SYNC
+~~~~~~~~~~~~~~
+
+Sync the filesystem data as would ``sync()`` syscall do, additionally
+wake up the internal transaction thread that may trigger actions like
+subvolume cleaning or queued defragmentation.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file or directory in the filesystem
+   * - ioctl args
+     - NULL
+
 .. _BTRFS_IOC_SNAP_CREATE_V2:
 
 BTRFS_IOC_SNAP_CREATE_V2
@@ -392,7 +475,8 @@ Create a snapshot of a subvolume.
    * - ioctl args
      - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
    * - args.fd
-     - file descriptor of any directory inside the subvolume to snapshot
+     - file descriptor of any directory inside the subvolume to snapshot,
+       must be on the filesystem
    * - args.transid
      - ignored
    * - args.flags
@@ -406,7 +490,7 @@ Create a snapshot of a subvolume.
 BTRFS_IOC_SUBVOL_CREATE_V2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*(since: 3.6)* Create a subvolume, qgroup inheritance can be specified.
+*(since: 3.6)* Create a subvolume, qgroup inheritance and limits can be specified.
 
 .. list-table::
    :header-rows: 1
@@ -422,17 +506,19 @@ BTRFS_IOC_SUBVOL_CREATE_V2
    * - args.transid
      - ignored
    * - args.flags
-     - ignored
+     - flags to set on the subvolume, ``BTRFS_SUBVOL_RDONLY`` for readonly,
+       ``BTRFS_SUBVOL_QGROUP_INHERIT`` if the qgroup related fileds should be
+       processed
    * - args.size
-     - ...
+     - number of entries in ``args.qgroup_inherit``
    * - args.qgroup_inherit
-     - ...
+     - inherit the given qgroups
+       (:ref:`struct btrfs_qgroup_inherit<struct_btrfs_qgroup_inherit>`) and
+       limits (:ref:`struct btrfs_qgroup_limit<struct_btrfs_qgroup_limit>`)
    * - name
      - name of the subvolume, although the buffer can be almost 4k, the file
        size is limited by Linux VFS to 255 characters and must not contain a
        slash ('/')
-   * - devid
-     - ...
 
 .. _BTRFS_IOC_SUBVOL_GETFLAGS:
 

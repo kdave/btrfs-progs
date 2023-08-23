@@ -13,7 +13,7 @@ in meeting your performance expectations for your specific workload.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.3**
+**The table is based on the latest released linux kernel: 6.4**
 
 The columns for each feature reflect the status of the implementation
 in following ways:
@@ -32,7 +32,9 @@ in following ways:
 
 .. role:: statusok
 .. role:: statusmok
-.. role:: statusunst
+.. role:: statusunstable
+.. role:: statusunsupp
+.. role:: statusincompat
 
 .. list-table::
    :header-rows: 1
@@ -126,7 +128,7 @@ in following ways:
      - mostly OK
      - reading from mirrors in parallel can be optimized further (see below)
    * - :ref:`RAID56<mkfs-section-profiles>`
-     - :statusunst:`unstable`
+     - :statusunstable:`unstable`
      - n/a
      - (see below)
    * - Mixed block groups
@@ -220,11 +222,12 @@ in following ways:
    * - :doc:`Subpage block size<Subpage>`
      - :statusmok:`mostly OK`
      - mostly OK
-     -
+     - Also see table below for more detailed compatibility.
    * - :doc:`Zoned mode<Zoned-mode>`
      - :statusmok:`mostly OK`
      - mostly OK
-     - there are known bugs, use only for testing
+     - Not yet feature complete but moderately stable, also see table below
+       for more detailed compatibility.
 
 Please open an issue if:
 
@@ -232,6 +235,8 @@ Please open an issue if:
 -  a particular feature combination that has a different status and is
    worth mentioning separately
 -  you know of a bug that lowers the feature status
+
+.. _status-subpage-block-size:
 
 Subpage block size
 ------------------
@@ -247,18 +252,26 @@ with subpage or require another feature to work:
      - Status
      - Notes
    * - Inline files
-     - unsupported
-     - The max_inline mount option value is ignored
+     - :statusunsupp:`unsupported`
+     - The max_inline mount option value is ignored, as if mounted with max_inline=0
    * - Free space cache v1
-     - unsupported
-     - Free space tree is mandatory
+     - :statusunsupp:`unsupported`
+     - Free space tree is mandatory, v1 has some assumptions about page size
    * - Compression
-     - partial support
+     - :statusok:`partial support`
      - Only page-aligned ranges can be compressed
+   * - Sectorsize
+     - :statusok:`supported`
+     - The list of supported sector sizes on a given version can be found
+       in file :file:`/sys/fs/btrfs/features/supported_sectorsizes`
 
 
 Zoned mode
 ----------
+
+Features that completely incompatible with zoned mode are listed below.
+Compatible features may not be listed and are assumed to work as they
+are unaffected by the zoned device constraints.
 
 .. list-table::
    :header-rows: 1
@@ -267,35 +280,56 @@ Zoned mode
      - Status
      - Notes
    * - Boot
-     - incompatible
+     - :statusincompat:`incompatible`
      - The blocks where partition table is stored is used for super block
    * - Mixed block groups
-     - incompatible
+     - :statusincompat:`incompatible`
      - Interleaving data and metadata would lead to out of order write
    * - NODATACOW
-     - incompatible
+     - :statusincompat:`incompatible`
      - In-place overwrite
    * - fallocate
-     - incompatible
+     - :statusincompat:`incompatible`
      - Preallocation of blocks would require an out of order write
    * - Free space cache v1
-     - incompatible
+     - :statusincompat:`incompatible`
      - Cache data are updated in a NODATACOW-way
+   * - Swapfile
+     - :statusincompat:`incompatible`
+     - Swap blocks are written out of order
+   * - Offline UUID change
+     - :statusincompat:`incompatible`
+     - Metadata blocks are updated in-place
    * - Free space tree
-     - supported
+     - :statusok:`supported`
      -
-   * - fstrim
-     - not implemented
-     - This would require free space v1
    * - single profile
-     - supported
+     - :statusok:`supported`
      - Both data and metadata
    * - DUP profile
-     - partial support
+     - :statusok:`partial support`
      - Only for metadata
+   * - Filesystem resize
+     - :statusok:`supported`
+     -
+   * - Balance
+     - :statusok:`supported`
+     -
+   * - Metadata UUID change
+     - :statusok:`supported`
+     -
    * - RAID (all)
      - not implemented
      - This requires raid-stripe-tree feature which is still work in progress
+   * - discard
+     - not implemented
+     - May not be required at all due to automatic zone reclaim
+   * - fsverity
+     - TBD
+     -
+   * - seeding
+     - TBD
+     -
 
 
 Details that do not fit the table

@@ -45,13 +45,13 @@ Summary of kernel changes for each version.
 
 Performance improvements:
 
-- reduced amount of reserved metadata for delayed items
+-  reduced amount of reserved metadata for delayed items
 
-  - when inserted items can be batched into one leaf
-  - when deleting batched directory index items
-  - when deleting delayed items used for deletion
-  - overall improved count of files/sec, decreased subvolume lock
-    contention
+   -  when inserted items can be batched into one leaf
+   -  when deleting batched directory index items
+   -  when deleting delayed items used for deletion
+   -  overall improved count of files/sec, decreased subvolume lock
+      contention
 
 - metadata item access bounds checker micro-optimized, with a few
   percent of improved runtime for metadata-heavy operations
@@ -274,6 +274,9 @@ Fixes:
 - restore thread_pool mount option behaviour for endio workers, the
   new value for maximum active threads would not be set to the actual
   work queues (since 6.0)
+
+6.4 (Jun 2022)
+^^^^^^^^^^^^^^
 
 5.x
 ---

@@ -38,4 +38,6 @@ relocate the data, however this leads to unexpected performance drop. Running
 trim periodically could prevent that too.
 
 When a filesystem is created by :doc:`mkfs.btrfs` and is capable
-of trim, then it's by default performed on all devices.
+of trim, then it's by default performed on all devices. Since kernel 6.2 the
+*discard=async* mount option is automatically enabled on devices that support
+that.
