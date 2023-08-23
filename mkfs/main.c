@@ -883,7 +883,10 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	struct btrfs_qgroup_status_item *qsi;
 	struct btrfs_root *quota_root;
 	struct btrfs_path path = { 0 };
-	struct btrfs_key key;
+	struct btrfs_key key = {
+		.objectid = BTRFS_QUOTA_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+	};
 	int qgroup_repaired = 0;
 	int ret;
 
@@ -895,12 +898,15 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
-	ret = btrfs_create_root(trans, fs_info, BTRFS_QUOTA_TREE_OBJECTID);
-	if (ret < 0) {
+
+	quota_root = btrfs_create_tree(trans, fs_info, &key);
+	if (IS_ERR(quota_root)) {
+		ret = PTR_ERR(quota_root);
 		error("failed to create quota root: %d (%m)", ret);
 		goto fail;
 	}
-	quota_root = fs_info->quota_root;
+	fs_info->quota_root = quota_root;
+	fs_info->quota_enabled = 1;
 
 	key.objectid = 0;
 	key.type = BTRFS_QGROUP_STATUS_KEY;
