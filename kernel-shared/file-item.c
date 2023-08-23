@@ -257,8 +257,10 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 	 * enough yet to put our csum in.  Grow it
 	 */
 	btrfs_release_path(path);
+	path->search_for_extension = 1;
 	ret = btrfs_search_slot(trans, root, &file_key, path,
 				csum_size, 1);
+	path->search_for_extension = 0;
 	if (ret < 0)
 		goto fail;
 	if (ret == 0) {
