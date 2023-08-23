@@ -31,7 +31,12 @@ int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_trans_handle *trans;
+	struct btrfs_root *root;
 	struct cache_extent *ce;
+	struct btrfs_key key = {
+		.objectid = BTRFS_BLOCK_GROUP_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+	};
 	int converted_bgs = 0;
 	int ret;
 
@@ -51,12 +56,14 @@ int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
 	if (btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_CHANGING_BG_TREE)
 		goto iterate_bgs;
 
-	ret = btrfs_create_root(trans, fs_info,
-				BTRFS_BLOCK_GROUP_TREE_OBJECTID);
-	if (ret < 0) {
+	root = btrfs_create_tree(trans, fs_info, &key);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
 		error("failed to create block group root: %d", ret);
 		goto error;
 	}
+	fs_info->block_group_root = root;
+
 	btrfs_set_super_flags(sb,
 			btrfs_super_flags(sb) |
 			BTRFS_SUPER_FLAG_CHANGING_BG_TREE);
