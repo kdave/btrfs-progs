@@ -240,7 +240,6 @@ static int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 	int offset = 1;
 	struct extent_buffer *c;
 	struct extent_buffer *next = NULL;
-	struct btrfs_fs_info *fs_info = root->fs_info;
 
 again:
 	for (; level < BTRFS_MAX_LEVEL; level++) {
@@ -267,7 +266,7 @@ again:
 			continue;
 		}
 
-		next = read_node_slot(fs_info, c, slot);
+		next = btrfs_read_node_slot(c, slot);
 		if (extent_buffer_uptodate(next))
 			break;
 		offset++;
@@ -281,7 +280,7 @@ again:
 		path->slots[level] = 0;
 		if (!level)
 			break;
-		next = read_node_slot(fs_info, next, 0);
+		next = btrfs_read_node_slot(next, 0);
 		if (!extent_buffer_uptodate(next))
 			goto again;
 	}
