@@ -459,13 +459,7 @@ static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 			btrfs_item_key_to_cpu(path.nodes[0], &found_key, i);
 			found_key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 			path.slots[0] = i;
-			ret = btrfs_set_item_key_safe(csum_root, &path, &found_key);
-			if (ret < 0) {
-				errno = -ret;
-				error("failed to set item key for data csum at logical %llu: %m",
-				      found_key.offset);
-				goto out;
-			}
+			btrfs_set_item_key_safe(fs_info, &path, &found_key);
 		}
 		btrfs_release_path(&path);
 	}
