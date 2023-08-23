@@ -1031,7 +1031,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 static inline int btrfs_insert_empty_item(struct btrfs_trans_handle *trans,
 					  struct btrfs_root *root,
 					  struct btrfs_path *path,
-					  struct btrfs_key *key,
+					  const struct btrfs_key *key,
 					  u32 data_size)
 {
 	struct btrfs_item_batch batch;
