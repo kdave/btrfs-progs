@@ -328,6 +328,8 @@ struct btrfs_fs_info {
 	struct extent_io_tree extent_ins;
 	struct extent_io_tree *excluded_extents;
 
+	spinlock_t trans_lock;
+
 	struct rb_root block_group_cache_tree;
 	/* logical->physical extent mapping */
 	struct btrfs_mapping_tree mapping_tree;
