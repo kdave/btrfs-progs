@@ -2558,6 +2558,7 @@ struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 					u64 hint, u64 empty_size,
 					enum btrfs_lock_nesting nest)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_key ins;
 	int ret;
 	struct extent_buffer *buf;
@@ -2578,6 +2579,14 @@ struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 		return ERR_PTR(-ENOMEM);
 	}
 	btrfs_set_buffer_uptodate(buf);
+	memset_extent_buffer(buf, 0, 0, sizeof(struct btrfs_header));
+	btrfs_set_header_level(buf, level);
+	btrfs_set_header_bytenr(buf, buf->start);
+	btrfs_set_header_generation(buf, trans->transid);
+	btrfs_set_header_backref_rev(buf, BTRFS_MIXED_BACKREF_REV);
+	btrfs_set_header_owner(buf, root_objectid);
+	write_extent_buffer_fsid(buf, fs_info->fs_devices->metadata_uuid);
+	write_extent_buffer_chunk_tree_uuid(buf, fs_info->chunk_tree_uuid);
 	trans->blocks_used++;
 
 	return buf;
