@@ -2479,7 +2479,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 }
 
 static int alloc_tree_block(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root, u64 num_bytes,
+			    struct btrfs_root *root, u64 parent,
 			    u64 root_objectid, u64 generation,
 			    u64 flags, struct btrfs_disk_key *key,
 			    int level, u64 empty_size, u64 hint_byte,
@@ -2490,6 +2490,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 	struct btrfs_delayed_extent_op *extent_op;
 	struct btrfs_space_info *sinfo;
 	struct btrfs_fs_info *fs_info = root->fs_info;
+	u64 num_bytes = fs_info->nodesize;
 	bool skinny_metadata = btrfs_fs_incompat(root->fs_info,
 						 SKINNY_METADATA);
 
@@ -2536,7 +2537,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 
 	sinfo->bytes_reserved += extent_size;
 	ret = btrfs_add_delayed_tree_ref(root->fs_info, trans, ins->objectid,
-					 extent_size, 0, root_objectid,
+					 extent_size, parent, root_objectid,
 					 level, BTRFS_ADD_DELAYED_EXTENT,
 					 extent_op, NULL, NULL);
 	return ret;
@@ -2548,7 +2549,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
  */
 struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 					struct btrfs_root *root,
-					u32 blocksize, u64 root_objectid,
+					u64 parent, u64 root_objectid,
 					struct btrfs_disk_key *key, int level,
 					u64 hint, u64 empty_size,
 					enum btrfs_lock_nesting nest)
@@ -2557,7 +2558,7 @@ struct extent_buffer *btrfs_alloc_tree_block(struct btrfs_trans_handle *trans,
 	int ret;
 	struct extent_buffer *buf;
 
-	ret = alloc_tree_block(trans, root, blocksize, root_objectid,
+	ret = alloc_tree_block(trans, root, parent, root_objectid,
 			       trans->transid, 0, key, level,
 			       empty_size, hint, (u64)-1, &ins);
 	if (ret) {

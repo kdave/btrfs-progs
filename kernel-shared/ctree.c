@@ -307,9 +307,8 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 	else
 		btrfs_node_key(buf, &disk_key, 0);
 
-	cow = btrfs_alloc_tree_block(trans, new_root, buf->len,
-				     new_root_objectid, &disk_key,
-				     level, buf->start, 0,
+	cow = btrfs_alloc_tree_block(trans, new_root, 0, new_root_objectid,
+				     &disk_key, level, buf->start, 0,
 				     BTRFS_NESTING_NORMAL);
 	if (IS_ERR(cow)) {
 		kfree(new_root);
@@ -606,9 +605,8 @@ static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 	else
 		btrfs_node_key(buf, &disk_key, 0);
 
-	cow = btrfs_alloc_tree_block(trans, root, buf->len,
-				     root->root_key.objectid, &disk_key,
-				     level, search_start, empty_size,
+	cow = btrfs_alloc_tree_block(trans, root, 0, root->root_key.objectid,
+				     &disk_key, level, search_start, empty_size,
 				     BTRFS_NESTING_NORMAL);
 	if (IS_ERR(cow))
 		return PTR_ERR(cow);
@@ -1683,9 +1681,8 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 	else
 		btrfs_node_key(lower, &lower_key, 0);
 
-	c = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
-				   root->root_key.objectid, &lower_key,
-				   level, root->node->start, 0,
+	c = btrfs_alloc_tree_block(trans, root, 0, root->root_key.objectid,
+				   &lower_key, level, root->node->start, 0,
 				   BTRFS_NESTING_NORMAL);
 
 	if (IS_ERR(c))
@@ -1805,10 +1802,9 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	mid = (c_nritems + 1) / 2;
 	btrfs_node_key(c, &disk_key, mid);
 
-	split = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
-					root->root_key.objectid,
-					&disk_key, level, c->start, 0,
-					BTRFS_NESTING_NORMAL);
+	split = btrfs_alloc_tree_block(trans, root, 0, root->root_key.objectid,
+				       &disk_key, level, c->start, 0,
+				       BTRFS_NESTING_NORMAL);
 	if (IS_ERR(split))
 		return PTR_ERR(split);
 
@@ -2368,10 +2364,9 @@ again:
 	else
 		btrfs_item_key(l, &disk_key, mid);
 
-	right = btrfs_alloc_tree_block(trans, root, root->fs_info->nodesize,
-					root->root_key.objectid,
-					&disk_key, 0, l->start, 0,
-					BTRFS_NESTING_NORMAL);
+	right = btrfs_alloc_tree_block(trans, root, 0, root->root_key.objectid,
+				       &disk_key, 0, l->start, 0,
+				       BTRFS_NESTING_NORMAL);
 	if (IS_ERR(right)) {
 		BUG_ON(1);
 		return PTR_ERR(right);
