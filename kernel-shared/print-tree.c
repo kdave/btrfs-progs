@@ -28,6 +28,7 @@
 #include "kernel-shared/compression.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
@@ -1613,10 +1614,13 @@ static void dfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 	mode &= ~(BTRFS_PRINT_TREE_BFS);
 
 	for (i = 0; i < nr; i++) {
+		struct btrfs_tree_parent_check check = {
+			.owner_root = btrfs_header_owner(root_eb),
+			.transid = btrfs_node_ptr_generation(root_eb, i),
+			.level = root_eb_level,
+		};
 		next = read_tree_block(fs_info, btrfs_node_blockptr(root_eb, i),
-				       btrfs_header_owner(root_eb),
-				       btrfs_node_ptr_generation(root_eb, i),
-				       root_eb_level, NULL);
+				       &check);
 		if (!extent_buffer_uptodate(next)) {
 			fprintf(stderr, "failed to read %llu in tree %llu\n",
 				btrfs_node_blockptr(root_eb, i),

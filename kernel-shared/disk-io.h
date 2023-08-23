@@ -152,8 +152,7 @@ struct btrfs_device;
 
 int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror);
 struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-				      u64 owner_root, u64 parent_transid,
-				      int level, struct btrfs_key *first_key);
+				      struct btrfs_tree_parent_check *check);
 
 void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			  u64 parent_transid);

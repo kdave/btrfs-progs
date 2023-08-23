@@ -30,6 +30,7 @@
 #include "kernel-shared/ulist.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/messages.h"
 #include "common/rbtree-utils.h"
 #include "check/repair.h"
@@ -714,14 +715,16 @@ static int travel_tree(struct btrfs_fs_info *info, struct btrfs_root *root,
 {
 	int ret, nr, i;
 	struct extent_buffer *eb;
+	struct btrfs_tree_parent_check check = {
+		.owner_root = btrfs_root_id(root),
+	};
 	u64 new_bytenr;
 	u64 new_num_bytes;
 
 //	printf("travel_tree: bytenr: %llu\tnum_bytes: %llu\tref_parent: %llu\n",
 //	       bytenr, num_bytes, ref_parent);
 
-	eb = read_tree_block(info, bytenr, btrfs_root_id(root), 0,
-			     0, NULL);
+	eb = read_tree_block(info, bytenr, &check);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;
 

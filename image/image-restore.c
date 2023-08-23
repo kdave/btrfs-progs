@@ -20,6 +20,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/tree-checker.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
@@ -1366,6 +1367,7 @@ static int iter_tree_blocks(struct btrfs_fs_info *fs_info,
 			    struct extent_buffer *eb, bool pin)
 {
 	void (*func)(struct btrfs_fs_info *fs_info, u64 bytenr, u64 num_bytes);
+	struct btrfs_tree_parent_check check = { 0 };
 	int nritems;
 	int level;
 	int i;
@@ -1396,7 +1398,7 @@ static int iter_tree_blocks(struct btrfs_fs_info *fs_info,
 				continue;
 			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
 			bytenr = btrfs_disk_root_bytenr(eb, ri);
-			tmp = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				error("unable to read log root block");
 				return -EIO;
@@ -1407,7 +1409,7 @@ static int iter_tree_blocks(struct btrfs_fs_info *fs_info,
 				return ret;
 		} else {
 			bytenr = btrfs_node_blockptr(eb, i);
-			tmp = read_tree_block(fs_info, bytenr, 0, 0, 0, NULL);
+			tmp = read_tree_block(fs_info, bytenr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
 				error("unable to read log root block");
 				return -EIO;

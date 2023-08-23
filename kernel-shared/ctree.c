@@ -715,6 +715,7 @@ struct extent_buffer *btrfs_read_node_slot(struct extent_buffer *parent,
 {
 	struct btrfs_fs_info *fs_info = parent->fs_info;
 	struct extent_buffer *ret;
+	struct btrfs_tree_parent_check check = { 0 };
 	int level = btrfs_header_level(parent);
 
 	if (slot < 0)
@@ -725,10 +726,12 @@ struct extent_buffer *btrfs_read_node_slot(struct extent_buffer *parent,
 	if (level == 0)
 		return NULL;
 
+	check.owner_root = btrfs_header_owner(parent);
+	check.transid = btrfs_node_ptr_generation(parent, slot);
+	check.level = level - 1;
+
 	ret = read_tree_block(fs_info, btrfs_node_blockptr(parent, slot),
-			      btrfs_header_owner(parent),
-			      btrfs_node_ptr_generation(parent, slot),
-			      level - 1, NULL);
+			      &check);
 	if (!extent_buffer_uptodate(ret))
 		return ERR_PTR(-EIO);
 
