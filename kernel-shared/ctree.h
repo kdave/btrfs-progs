@@ -980,7 +980,7 @@ void btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end);
 int btrfs_split_item(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct btrfs_path *path,
-		     struct btrfs_key *new_key,
+		     const struct btrfs_key *new_key,
 		     unsigned long split_offset);
 int btrfs_search_slot(struct btrfs_trans_handle *trans,
 		struct btrfs_root *root, const struct btrfs_key *key,
