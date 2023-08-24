@@ -1,0 +1,39 @@
+# Workflow for testing pull request against branches 'devel' or 'master'
+#
+# Derived from CI workflow for 'devel' but simplified to only the most common
+# tests, more problems could be caught by other workflows after merge.
+#
+# - build tests
+# - various runtime tests
+
+name: Pull request build and tests
+run-name: Pull request build and tests
+on:
+  pull_request:
+    branches: [ "devel", "master" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: uname -a
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure
+      - name: Make
+        run: make V=1
+#      - name: Musl build
+#        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+      - name: Tests cli
+        run: sudo make TEST_LOG=dump test-cli
+      - name: Tests mkfs
+        run: sudo make TEST_LOG=dump test-mkfs
+      - name: Tests check
+        run: sudo make TEST_LOG=dump test-check
+      - name: Tests check (lowmem)
+        run: sudo make TEST_LOG=dump test-check-lowmem
+      - name: Tests misc
+        run: sudo make TEST_LOG=dump test-misc
+      - name: Tests fuzz
+        run: sudo make TEST_LOG=dump test-fuzz
