@@ -167,22 +167,22 @@ check_completed() {
 	# check that metadata uuid is indeed completed
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$1" | grep -q METADATA_UUID
-	[ $? -eq 0 ] || _fail "metadata_uuid not set on $1"
+	[ $? -eq 0 ] || _fail "check_completed: metadata_uuid not set on $1"
 
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$2" | grep -q METADATA_UUID
-	[ $? -eq 0 ] || _fail "metadata_uuid not set on $2"
+	[ $? -eq 0 ] || _fail "check_completed: metadata_uuid not set on $2"
 }
 
 check_flag_cleared() {
 	# Ensure METADATA_UUID is not set
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$1" | grep -q METADATA_UUID
-	[ $? -eq 1 ] || _fail "metadata_uuid not set on $1"
+	[ $? -eq 1 ] || _fail "check_flag_cleared: metadata_uuid not set on $1"
 
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$2" | grep -q METADATA_UUID
-	[ $? -eq 1 ] || _fail "metadata_uuid not set on $2"
+	[ $? -eq 1 ] || _fail "check_flag_cleared: metadata_uuid not set on $2"
 }
 
 check_multi_fsid_change() {
