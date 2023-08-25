@@ -684,6 +684,11 @@ static inline bool refcount_dec_and_test(refcount_t *ref)
 	return ref->refs == 0;
 }
 
+static inline int refcount_read(const refcount_t *ref)
+{
+	return ref->refs;
+}
+
 typedef u32 blk_status_t;
 typedef u32 blk_opf_t;
 typedef int atomic_t;
@@ -812,6 +817,8 @@ static inline void lockdep_set_class(spinlock_t *lock, struct lock_class_key *lc
 static inline void lockdep_assert_held_read(struct rw_semaphore *sem)
 {
 }
+
+#define lockdep_assert_held(sem)
 
 static inline bool cond_resched_lock(spinlock_t *lock)
 {
