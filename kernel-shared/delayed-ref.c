@@ -22,6 +22,10 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/messages.h"
 
+struct kmem_cache *btrfs_delayed_ref_head_cachep;
+struct kmem_cache *btrfs_delayed_tree_ref_cachep;
+struct kmem_cache *btrfs_delayed_data_ref_cachep;
+struct kmem_cache *btrfs_delayed_extent_op_cachep;
 /*
  * delayed back reference update tracking.  For subvolume trees
  * we queue up extent allocations and backref maintenance for
@@ -51,6 +55,34 @@ static int comp_tree_refs(struct btrfs_delayed_tree_ref *ref1,
 	return 0;
 }
 
+/*
+ * compare two delayed data backrefs with same bytenr and type
+ */
+static int comp_data_refs(struct btrfs_delayed_data_ref *ref1,
+			  struct btrfs_delayed_data_ref *ref2)
+{
+	if (ref1->node.type == BTRFS_EXTENT_DATA_REF_KEY) {
+		if (ref1->root < ref2->root)
+			return -1;
+		if (ref1->root > ref2->root)
+			return 1;
+		if (ref1->objectid < ref2->objectid)
+			return -1;
+		if (ref1->objectid > ref2->objectid)
+			return 1;
+		if (ref1->offset < ref2->offset)
+			return -1;
+		if (ref1->offset > ref2->offset)
+			return 1;
+	} else {
+		if (ref1->parent < ref2->parent)
+			return -1;
+		if (ref1->parent > ref2->parent)
+			return 1;
+	}
+	return 0;
+}
+
 static int comp_refs(struct btrfs_delayed_ref_node *ref1,
 		     struct btrfs_delayed_ref_node *ref2,
 		     bool check_seq)
@@ -66,8 +98,8 @@ static int comp_refs(struct btrfs_delayed_ref_node *ref1,
 		ret = comp_tree_refs(btrfs_delayed_node_to_tree_ref(ref1),
 				     btrfs_delayed_node_to_tree_ref(ref2));
 	else
-		BUG();
-
+		ret = comp_data_refs(btrfs_delayed_node_to_data_ref(ref1),
+				     btrfs_delayed_node_to_data_ref(ref2));
 	if (ret)
 		return ret;
 	if (check_seq) {
@@ -299,12 +331,26 @@ again:
 				href_node);
 	}
 
-	head->processing = 1;
+	head->processing = true;
 	WARN_ON(delayed_refs->num_heads_ready == 0);
 	delayed_refs->num_heads_ready--;
 	delayed_refs->run_delayed_start = head->bytenr +
 		head->num_bytes;
 	return head;
+}
+
+void btrfs_delete_ref_head(struct btrfs_delayed_ref_root *delayed_refs,
+			   struct btrfs_delayed_ref_head *head)
+{
+	lockdep_assert_held(&delayed_refs->lock);
+	lockdep_assert_held(&head->lock);
+
+	rb_erase(&head->href_node, &delayed_refs->href_root);
+	RB_CLEAR_NODE(&head->href_node);
+	atomic_dec(&delayed_refs->num_entries);
+	delayed_refs->num_heads--;
+	if (!head->processing)
+		delayed_refs->num_heads_ready--;
 }
 
 /*
@@ -431,7 +477,7 @@ static void init_delayed_ref_head(struct btrfs_delayed_ref_head *head_ref,
 				  bool is_system)
 {
 	int count_mod = 1;
-	int must_insert_reserved = 0;
+	bool must_insert_reserved = false;
 
 	/* If reserved is provided, it must be a data extent. */
 	BUG_ON(!is_data && reserved);
@@ -456,11 +502,11 @@ static void init_delayed_ref_head(struct btrfs_delayed_ref_head *head_ref,
 	 * BTRFS_ADD_DELAYED_REF because other special casing is not required.
 	 */
 	if (action == BTRFS_ADD_DELAYED_EXTENT)
-		must_insert_reserved = 1;
+		must_insert_reserved = true;
 	else
-		must_insert_reserved = 0;
+		must_insert_reserved = false;
 
-	head_ref->refs = 1;
+	refcount_set(&head_ref->refs, 1);
 	head_ref->bytenr = bytenr;
 	head_ref->num_bytes = num_bytes;
 	head_ref->ref_mod = count_mod;
@@ -470,7 +516,7 @@ static void init_delayed_ref_head(struct btrfs_delayed_ref_head *head_ref,
 	head_ref->ref_tree = RB_ROOT;
 	INIT_LIST_HEAD(&head_ref->ref_add_list);
 	RB_CLEAR_NODE(&head_ref->href_node);
-	head_ref->processing = 0;
+	head_ref->processing = false;
 	head_ref->total_ref_mod = count_mod;
 }
 
@@ -546,7 +592,7 @@ static void init_delayed_ref_common(struct btrfs_fs_info *fs_info,
 	if (action == BTRFS_ADD_DELAYED_EXTENT)
 		action = BTRFS_ADD_DELAYED_REF;
 
-	ref->refs = 1;
+	refcount_set(&ref->refs, 1);
 	ref->bytenr = bytenr;
 	ref->num_bytes = num_bytes;
 	ref->ref_mod = 1;
@@ -641,4 +687,48 @@ void btrfs_destroy_delayed_refs(struct btrfs_trans_handle *trans)
 		}
 		ASSERT(cleanup_ref_head(trans, fs_info, head) == 0);
 	}
+}
+
+void __cold btrfs_delayed_ref_exit(void)
+{
+	kmem_cache_destroy(btrfs_delayed_ref_head_cachep);
+	kmem_cache_destroy(btrfs_delayed_tree_ref_cachep);
+	kmem_cache_destroy(btrfs_delayed_data_ref_cachep);
+	kmem_cache_destroy(btrfs_delayed_extent_op_cachep);
+}
+
+int __init btrfs_delayed_ref_init(void)
+{
+	btrfs_delayed_ref_head_cachep = kmem_cache_create(
+				"btrfs_delayed_ref_head",
+				sizeof(struct btrfs_delayed_ref_head), 0,
+				SLAB_MEM_SPREAD, NULL);
+	if (!btrfs_delayed_ref_head_cachep)
+		goto fail;
+
+	btrfs_delayed_tree_ref_cachep = kmem_cache_create(
+				"btrfs_delayed_tree_ref",
+				sizeof(struct btrfs_delayed_tree_ref), 0,
+				SLAB_MEM_SPREAD, NULL);
+	if (!btrfs_delayed_tree_ref_cachep)
+		goto fail;
+
+	btrfs_delayed_data_ref_cachep = kmem_cache_create(
+				"btrfs_delayed_data_ref",
+				sizeof(struct btrfs_delayed_data_ref), 0,
+				SLAB_MEM_SPREAD, NULL);
+	if (!btrfs_delayed_data_ref_cachep)
+		goto fail;
+
+	btrfs_delayed_extent_op_cachep = kmem_cache_create(
+				"btrfs_delayed_extent_op",
+				sizeof(struct btrfs_delayed_extent_op), 0,
+				SLAB_MEM_SPREAD, NULL);
+	if (!btrfs_delayed_extent_op_cachep)
+		goto fail;
+
+	return 0;
+fail:
+	btrfs_delayed_ref_exit();
+	return -ENOMEM;
 }
