@@ -18,9 +18,9 @@ jobs:
       - name: Configure
         run: ./autogen.sh && ./configure
       - name: Make static
-        run: make V=1 static
+        run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
-        run: make V=1 btrfs.box.static
+        run: make V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
       - name: Strip binaries
         run: strip btrfs.static btrfs.box.static
       - name: Calculate SHA256 checksums
