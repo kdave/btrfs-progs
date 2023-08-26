@@ -92,6 +92,9 @@ of the libraries.
 The resulting binaries have the '.static' suffix, the intermediate object
 files do not conflict with the normal (dynamic) build.
 
+There are pre-built static binaries for download available at the latest
+release (under Assets), https://github.com/kdave/btrfs-progs/releases .
+
 
 All-in-one binary (busybox style)
 ---------------------------------
