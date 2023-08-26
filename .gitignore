@@ -8,8 +8,6 @@
 /btrfs.static
 /btrfs-map-logical
 /btrfs-map-logical.static
-/btrfs-fragments
-/btrfs-fragments.static
 /btrfsck
 /mkfs.btrfs
 /mkfs.btrfs.static
