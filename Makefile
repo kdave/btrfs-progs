@@ -358,7 +358,7 @@ progs_build = $(progs_install) btrfsck btrfs-corrupt-block
 
 # All programs. Use := instead of = so that this is expanded before we reassign
 # progs_build below.
-progs := $(progs_build) btrfs-convert btrfs-fragments btrfs-sb-mod
+progs := $(progs_build) btrfs-convert btrfs-sb-mod
 
 ifneq ($(DISABLE_BTRFSCONVERT),1)
 progs_install += btrfs-convert
@@ -377,7 +377,6 @@ endif
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
 btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_convert_cflags += -DBTRFSCONVERT_REISERFS=$(BTRFSCONVERT_REISERFS)
-btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 cmds_restore_cflags = -DCOMPRESSION_LZO=$(COMPRESSION_LZO) -DCOMPRESSION_ZSTD=$(COMPRESSION_ZSTD)
 
 ifeq ($(CRYPTOPROVIDER_BUILTIN),1)
