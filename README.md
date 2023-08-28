@@ -45,7 +45,7 @@ There are several ways, each has its own specifics and audience that can give
 feedback or work on a fix. The following list is sorted in the order of
 preference:
 
-* [github issue tracker](https://github.com/kdave/btrfs-progs/issues)
+* [Github issue tracker](https://github.com/kdave/btrfs-progs/issues)
 * to the mailing list *linux-btrfs@vger.kernel.org* -- (not required to
   subscribe), beware that the mail might get overlooked in other traffic
 * IRC (irc.libera.chat #btrfs) -- good for discussions eg. if a bug is already
@@ -57,15 +57,15 @@ Development
 -----------
 
 The development takes place in the mailing list (*linux-btrfs@vger.kernel.org*)
-or at github (issues, pull requests). Changes should be split to logical parts
+or at Github (issues, pull requests). Changes should be split to logical parts
 if possible, documentation may be included in the same patch as to code or
 separately.
 
 The development model of btrfs-progs shares a lot with the kernel model. The
 
-* **one logical change per patch**: eg. not mixing bugfixes, cleanups, features
+* **one logical change per patch**: e.g. not mixing bugfixes, cleanups, features
   etc., sometimes it's not clear and will be usually pointed out during reviews
-* proper **subject line**: eg. prefix with _btrfs-progs: subpart, ..._ ,
+* proper **subject line**: e.g. prefix with _btrfs-progs: subpart, ..._ ,
   descriptive yet not too long, see `git log --oneline` for some inspiration
 * proper **changelog**: the changelogs are often missing or lacking explanation _why_
   the change was made, or _how_ is something broken, _what_ are user-visible
@@ -79,6 +79,18 @@ The development model of btrfs-progs shares a lot with the kernel model. The
     rejected just because of it's missing, the _Author:_ tag will be added as a
     substitute in order to allow contributions without much bothering with
     formalities
+
+### Pull requests
+
+The pull requests on Github may be used for code or documentation
+contributions. There are basic build checks enabled in the Github actions CI
+(first time contributors' pull requests may need an approval). The status can
+be checked at the [workflow page](https://github.com/kdave/btrfs-progs/actions/workflows/pull-request.yml).
+
+* open a PR against branches *devel* or *master*
+* push update to the same branch if you need to
+* close the PR in case it's wrong, a mistake or needs rework
+* if you're sure the changes don't need a CI build verification, please add `[skip ci]` to the changelog
 
 Source code coding style and preferences follow the
 [kernel coding style](https://www.kernel.org/doc/html/latest/process/coding-style.html).
@@ -98,7 +110,7 @@ Documentation updates
 Documentation fixes or updates do not need much explanation so sticking to the
 code rules in the previous section is not necessary. GitHub pull requests are
 OK, patches could be sent to me directly and not required to be also in the
-mailinglist. Pointing out typos via IRC also works, although might get
+mailing list. Pointing out typos via IRC also works, although might get
 accidentally lost in the noise.
 
 Documentation sources are written in
