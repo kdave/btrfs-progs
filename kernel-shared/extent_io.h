@@ -20,10 +20,9 @@
 #define __BTRFS_EXTENT_IO_H__
 
 #include "kerncompat.h"
-#include "common/extent-cache.h"
+#include "kernel-lib/bitops.h"
 #include "kernel-lib/list.h"
-
-struct extent_io_tree;
+#include "common/extent-cache.h"
 
 #define EXTENT_BUFFER_UPTODATE		(1U << 0)
 #define EXTENT_BUFFER_DIRTY		(1U << 1)

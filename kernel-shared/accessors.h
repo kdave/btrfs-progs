@@ -4,6 +4,12 @@
 #define BTRFS_ACCESSORS_H
 
 #include "kerncompat.h"
+#include <stddef.h>
+#include <string.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 
 #ifndef _static_assert
 #define _static_assert(expr)   _Static_assert(expr, #expr)

@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <getopt.h>
 #include <errno.h>
@@ -25,10 +26,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <unistd.h>
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/open-utils.h"
@@ -40,6 +44,9 @@
 #include "common/messages.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
+
+enum btrfs_qgroup_comp_enum;
+enum btrfs_qgroup_filter_enum;
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)

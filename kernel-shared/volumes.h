@@ -20,8 +20,15 @@
 #define __BTRFS_VOLUMES_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/ctree.h"
+#include <stdbool.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
+#include "common/extent-cache.h"
+
+struct btrfs_trans_handle;
+struct extent_buffer;
 
 #define BTRFS_STRIPE_LEN	SZ_64K
 #define BTRFS_STRIPE_LEN_SHIFT	(16)

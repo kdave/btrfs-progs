@@ -20,16 +20,12 @@
 #define __BTRFS_UTILS_H__
 
 #include "kerncompat.h"
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "kernel-lib/sizes.h"
-#include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
-#include "common/defs.h"
-#include "common/internal.h"
-#include "common/messages.h"
+#include "kernel-shared/volumes.h"
 #include "common/fsfeatures.h"
+
+struct list_head;
 
 enum exclusive_operation {
 	BTRFS_EXCLOP_NONE,

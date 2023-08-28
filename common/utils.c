@@ -19,7 +19,11 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <sys/sysinfo.h>
+#include <sys/select.h>
+#include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,8 +32,9 @@
 #include <mntent.h>
 #include <ctype.h>
 #include <limits.h>
-#include <uuid/uuid.h>
-#include "kernel-shared/uapi/btrfs.h"
+#include <strings.h>
+#include "kernel-lib/list.h"
+#include "kernel-shared/accessors.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"

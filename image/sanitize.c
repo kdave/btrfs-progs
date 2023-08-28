@@ -15,9 +15,12 @@
  */
 
 #include "kerncompat.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "kernel-lib/rbtree.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "common/internal.h"

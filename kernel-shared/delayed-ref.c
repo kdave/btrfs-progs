@@ -17,6 +17,10 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <string.h>
+#include <errno.h>
+#include "kernel-lib/rbtree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/delayed-ref.h"
 #include "kernel-shared/transaction.h"

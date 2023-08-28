@@ -25,7 +25,6 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include <blkid/blkid.h>
-#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/disk-io.h"

@@ -20,6 +20,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"

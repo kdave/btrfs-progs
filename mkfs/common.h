@@ -25,7 +25,7 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include "kernel-lib/sizes.h"
-#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/defs.h"
 #include "common/fsfeatures.h"
 

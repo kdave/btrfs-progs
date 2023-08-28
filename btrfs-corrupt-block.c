@@ -23,6 +23,9 @@
 #include <limits.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"

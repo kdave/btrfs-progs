@@ -19,10 +19,16 @@
 #define __BTRFS_ZONED_H__
 
 #include "kerncompat.h"
+#include <sys/types.h>
 #include <stdbool.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/messages.h"
+
+struct btrfs_block_group;
+struct btrfs_fs_info;
 
 #ifdef BTRFS_ZONED
 #include <linux/blkzoned.h>

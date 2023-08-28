@@ -19,8 +19,9 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include "kernel-lib/rbtree.h"
 #include "kernel-shared/ulist.h"
-#include "kernel-shared/ctree.h"
 #include "kernel-shared/messages.h"
 
 /*

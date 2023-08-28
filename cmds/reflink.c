@@ -16,9 +16,10 @@
 
 #include "kerncompat.h"
 #include <sys/stat.h>
+#include <errno.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <unistd.h>
 #include "kernel-lib/list.h"
 #include "common/messages.h"

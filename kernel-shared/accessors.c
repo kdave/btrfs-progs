@@ -4,8 +4,10 @@
  */
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/messages.h"
-#include "kernel-shared/ctree.h"
 #include "kernel-shared/accessors.h"
 
 static bool check_setget_bounds(const struct extent_buffer *eb,

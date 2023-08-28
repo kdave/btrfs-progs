@@ -25,11 +25,13 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include "kernel-lib/list.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "common/messages.h"
 
 struct btrfs_trans_handle;
 struct extent_buffer;
+struct task_ctx;
 
 extern struct task_ctx g_task_ctx;
 

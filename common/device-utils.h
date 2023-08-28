@@ -18,10 +18,12 @@
 #define __DEVICE_UTILS_H__
 
 #include "kerncompat.h"
-#include <sys/stat.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-lib/bitops.h"
+
+struct btrfs_ioctl_dev_info_args;
+struct stat;
 
 /*
  * Options for btrfs_prepare_device

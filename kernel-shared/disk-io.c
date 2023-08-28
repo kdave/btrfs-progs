@@ -16,28 +16,48 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/stat.h>
+#include <linux/fs.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <uuid/uuid.h>
-#include "kerncompat.h"
 #include "kernel-lib/bitops.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent-io-tree.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/locking.h"
+#include "kernel-shared/messages.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/tree-checker.h"
 #include "kernel-shared/zoned.h"
-#include "kernel-shared/print-tree.h"
 #include "crypto/hash.h"
-#include "crypto/crc32c.h"
+#include "common/defs.h"
+#include "common/extent-cache.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/rbtree-utils.h"
 #include "common/device-scan.h"
 #include "common/device-utils.h"
+
+struct btrfs_fs_devices;
+struct btrfs_key;
+struct btrfs_super_block;
+struct btrfs_trans_handle;
+struct extent_buffer;
+struct rb_node;
 
 /* specified errno for check_tree_block */
 #define BTRFS_BAD_BYTENR		(-1)

@@ -15,12 +15,16 @@
  */
 
 #include "kerncompat.h"
+#include <sys/stat.h>
+#include <linux/fs.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <getopt.h>
-#include <sys/stat.h>
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"

@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
-#include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/messages.h"

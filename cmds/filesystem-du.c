@@ -28,10 +28,12 @@
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
+#include <unistd.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
 #include "kernel-lib/interval_tree_generic.h"
-#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"

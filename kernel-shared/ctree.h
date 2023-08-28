@@ -19,19 +19,20 @@
 #ifndef __BTRFS_CTREE_H__
 #define __BTRFS_CTREE_H__
 
-#include <stdbool.h>
-
-#include "kernel-lib/list.h"
-#include "kernel-lib/rbtree.h"
 #include "kerncompat.h"
-#include "common/extent-cache.h"
-#include "crypto/crc32c.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include "kernel-lib/list.h"
+#include "kernel-lib/bitops.h"
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/extent-io-tree.h"
 #include "kernel-shared/locking.h"
+#include "crypto/crc32c.h"
+#include "common/extent-cache.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;

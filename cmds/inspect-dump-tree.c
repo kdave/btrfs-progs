@@ -17,26 +17,25 @@
  */
 
 #include "kerncompat.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 #include <strings.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
-#include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/tree-checker.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
-#include "common/utils.h"
 #include "common/help.h"
 #include "common/device-scan.h"
 #include "common/string-utils.h"

@@ -4,10 +4,13 @@
 #define BTRFS_EXTENT_IO_TREE_H
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/misc.h"
 
 struct extent_changeset;
-struct io_failure_record;
+struct btrfs_fs_info;
 
 /* Bits for the extent state */
 enum {

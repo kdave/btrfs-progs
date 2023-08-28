@@ -25,8 +25,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <stdbool.h>
-#include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/volumes.h"
 #include "common/open-utils.h"
 #include "common/utils.h"

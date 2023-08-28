@@ -15,6 +15,13 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "kernel-lib/rbtree.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent-io-tree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/free-space-cache.h"
@@ -24,7 +31,6 @@
 #include "kernel-shared/file-item.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "check/common.h"
 #include "check/repair.h"
 #include "check/mode-common.h"
 #include "check/clear-cache.h"

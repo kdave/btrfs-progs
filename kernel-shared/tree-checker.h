@@ -7,10 +7,11 @@
 #define BTRFS_TREE_CHECKER_H
 
 #include "kerncompat.h"
-#include "uapi/btrfs_tree.h"
+#include <stdbool.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 
 struct extent_buffer;
-struct btrfs_chunk;
 
 /* All the extra info needed to verify the parentness of a tree block. */
 struct btrfs_tree_parent_check {

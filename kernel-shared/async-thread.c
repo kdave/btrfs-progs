@@ -5,10 +5,11 @@
  */
 
 #include "kerncompat.h"
+#include <stddef.h>
 #include "kernel-lib/bitops.h"
 #include "kernel-lib/trace.h"
 #include "kernel-shared/async-thread.h"
-#include "kernel-shared/ctree.h"
+#include "common/internal.h"
 
 enum {
 	WORK_DONE_BIT,

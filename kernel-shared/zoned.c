@@ -15,14 +15,25 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <unistd.h>
-
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include "kernel-lib/list.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/zoned.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
+#include "common/extent-cache.h"
+#include "common/internal.h"
 #include "common/messages.h"
 #include "mkfs/common.h"
 

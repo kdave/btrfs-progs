@@ -17,13 +17,21 @@
  */
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
+#include "kernel-lib/list.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
-#include "kernel-shared/transaction.h"
 #include "kernel-shared/messages.h"
 #include "kernel-shared/tree-checker.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/internal.h"
 
 #define pr_debug(...) do { } while (0)

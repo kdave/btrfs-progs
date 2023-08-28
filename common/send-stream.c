@@ -16,13 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
 #include "kernel-shared/send.h"
 #include "crypto/crc32c.h"
 #include "common/send-stream.h"

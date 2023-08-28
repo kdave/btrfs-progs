@@ -16,11 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <uuid/uuid.h>
-#include <ctype.h>
 #include "kerncompat.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
+#include <time.h>
+#include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
@@ -29,7 +33,9 @@
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/tree-checker.h"
-#include "common/utils.h"
+#include "common/defs.h"
+#include "common/internal.h"
+#include "common/messages.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)

@@ -17,15 +17,22 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/transaction.h"
-#include "kernel-shared/disk-io.h"
 #include "kernel-shared/extent_io.h"
 #include "crypto/crc32c.h"
-#include "kernel-lib/bitops.h"
 #include "common/internal.h"
-#include "common/utils.h"
+#include "common/messages.h"
 
 /*
  * Kernel always uses PAGE_CACHE_SIZE for sectorsize, but we don't have

@@ -20,7 +20,7 @@
 #define __CMDS_FI_USAGE_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/volumes.h"
 
 struct device_info {
 	u64	devid;

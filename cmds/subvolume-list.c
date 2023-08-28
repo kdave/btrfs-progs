@@ -23,9 +23,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"
@@ -38,6 +42,9 @@
 #include "common/format-output.h"
 #include "cmds/commands.h"
 #include "cmds/subvolume.h"
+
+enum btrfs_list_comp_enum;
+enum btrfs_list_filter_enum;
 
 /*
  * Naming of options:

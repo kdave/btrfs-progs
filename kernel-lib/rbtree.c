@@ -21,7 +21,12 @@
   linux/lib/rbtree.c
 */
 
+#include "kerncompat.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-lib/rbtree_augmented.h"
+#include "kernel-lib/rbtree.h"
 
 /*
  * red-black trees properties:  https://en.wikipedia.org/wiki/Rbtree

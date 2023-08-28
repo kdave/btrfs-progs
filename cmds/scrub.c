@@ -34,7 +34,6 @@
 #include <limits.h>
 #include <dirent.h>
 #include <errno.h>
-#include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +42,6 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
-#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/volumes.h"
 #include "common/defs.h"
 #include "common/messages.h"

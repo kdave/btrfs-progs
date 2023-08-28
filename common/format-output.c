@@ -22,7 +22,8 @@
 #include <string.h>
 #include <time.h>
 #include <uuid/uuid.h>
-#include "common/defs.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "common/messages.h"
 #include "common/format-output.h"
 #include "common/utils.h"
 #include "common/units.h"

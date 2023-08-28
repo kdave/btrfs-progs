@@ -19,8 +19,18 @@
 #ifndef __BTRFS_BACKREF_H__
 #define __BTRFS_BACKREF_H__
 
-#include "kernel-shared/ulist.h"
-#include "kernel-shared/extent_io.h"
+#include "kerncompat.h"
+#include "kernel-lib/bitops.h"
+
+struct btrfs_extent_item;
+struct btrfs_fs_info;
+struct btrfs_inode_extref;
+struct btrfs_key;
+struct btrfs_path;
+struct btrfs_root;
+struct btrfs_trans_handle;
+struct extent_buffer;
+struct ulist;
 
 struct inode_fs_paths {
 	struct btrfs_path		*btrfs_path;

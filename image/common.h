@@ -20,6 +20,8 @@
 #include "kerncompat.h"
 #include <stdio.h>
 
+struct btrfs_fs_info;
+
 void csum_block(u8 *buf, size_t len);
 int detect_version(FILE *in);
 int update_disk_super_on_device(struct btrfs_fs_info *info,

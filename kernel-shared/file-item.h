@@ -4,13 +4,21 @@
 #define BTRFS_FILE_ITEM_H
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/accessors.h"
 
 struct bio;
 struct inode;
 struct btrfs_ordered_sum;
 struct btrfs_inode;
+struct btrfs_trans_handle;
 struct extent_map;
+struct extent_buffer;
+struct list_head;
 
 #define BTRFS_FILE_EXTENT_INLINE_DATA_START		\
 		(offsetof(struct btrfs_file_extent_item, disk_bytenr))

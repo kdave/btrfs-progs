@@ -82,6 +82,7 @@
 
 #include "kerncompat.h"
 #include <sys/stat.h>
+#include <linux/fs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -94,6 +95,8 @@
 #include <string.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"

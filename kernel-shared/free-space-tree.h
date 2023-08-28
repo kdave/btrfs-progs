@@ -19,6 +19,13 @@
 #ifndef __BTRFS_FREE_SPACE_TREE_H__
 #define __BTRFS_FREE_SPACE_TREE_H__
 
+#include "kerncompat.h"
+#include "kernel-lib/bitops.h"
+
+struct btrfs_block_group;
+struct btrfs_fs_info;
+struct btrfs_trans_handle;
+
 #define BTRFS_FREE_SPACE_BITMAP_SIZE 256
 #define BTRFS_FREE_SPACE_BITMAP_BITS (BTRFS_FREE_SPACE_BITMAP_SIZE * BITS_PER_BYTE)
 

@@ -35,12 +35,13 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/zoned.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/device-utils.h"
 #include "common/sysfs-utils.h"
 #include "common/path-utils.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "common/utils.h"
 #include "common/units.h"
 
 #ifndef BLKDISCARD

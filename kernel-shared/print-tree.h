@@ -19,6 +19,15 @@
 #ifndef __PRINT_TREE_H__
 #define __PRINT_TREE_H__
 
+#include "kerncompat.h"
+#include <stdio.h>
+#include "kernel-lib/bitops.h"
+
+struct btrfs_chunk;
+struct btrfs_disk_key;
+struct btrfs_super_block;
+struct extent_buffer;
+
 enum {
 	/* Depth-first search, nodes and leaves can be interleaved */
 	BTRFS_PRINT_TREE_DFS		= (1 << 0),

@@ -17,6 +17,7 @@
  */
 
 #include "kerncompat.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -26,7 +27,10 @@
 #include <stddef.h>
 #include <string.h>
 #include "kernel-lib/list.h"
-#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent-io-tree.h"
+#include "kernel-shared/locking.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"

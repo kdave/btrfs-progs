@@ -18,12 +18,12 @@
 #include <sys/ioctl.h>
 #include <sys/statfs.h>
 #include <linux/limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <getopt.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <limits.h>
@@ -32,6 +32,9 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
+#include "common/defs.h"
 #include "common/utils.h"
 #include "common/string-table.h"
 #include "common/open-utils.h"

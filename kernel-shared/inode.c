@@ -22,12 +22,17 @@
  * do directly operation on extent buffer, which may cause extra searching,
  * but should not be a huge problem since progs is less performance sensitive.
  */
-#include <sys/stat.h>
 
+#include "kerncompat.h"
+#include <sys/stat.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
-#include "time.h"
 #include "common/messages.h"
 #include "common/internal.h"
 

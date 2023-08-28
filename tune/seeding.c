@@ -15,6 +15,8 @@
  */
 
 #include "kerncompat.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"

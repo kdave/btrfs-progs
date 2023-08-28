@@ -45,7 +45,6 @@
 #include <zstd.h>
 #endif
 #include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/messages.h"
 #include "common/utils.h"

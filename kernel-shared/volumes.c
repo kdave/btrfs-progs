@@ -16,21 +16,27 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <uuid/uuid.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stddef.h>
+#include <string.h>
 #include "kernel-lib/raid56.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
-#include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/tree-checker.h"
 #include "kernel-shared/zoned.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/messages.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
 

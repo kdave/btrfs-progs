@@ -16,6 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <errno.h>
+#include <string.h>
 #include "kernel-lib/bitops.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
@@ -26,8 +28,6 @@
 #include "kernel-shared/volumes.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "common/utils.h"
-#include "check/repair.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);

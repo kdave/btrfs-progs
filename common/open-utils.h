@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 #include <dirent.h>
+#include <stdbool.h>
 
 struct btrfs_fs_devices;
 

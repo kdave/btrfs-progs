@@ -17,13 +17,20 @@
  */
 
 #include "kerncompat.h"
-#include <sys/stat.h>
+#include <errno.h>
+#include <string.h>
+#include "kernel-lib/bitops.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
-#include "kernel-shared/disk-io.h"
-#include "kernel-shared/transaction.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/file-item.h"
-#include "common/utils.h"
+#include "common/internal.h"
+#include "common/messages.h"
+
+struct btrfs_trans_handle;
 
 /*
  * Get the first file extent that covers (part of) the given range

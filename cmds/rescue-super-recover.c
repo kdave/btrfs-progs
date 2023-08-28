@@ -24,6 +24,8 @@
 #include <unistd.h>
 #include <string.h>
 #include "kernel-lib/list.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"

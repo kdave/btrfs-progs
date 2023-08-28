@@ -19,7 +19,8 @@
 #ifndef __RBTREE_UTILS__
 #define __RBTREE_UTILS__
 
-#include "kernel-lib/rbtree.h"
+struct rb_node;
+struct rb_root;
 
 /* The common insert/search/free functions */
 typedef int (*rb_compare_nodes)(struct rb_node *node1, struct rb_node *node2);

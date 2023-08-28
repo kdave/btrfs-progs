@@ -17,19 +17,24 @@
 
 #include "kerncompat.h"
 #include <sys/stat.h>
-#include <linux/types.h>
 #include <linux/limits.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdarg.h>
 #include "kernel-lib/overflow.h"
 #include "kernel-lib/bitops.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/messages.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/tree-checker.h"
-#include "kernel-shared/disk-io.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/misc.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/internal.h"
 
 /*

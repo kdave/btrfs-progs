@@ -19,6 +19,8 @@
 #include <string.h>
 #include <unistd.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "common/internal.h"

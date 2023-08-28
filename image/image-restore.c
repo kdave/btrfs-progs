@@ -15,15 +15,33 @@
  */
 
 #include "kerncompat.h"
+#include <sys/stat.h>
+#include <linux/fs.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <zlib.h>
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/tree-checker.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "common/open-utils.h"
+#include "common/extent-cache.h"
 #include "image/common.h"
 #include "image/metadump.h"
 

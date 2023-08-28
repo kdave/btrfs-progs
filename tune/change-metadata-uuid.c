@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"

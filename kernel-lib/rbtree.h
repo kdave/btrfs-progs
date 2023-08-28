@@ -37,6 +37,7 @@
 #include <btrfs/rbtree_types.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
+#include <stddef.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus

@@ -25,11 +25,11 @@
 #include <string.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "common/fsfeatures.h"
 #include "common/string-utils.h"
 #include "common/sysfs-utils.h"
-#include "common/utils.h"
 #include "common/messages.h"
 
 /*

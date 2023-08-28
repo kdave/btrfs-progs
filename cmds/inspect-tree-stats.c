@@ -18,19 +18,20 @@
 
 #include "kerncompat.h"
 #include <sys/time.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <getopt.h>
 #include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/tree-checker.h"
-#include "common/utils.h"
 #include "common/help.h"
 #include "common/messages.h"
 #include "common/open-utils.h"

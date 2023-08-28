@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <stdarg.h>
 #include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/messages.h"
-#include "kernel-shared/transaction.h"
 
 #ifdef CONFIG_PRINTK
 

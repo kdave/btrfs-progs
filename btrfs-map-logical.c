@@ -25,12 +25,14 @@
 #include <errno.h>
 #include <string.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "common/internal.h"
-#include "common/utils.h"
+#include "common/messages.h"
 #include "common/help.h"
 #include "common/extent-cache.h"
 #include "common/extent-tree-utils.h"

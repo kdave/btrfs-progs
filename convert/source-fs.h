@@ -20,12 +20,11 @@
 #include "kerncompat.h"
 #include <sys/types.h>
 #include <pthread.h>
+#include "kernel-shared/uapi/btrfs_tree.h"
+#include "convert/common.h"
 
-struct btrfs_convert_context;
-struct btrfs_inode_item;
 struct btrfs_root;
 struct btrfs_trans_handle;
-struct task_info;
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 

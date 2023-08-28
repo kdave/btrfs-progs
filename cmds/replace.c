@@ -30,7 +30,6 @@
 #include <signal.h>
 #include <stdbool.h>
 #include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/help.h"

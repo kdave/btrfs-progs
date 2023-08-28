@@ -21,7 +21,14 @@
 #define BTRFS_DELAYED_REF_H
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree_types.h"
+#include "kernel-lib/bitops.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 
+struct btrfs_trans_handle;
 struct btrfs_block_rsv;
 
 /* these are the possible values of struct btrfs_delayed_ref_node->action */

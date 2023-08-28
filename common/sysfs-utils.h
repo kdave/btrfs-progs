@@ -17,6 +17,8 @@
 #ifndef __COMMON_SYSFS_UTILS__
 #define __COMMON_SYSFS_UTILS__
 
+#include <stddef.h>
+
 int sysfs_open_file(const char *name);
 int sysfs_open_fsid_file(int fd, const char *filename);
 int sysfs_open_fsid_dir(int fd, const char *dirname);

@@ -16,10 +16,19 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <linux/limits.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "kernel-shared/transaction.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
+
+struct btrfs_trans_handle;
 
 /*
  * insert a name into a directory, doing overflow properly if there is a hash

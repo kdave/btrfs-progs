@@ -18,7 +18,6 @@
 #define __PARSE_UTILS_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/ctree.h"
 
 u64 parse_size_from_string(const char *s);
 enum btrfs_csum_type parse_csum_type(const char *s);

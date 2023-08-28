@@ -4,11 +4,10 @@
 #define BTRFS_MESSAGES_H
 
 #include "kerncompat.h"
-#include <linux/types.h>
+#include "kernel-lib/bitops.h"
 #include "common/messages.h"
 
 struct btrfs_fs_info;
-struct btrfs_trans_handle;
 
 #ifdef __KERNEL__
 static inline __printf(2, 3) __cold

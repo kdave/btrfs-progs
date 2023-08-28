@@ -15,11 +15,18 @@
  */
 
 #include "kerncompat.h"
+#include <stdlib.h>
+#include "kernel-lib/rbtree.h"
 #include "kernel-lib/bitops.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/delayed-ref.h"
 #include "kernel-shared/zoned.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/locking.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/messages.h"
 
 struct btrfs_trans_handle *btrfs_start_transaction(struct btrfs_root *root,

@@ -18,6 +18,7 @@
 #define CRYPTO_HASH_H
 
 #include "kerncompat.h"
+#include <stddef.h>
 
 #define CRYPTO_HASH_SIZE_MAX	32
 

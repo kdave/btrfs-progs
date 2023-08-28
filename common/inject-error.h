@@ -17,8 +17,6 @@
 #ifndef __INJECT_ERROR_H__
 #define __INJECT_ERROR_H__
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 #ifdef INJECT

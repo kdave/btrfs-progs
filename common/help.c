@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "common/help.h"
 #include "common/string-utils.h"
 #include "cmds/commands.h"

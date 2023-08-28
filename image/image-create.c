@@ -15,16 +15,31 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <zlib.h>
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/extent-io-tree.h"
+#include "kernel-shared/extent_io.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/tree-checker.h"
-#include "crypto/crc32c.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "image/sanitize.h"
 #include "image/metadump.h"
 #include "image/common.h"
 

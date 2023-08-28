@@ -15,7 +15,6 @@
  */
 
 #include <stdio.h>
-#include <stdbool.h>
 #include "common/cpu-utils.h"
 
 unsigned long __cpu_flags = CPU_FLAG_NONE;

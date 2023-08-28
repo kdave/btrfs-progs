@@ -4,6 +4,10 @@
 #define BTRFS_LOCKING_H
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include "kernel-lib/bitops.h"
+
+struct extent_buffer;
 
 #define BTRFS_WRITE_LOCK 1
 #define BTRFS_READ_LOCK 2

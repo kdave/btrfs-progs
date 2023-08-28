@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <errno.h>
@@ -23,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include "kernel-shared/uapi/btrfs.h"
 #include "common/help.h"
 #include "common/open-utils.h"

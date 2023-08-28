@@ -4,6 +4,8 @@
  */
 
 #include "kerncompat.h"
+#include <stdio.h>
+#include <string.h>
 #include "kernel-lib/list_sort.h"
 #include "kernel-lib/list.h"
 

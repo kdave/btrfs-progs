@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
@@ -21,13 +22,15 @@
 #include <string.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
-#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/path-utils.h"
 #include "common/messages.h"
+#include "common/fsfeatures.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
 

@@ -18,6 +18,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>

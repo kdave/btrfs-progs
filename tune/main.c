@@ -17,24 +17,23 @@
  */
 
 #include "kerncompat.h"
-#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <uuid/uuid.h>
+#include "kernel-shared/accessors.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
-#include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
-#include "common/parse-utils.h"
 #include "common/device-scan.h"
 #include "common/messages.h"
+#include "common/parse-utils.h"
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "common/box.h"

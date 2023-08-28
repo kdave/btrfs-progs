@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -39,6 +38,8 @@
 #endif
 #include "kernel-lib/overflow.h"
 #include "kernel-lib/list.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"

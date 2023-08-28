@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include "kerncompat.h"
+#include <errno.h>
 #include "kernel-lib/trace.h"
+#include "kernel-lib/rbtree.h"
 #include "kernel-shared/messages.h"
-#include "kernel-shared/ctree.h"
-#include "kernel-shared/async-thread.h"
 #include "kernel-shared/extent-io-tree.h"
 #include "kernel-shared/misc.h"
 #include "kernel-shared/ulist.h"
 #include "common/internal.h"
+
+struct btrfs_fs_info;
 
 /*
  * MODIFIED:

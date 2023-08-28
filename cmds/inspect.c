@@ -20,6 +20,7 @@
 #include <sys/statfs.h>
 #include <linux/fs.h>
 #include <linux/magic.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +32,8 @@
 #include <unistd.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/accessors.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
