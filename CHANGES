@@ -1,3 +1,25 @@
+btrfs-progs-6.5 (2023-09-01)
+----------------------------
+   * crc32c implementation speedup (3x)
+   * btrfstune:
+      * be more strict about option combinations and refuse changing
+        features from incompatible groups
+      * metadata_uuid changes fixes
+   * libbtrfs: fix ABI breakage introduced in 6.3.1, revert struct subvol_info
+     and subvol_uuid_search changes
+   * CI updates
+      * pull request build tests enabled
+      * published static binaries built with backward compatibility (-march=x86-64)
+   * other
+      * documentation updates
+      * new and updated tests
+      * experimental feature updates (json, list-chunks, checksum switch)
+      * code refactoring
+      * remove btrfs-fragments
+
+btrfs-progs-6.4 (skipped)
+-------------------------
+
 btrfs-progs-6.3 (2023-04-27)
 ----------------------------
    * mkfs: option -R deprecated, options unified in -O (-R still works)
