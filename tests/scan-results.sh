@@ -7,7 +7,7 @@ for i in *.txt; do
 	last=
 	while read line; do
 		case "$line" in
-			===\ Entering*) last="$line" ;;
+			===\ START\ TEST*) last="$line" ;;
 			*Assertion*failed*) echo "ASSERTION FAILED: $last" ;;
 			*runtime\ error*) echo "RUNTIME ERROR (sanitizer): $last" ;;
 			*AddressSanitizer*heap-use-after-free*) echo "RUNTIME ERROR (use after free): $last" ;;
