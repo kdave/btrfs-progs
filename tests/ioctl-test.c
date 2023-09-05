@@ -192,7 +192,7 @@ static struct btrfs_ioctl_dev_replace_args used_replace_args __attribute__((used
 static struct btrfs_ioctl_same_args used_same_args __attribute__((used));
 static struct btrfs_ioctl_feature_flags used_feature_flags __attribute__((used));
 
-const char* value_to_string(unsigned long num)
+static const char* value_to_string(unsigned long num)
 {
 #define ONE(x)	case x: return #x;
 	switch (num) {

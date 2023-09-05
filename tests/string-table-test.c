@@ -19,7 +19,7 @@
 #include "common/utils.h"
 #include "common/string-table.h"
 
-void test_simple_create_free()
+static void test_simple_create_free()
 {
 	struct string_table *tab;
 
@@ -38,7 +38,7 @@ void test_simple_create_free()
 	table_free(tab);
 }
 
-void test_simple_header()
+static void test_simple_header()
 {
 	struct string_table *tab;
 	int i;
@@ -68,7 +68,7 @@ void test_simple_header()
 	table_free(tab);
 }
 
-void test_simple_paginate()
+static void test_simple_paginate()
 {
 	struct string_table *tab;
 	unsigned int page_size = 4;
