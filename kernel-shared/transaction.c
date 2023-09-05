@@ -139,6 +139,25 @@ int commit_tree_roots(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static void clean_dirty_buffers(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct extent_io_tree *tree = &fs_info->dirty_buffers;
+	struct extent_buffer *eb;
+	u64 start, end;
+
+	while (find_first_extent_bit(tree, 0, &start, &end, EXTENT_DIRTY,
+				     NULL) == 0) {
+		while (start <= end) {
+			eb = find_first_extent_buffer(fs_info, start);
+			BUG_ON(!eb || eb->start != start);
+			start += eb->len;
+			btrfs_clear_buffer_dirty(trans, eb);
+			free_extent_buffer(eb);
+		}
+	}
+}
+
 int __commit_transaction(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root)
 {
@@ -181,23 +200,7 @@ cleanup:
 	 * Mark all remaining dirty ebs clean, as they have no chance to be written
 	 * back anymore.
 	 */
-	while (1) {
-		int find_ret;
-
-		find_ret = find_first_extent_bit(tree, 0, &start, &end,
-						 EXTENT_DIRTY, NULL);
-
-		if (find_ret)
-			break;
-
-		while (start <= end) {
-			eb = find_first_extent_buffer(fs_info, start);
-			BUG_ON(!eb || eb->start != start);
-			start += eb->len;
-			btrfs_clear_buffer_dirty(trans, eb);
-			free_extent_buffer(eb);
-		}
-	}
+	clean_dirty_buffers(trans);
 	return ret;
 }
 
@@ -209,8 +212,11 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_space_info *sinfo;
 
-	if (trans->fs_info->transaction_aborted)
-		return -EROFS;
+	if (trans->fs_info->transaction_aborted) {
+		ret = -EROFS;
+		goto error;
+	}
+
 	/*
 	 * Flush all accumulated delayed refs so that root-tree updates are
 	 * consistent
@@ -284,6 +290,7 @@ commit_tree:
 	return ret;
 error:
 	btrfs_abort_transaction(trans, ret);
+	clean_dirty_buffers(trans);
 	btrfs_destroy_delayed_refs(trans);
 	free(trans);
 	return ret;
