@@ -1,9 +1,12 @@
 #!/bin/sh
+# Look for some frequent error message templates in test logs
+#
+# Usage: $0 [test-log.txt]
 
-# look for some error messages in all test logs
+scan_log() {
+	local file="$1"
 
-for i in *.txt; do
-	echo "Scanning $i"
+	echo "Scanning $file"
 	last=
 	while read line; do
 		case "$line" in
@@ -17,5 +20,16 @@ for i in *.txt; do
 			*extent\ buffer\ leak*) echo "EXTENT BUFFER LEAK: $last" ;;
 			*) : ;;
 		esac
-	done < "$i"
+	done < "$file"
+}
+
+# Scan only the given file
+if [ -n "$1" ]; then
+	scan_log "$1"
+	exit
+fi
+
+# Scan all existing test logs
+for file in *.txt; do
+	scan_log "$file"
 done
