@@ -321,10 +321,10 @@ LABEL less_than_ %j			# less_than_j: Length should be in
 .size crc_pcl, .-crc_pcl
 ###SYM_FUNC_END(crc_pcl)
 
-.section	.rodata, "a", @progbits
         ################################################################
         ## jump table        Table is 129 entries x 2 bytes each
         ################################################################
+.data
 .align 4
 jump_table:
 	i=0
@@ -340,6 +340,7 @@ JMPTBL_ENTRY %i
 	## PCLMULQDQ tables
 	## Table is 128 entries x 2 words (8 bytes) each
 	################################################################
+.section	.rodata, "a", @progbits
 .align 8
 K_table:
 	.long 0x493c7d27, 0x00000001
