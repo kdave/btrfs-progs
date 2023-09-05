@@ -3116,6 +3116,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			ret = btrfs_make_root_dir(trans, root, root_dirid);
 			if (ret < 0) {
 				btrfs_abort_transaction(trans, ret);
+				btrfs_commit_transaction(trans, root);
 				return ret;
 			}
 
@@ -8022,8 +8023,10 @@ static int repair_extent_item_generation(struct extent_record *rec)
 	rec->generation = new_gen;
 out:
 	btrfs_release_path(&path);
-	if (ret < 0)
+	if (ret < 0) {
 		btrfs_abort_transaction(trans, ret);
+		btrfs_commit_transaction(trans, extent_root);
+	}
 	return ret;
 }
 
@@ -8242,8 +8245,11 @@ repair_abort:
 			}
 
 			ret = btrfs_fix_block_accounting(trans);
-			if (ret)
+			if (ret) {
+				btrfs_abort_transaction(trans, ret);
+				btrfs_commit_transaction(trans, root);
 				goto repair_abort;
+			}
 			ret = btrfs_commit_transaction(trans, root);
 			if (ret)
 				goto repair_abort;
