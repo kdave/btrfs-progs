@@ -150,6 +150,33 @@ DATA STRUCTURES AND DEFINITIONS
 		__u64 rsv_excl;
 	};
 
+.. _struct_btrfs_ioctl_fs_info_args:
+
+.. code-block:: c
+
+        /* Request information about checksum type and size */
+        #define BTRFS_FS_INFO_FLAG_CSUM_INFO			(1 << 0)
+        /* Request information about filesystem generation */
+        #define BTRFS_FS_INFO_FLAG_GENERATION			(1 << 1)
+        /* Request information about filesystem metadata UUID */
+        #define BTRFS_FS_INFO_FLAG_METADATA_UUID		(1 << 2)
+
+        struct btrfs_ioctl_fs_info_args {
+                __u64 max_id;				/* out */
+                __u64 num_devices;			/* out */
+                __u8 fsid[BTRFS_FSID_SIZE];		/* out */
+                __u32 nodesize;				/* out */
+                __u32 sectorsize;			/* out */
+                __u32 clone_alignment;			/* out */
+                /* See BTRFS_FS_INFO_FLAG_* */
+                __u16 csum_type;			/* out */
+                __u16 csum_size;			/* out */
+                __u64 flags;				/* in/out */
+                __u64 generation;			/* out */
+                __u8 metadata_uuid[BTRFS_FSID_SIZE];	/* out */
+                __u8 reserved[944];			/* pad to 1k */
+        };
+
 .. list-table::
    :header-rows: 1
 
@@ -157,10 +184,14 @@ DATA STRUCTURES AND DEFINITIONS
      - Value
    * - BTRFS_UUID_SIZE
      - 16
+   * - BTRFS_FSID_SIZE
+     - 16
    * - BTRFS_SUBVOL_NAME_MAX
      - 4039
    * - BTRFS_PATH_NAME_MAX
      - 4087
+   * - BTRFS_VOL_NAME_MAX
+     - 255
 
 OVERVIEW
 --------
@@ -296,9 +327,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_DEV_INFO
      -
      -
-   * - BTRFS_IOC_FS_INFO
-     -
-     -
+   * - :ref:`BTRFS_IOC_FS_INFO<BTRFS_IOC_FS_INFO>`
+     - get information about filesystem (device count, fsid, ...)
+     - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
    * - BTRFS_IOC_BALANCE_V2
      -
      -
@@ -554,6 +585,26 @@ Change the flags of a subvolume.
      - file descriptor of the subvolume to modify
    * - ioctl args
      - uint64_t, either 0 or `BTRFS_SUBVOL_RDONLY`
+
+.. _BTRFS_IOC_FS_INFO:
+
+BTRFS_IOC_FS_INFO
+~~~~~~~~~~~~~~~~~
+
+Read internal information about the filesystem. The data can be exchanged
+both ways and part of the structure could be optionally filled. The reserved
+bytes can be used to get new kind of information in the future, always
+depending on the flags set.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file/directory in the filesystem
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
 
 .. _BTRFS_IOC_GET_SUBVOL_INFO:
 

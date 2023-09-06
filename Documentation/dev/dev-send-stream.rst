@@ -19,14 +19,36 @@ Data types
 
 Raw data types. Integer values are stored in little endian byte order.
 
-- unsigned int 8bit (u8)
-- unsigned int 16bit (u16)
-- unsigned int 32bit (u32)
-- unsigned int 64bit (u64)
-- variable length binary data (data)
-- variable length string (string)
-- UUID, 16 bytes (uuid)
-- time specification, 64bit seconds, 32bit nanoseconds (timespec)
+.. list-table::
+   :header-rows: 1
+
+   * - Meaning
+     - Size
+     - Name
+   * - unsigned int
+     - 8 bit
+     - u8
+   * - unsigned int
+     - 16 bit
+     - u16
+   * - unsigned int
+     - 32 bit
+     - u32
+   * - unsigned int
+     - 64 bit
+     - u64
+   * - variable length binary data
+     - variable
+     - data
+   * - variable length string
+     - variable
+     - string
+   * - UUID
+     - 16 bytes
+     - uuid
+   * - time specification
+     - 64bit seconds, 32bit nanoseconds
+     - timespec
 
 Stream structure
 ----------------

@@ -79,6 +79,8 @@ OPTIONS
 
         On multiple devices the default is *raid1*.
 
+.. _mkfs-feature-mixed-bg:
+
 -M|--mixed
         Normally the data and metadata block groups are isolated. The *mixed* mode
         will remove the isolation and store both types in the same block group type.
@@ -300,12 +302,29 @@ free-space-tree
         (default since btrfs-progs 5.15, kernel support since 4.5)
 
         Enable the free space tree (mount option *space_cache=v2*) for persisting the
-        free space cache.
+        free space cache in a b-tree. This is built on top of the COW mechanism
+        and has better performance than v1.
+
+        Offline conversion from filesystems that don't have this feature
+        enabled at *mkfs* time is possible, see :doc:`btrfstune`.
+
+        Online conversion can be done by mounting with ``space_cache=v2``, this
+        is sufficient to be done one time.
+
+.. _mkfs-feature-block-group-tree:
 
 block-group-tree
         (kernel support since 6.1)
 
-        Enable the block group tree to greatly reduce mount time for large filesystems.
+        Enable a dedicated b-tree for block group items, this greatly reduces
+        mount time for large filesystems due to better data locality that
+        avoids seeking. On rotational devices the *large* size is considered
+        starting from the 2-4TiB. Can be used on other types of devices (SSD,
+        NVMe, ...) as well.
+
+        Offline conversion from filesystems that don't have this feature
+        enabled at *mkfs* time is possible, see :doc:`btrfstune`. Online
+        conversion is not possible.
 
 .. _mkfs-section-profiles:
 

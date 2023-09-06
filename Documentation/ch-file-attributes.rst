@@ -68,7 +68,7 @@ No other attributes are supported.  For the complete list please refer to the
 XFLAGS
 ^^^^^^
 
-There's overlap of letters assigned to the bits with the attributes, this list
+There's an overlap of letters assigned to the bits with the attributes, this list
 refers to what ``xfs_io(8)`` provides:
 
 i

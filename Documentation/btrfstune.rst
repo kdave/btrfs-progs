@@ -52,6 +52,8 @@ OPTIONS
         change fsid stored as *metadata_uuid* to a randomly generated UUID,
         see also *-U*
 
+.. _btrfstune-feature-metadata-uuid:
+
 -M <UUID>
         (since kernel: 5.0)
 

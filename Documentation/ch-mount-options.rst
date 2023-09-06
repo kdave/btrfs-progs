@@ -27,13 +27,15 @@ acl, noacl
         The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
         mount fails if *acl* is requested but the feature is not compiled in.
 
+.. _mount-option-autodefrag:
+
 autodefrag, noautodefrag
         (since: 3.0, default: off)
 
         Enable automatic file defragmentation.
         When enabled, small random writes into files (in a range of tens of kilobytes,
         currently it's 64KiB) are detected and queued up for the defragmentation process.
-        Not well suited for large database workloads.
+        May not be well suited for large database workloads.
 
         The read latency may increase due to reading the adjacent blocks that make up the
         range for defragmentation, successive write will merge the blocks in the new
@@ -170,10 +172,12 @@ datasum, nodatasum
         The cost of checksumming of the blocks in memory is much lower than the IO,
         modern CPUs feature hardware support of the checksumming algorithm.
 
+.. _mount-option-degraded:
+
 degraded
         (default: off)
 
-        Allow mounts with less devices than the RAID profile constraints
+        Allow mounts with fewer devices than the RAID profile constraints
         require.  A read-write mount (or remount) may fail when there are too many devices
         missing, for example if a stripe member is completely missing from RAID0.
 
@@ -261,12 +265,12 @@ flushoncommit, noflushoncommit
         one transaction commit.
 
 fragment=<type>
-        (depends on compile-time option BTRFS_DEBUG, since: 4.4, default: off)
+        (depends on compile-time option CONFIG_BTRFS_DEBUG, since: 4.4, default: off)
 
         A debugging helper to intentionally fragment given *type* of block groups. The
         type can be *data*, *metadata* or *all*. This mount option should not be used
         outside of debugging environments and is not recognized if the kernel config
-        option *BTRFS_DEBUG* is not enabled.
+        option *CONFIG_BTRFS_DEBUG* is not enabled.
 
 nologreplay
         (default: off, even read-only)
@@ -287,8 +291,8 @@ max_inline=<bytes>
         with a K suffix (case insensitive).  In practice, this value
         is limited by the filesystem block size (named *sectorsize* at mkfs time),
         and memory page size of the system. In case of sectorsize limit, there's
-        some space unavailable due to leaf headers.  For example, a 4KiB sectorsize,
-        maximum size of inline data is about 3900 bytes.
+        some space unavailable due to b-tree leaf headers.  For example, a 4KiB
+        sectorsize, maximum size of inline data is about 3900 bytes.
 
         Inlining can be completely turned off by specifying 0. This will increase data
         block slack if file sizes are much smaller than block size but will reduce

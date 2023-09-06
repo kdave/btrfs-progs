@@ -3,6 +3,11 @@ On-disk Format
 
 This document describes the Btrfs on‐disk format.
 
+.. note::
+
+   This document contains outdated and incomplete information and has been
+   copied from the original btrfs.wiki.kernel.org with little review.
+
 Overview
 ~~~~~~~~
 
