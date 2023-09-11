@@ -185,9 +185,9 @@ sum_fini(sum_t *cs)
 }
 
 static void
-sum_add(sum_t *cs, void *buf, int size)
+sum_add(sum_t *cs, void *data, int size)
 {
-	SHA256Input(&cs->sha, buf, size);
+	SHA256Input(&cs->sha, data, size);
 }
 
 static void
@@ -235,7 +235,7 @@ sum_xattrs(int fd, sum_t *dst)
 {
 	ssize_t buflen;
 	ssize_t len;
-	char *buf;
+	char *buffer;
 	char *p;
 	char **names = NULL;
 	int num_xattrs = 0;
@@ -249,11 +249,11 @@ sum_xattrs(int fd, sum_t *dst)
 	if (buflen == 0)
 		return 0;
 
-	buf = malloc(buflen);
-	if (!buf)
+	buffer = malloc(buflen);
+	if (!buffer)
 		return -ENOMEM;
 
-	buflen = flistxattr(fd, buf, buflen);
+	buflen = flistxattr(fd, buffer, buflen);
 	if (buflen < 0) {
 		ret = -errno;
 		goto out;
@@ -265,7 +265,7 @@ sum_xattrs(int fd, sum_t *dst)
 	 * on different filesystems.
 	 */
 
-	p = buf;
+	p = buffer;
 	len = buflen;
 	while (len > 0) {
 		int keylen;
@@ -282,7 +282,7 @@ sum_xattrs(int fd, sum_t *dst)
 		goto out;
 	}
 
-	p = buf;
+	p = buffer;
 	for (i = 0; i < num_xattrs; i++) {
 		names[i] = p;
 		p += strlen(p) + 1; /* +1 for NULL terminator */
@@ -315,7 +315,7 @@ sum_xattrs(int fd, sum_t *dst)
 		free(p);
 	}
 out:
-	free(buf);
+	free(buffer);
 	free(names);
 
 	return ret;

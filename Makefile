@@ -86,7 +86,8 @@ DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation) \
 
 # Warnings that we want by default
 ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough) \
-			$(call cc-option, -Wmissing-prototypes)
+			$(call cc-option, -Wmissing-prototypes) \
+			-Wshadow
 
 ASFLAGS =
 
