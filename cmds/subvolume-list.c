@@ -1411,7 +1411,7 @@ static int btrfs_list_subvols(int fd, struct rb_root *root_lookup)
 	n = rb_first(root_lookup);
 	while (n) {
 		struct root_info *entry;
-		int ret;
+
 		entry = to_root_info(n);
 		ret = lookup_ino_path(fd, entry);
 		if (ret && ret != -ENOENT)

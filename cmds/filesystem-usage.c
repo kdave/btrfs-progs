@@ -537,11 +537,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			 * As mixed mode is not supported in zoned mode, this
 			 * will account for all profile types
 			 */
-			u64 tmp;
+			u64 unusable;
 
-			tmp = device_get_zone_unusable(fd, flags);
-			if (tmp != DEVICE_ZONE_UNUSABLE_UNKNOWN)
-				zone_unusable += tmp;
+			unusable = device_get_zone_unusable(fd, flags);
+			if (unusable != DEVICE_ZONE_UNUSABLE_UNKNOWN)
+				zone_unusable += unusable;
 		}
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
 			r_data_used += sargs->spaces[i].used_bytes * ratio;

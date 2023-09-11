@@ -227,15 +227,15 @@ static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,
 		for (i = 0; i < btrfs_header_nritems(eb); i++) {
 			struct btrfs_chunk *chunk;
 			struct btrfs_key key;
-			u64 type, physical, physical_dup, size = (u64)-1;
+			u64 type, physical, physical_dup;
+			u64 found_size = (u64)-1;
 
 			btrfs_item_key_to_cpu(eb, &key, i);
 			if (key.type != BTRFS_CHUNK_ITEM_KEY)
 				continue;
 
-			size = 0;
 			physical = logical_to_physical(mdres, key.offset,
-						       &size, &physical_dup);
+						       &found_size, &physical_dup);
 
 			if (!physical_dup)
 				truncate_item(eb, i, sizeof(*chunk));
@@ -254,9 +254,7 @@ static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,
 				btrfs_set_chunk_num_stripes(eb, chunk, 1);
 			btrfs_set_chunk_sub_stripes(eb, chunk, 0);
 			btrfs_set_stripe_devid_nr(eb, chunk, 0, mdres->devid);
-			if (size != (u64)-1)
-				btrfs_set_stripe_offset_nr(eb, chunk, 0,
-							   physical);
+			btrfs_set_stripe_offset_nr(eb, chunk, 0, physical);
 			/* update stripe 2 offset */
 			if (physical_dup)
 				btrfs_set_stripe_offset_nr(eb, chunk, 1,

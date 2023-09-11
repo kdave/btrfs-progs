@@ -248,7 +248,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 	}
 
 	while (cur < last_csum) {
-		u64 start;
+		u64 csum_start;
 		u64 len;
 		u32 item_size;
 
@@ -276,14 +276,14 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 		assert(key.offset >= cur);
 		item_size = btrfs_item_size(path.nodes[0], path.slots[0]);
 
-		start = key.offset;
+		csum_start = key.offset;
 		len = item_size / fs_info->csum_size * fs_info->sectorsize;
 		read_extent_buffer(path.nodes[0], csum_buffer,
 				btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 				item_size);
 		btrfs_release_path(&path);
 
-		ret = generate_new_csum_range(trans, start, len, new_csum_type,
+		ret = generate_new_csum_range(trans, csum_start, len, new_csum_type,
 					      csum_buffer);
 		if (ret < 0)
 			goto out;
@@ -303,7 +303,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 				goto out;
 			}
 		}
-		cur = start + len;
+		cur = csum_start + len;
 	}
 	ret = btrfs_commit_transaction(trans, csum_root);
 	if (inject_error(0x4de02239))
@@ -628,7 +628,7 @@ out:
 		struct btrfs_root *tree_root = fs_info->tree_root;
 		struct btrfs_trans_handle *trans;
 
-		u64 super_flags = btrfs_super_flags(fs_info->super_copy);
+		super_flags = btrfs_super_flags(fs_info->super_copy);
 
 		btrfs_set_super_csum_type(fs_info->super_copy, new_csum_type);
 		super_flags &= ~(BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM |

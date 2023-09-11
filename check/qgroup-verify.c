@@ -408,7 +408,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 	int ret;
 	u64 id, nr_roots, nr_refs;
 	struct qgroup_count *count;
-	struct ulist *counts = ulist_alloc(0);
+	struct ulist *local_counts = ulist_alloc(0);
 	struct ulist *tmp = ulist_alloc(0);
 	struct ulist_iterator uiter;
 	struct ulist_iterator tmp_uiter;
@@ -416,8 +416,8 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 	struct ulist_node *tmp_unode;
 	struct btrfs_qgroup_list *glist;
 
-	if (!counts || !tmp) {
-		ulist_free(counts);
+	if (!local_counts || !tmp) {
+		ulist_free(local_counts);
 		ulist_free(tmp);
 		return ENOMEM;
 	}
@@ -435,7 +435,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 			continue;
 
 		BUG_ON(!is_fstree(unode->val));
-		ret = ulist_add(counts, count->qgroupid, ptr_to_u64(count), 0);
+		ret = ulist_add(local_counts, count->qgroupid, ptr_to_u64(count), 0);
 		if (ret < 0)
 			goto out;
 
@@ -462,7 +462,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 
 				BUG_ON(!count);
 
-				ret = ulist_add(counts, id, ptr_to_u64(parent),
+				ret = ulist_add(local_counts, id, ptr_to_u64(parent),
 						0);
 				if (ret < 0)
 					goto out;
@@ -480,7 +480,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 	 */
 	nr_roots = roots->nnodes;
 	ULIST_ITER_INIT(&uiter);
-	while ((unode = ulist_next(counts, &uiter))) {
+	while ((unode = ulist_next(local_counts, &uiter))) {
 		count = u64_to_ptr(unode->aux);
 
 		nr_refs = group_get_cur_refcnt(count);
@@ -506,7 +506,7 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 	inc_qgroup_seq(roots->nnodes);
 	ret = 0;
 out:
-	ulist_free(counts);
+	ulist_free(local_counts);
 	ulist_free(tmp);
 	return ret;
 }
@@ -922,7 +922,7 @@ static int add_qgroup_relation(u64 memberid, u64 parentid)
 }
 
 static void read_qgroup_status(struct btrfs_fs_info *info, struct extent_buffer *eb,
-			       int slot, struct counts_tree *counts)
+			       int slot, struct counts_tree *ct)
 {
 	struct btrfs_qgroup_status_item *status_item;
 	u64 flags;
@@ -930,16 +930,15 @@ static void read_qgroup_status(struct btrfs_fs_info *info, struct extent_buffer 
 	status_item = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_status_item);
 	flags = btrfs_qgroup_status_flags(eb, status_item);
 
-	if (counts->simple == 1)
-		counts->enable_gen = btrfs_qgroup_status_enable_gen(eb, status_item);
+	if (ct->simple == 1)
+		ct->enable_gen = btrfs_qgroup_status_enable_gen(eb, status_item);
 	/*
 	 * Since qgroup_inconsist/rescan_running is just one bit,
 	 * assign value directly won't work.
 	 */
-	counts->qgroup_inconsist = !!(flags &
-			BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
-	counts->rescan_running = !!(flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN);
-	counts->scan_progress = btrfs_qgroup_status_rescan(eb, status_item);
+	ct->qgroup_inconsist = !!(flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
+	ct->rescan_running = !!(flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN);
+	ct->scan_progress = btrfs_qgroup_status_rescan(eb, status_item);
 }
 
 static int load_quota_info(struct btrfs_fs_info *info)

@@ -3768,7 +3768,6 @@ static int run_delayed_tree_ref(struct btrfs_trans_handle *trans,
 		BUG_ON(!extent_op || !extent_op->update_flags);
 		ret = alloc_reserved_tree_block(trans, node, extent_op);
 	} else if (node->action == BTRFS_DROP_DELAYED_REF) {
-		struct btrfs_delayed_tree_ref *ref = btrfs_delayed_node_to_tree_ref(node);
 		ret =  __free_extent(trans, node->bytenr, node->num_bytes,
 			     ref->parent, ref->root, ref->level, 0, 1);
 	} else {

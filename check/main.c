@@ -7597,9 +7597,9 @@ static int find_possible_backrefs(struct btrfs_path *path,
 
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (cache) {
-			struct extent_record *tmp;
+			struct extent_record *extent;
 
-			tmp = container_of(cache, struct extent_record, cache);
+			extent = container_of(cache, struct extent_record, cache);
 
 			/*
 			 * If we found an extent record for the bytenr for this
@@ -7609,7 +7609,7 @@ static int find_possible_backrefs(struct btrfs_path *path,
 			 * extent tree since they likely belong to this record
 			 * and we need to fix it if it doesn't match bytenrs.
 			 */
-			if  (tmp->found_rec)
+			if  (extent->found_rec)
 				continue;
 		}
 

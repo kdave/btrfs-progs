@@ -5027,7 +5027,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 
 		next = btrfs_find_tree_block(gfs_info, bytenr, gfs_info->nodesize);
 		if (!next || !btrfs_buffer_uptodate(next, ptr_gen, 0)) {
-			struct btrfs_tree_parent_check check = {
+			struct btrfs_tree_parent_check tree_check = {
 				.owner_root = btrfs_header_owner(cur),
 				.transid = ptr_gen,
 				.level = *level - 1,
@@ -5035,7 +5035,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 
 			free_extent_buffer(next);
 			reada_walk_down(root, cur, path->slots[*level]);
-			next = read_tree_block(gfs_info, bytenr, &check);
+			next = read_tree_block(gfs_info, bytenr, &tree_check);
 			if (!extent_buffer_uptodate(next)) {
 				struct btrfs_key node_key;
 

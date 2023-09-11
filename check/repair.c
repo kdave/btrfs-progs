@@ -169,10 +169,10 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 			if (ret)
 				return ret;
 		} else {
-			u64 end;
+			u64 child_end;
 
 			bytenr = btrfs_node_blockptr(eb, i);
-			end = bytenr + fs_info->nodesize - 1;
+			child_end = bytenr + fs_info->nodesize - 1;
 
 			/* If we aren't the tree root don't read the block */
 			if (level == 1 && !tree_root) {
@@ -180,7 +180,8 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 					btrfs_pin_extent(fs_info, bytenr,
 							 fs_info->nodesize);
 				else
-					set_extent_dirty(tree, bytenr, end, GFP_NOFS);
+					set_extent_dirty(tree, bytenr,
+							 child_end, GFP_NOFS);
 				continue;
 			}
 
