@@ -7,7 +7,6 @@ run-name: Static binaries
 on:
   push:
     branches:
-      - release-test
       - master
 jobs:
   build:

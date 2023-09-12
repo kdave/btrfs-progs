@@ -22,6 +22,10 @@ jobs:
         run: make V=1
       - name: Musl build
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+      - name: Make static
+        run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
+      - name: Make box.static
+        run: make V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
       - name: Tests cli
         run: sudo make TEST_LOG=dump test-cli
       - name: Tests mkfs
