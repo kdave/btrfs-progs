@@ -25,7 +25,7 @@ static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t
 	return crc_pcl(data, len, crc);
 }
 
-#else
+#endif
 
 /*
  * Based on a posting to lkml by Austin Zhang <austin.zhang@intel.com>
@@ -86,8 +86,6 @@ static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t l
 	return crc;
 }
 
-#endif
-
 void crc32c_init_accel(void)
 {
 	/*
@@ -96,14 +94,13 @@ void crc32c_init_accel(void)
 	 */
 	if (0) {
 #ifdef __GLIBC__
-	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
+	} else if (cpu_has_feature(CPU_FLAG_PCLMUL)) {
 		/* printf("CRC32C: pcl\n"); */
 		crc_function = crc32c_pcl;
-#else
+#endif
 	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
 		/* printf("CRC32c: intel\n"); */
 		crc_function = crc32c_intel;
-#endif
 	} else {
 		/* printf("CRC32c: fallback\n"); */
 		crc_function = __crc32c_le;

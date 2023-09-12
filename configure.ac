@@ -86,6 +86,7 @@ AC_SUBST([HAVE_GLIBC])
 AX_GCC_BUILTIN([__builtin_add_overflow])
 AX_GCC_BUILTIN([__builtin_sub_overflow])
 AX_GCC_BUILTIN([__builtin_mul_overflow])
+AX_GCC_BUILTIN([__builtin_cpu_supports__pclmul])
 
 AC_CHECK_HEADERS([linux/perf_event.h])
 AC_CHECK_HEADERS([linux/hw_breakpoint.h])

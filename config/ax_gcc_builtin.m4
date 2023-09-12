@@ -124,6 +124,7 @@ AC_DEFUN([AX_GCC_BUILTIN], [
                 [__builtin_cpu_init], [$1()],
                 [__builtin_cpu_is], [$1("intel")],
                 [__builtin_cpu_supports], [$1("sse")],
+                [__builtin_cpu_supports__pclmul], [__builtin_cpu_supports("pclmul")],
                 [__builtin_ctz], [$1(0)],
                 [__builtin_ctzl], [$1(0)],
                 [__builtin_ctzll], [$1(0)],
