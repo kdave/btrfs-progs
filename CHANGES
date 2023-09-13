@@ -17,6 +17,15 @@ btrfs-progs-6.5 (2023-09-01)
       * code refactoring
       * remove btrfs-fragments
 
+btrfs-progs-6.5.1 (2023-09-13)
+""""""""""""""""""""""""""""""
+   * build fixes:
+      * crc32c if PIE or relro is enabled
+      * detect if PCLMUL feature is recognized by compiler and also detect that
+        at runtime
+   * check: verify metadata item level when skinny-metadata is enabled
+   * other: minor build and docs updates
+
 btrfs-progs-6.4 (skipped)
 -------------------------
 
