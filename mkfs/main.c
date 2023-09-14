@@ -1728,6 +1728,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
+	if (opt_zoned)
+		btrfs_get_dev_zone_info_all_devices(fs_info);
+
 raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
 			 metadata_profile, mixed, &allocation);
