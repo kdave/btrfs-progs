@@ -10,27 +10,73 @@ on:
       - release-test
       - master
 jobs:
-  build:
+  check-centos7:
+    name: CI Centos 7
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: CI Centos7
         run: ci/ci-build-centos7
+  check-centos8:
+    name: CI Centos 8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Centos8
         run: ci/ci-build-centos8
+  check-leap153:
+    name: CI Leap 15.3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Leap 15.3
         run: ci/ci-build-leap153
+  check-leap154:
+    name: CI Leap 15.4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Leap 15.4
         run: ci/ci-build-leap154
+  check-musl:
+    name: CI Musl
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Musl
         run: ci/ci-build-musl
+  check-musl-32bit:
+    name: CI Musl (32bit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Musl (32bit)
         run: ci/ci-build-musl-i386
+  check-tumbleweed:
+    name: CI Tumbleweed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Tumbleweed
         run: ci/ci-build-tumbleweed
+  check-tumbleweed-libgcrypt:
+    name: CI Tumbleweed (libgcrypt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Tumbleweed (libgcrypt)
         run: ci/ci-build-tumbleweed HEAD --with-crypto=libgcrypt
+  check-tumbleweed-libsodium:
+    name: CI Tumbleweed (libsodium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Tumbleweed (libsodium)
         run: ci/ci-build-tumbleweed HEAD --with-crypto=libsodium
+  check-tumbleweed-libkcapi:
+    name: CI Tumbleweed (libkcapi)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: CI Tumbleweed (libkcapi)
         run: ci/ci-build-tumbleweed HEAD --with-crypto=libkcapi
