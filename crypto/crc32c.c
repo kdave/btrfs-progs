@@ -13,8 +13,8 @@
 #include "crypto/crc32c.h"
 #include "common/cpu-utils.h"
 
-static uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length);
-static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_t length) = __crc32c_le;
+static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length);
+static uint32_t (*crc32c_impl)(uint32_t crc, unsigned char const *data, uint32_t length) = crc32c_ref;
 
 #ifdef __x86_64__
 
@@ -61,10 +61,11 @@ static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
 }
 
 /*
- * Steps through buffer one byte at at time, calculates reflected 
- * crc using table.
+ * Accelerated implementation using SSE 4.2 extension for instruction crc32c.
+ * Steps through buffer one byte at at time, calculates reflected crc using
+ * table.
  */
-static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t length)
+static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	unsigned int iquotient = length / SCALE_F;
 	unsigned int iremainder = length % SCALE_F;
@@ -96,14 +97,14 @@ void crc32c_init_accel(void)
 #ifdef __GLIBC__
 	} else if (cpu_has_feature(CPU_FLAG_PCLMUL)) {
 		/* printf("CRC32C: pcl\n"); */
-		crc_function = crc32c_pcl;
+		crc32c_impl = crc32c_pcl;
 #endif
 	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
 		/* printf("CRC32c: intel\n"); */
-		crc_function = crc32c_intel;
+		crc32c_impl = crc32c_sse42;
 	} else {
 		/* printf("CRC32c: fallback\n"); */
-		crc_function = __crc32c_le;
+		crc32c_impl = crc32c_ref;
 	}
 }
 
@@ -111,7 +112,7 @@ void crc32c_init_accel(void)
 
 void crc32c_init_accel(void)
 {
-	crc_function = __crc32c_le;
+	crc32c_impl = crc32c_ref;
 }
 
 #endif /* __x86_64__ */
@@ -193,11 +194,10 @@ static const uint32_t crc32c_table[256] = {
 };
 
 /*
- * Steps through buffer one byte at at time, calculates reflected crc using
- * table.
+ * Fallback implementatin. Step through buffer one byte at at time, calculates
+ * reflected crc using table, can accept an unaligned buffer.
  */
-
-static uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length)
+static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	while (length--)
 		crc =
@@ -209,7 +209,7 @@ uint32_t crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	/* Use by-byte access for unaligned buffers */
 	if ((unsigned long)data % sizeof(unsigned long))
-		return __crc32c_le(crc, data, length);
+		return crc32c_ref(crc, data, length);
 
-	return crc_function(crc, data, length);
+	return crc32c_impl(crc, data, length);
 }
