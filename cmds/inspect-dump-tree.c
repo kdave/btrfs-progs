@@ -170,6 +170,7 @@ static u64 treeid_from_string(const char *str, const char **end)
 		{ "TREE_RELOC", BTRFS_TREE_RELOC_OBJECTID },
 		{ "DATA_RELOC", BTRFS_DATA_RELOC_TREE_OBJECTID },
 		{ "BLOCK_GROUP_TREE", BTRFS_BLOCK_GROUP_TREE_OBJECTID },
+		{ "RAID_STRIPE", BTRFS_RAID_STRIPE_TREE_OBJECTID },
 	};
 
 	if (strncasecmp("BTRFS_", str, strlen("BTRFS_")) == 0)
@@ -695,6 +696,10 @@ again:
 			case BTRFS_BLOCK_GROUP_TREE_OBJECTID:
 				if (!skip)
 					pr_verbose(LOG_DEFAULT, "block group");
+				break;
+			case BTRFS_RAID_STRIPE_TREE_OBJECTID:
+				if (!skip)
+					printf("raid stripe");
 				break;
 			default:
 				if (!skip) {

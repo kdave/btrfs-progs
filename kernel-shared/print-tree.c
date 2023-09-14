@@ -637,6 +637,49 @@ static void print_free_space_header(struct extent_buffer *leaf, int slot)
 	       (unsigned long long)btrfs_free_space_bitmaps(leaf, header));
 }
 
+struct raid_encoding_map {
+	u8 encoding;
+	char name[16];
+};
+
+static const struct raid_encoding_map raid_map[] = {
+	{ BTRFS_STRIPE_DUP,	"DUP" },
+	{ BTRFS_STRIPE_RAID0,	"RAID0" },
+	{ BTRFS_STRIPE_RAID1,	"RAID1" },
+	{ BTRFS_STRIPE_RAID1C3,	"RAID1C3" },
+	{ BTRFS_STRIPE_RAID1C4, "RAID1C4" },
+	{ BTRFS_STRIPE_RAID5,	"RAID5" },
+	{ BTRFS_STRIPE_RAID6,	"RAID6" },
+	{ BTRFS_STRIPE_RAID10,	"RAID10" }
+};
+
+static const char *stripe_encoding_name(u8 encoding)
+{
+	for (int i = 0; i < ARRAY_SIZE(raid_map); i++) {
+		if (raid_map[i].encoding == encoding)
+			return raid_map[i].name;
+	}
+
+	return "UNKNOWN";
+}
+
+static void print_raid_stripe_key(struct extent_buffer *eb,
+				  u32 item_size, struct btrfs_stripe_extent *stripe)
+{
+	int num_stripes;
+	u8 encoding = btrfs_stripe_extent_encoding(eb, stripe);
+
+	num_stripes = (item_size - offsetof(struct btrfs_stripe_extent, strides)) /
+		      sizeof(struct btrfs_raid_stride);
+
+	printf("\t\t\tencoding: %s\n", stripe_encoding_name(encoding));
+	for (int i = 0; i < num_stripes; i++)
+		printf("\t\t\tstripe %d devid %llu physical %llu length %llu\n", i,
+		       (unsigned long long)btrfs_raid_stride_devid_nr(eb, stripe, i),
+		       (unsigned long long)btrfs_raid_stride_offset_nr(eb, stripe, i),
+		       (unsigned long long)btrfs_raid_stride_length_nr(eb, stripe, i));
+}
+
 void print_key_type(FILE *stream, u64 objectid, u8 type)
 {
 	static const char* key_to_str[256] = {
@@ -681,6 +724,7 @@ void print_key_type(FILE *stream, u64 objectid, u8 type)
 		[BTRFS_PERSISTENT_ITEM_KEY]	= "PERSISTENT_ITEM",
 		[BTRFS_UUID_KEY_SUBVOL]		= "UUID_KEY_SUBVOL",
 		[BTRFS_UUID_KEY_RECEIVED_SUBVOL] = "UUID_KEY_RECEIVED_SUBVOL",
+		[BTRFS_RAID_STRIPE_KEY]		= "RAID_STRIPE",
 	};
 
 	if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID) {
@@ -792,6 +836,9 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 		break;
 	case BTRFS_CSUM_CHANGE_OBJECTID:
 		fprintf(stream, "CSUM_CHANGE");
+		break;
+	case  BTRFS_RAID_STRIPE_TREE_OBJECTID:
+		fprintf(stream, "RAID_STRIPE_TREE");
 		break;
 	case (u64)-1:
 		fprintf(stream, "-1");
@@ -1468,6 +1515,9 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			break;
 		case BTRFS_TEMPORARY_ITEM_KEY:
 			print_temporary_item(eb, ptr, objectid, offset);
+			break;
+		case BTRFS_RAID_STRIPE_KEY:
+			print_raid_stripe_key(eb, item_size, ptr);
 			break;
 		};
 		fflush(stdout);
