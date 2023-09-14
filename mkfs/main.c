@@ -962,6 +962,36 @@ fail:
 	return ret;
 }
 
+static int setup_raid_stripe_tree_root(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *stripe_root;
+	struct btrfs_key key = {
+		.objectid = BTRFS_RAID_STRIPE_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+	};
+	int ret;
+
+	trans = btrfs_start_transaction(fs_info->tree_root, 0);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	stripe_root = btrfs_create_tree(trans, fs_info, &key);
+	if (IS_ERR(stripe_root))  {
+		ret = PTR_ERR(stripe_root);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	fs_info->stripe_root = stripe_root;
+	add_root_to_dirty_list(stripe_root);
+
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 /* Thread callback for device preparation */
 static void *prepare_one_device(void *ctx)
 {
@@ -1472,10 +1502,38 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret)
 		goto error;
 
-	if (opt_zoned && (!zoned_profile_supported(BTRFS_BLOCK_GROUP_METADATA | metadata_profile) ||
-		      !zoned_profile_supported(BTRFS_BLOCK_GROUP_DATA | data_profile))) {
-		error("zoned mode does not yet support RAID/DUP profiles, please specify '-d single -m single' manually");
-		goto error;
+#if EXPERIMENTAL
+	if (opt_zoned && device_count) {
+		switch (data_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+		case BTRFS_BLOCK_GROUP_DUP:
+		case BTRFS_BLOCK_GROUP_RAID1:
+		case BTRFS_BLOCK_GROUP_RAID1C3:
+		case BTRFS_BLOCK_GROUP_RAID1C4:
+		case BTRFS_BLOCK_GROUP_RAID0:
+		case BTRFS_BLOCK_GROUP_RAID10:
+			features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE;
+			break;
+		default:
+			break;
+		}
+	}
+#endif
+
+	if (opt_zoned) {
+		u64 metadata = BTRFS_BLOCK_GROUP_METADATA | metadata_profile;
+		u64 data = BTRFS_BLOCK_GROUP_DATA | data_profile;
+		bool rst = false;
+
+#if EXPERIMENTAL
+		if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE)
+			rst = true;
+#endif
+
+		if (!zoned_profile_supported(metadata, rst) ||
+		    !zoned_profile_supported(data, rst)) {
+			error("zoned mode does not yet support RAID/DUP profiles, please specify '-d single -m single' manually");
+			goto error;
+		}
 	}
 
 	t_prepare = calloc(device_count, sizeof(*t_prepare));
@@ -1583,6 +1641,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret) {
 		error("failed to create default block groups: %d", ret);
 		goto error;
+	}
+
+	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE) {
+		ret = setup_raid_stripe_tree_root(fs_info);
+		if (ret < 0) {
+			error("failed to initialize raid-stripe-tree: %d (%m)", ret);
+			goto out;
+		}
 	}
 
 	trans = btrfs_start_transaction(root, 1);

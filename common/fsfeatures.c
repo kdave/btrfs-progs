@@ -190,6 +190,14 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
 		.desc		= "new extent tree format"
+	} , {
+		.name		= "raid-stripe-tree",
+		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
+		.sysfs_name	= NULL,
+		VERSION_TO_STRING2(compat, 6,7),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "raid stripe tree"
 	},
 #endif
 	/* Keep this one last */

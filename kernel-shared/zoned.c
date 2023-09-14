@@ -737,7 +737,7 @@ out:
 	return ret;
 }
 
-bool zoned_profile_supported(u64 map_type)
+bool zoned_profile_supported(u64 map_type, bool rst)
 {
 	bool data = (map_type & BTRFS_BLOCK_GROUP_DATA);
 	u64 flags = (map_type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
@@ -746,9 +746,37 @@ bool zoned_profile_supported(u64 map_type)
 	if (flags == 0)
 		return true;
 
-	/* We can support DUP on metadata */
+#if EXPERIMENTAL
+	if (data) {
+		if ((flags & BTRFS_BLOCK_GROUP_DUP) && rst)
+			return true;
+		/* Data RAID1 needs a raid-stripe-tree. */
+		if ((flags & BTRFS_BLOCK_GROUP_RAID1_MASK) && rst)
+			return true;
+		/* Data RAID0 needs a raid-stripe-tree. */
+		if ((flags & BTRFS_BLOCK_GROUP_RAID0) && rst)
+			return true;
+		/* Data RAID10 needs a raid-stripe-tree. */
+		if ((flags & BTRFS_BLOCK_GROUP_RAID10) && rst)
+			return true;
+	} else {
+		/* We can support DUP on metadata/system. */
+		if (flags & BTRFS_BLOCK_GROUP_DUP)
+			return true;
+		/* We can support RAID1 on metadata/system. */
+		if (flags & BTRFS_BLOCK_GROUP_RAID1_MASK)
+			return true;
+		/* We can support RAID0 on metadata/system. */
+		if (flags & BTRFS_BLOCK_GROUP_RAID0)
+			return true;
+		/* We can support RAID10 on metadata/system. */
+		if (flags & BTRFS_BLOCK_GROUP_RAID10)
+			return true;
+	}
+#else
 	if (!data && (flags & BTRFS_BLOCK_GROUP_DUP))
 		return true;
+#endif
 
 	/* All other profiles are not supported yet */
 	return false;
@@ -863,7 +891,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		}
 	}
 
-	if (!zoned_profile_supported(map->type)) {
+	if (!zoned_profile_supported(map->type, !!fs_info->stripe_root)) {
 		error("zoned: profile %s not yet supported",
 		      btrfs_group_profile_str(map->type));
 		ret = -EINVAL;
