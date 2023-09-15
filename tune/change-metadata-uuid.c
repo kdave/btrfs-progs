@@ -21,8 +21,30 @@
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/volumes.h"
 #include "common/messages.h"
 #include "tune/tune.h"
+
+/*
+ * Return 0 for no unfinished metadata_uuid change.
+ * Return >0 for unfinished metadata_uuid change, and restore unfinished
+ * fsid/metadata_uuid into fsid_ret/metadata_uuid_ret.
+ */
+static int check_unfinished_metadata_uuid(struct btrfs_fs_info *fs_info,
+					  uuid_t fsid_ret,
+					  uuid_t metadata_uuid_ret)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+
+	if (fs_info->fs_devices->inconsistent_super) {
+		memcpy(fsid_ret, fs_info->super_copy->fsid, BTRFS_FSID_SIZE);
+		read_extent_buffer(tree_root->node, metadata_uuid_ret,
+				   btrfs_header_chunk_tree_uuid(tree_root->node),
+				   BTRFS_UUID_SIZE);
+		return 1;
+	}
+	return 0;
+}
 
 int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 {
@@ -45,15 +67,24 @@ int set_metadata_uuid(struct btrfs_root *root, const char *new_fsid_string)
 		return 1;
 	}
 
-	if (check_unfinished_fsid_change(root->fs_info, fsid, metadata_uuid)) {
-		error("UUID rewrite in progress, cannot change metadata_uuid");
-		return 1;
-	}
+	if (check_unfinished_metadata_uuid(root->fs_info, fsid, metadata_uuid)) {
+		if (new_fsid_string) {
+			uuid_t tmp;
 
-	if (new_fsid_string)
-		uuid_parse(new_fsid_string, fsid);
-	else
-		uuid_generate(fsid);
+			uuid_parse(new_fsid_string, tmp);
+			if (memcmp(tmp, fsid, BTRFS_FSID_SIZE) != 0) {
+				error(
+		"new fsid %s is not the same with unfinished fsid change",
+				      new_fsid_string);
+				return -EINVAL;
+			}
+		}
+	} else {
+		if (new_fsid_string)
+			uuid_parse(new_fsid_string, fsid);
+		else
+			uuid_generate(fsid);
+	}
 
 	new_fsid = (memcmp(fsid, disk_super->fsid, BTRFS_FSID_SIZE) != 0);
 

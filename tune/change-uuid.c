@@ -210,8 +210,8 @@ static int change_fsid_done(struct btrfs_fs_info *fs_info)
  * Return >0 for unfinished fsid change, and restore unfinished fsid/
  * chunk_tree_id into fsid_ret/chunk_id_ret.
  */
-int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
-				 uuid_t fsid_ret, uuid_t chunk_id_ret)
+static int check_unfinished_fsid_change(struct btrfs_fs_info *fs_info,
+					uuid_t fsid_ret, uuid_t chunk_id_ret)
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
 
