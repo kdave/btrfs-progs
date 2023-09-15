@@ -355,6 +355,14 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		goto free_out;
 	}
 
+	/*
+	 * For fsid changes we must use the latest device (not necessarily the
+	 * one specified on command line so the matching of the device
+	 * belonging to the filesystem works.
+	 */
+	if (change_metadata_uuid || random_fsid || new_fsid_str)
+		ctree_flags |= OPEN_CTREE_USE_LATEST_BDEV;
+
 	root = open_ctree_fd(fd, device, 0, ctree_flags);
 
 	if (!root) {
