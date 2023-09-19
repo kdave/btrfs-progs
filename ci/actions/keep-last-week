@@ -39,3 +39,4 @@ clean_workflow() {
 
 clean_workflow "Testing CI build"
 clean_workflow "Devel build and tests"
+clean_workflow "Pull request build and tests"
