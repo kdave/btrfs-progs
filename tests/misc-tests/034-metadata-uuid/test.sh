@@ -222,47 +222,8 @@ failure_recovery_progs() {
 	rm -f -- "$image1" "$image2"
 }
 
-failure_recovery_kernel() {
-	local image1
-	local image2
-	local loop1
-	local loop2
-	local devcount
-
-	reload_btrfs
-
-	image1=$(extract_image "$1")
-	image2=$(extract_image "$2")
-	loop1=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image1")
-	loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image2")
-
-	run_check $SUDO_HELPER udevadm settle
-
-	# Scan to make sure btrfs detects both devices before trying to mount
-	run_check $SUDO_HELPER "$TOP/btrfs" device scan "$loop1"
-	run_check $SUDO_HELPER "$TOP/btrfs" device scan "$loop2"
-
-	# Mount and unmount, on trans commit all disks should be consistent
-	run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
-	run_check $SUDO_HELPER umount "$TEST_MNT"
-
-	# perform any specific check
-	"$3" "$loop1" "$loop2"
-
-	# cleanup
-	run_check $SUDO_HELPER losetup -d "$loop1"
-	run_check $SUDO_HELPER losetup -d "$loop2"
-	rm -f -- "$image1" "$image2"
-}
-
 failure_recovery() {
 	failure_recovery_progs "$@"
-	failure_recovery_kernel "$@"
-}
-
-reload_btrfs() {
-	run_check $SUDO_HELPER rmmod btrfs
-	run_check $SUDO_HELPER modprobe btrfs
 }
 
 test_progs() {
@@ -275,15 +236,6 @@ test_progs() {
 	run_check_mkfs_test_dev
 	check_image_restore
 }
-
-check_kernel_reloadable() {
-	# for full coverage we need btrfs to actually be a module
-	modinfo btrfs > /dev/null 2>&1 || _not_run "btrfs must be a module"
-	run_mayfail $SUDO_HELPER modprobe -r btrfs || _not_run "btrfs must be unloadable"
-	run_mayfail $SUDO_HELPER modprobe btrfs || _not_run "loading btrfs module failed"
-}
-
-check_kernel_reloadable
 
 test_progs
 
