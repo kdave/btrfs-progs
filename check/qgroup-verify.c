@@ -1696,6 +1696,8 @@ static int repair_qgroup_status(struct btrfs_fs_info *info, bool silent)
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_qgroup_status_item *status_item;
+	bool simple = btrfs_fs_incompat(info, SIMPLE_QUOTA);
+	u64 flags = BTRFS_QGROUP_STATUS_FLAG_ON;
 
 	if (!silent)
 		printf("Repair qgroup status item\n");
@@ -1718,8 +1720,9 @@ static int repair_qgroup_status(struct btrfs_fs_info *info, bool silent)
 
 	status_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				     struct btrfs_qgroup_status_item);
-	btrfs_set_qgroup_status_flags(path.nodes[0], status_item,
-				      BTRFS_QGROUP_STATUS_FLAG_ON);
+	if (simple)
+		flags |= BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE;
+	btrfs_set_qgroup_status_flags(path.nodes[0], status_item, flags);
 	btrfs_set_qgroup_status_rescan(path.nodes[0], status_item, 0);
 	btrfs_set_qgroup_status_generation(path.nodes[0], status_item,
 					   trans->transid);

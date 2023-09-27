@@ -59,6 +59,8 @@
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 
+#include "libbtrfs/ctree.h"
+
 struct mkfs_allocation {
 	u64 data;
 	u64 metadata;
@@ -882,6 +884,51 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+/*
+ * Workaround for squota so the enable_gen can be properly used.
+ */
+static int touch_root_subvol(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key = {
+		.objectid = BTRFS_FIRST_FREE_OBJECTID,
+		.type = BTRFS_INODE_ITEM_KEY,
+		.offset = 0,
+	};
+	struct extent_buffer *leaf;
+	int slot;
+	struct btrfs_path path;
+	int ret;
+
+	trans = btrfs_start_transaction(fs_info->fs_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(trans, fs_info->fs_root, &key, &path, 0, 1);
+	if (ret)
+		goto fail;
+	leaf = path.nodes[0];
+	slot = path.slots[0];
+	btrfs_item_key_to_cpu(leaf, &key, slot);
+	btrfs_mark_buffer_dirty(leaf);
+	ret = btrfs_commit_transaction(trans, fs_info->fs_root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		return ret;
+	}
+	btrfs_release_path(&path);
+	return 0;
+fail:
+	btrfs_abort_transaction(trans, ret);
+	btrfs_release_path(&path);
+	return ret;
+}
+
 static int setup_quota_root(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_trans_handle *trans;
@@ -890,7 +937,10 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	struct btrfs_path path;
 	struct btrfs_key key;
 	int qgroup_repaired = 0;
+	bool simple = btrfs_fs_incompat(fs_info, SIMPLE_QUOTA);
+	int flags;
 	int ret;
+
 
 	/* One to modify tree root, one for quota root */
 	trans = btrfs_start_transaction(fs_info->tree_root, 2);
@@ -921,13 +971,19 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 
 	qsi = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			     struct btrfs_qgroup_status_item);
-	btrfs_set_qgroup_status_generation(path.nodes[0], qsi, 0);
+	btrfs_set_qgroup_status_generation(path.nodes[0], qsi, trans->transid);
 	btrfs_set_qgroup_status_rescan(path.nodes[0], qsi, 0);
+	flags = BTRFS_QGROUP_STATUS_FLAG_ON;
+	if (simple) {
+		btrfs_set_qgroup_status_enable_gen(path.nodes[0], qsi, trans->transid);
+		flags |= BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE;
+	}
+	else {
+		flags |= BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT;
+	}
 
-	/* Mark current status info inconsistent, and fix it later */
-	btrfs_set_qgroup_status_flags(path.nodes[0], qsi,
-			BTRFS_QGROUP_STATUS_FLAG_ON |
-			BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
+	btrfs_set_qgroup_status_version(path.nodes[0], qsi, 1);
+	btrfs_set_qgroup_status_flags(path.nodes[0], qsi, flags);
 	btrfs_release_path(&path);
 
 	/* Currently mkfs will only create one subvolume */
@@ -942,6 +998,15 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
+	}
+
+	/* Hack to count the default subvol metadata by dirtying it */
+	if (simple) {
+		ret = touch_root_subvol(fs_info);
+		if (ret) {
+			error("failed to touch root dir for simple quota accounting %d (%m)", ret);
+			goto fail;
+		}
 	}
 
 	/*
@@ -1813,7 +1878,8 @@ raid_groups:
 		}
 	}
 
-	if (features.runtime_flags & BTRFS_FEATURE_RUNTIME_QUOTA) {
+	if (features.runtime_flags & BTRFS_FEATURE_RUNTIME_QUOTA ||
+	    features.incompat_flags & BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA) {
 		ret = setup_quota_root(fs_info);
 		if (ret < 0) {
 			error("failed to initialize quota: %d (%m)", ret);

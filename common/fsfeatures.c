@@ -110,6 +110,15 @@ static const struct btrfs_feature mkfs_features[] = {
 		.desc		= "quota support (qgroups)"
 	},
 	{
+		.name		= "squota",
+		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA,
+		.sysfs_name	= "squota",
+		VERSION_TO_STRING2(compat, 6,7),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "squota support (simple accounting qgroups)"
+	},
+	{
 		.name		= "extref",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
 		.sysfs_name	= "extended_iref",
