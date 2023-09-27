@@ -103,6 +103,7 @@ static const char * const tune_usage[] = {
 	OPTLINE("-x", "enable skinny metadata extent refs (mkfs: skinny-metadata)"),
 	OPTLINE("-n", "enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)"),
 	OPTLINE("-S <0|1>", "set/unset seeding status of a device"),
+	OPTLINE("-q", "enable simple quotas on the file system. (mkfs: squota)"),
 	OPTLINE("--convert-to-block-group-tree", "convert filesystem to track block groups in "
 			"the separate block-group-tree instead of extent tree (sets the incompat bit)"),
 	OPTLINE("--convert-from-block-group-tree",
@@ -153,6 +154,9 @@ enum btrfstune_group_enum {
 	 */
 	LEGACY,
 
+	/* Qgroup options */
+	QGROUP,
+
 	BTRFSTUNE_NR_GROUPS,
 };
 
@@ -189,6 +193,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	char *new_fsid_str = NULL;
 	int ret;
 	u64 super_flags = 0;
+	int quota = 0;
 	int fd = -1;
 
 	btrfs_config_init();
@@ -211,7 +216,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "S:rxfuU:nmM:", long_options, NULL);
+		int c = getopt_long(argc, argv, "S:rxqfuU:nmM:", long_options, NULL);
 
 		if (c < 0)
 			break;
@@ -228,6 +233,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case 'x':
 			super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
 			btrfstune_cmd_groups[LEGACY] = true;
+			break;
+		case 'q':
+			quota = 1;
+			btrfstune_cmd_groups[QGROUP] = true;
 			break;
 		case 'n':
 			super_flags |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
@@ -499,6 +508,13 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		ret = change_uuid(fs_info, new_fsid_str);
 		goto out;
 	}
+
+	if (quota) {
+		ret = enable_quota(root->fs_info, true);
+		if (ret)
+			goto out;
+	}
+
 out:
 	if (ret < 0) {
 		fs_info->readonly = 1;

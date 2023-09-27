@@ -33,4 +33,7 @@ int convert_to_bg_tree(struct btrfs_fs_info *fs_info);
 int convert_to_extent_tree(struct btrfs_fs_info *fs_info);
 
 int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type);
+
+int enable_quota(struct btrfs_fs_info *fs_info, bool simple);
+
 #endif
