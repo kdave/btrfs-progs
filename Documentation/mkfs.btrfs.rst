@@ -326,6 +326,13 @@ block-group-tree
         enabled at *mkfs* time is possible, see :doc:`btrfstune`. Online
         conversion is not possible.
 
+squota
+	(kernel support since 6.7)
+
+        Enable simple quota accounting (squotas). This is an alternative to
+        qgroups with a smaller performance impact but no notion of shared vs.
+        exclusive usage.
+
 .. _mkfs-section-profiles:
 
 BLOCK GROUPS, CHUNKS, RAID

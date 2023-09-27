@@ -47,8 +47,16 @@ SUBCOMMAND
 disable <path>
         Disable subvolume quota support for a filesystem.
 
-enable <path>
-        Enable subvolume quota support for a filesystem.
+enable [options] <path>
+        Enable subvolume quota support for a filesystem. At this point it's
+        possible the two modes of accounting. The *full* means that extent
+        ownership by subvolumes will be tracked all the time, *simple* will
+        account everything to the first owner. See the section for more details.
+
+        ``Options``
+
+	-s|--simple
+		use simple quotas (squotas) instead of full qgroup accounting
 
 rescan [options] <path>
         Trash all qgroup numbers and scan the metadata again with the current config.

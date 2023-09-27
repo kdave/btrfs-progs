@@ -188,3 +188,64 @@ but some snapshots for backup purposes are being created by the system.  The
 user's snapshots should be accounted to the user, not the system.  The solution
 is similar to the one from section *Accounting snapshots to the user*, but do
 not assign system snapshots to user's qgroup.
+
+Simple quotas (squota)
+^^^^^^^^^^^^^^^^^^^^^^
+
+As detailed in this document, qgroups can handle many complex extent sharing
+and unsharing scenarios while maintaining an accurate count of exclusive and
+shared usage. However, this flexibility comes at a cost: many of the
+computations are global, in the sense that we must count up the number of trees
+referring to an extent after its references change. This can slow down
+transaction commits and lead to unacceptable latencies, especially in cases
+where snapshots scale up.
+
+To work around this limitation of qgroups, btrfs also supports a second set of
+quota semantics: *simple quotas* or *squotas*. Squotas fully share the qgroups API
+and hierarchical model, but do not track shared vs. exclusive usage. Instead,
+they account all extents to the subvolume that first allocated it. With a bit
+of new bookkeeping, this allows all accounting decisions to be local to the
+allocation or freeing operation that deals with the extents themselves, and
+fully avoids the complex and costly back-reference resolutions.
+
+``Example``
+
+To illustrate the difference between squotas and qgroups, consider the following
+basic example assuming a nodesize of 16KiB.
+
+1. create subvolume 256
+2. rack up 1GiB of data and metadata usage in 256
+3. snapshot 256, creating subvolume 257
+4. COW 512MiB of the data and metadata in 257
+5. delete everything in 256
+
+At each step, qgroups would have the following accounting:
+
+1. 0/256: 16KiB excl 0 shared
+2. 0/256: 1GiB excl 0 shared
+3. 0/256: 0 excl 1GiB shared; 0/257: 0 excl 1GiB shared
+4. 0/256: 512MiB excl 512MiB shared; 0/257: 512MiB excl 512MiB shared
+5. 0/256: 16KiB excl 0 shared; 0/257: 1GiB excl 0 shared
+
+Whereas under squotas, the accounting would look like:
+
+1. 0/256: 16KiB excl 16KiB shared
+2. 0/256: 1GiB excl 1GiB shared
+3. 0/256: 1GiB excl 1GiB shared; 0/257: 16KiB excl 16KiB shared
+4. 0/256: 1GiB excl 1GiB shared; 0/257: 512MiB excl 512MiB shared
+5. 0/256: 512MiB excl 512MiB shared; 0/257: 512MiB excl 512MiB shared
+
+Note that since the original snapshotted 512MiB are still referenced by 257,
+they cannot be freed from 256, even after 256 is emptied, or even deleted.
+
+``Summary``
+
+If you want some of power and flexibility of quotas for tracking and limiting
+subvolume usage, but want to avoid the performance penalty of accurately
+tracking extent ownership life cycles, then squotas can be a useful option.
+
+Furthermore, squotas is targeted at use cases where the original extent is
+immutable, like image snapshotting for container startup, in which case we avoid
+these awkward scenarios where a subvolume is empty or deleted but still has
+significant extents accounted to it. However, as long as you are aware of the
+accounting semantics, they can handle mutable original extents.
