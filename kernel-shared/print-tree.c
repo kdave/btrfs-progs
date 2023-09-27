@@ -509,6 +509,10 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 			       (unsigned long long)offset,
 			       btrfs_shared_data_ref_count(eb, sref));
 			break;
+		case BTRFS_EXTENT_OWNER_REF_KEY:
+			printf("\t\textent owner root %llu\n",
+			       (unsigned long long)offset);
+			break;
 		default:
 			return;
 		}
@@ -704,6 +708,7 @@ void print_key_type(FILE *stream, u64 objectid, u8 type)
 		[BTRFS_EXTENT_DATA_REF_KEY]	= "EXTENT_DATA_REF",
 		[BTRFS_SHARED_DATA_REF_KEY]	= "SHARED_DATA_REF",
 		[BTRFS_EXTENT_REF_V0_KEY]	= "EXTENT_REF_V0",
+		[BTRFS_EXTENT_OWNER_REF_KEY]	= "EXTENT_OWNER_REF",
 		[BTRFS_CSUM_ITEM_KEY]		= "CSUM_ITEM",
 		[BTRFS_EXTENT_CSUM_KEY]		= "EXTENT_CSUM",
 		[BTRFS_EXTENT_DATA_KEY]		= "EXTENT_DATA",
@@ -1089,6 +1094,17 @@ static void print_shared_data_ref(struct extent_buffer *eb, int slot)
 		btrfs_shared_data_ref_count(eb, sref));
 }
 
+static void print_extent_owner_ref(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_extent_owner_ref *oref;
+	u64 root_id;
+
+	oref = btrfs_item_ptr(eb, slot, struct btrfs_extent_owner_ref);
+	root_id = btrfs_extent_owner_ref_root_id(eb, oref);
+
+	printf("\t\textent owner root %llu\n", root_id);
+}
+
 static void print_free_space_info(struct extent_buffer *eb, int slot)
 {
 	struct btrfs_free_space_info *free_info;
@@ -1130,11 +1146,16 @@ static void print_qgroup_status(struct extent_buffer *eb, int slot)
 	memset(flags_str, 0, sizeof(flags_str));
 	qgroup_flags_to_str(btrfs_qgroup_status_flags(eb, qg_status),
 					flags_str);
-	printf("\t\tversion %llu generation %llu flags %s scan %llu\n",
+	printf("\t\tversion %llu generation %llu flags %s scan %llu",
 		(unsigned long long)btrfs_qgroup_status_version(eb, qg_status),
 		(unsigned long long)btrfs_qgroup_status_generation(eb, qg_status),
 		flags_str,
 		(unsigned long long)btrfs_qgroup_status_rescan(eb, qg_status));
+	if (btrfs_fs_incompat(eb->fs_info, SIMPLE_QUOTA))
+		printf(" enable_gen %llu\n",
+			   (unsigned long long)btrfs_qgroup_status_enable_gen(eb, qg_status));
+	else
+		printf("\n");
 }
 
 static void print_qgroup_info(struct extent_buffer *eb, int slot)
@@ -1454,6 +1475,9 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 		case BTRFS_SHARED_DATA_REF_KEY:
 			print_shared_data_ref(eb, i);
 			break;
+		case BTRFS_EXTENT_OWNER_REF_KEY:
+			print_extent_owner_ref(eb, i);
+			break;
 		case BTRFS_EXTENT_REF_V0_KEY:
 			printf("\t\textent ref v0 (deprecated)\n");
 			break;
@@ -1759,6 +1783,7 @@ static struct readable_flag_entry incompat_flags_array[] = {
 	DEF_INCOMPAT_FLAG_ENTRY(ZONED),
 	DEF_INCOMPAT_FLAG_ENTRY(EXTENT_TREE_V2),
 	DEF_INCOMPAT_FLAG_ENTRY(RAID_STRIPE_TREE),
+	DEF_INCOMPAT_FLAG_ENTRY(SIMPLE_QUOTA),
 };
 static const int incompat_flags_num = sizeof(incompat_flags_array) /
 				      sizeof(struct readable_flag_entry);
