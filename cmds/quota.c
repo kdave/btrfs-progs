@@ -34,16 +34,12 @@ static const char * const quota_cmd_group_usage[] = {
 	NULL
 };
 
-static int quota_ctl(int cmd, int argc, char **argv)
+static int quota_ctl(int cmd, char *path)
 {
 	int ret = 0;
 	int fd;
-	char *path = argv[1];
 	struct btrfs_ioctl_quota_ctl_args args;
 	DIR *dirstream = NULL;
-
-	if (check_argc_exact(argc, 2))
-		return -1;
 
 	memset(&args, 0, sizeof(args));
 	args.cmd = cmd;
@@ -67,17 +63,40 @@ static const char * const cmd_quota_enable_usage[] = {
 	"Any data already present on the filesystem will not count towards",
 	"the space usage numbers. It is recommended to enable quota for a",
 	"filesystem before writing any data to it.",
+	"",
+	"-s|--simple	simple qgroups account ownership by extent lifetime rather than backref walks",
 	NULL
 };
 
 static int cmd_quota_enable(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int ret;
+	int ctl_cmd = BTRFS_QUOTA_CTL_ENABLE;
 
-	clean_args_no_options(cmd, argc, argv);
+	optind = 0;
+	while (1) {
+		static const struct option long_options[] = {
+			{"simple", no_argument, NULL, 's'},
+			{NULL, 0, NULL, 0}
+		};
+		int c;
 
-	ret = quota_ctl(BTRFS_QUOTA_CTL_ENABLE, argc, argv);
+		c = getopt_long(argc, argv, "s", long_options, NULL);
+		if (c < 0)
+			break;
 
+		switch (c) {
+		case 's':
+			ctl_cmd = BTRFS_QUOTA_CTL_ENABLE_SIMPLE_QUOTA;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
+		return -1;
+
+	ret = quota_ctl(ctl_cmd, argv[optind]);
 	if (ret < 0)
 		usage(cmd, 1);
 	return ret;
@@ -97,8 +116,10 @@ static int cmd_quota_disable(const struct cmd_struct *cmd,
 
 	clean_args_no_options(cmd, argc, argv);
 
-	ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argc, argv);
+	if (check_argc_exact(argc, 2))
+		return -1;
 
+	ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argv[1]);
 	if (ret < 0)
 		usage(cmd, 1);
 	return ret;
