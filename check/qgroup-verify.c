@@ -85,6 +85,8 @@ static struct counts_tree {
 	unsigned int		num_groups;
 	unsigned int		rescan_running:1;
 	unsigned int		qgroup_inconsist:1;
+	unsigned int		simple:1;
+	u64			enable_gen;
 	u64			scan_progress;
 } counts = { .root = RB_ROOT };
 
@@ -915,14 +917,17 @@ static int add_qgroup_relation(u64 memberid, u64 parentid)
 	return 0;
 }
 
-static void read_qgroup_status(struct extent_buffer *eb, int slot,
-			      struct counts_tree *counts)
+static void read_qgroup_status(struct btrfs_fs_info *info, struct extent_buffer *eb,
+			       int slot, struct counts_tree *counts)
 {
 	struct btrfs_qgroup_status_item *status_item;
 	u64 flags;
 
 	status_item = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_status_item);
 	flags = btrfs_qgroup_status_flags(eb, status_item);
+
+	if (counts->simple == 1)
+		counts->enable_gen = btrfs_qgroup_status_enable_gen(eb, status_item);
 	/*
 	 * Since qgroup_inconsist/rescan_running is just one bit,
 	 * assign value directly won't work.
@@ -948,6 +953,8 @@ static int load_quota_info(struct btrfs_fs_info *info)
 	int i, nr;
 	int search_relations = 0;
 
+	if (btrfs_fs_incompat(info, SIMPLE_QUOTA))
+		counts.simple = 1;
 loop:
 	/*
 	 * Do 2 passes, the first allocates group counts and reads status
@@ -990,7 +997,7 @@ loop:
 			}
 
 			if (key.type == BTRFS_QGROUP_STATUS_KEY) {
-				read_qgroup_status(leaf, i, &counts);
+				read_qgroup_status(info, leaf, i, &counts);
 				continue;
 			}
 
@@ -1038,6 +1045,53 @@ out:
 	return ret;
 }
 
+static int simple_quota_account_extent(struct btrfs_fs_info *info,
+				       struct extent_buffer *leaf,
+				       struct btrfs_key *key,
+				       struct btrfs_extent_item *ei,
+				       struct btrfs_extent_inline_ref *iref,
+				       u64 bytenr, u64 num_bytes, int meta_item)
+{
+	u64 generation;
+	int type;
+	u64 root;
+	struct ulist *roots = ulist_alloc(0);
+	int ret;
+	struct extent_buffer *node_eb;
+	u64 extent_root;
+
+	generation = btrfs_extent_generation(leaf, ei);
+	if (generation < counts.enable_gen)
+		return 0;
+
+	type = btrfs_extent_inline_ref_type(leaf, iref);
+	if (!meta_item) {
+		if (type == BTRFS_EXTENT_OWNER_REF_KEY) {
+			struct btrfs_extent_owner_ref *oref;
+
+			oref = (struct btrfs_extent_owner_ref *)(&iref->offset);
+			root = btrfs_extent_owner_ref_root_id(leaf, oref);
+		} else {
+			return 0;
+		}
+	} else {
+		extent_root = btrfs_root_id(btrfs_extent_root(info, key->objectid));
+		node_eb = read_tree_block(info, key->objectid, extent_root, 0, 0, NULL);
+		if (!extent_buffer_uptodate(node_eb))
+			return -EIO;
+		root = btrfs_header_owner(node_eb);
+		free_extent_buffer(node_eb);
+	}
+
+	if (!is_fstree(root))
+		return 0;
+
+	ulist_add(roots, root, 0, 0);
+	ret = account_one_extent(roots, bytenr, num_bytes);
+	ulist_free(roots);
+	return ret;
+}
+
 static int add_inline_refs(struct btrfs_fs_info *info,
 			   struct extent_buffer *ei_leaf, int slot,
 			   u64 bytenr, u64 num_bytes, int meta_item)
@@ -1045,6 +1099,7 @@ static int add_inline_refs(struct btrfs_fs_info *info,
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_extent_data_ref *dref;
+	struct btrfs_key key;
 	u64 flags, root_obj, offset, parent;
 	u32 item_size = btrfs_item_size(ei_leaf, slot);
 	int type;
@@ -1052,6 +1107,7 @@ static int add_inline_refs(struct btrfs_fs_info *info,
 	unsigned long ptr;
 
 	ei = btrfs_item_ptr(ei_leaf, slot, struct btrfs_extent_item);
+	btrfs_item_key_to_cpu(ei_leaf, &key, slot);
 	flags = btrfs_extent_flags(ei_leaf, ei);
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK && !meta_item) {
@@ -1060,6 +1116,15 @@ static int add_inline_refs(struct btrfs_fs_info *info,
 		iref = (struct btrfs_extent_inline_ref *)(tbinfo + 1);
 	} else {
 		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
+	}
+
+	if (counts.simple) {
+		int ret = simple_quota_account_extent(info, ei_leaf, &key, ei, iref,
+						      bytenr, num_bytes, meta_item);
+
+		if (ret)
+			error("squota account extent error: %d", ret);
+		return ret;
 	}
 
 	ptr = (unsigned long)iref;
@@ -1083,6 +1148,7 @@ static int add_inline_refs(struct btrfs_fs_info *info,
 			parent = offset;
 			break;
 		default:
+			error("unexpected iref type %d", type);
 			return 1;
 		}
 
@@ -1445,6 +1511,13 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 			goto out;
 		}
 	}
+	/*
+	 * As in the kernel, simple qgroup accounting is done locally per extent,
+	 * so we don't need to resolve backrefs to find which subvol an extent
+	 * is accounted to.
+	 */
+	if (counts.simple)
+		goto check;
 
 	ret = map_implied_refs(info);
 	if (ret) {
@@ -1454,6 +1527,7 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 
 	ret = account_all_refs(1, 0);
 
+check:
 	/*
 	 * Do the correctness check here, so for callers who don't want
 	 * verbose report can skip calling report_qgroups()

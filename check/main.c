@@ -5674,6 +5674,8 @@ static int process_extent_item(struct btrfs_root *root,
 					btrfs_shared_data_ref_count(eb, sref),
 					gen, 0, num_bytes);
 			break;
+		case BTRFS_EXTENT_OWNER_REF_KEY:
+			break;
 		default:
 			fprintf(stderr,
 				"corrupt extent record: key [%llu,%u,%llu]\n",
