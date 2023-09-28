@@ -1265,7 +1265,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			error("could not parse UUID: %s", fs_uuid);
 			goto error;
 		}
-		if (!test_uuid_unique(fs_uuid)) {
+		/* We allow non-unique fsid for single device btrfs filesystem. */
+		if (device_count != 1 && !test_uuid_unique(fs_uuid)) {
 			error("non-unique UUID: %s", fs_uuid);
 			goto error;
 		}
