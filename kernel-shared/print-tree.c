@@ -1311,12 +1311,12 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	printf("\n");
 	if (fs_info && (mode & BTRFS_PRINT_TREE_CSUM_HEADERS)) {
 		char *tmp = csum_str;
-		u8 *csum = (u8 *)(eb->data + offsetof(struct btrfs_header, csum));
+		u8 *tree_csum = (u8 *)(eb->data + offsetof(struct btrfs_header, csum));
 
 		strcpy(csum_str, " csum 0x");
 		tmp = csum_str + strlen(csum_str);
 		for (i = 0; i < csum_size; i++) {
-			sprintf(tmp, "%02x", csum[i]);
+			sprintf(tmp, "%02x", tree_csum[i]);
 			tmp++;
 			tmp++;
 		}
