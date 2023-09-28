@@ -1023,7 +1023,6 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	int ret;
 	int fd;
 	int i;
-	int e;
 	DIR *dirstream = NULL;
 	unsigned unit_mode;
 	char *sortmode = NULL;
@@ -1111,9 +1110,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	while (1) {
 		sk->nr_items = 1;
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		e = errno;
 		if (ret < 0) {
-			error("cannot perform the search: %s", strerror(e));
+			error("cannot perform the search: %m");
 			return 1;
 		}
 		if (sk->nr_items == 0)
