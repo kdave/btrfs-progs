@@ -41,7 +41,7 @@ struct btrfs_mkfs_features {
  * Such buffer size should be able to contain all feature string, with extra
  * ", " for each feature.
  */
-#define BTRFS_FEATURE_STRING_BUF_SIZE		(160)
+#define BTRFS_FEATURE_STRING_BUF_SIZE		(512)
 
 static const struct btrfs_mkfs_features btrfs_mkfs_default_features = {
 	.compat_ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
