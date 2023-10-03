@@ -430,7 +430,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-s|--sectorsize SIZE", "data block size (may not be mountable by current kernel)"),
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features (use '-O list-all' to list features)"),
 	OPTLINE("-L|--label LABEL", "set the filesystem label"),
-	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique)"),
+	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique for a filesystem with multiple devices)"),
 	"Creation:",
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),

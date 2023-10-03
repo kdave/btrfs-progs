@@ -179,8 +179,9 @@ OPTIONS
         Resets any previous effects of *--verbose*.
 
 -U|--uuid <UUID>
-        Create the filesystem with the given *UUID*. The UUID must not exist on any
-        filesystem currently present.
+        Create the filesystem with the given *UUID*. For a single-device filesystem,
+        you can duplicate the UUID. However, for a multi-device filesystem, the UUID
+        must not already exist on any currently present filesystem.
 
 -v|--verbose
         Increase verbosity level, default is 1.
