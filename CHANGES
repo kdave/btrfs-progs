@@ -26,6 +26,20 @@ btrfs-progs-6.5.1 (2023-09-13)
    * check: verify metadata item level when skinny-metadata is enabled
    * other: minor build and docs updates
 
+btrfs-progs-6.5.2 (2023-10-03)
+""""""""""""""""""""""""""""""
+   * new feature support:
+      * raid-stripe-tree, new tree to track extent mapping for raid profiles,
+        allows raid1*, raid0 and raid10 on zoned devices (kernel 6.7)
+      * simple quotas, simplified accounting that does not track exclusive and
+        shared extents (kernel 6.7)
+      * mkfs with duplicate UUID on a single device, temp-fsid (kernel 6.7)
+   * metadata_uuid: enhanced capabilities to repair partially updated fsid on
+     multiple devices
+   * other:
+      * updated tests and CI
+      * sync sources with kernel
+
 btrfs-progs-6.4 (skipped)
 -------------------------
 
