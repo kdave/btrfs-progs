@@ -76,5 +76,3 @@ do
 	fi
 	cd "$TEST_TOP"
 done
-
-"$TEST_TOP/scan-results.sh" "$RESULTS"

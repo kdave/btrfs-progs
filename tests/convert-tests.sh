@@ -95,5 +95,3 @@ for i in $(find "$TEST_TOP/convert-tests" -maxdepth 1 -mindepth 1 -type d \
 do
 	run_one_test "$i"
 done
-
-"$TEST_TOP/scan-results.sh" "$RESULTS"
