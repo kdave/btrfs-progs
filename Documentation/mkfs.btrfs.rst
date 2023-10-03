@@ -183,6 +183,12 @@ OPTIONS
         you can duplicate the UUID. However, for a multi-device filesystem, the UUID
         must not already exist on any currently present filesystem.
 
+--device-uuid <UUID>
+        Create the filesystem with the given device-uuid *UUID* (also known as
+        UUID_SUB in :command:`blkid`).  For a single device filesystem, you can
+        duplicate the device-uuid. However, used for a multi-device filesystem
+        this option will not work at the moment.
+
 -v|--verbose
         Increase verbosity level, default is 1.
 

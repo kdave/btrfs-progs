@@ -90,7 +90,12 @@ struct btrfs_mkfs_config {
 
 	/* Logical addresses of superblock [0] and other tree roots */
 	u64 blocks[MKFS_BLOCK_COUNT + 1];
+
+	/* btrfs_super_block filesystem uuid */
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
+
+	/* Set the given uuid to super block device_item. */
+	char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
 	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
 	/* Superblock offset after make_btrfs */

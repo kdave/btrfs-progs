@@ -431,6 +431,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features (use '-O list-all' to list features)"),
 	OPTLINE("-L|--label LABEL", "set the filesystem label"),
 	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique for a filesystem with multiple devices)"),
+	OPTLINE("--device-uuid UUID", "Specify the filesystem device UUID (a.k.a sub-uuid) (for single device filesystem only)"),
 	"Creation:",
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),
@@ -1161,6 +1162,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	struct btrfs_mkfs_features features = btrfs_mkfs_default_features;
 	enum btrfs_csum_type csum_type = BTRFS_CSUM_TYPE_CRC32;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
+	char dev_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u32 nodesize = 0;
 	bool nodesize_forced = false;
 	u32 sectorsize = 0;
@@ -1187,6 +1189,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_SHRINK = GETOPT_VAL_FIRST,
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
+			GETOPT_VAL_DEVICE_UUID,
 		};
 		static const struct option long_options[] = {
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -1208,6 +1211,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "features", required_argument, NULL, 'O' },
 			{ "runtime-features", required_argument, NULL, 'R' },
 			{ "uuid", required_argument, NULL, 'U' },
+			{ "device-uuid", required_argument, NULL,
+				GETOPT_VAL_DEVICE_UUID },
 			{ "quiet", 0, NULL, 'q' },
 			{ "verbose", 0, NULL, 'v' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
@@ -1332,6 +1337,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'q':
 				bconf_be_quiet();
 				break;
+			case GETOPT_VAL_DEVICE_UUID:
+				strncpy(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE - 1);
+				break;
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;
 				break;
@@ -1371,6 +1379,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	if (source_dir && device_count > 1) {
 		error("the option -r is limited to a single device");
+		goto error;
+	}
+	if (strlen(dev_uuid) != 0 && device_count > 1) {
+		error("the option --device-uuid is limited to a single device");
 		goto error;
 	}
 	if (shrink_rootdir && source_dir == NULL) {
@@ -1733,6 +1745,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
+	memcpy(mkfs_cfg.dev_uuid, dev_uuid, sizeof(mkfs_cfg.dev_uuid));
 	mkfs_cfg.num_bytes = dev_block_count;
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = sectorsize;
