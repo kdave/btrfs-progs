@@ -1623,8 +1623,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
 	return ret;
 }
 
-static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
-						  u64 flags)
+struct btrfs_space_info *btrfs_find_space_info(struct btrfs_fs_info *info, u64 flags)
 {
 	struct btrfs_space_info *found;
 
@@ -1648,7 +1647,7 @@ static int free_space_info(struct btrfs_fs_info *fs_info, u64 flags,
 	if (bytes_used)
 		return -ENOTEMPTY;
 
-	found = __find_space_info(fs_info, flags);
+	found = btrfs_find_space_info(fs_info, flags);
 	if (!found)
 		return -ENOENT;
 	if (found->total_bytes < total_bytes) {
@@ -1669,7 +1668,7 @@ int update_space_info(struct btrfs_fs_info *info, u64 flags,
 {
 	struct btrfs_space_info *found;
 
-	found = __find_space_info(info, flags);
+	found = btrfs_find_space_info(info, flags);
 	if (found) {
 		found->total_bytes += total_bytes;
 		found->bytes_used += bytes_used;
@@ -1715,7 +1714,7 @@ static void set_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
 	}
 }
 
-static int do_chunk_alloc(struct btrfs_trans_handle *trans,
+int btrfs_try_chunk_alloc(struct btrfs_trans_handle *trans,
 			  struct btrfs_fs_info *fs_info, u64 alloc_bytes,
 			  u64 flags)
 {
@@ -1725,7 +1724,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	u64 num_bytes;
 	int ret;
 
-	space_info = __find_space_info(fs_info, flags);
+	space_info = btrfs_find_space_info(fs_info, flags);
 	if (!space_info) {
 		ret = update_space_info(fs_info, flags, 0, 0, &space_info);
 		BUG_ON(ret);
@@ -2375,13 +2374,11 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) ||
 	    root->root_key.objectid == BTRFS_CSUM_TREE_OBJECTID) {
 		if (!(profile & BTRFS_BLOCK_GROUP_METADATA)) {
-			ret = do_chunk_alloc(trans, info,
-					     num_bytes,
-					     BTRFS_BLOCK_GROUP_METADATA);
+			ret = btrfs_try_chunk_alloc(trans, info, num_bytes,
+						    BTRFS_BLOCK_GROUP_METADATA);
 			BUG_ON(ret);
 		}
-		ret = do_chunk_alloc(trans, info,
-				     num_bytes + SZ_2M, profile);
+		ret = btrfs_try_chunk_alloc(trans, info, num_bytes + SZ_2M, profile);
 		BUG_ON(ret);
 	}
 
@@ -2418,7 +2415,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	u64 start, end;
 	int ret;
 
-	sinfo = __find_space_info(fs_info, BTRFS_BLOCK_GROUP_METADATA);
+	sinfo = btrfs_find_space_info(fs_info, BTRFS_BLOCK_GROUP_METADATA);
 	ASSERT(sinfo);
 
 	ins.objectid = node->bytenr;
@@ -2516,7 +2513,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 	if (!extent_op)
 		return -ENOMEM;
 
-	sinfo = __find_space_info(fs_info, BTRFS_BLOCK_GROUP_METADATA);
+	sinfo = btrfs_find_space_info(fs_info, BTRFS_BLOCK_GROUP_METADATA);
 	if (!sinfo) {
 		error("Corrupted fs, no valid METADATA block group found");
 		return -EUCLEAN;
@@ -3706,7 +3703,7 @@ int cleanup_ref_head(struct btrfs_trans_handle *trans,
 		if (!head->is_data) {
 			struct btrfs_space_info *sinfo;
 
-			sinfo = __find_space_info(trans->fs_info,
+			sinfo = btrfs_find_space_info(trans->fs_info,
 					BTRFS_BLOCK_GROUP_METADATA);
 			ASSERT(sinfo);
 			sinfo->bytes_reserved -= head->num_bytes;

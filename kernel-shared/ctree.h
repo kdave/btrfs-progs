@@ -376,6 +376,7 @@ struct btrfs_fs_info {
 	unsigned int hide_names:1;
 	unsigned int allow_transid_mismatch:1;
 	unsigned int skip_leaf_item_checks:1;
+	unsigned int rebuilding_extent_tree:1;
 
 	int transaction_aborted;
 
@@ -936,11 +937,15 @@ int btrfs_update_extent_ref(struct btrfs_trans_handle *trans,
 			    u64 root_objectid, u64 ref_generation,
 			    u64 owner_objectid);
 int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans);
+struct btrfs_space_info *btrfs_find_space_info(struct btrfs_fs_info *info, u64 flags);
 int update_space_info(struct btrfs_fs_info *info, u64 flags,
 		      u64 total_bytes, u64 bytes_used,
 		      struct btrfs_space_info **space_info);
 int btrfs_free_block_groups(struct btrfs_fs_info *info);
 int btrfs_read_block_groups(struct btrfs_fs_info *info);
+int btrfs_try_chunk_alloc(struct btrfs_trans_handle *trans,
+			  struct btrfs_fs_info *fs_info, u64 alloc_bytes,
+			  u64 flags);
 struct btrfs_block_group *
 btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 		      u64 chunk_offset, u64 size);

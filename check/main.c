@@ -10287,6 +10287,14 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	if (init_extent_tree || init_csum_tree) {
 		struct btrfs_trans_handle *trans;
 
+		/*
+		 * If we're rebuilding extent tree, we must keep the flag set
+		 * for the whole duration of btrfs check.  As we rely on later
+		 * extent tree check code to rebuild block group items, thus we
+		 * can no longer trust the free space for metadata.
+		 */
+		if (init_extent_tree)
+			gfs_info->rebuilding_extent_tree = 1;
 		trans = btrfs_start_transaction(gfs_info->tree_root, 0);
 		if (IS_ERR(trans)) {
 			ret = PTR_ERR(trans);
