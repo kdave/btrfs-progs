@@ -710,8 +710,6 @@ struct btrfs_raid_stride {
 	__le64 devid;
 	/* offset from  the devextent start */
 	__le64 offset;
-	/* length of the stride on disk */
-	__le64 length;
 } __attribute__ ((__packed__));
 
 /* The stripe_extent::encoding, 1:1 mapping of enum btrfs_raid_types */
