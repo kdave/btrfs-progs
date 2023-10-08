@@ -486,6 +486,14 @@ static int comp_entry_with_path(struct btrfs_qgroup *entry1,
 	if (ret)
 		goto out;
 
+	if (!p1) {
+		ret = p2 ? 1 : 0;
+		goto out;
+	} else if (!p2) {
+		ret = -1;
+		goto out;
+	}
+
 	while (*p1 && *p2) {
 		if (*p1 != *p2)
 			break;
