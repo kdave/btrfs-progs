@@ -84,8 +84,11 @@ SAFE OR ADVISORY OPTIONS
         See also the *clear_cache* mount option.
 
 --clear-ino-cache
-        remove leftover items pertaining to the deprecated inode map feature
+        remove leftover items pertaining to the deprecated `inode cache` feature
 
+	.. warning::
+		This option is deprecated, please use `btrfs rescue clear-ino-cache`
+		instead, this option would be removed in the future eventually.
 
 DANGEROUS OPTIONS
 -----------------

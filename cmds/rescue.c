@@ -34,6 +34,7 @@
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/clear-cache.h"
 #include "cmds/commands.h"
 #include "cmds/rescue.h"
 
@@ -405,6 +406,56 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(rescue_clear_uuid_tree, "clear-uuid-tree");
 
+static const char * const cmd_rescue_clear_ino_cache_usage[] = {
+	"btrfs rescue clear-ino-cache <device>",
+	"remove leftover items pertaining to the deprecated inode cache feature",
+	NULL
+};
+
+static int cmd_rescue_clear_ino_cache(const struct cmd_struct *cmd,
+				      int argc, char **argv)
+{
+	struct open_ctree_args oca = { 0 };
+	struct btrfs_fs_info *fs_info;
+	char *devname;
+	int ret;
+
+	clean_args_no_options(cmd, argc, argv);
+
+	if (check_argc_exact(argc, 2))
+		return 1;
+
+	devname = argv[optind];
+	ret = check_mounted(devname);
+	if (ret < 0) {
+		errno = -ret;
+		error("could not check mount status: %m");
+		goto out;
+	} else if (ret) {
+		error("%s is currently mounted", devname);
+		ret = -EBUSY;
+		goto out;
+	}
+	oca.filename = devname;
+	oca.flags = OPEN_CTREE_WRITES;
+	fs_info = open_ctree_fs_info(&oca);
+	if (!fs_info) {
+		error("could not open btrfs");
+		ret = -EIO;
+		goto out;
+	}
+	ret = clear_ino_cache_items(fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to clear ino cache: %m");
+	} else {
+		pr_verbose(LOG_DEFAULT, "Successfully cleared ino cache");
+	}
+out:
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(rescue_clear_ino_cache, "clear-ino-cache");
+
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
@@ -415,6 +466,7 @@ static const struct cmd_group rescue_cmd_group = {
 		&cmd_struct_rescue_zero_log,
 		&cmd_struct_rescue_fix_device_size,
 		&cmd_struct_rescue_create_control_device,
+		&cmd_struct_rescue_clear_ino_cache,
 		&cmd_struct_rescue_clear_uuid_tree,
 		NULL
 	}
