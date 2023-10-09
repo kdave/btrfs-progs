@@ -58,6 +58,7 @@
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "common/clear-cache.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "check/common.h"
@@ -66,7 +67,6 @@
 #include "check/mode-original.h"
 #include "check/mode-lowmem.h"
 #include "check/qgroup-verify.h"
-#include "check/clear-cache.h"
 
 /* Global context variables */
 struct btrfs_fs_info *gfs_info;

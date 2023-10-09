@@ -33,7 +33,7 @@
 #include "common/messages.h"
 #include "check/repair.h"
 #include "check/mode-common.h"
-#include "check/clear-cache.h"
+#include "common/clear-cache.h"
 
 /*
  * Number of free space cache inodes to delete in one transaction.
