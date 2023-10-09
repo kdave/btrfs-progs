@@ -37,9 +37,9 @@
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "common/clear-cache.h"
 #include "cmds/commands.h"
 #include "tune/tune.h"
-#include "check/clear-cache.h"
 
 static char *device;
 static int force = 0;

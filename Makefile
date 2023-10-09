@@ -242,7 +242,7 @@ cmds_objects = cmds/subvolume.o cmds/subvolume-list.o \
 	       cmds/inspect-dump-super.o cmds/inspect-tree-stats.o cmds/filesystem-du.o \
 	       cmds/reflink.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o \
-	       check/clear-cache.o
+	       common/clear-cache.o
 
 libbtrfs_objects = \
 		kernel-lib/rbtree.o	\
@@ -262,12 +262,12 @@ libbtrfsutil_objects = libbtrfsutil/errors.o libbtrfsutil/filesystem.o \
 		       libbtrfsutil/stubs.o
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  convert/source-ext2.o convert/source-reiserfs.o \
-		  mkfs/common.o check/clear-cache.o
+		  mkfs/common.o common/clear-cache.o
 mkfs_objects = mkfs/main.o mkfs/common.o mkfs/rootdir.o
 image_objects = image/main.o image/sanitize.o image/image-create.o image/common.o \
 		image/image-restore.o
 tune_objects = tune/main.o tune/seeding.o tune/change-uuid.o tune/change-metadata-uuid.o \
-	       tune/convert-bgt.o tune/change-csum.o check/clear-cache.o tune/quota.o
+	       tune/convert-bgt.o tune/change-csum.o common/clear-cache.o tune/quota.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
