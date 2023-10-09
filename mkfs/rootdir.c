@@ -429,6 +429,68 @@ end:
 	return ret;
 }
 
+static int copy_rootdir_inode(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root, const char *dir_name)
+{
+	u64 root_dir_inode_size;
+	struct btrfs_inode_item *inode_item;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	struct stat st;
+	int ret;
+
+	ret = stat(dir_name, &st);
+	if (ret < 0) {
+		ret = -errno;
+		error("stat failed for direcotry %s: %m", dir_name);
+		return ret;
+	}
+
+	ret = add_xattr_item(trans, root, btrfs_root_dirid(&root->root_item), dir_name);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to add xattr item for the top level inode: %m");
+		return ret;
+	}
+
+	key.objectid = btrfs_root_dirid(&root->root_item);
+	key.offset = 0;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret) {
+		error("failed to lookup root dir: %d", ret);
+		goto error;
+	}
+
+	leaf = path.nodes[0];
+	inode_item = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_inode_item);
+
+	root_dir_inode_size = calculate_dir_inode_size(dir_name);
+	btrfs_set_inode_size(leaf, inode_item, root_dir_inode_size);
+
+	/* Unlike fill_inode_item, we only need to copy part of the attributes. */
+	btrfs_set_inode_uid(leaf, inode_item, st.st_uid);
+	btrfs_set_inode_gid(leaf, inode_item, st.st_gid);
+	btrfs_set_inode_mode(leaf, inode_item, st.st_mode);
+	btrfs_set_timespec_sec(leaf, &inode_item->atime, st.st_atime);
+	btrfs_set_timespec_nsec(leaf, &inode_item->atime, 0);
+	btrfs_set_timespec_sec(leaf, &inode_item->ctime, st.st_ctime);
+	btrfs_set_timespec_nsec(leaf, &inode_item->ctime, 0);
+	btrfs_set_timespec_sec(leaf, &inode_item->mtime, st.st_mtime);
+	btrfs_set_timespec_nsec(leaf, &inode_item->mtime, 0);
+	/* FIXME */
+	btrfs_set_timespec_sec(leaf, &inode_item->otime, 0);
+	btrfs_set_timespec_nsec(leaf, &inode_item->otime, 0);
+	btrfs_mark_buffer_dirty(leaf);
+
+error:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 static int traverse_directory(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, const char *dir_name,
 			      struct directory_name_entry *dir_head)
@@ -436,7 +498,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	int ret = 0;
 
 	struct btrfs_inode_item cur_inode;
-	struct btrfs_inode_item *inode_item;
 	int count, i, dir_index_cnt;
 	struct dirent **files;
 	struct stat st;
@@ -445,10 +506,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ino_t parent_inum, cur_inum;
 	ino_t highest_inum = 0;
 	const char *parent_dir_name;
-	struct btrfs_path path = { 0 };
-	struct extent_buffer *leaf;
-	struct btrfs_key root_dir_key;
-	u64 root_dir_inode_size = 0;
 
 	/* Add list for source directory */
 	dir_entry = malloc(sizeof(struct directory_name_entry));
@@ -466,24 +523,12 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	dir_entry->inum = parent_inum;
 	list_add_tail(&dir_entry->list, &dir_head->list);
 
-	root_dir_key.objectid = btrfs_root_dirid(&root->root_item);
-	root_dir_key.offset = 0;
-	root_dir_key.type = BTRFS_INODE_ITEM_KEY;
-	ret = btrfs_lookup_inode(trans, root, &path, &root_dir_key, 1);
-	if (ret) {
-		error("failed to lookup root dir: %d", ret);
+	ret = copy_rootdir_inode(trans, root, dir_name);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to copy rootdir inode: %m");
 		goto fail_no_dir;
 	}
-
-	leaf = path.nodes[0];
-	inode_item = btrfs_item_ptr(leaf, path.slots[0],
-				    struct btrfs_inode_item);
-
-	root_dir_inode_size = calculate_dir_inode_size(dir_name);
-	btrfs_set_inode_size(leaf, inode_item, root_dir_inode_size);
-	btrfs_mark_buffer_dirty(leaf);
-
-	btrfs_release_path(&path);
 
 	do {
 		parent_dir_entry = list_entry(dir_head->list.next,
