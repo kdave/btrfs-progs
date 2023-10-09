@@ -466,6 +466,14 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	dir_entry->inum = parent_inum;
 	list_add_tail(&dir_entry->list, &dir_head->list);
 
+	ret = add_xattr_item(trans, root, btrfs_root_dirid(&root->root_item),
+			     dir_name);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to add xattr item for the top level inode: %m");
+		goto fail_no_dir;
+	}
+
 	root_dir_key.objectid = btrfs_root_dirid(&root->root_item);
 	root_dir_key.offset = 0;
 	root_dir_key.type = BTRFS_INODE_ITEM_KEY;
