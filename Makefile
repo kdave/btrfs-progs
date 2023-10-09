@@ -564,6 +564,16 @@ test-string-table: string-table-test
 		done							\
 	}
 
+test-array: array-test
+	@echo "    [TEST]   dynamic array"
+	@{								\
+		max=`./array-test`;					\
+		for testno in `seq 1 $$max`; do				\
+			echo "    [TEST/array]  $$testno";		\
+			./array-test $$testno >/dev/null;		\
+		done							\
+	}
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
@@ -817,6 +827,10 @@ string-table-test: tests/string-table-test.c $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
+array-test: tests/array-test.c $(objects) libbtrfsutil.a
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
 test-build: test-build-pre test-build-real
 
 test-build-pre:
@@ -873,7 +887,7 @@ clean: $(CLEANDIRS)
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      btrfs.box btrfs.box.static json-formatter-test \
-	      hash-speedtest \
+	      hash-speedtest array-test \
 	      $(check_defs) \
 	      libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links) \
 	      $(progs_static) \
