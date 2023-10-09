@@ -10242,6 +10242,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (clear_ino_cache) {
+		warning("--clear-ino-cache option is deprecated, please use \"btrfs rescue clear-ino-cache\" instead");
 		ret = clear_ino_cache_items(gfs_info);
 		err = ret;
 		goto close_out;

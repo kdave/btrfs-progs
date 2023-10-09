@@ -50,6 +50,12 @@ fix-device-size <device>
 
                 WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]
 
+clear-ino-cache <device>
+        Remove leftover items pertaining to the deprecated `inode cache` feature.
+
+	The `inode cache` feature (enabled by mount option "inode_cache") has been
+	completely removed in 5.11 kernel.
+
 clear-uuid-tree <device>
         Clear UUID tree, so that kernel can re-generate it at next read-write
         mount.
