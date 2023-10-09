@@ -564,6 +564,16 @@ test-string-table: string-table-test
 		done							\
 	}
 
+test-array: array-test
+	@echo "    [TEST]   dynamic array"
+	@{								\
+		max=`./array-test`;					\
+		for testno in `seq 1 $$max`; do				\
+			echo "    [TEST/array]  $$testno";		\
+			./array-test $$testno >/dev/null;		\
+		done							\
+	}
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
@@ -814,6 +824,10 @@ json-formatter-test: tests/json-formatter-test.c $(objects) libbtrfsutil.a
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 string-table-test: tests/string-table-test.c $(objects) libbtrfsutil.a
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+array-test: tests/array-test.c $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
