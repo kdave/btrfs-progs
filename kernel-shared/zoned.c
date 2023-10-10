@@ -757,7 +757,6 @@ bool zoned_profile_supported(u64 map_type, bool rst)
 	if (flags == 0)
 		return true;
 
-#if EXPERIMENTAL
 	if (data) {
 		if ((flags & BTRFS_BLOCK_GROUP_DUP) && rst)
 			return true;
@@ -784,10 +783,6 @@ bool zoned_profile_supported(u64 map_type, bool rst)
 		if (flags & BTRFS_BLOCK_GROUP_RAID10)
 			return true;
 	}
-#else
-	if (!data && (flags & BTRFS_BLOCK_GROUP_DUP))
-		return true;
-#endif
 
 	/* All other profiles are not supported yet */
 	return false;

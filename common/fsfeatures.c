@@ -221,7 +221,6 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(default),
 		.desc		= "block group tree to reduce mount time"
 	},
-#if EXPERIMENTAL
 	{
 		.name		= "rst",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
@@ -247,7 +246,6 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(default),
 		.desc		= "squota support (simple accounting qgroups)"
 	},
-#endif
 	/* Keep this one last */
 	{
 		.name		= "list-all",

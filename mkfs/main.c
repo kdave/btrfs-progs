@@ -1623,7 +1623,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret)
 		goto error;
 
-#if EXPERIMENTAL
 	if (opt_zoned && device_count) {
 		switch (data_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
 		case BTRFS_BLOCK_GROUP_DUP:
@@ -1638,21 +1637,18 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			break;
 		}
 	}
-#endif
 
 	if (opt_zoned) {
 		u64 metadata = BTRFS_BLOCK_GROUP_METADATA | metadata_profile;
 		u64 data = BTRFS_BLOCK_GROUP_DATA | data_profile;
 		bool rst = false;
 
-#if EXPERIMENTAL
 		if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE)
 			rst = true;
-#endif
 
 		if (!zoned_profile_supported(metadata, rst) ||
 		    !zoned_profile_supported(data, rst)) {
-			error("zoned mode does not yet support RAID/DUP profiles, please specify '-d single -m single' manually");
+			error("zoned mode does not yet support the selected RAID profiles");
 			goto error;
 		}
 	}
