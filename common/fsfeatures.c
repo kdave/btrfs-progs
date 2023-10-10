@@ -90,6 +90,9 @@ struct btrfs_feature {
 	const char *desc;
 };
 
+/*
+ * Keep the list sorted by compat version.
+ */
 static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name		= "mixed-bg",
@@ -108,15 +111,6 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
 		.desc		= "quota support (qgroups)"
-	},
-	{
-		.name		= "squota",
-		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA,
-		.sysfs_name	= "squota",
-		VERSION_TO_STRING2(compat, 6,7),
-		VERSION_NULL(safe),
-		VERSION_NULL(default),
-		.desc		= "squota support (simple accounting qgroups)"
 	},
 	{
 		.name		= "extref",
@@ -181,6 +175,17 @@ static const struct btrfs_feature mkfs_features[] = {
 		.desc		= "support zoned devices"
 	},
 #endif
+#if EXPERIMENTAL
+	{
+		.name		= "extent-tree-v2",
+		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2,
+		.sysfs_name	= "extent_tree_v2",
+		VERSION_TO_STRING2(compat, 5,15),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "new extent tree format"
+	},
+#endif
 	{
 		.name		= "block-group-tree",
 		.compat_ro_flag	= BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
@@ -192,14 +197,6 @@ static const struct btrfs_feature mkfs_features[] = {
 	},
 #if EXPERIMENTAL
 	{
-		.name		= "extent-tree-v2",
-		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2,
-		.sysfs_name	= "extent_tree_v2",
-		VERSION_TO_STRING2(compat, 5,15),
-		VERSION_NULL(safe),
-		VERSION_NULL(default),
-		.desc		= "new extent tree format"
-	} , {
 		.name		= "raid-stripe-tree",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
 		.sysfs_name	= NULL,
@@ -207,6 +204,15 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
 		.desc		= "raid stripe tree"
+	},
+	{
+		.name		= "squota",
+		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA,
+		.sysfs_name	= "squota",
+		VERSION_TO_STRING2(compat, 6,7),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "squota support (simple accounting qgroups)"
 	},
 #endif
 	/* Keep this one last */
