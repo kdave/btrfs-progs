@@ -1,5 +1,5 @@
 #!/bin/bash
-# Basic check if mkfs supports the runtime feature free-space-tree
+# Check that free-space-tree does not create space bitmaps on an empty filesystem
 
 source "$TEST_TOP/common" || exit
 
