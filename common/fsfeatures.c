@@ -241,7 +241,7 @@ static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name		= "squota",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA,
-		.sysfs_name	= "squota",
+		.sysfs_name	= "simple_quota",
 		VERSION_TO_STRING2(compat, 6,7),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
