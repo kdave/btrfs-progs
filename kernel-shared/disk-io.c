@@ -1295,7 +1295,6 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			return -EIO;
 	}
 
-#if EXPERIMENTAL
 	if (btrfs_fs_incompat(fs_info, RAID_STRIPE_TREE)) {
 		ret = btrfs_find_and_setup_root(root, fs_info,
 						BTRFS_RAID_STRIPE_TREE_OBJECTID,
@@ -1307,7 +1306,6 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			set_bit(BTRFS_ROOT_TRACK_DIRTY, &fs_info->stripe_root->state);
 		}
 	}
-#endif
 
 	if (maybe_load_block_groups(fs_info, flags)) {
 		ret = btrfs_read_block_groups(fs_info);
