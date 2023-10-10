@@ -225,14 +225,14 @@ static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name		= "rst",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
-		.sysfs_name	= NULL,
+		.sysfs_name	= "raid_stripe_tree",
 		VERSION_ALIAS,
 		.desc		= "raid-stripe-tree alias"
 	},
 	{
 		.name		= "raid-stripe-tree",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
-		.sysfs_name	= NULL,
+		.sysfs_name	= "raid_stripe_tree",
 		VERSION_TO_STRING2(compat, 6,7),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
