@@ -321,11 +321,24 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 	_print_scrub_ss(ss);
 
 	if (p) {
-		if (raw)
+		if (raw) {
 			print_scrub_full(p);
-		else
+		} else if (ss->finished) {
+			/*
+			 * For finished scrub, we can use the total scrubbed
+			 * bytes to report "Total to scrub", which is more
+			 * accurate (e.g. mostly empty block groups).
+			 */
 			print_scrub_summary(p, ss, p->data_bytes_scrubbed +
 						   p->tree_bytes_scrubbed);
+		} else {
+			/*
+			 * For any canceled/interrupted/running scrub, we're
+			 * not sure how many bytes we're really going to scrub,
+			 * thus we use device's used bytes instead.
+			 */
+			print_scrub_summary(p, ss, di->bytes_used);
+		}
 	}
 }
 
