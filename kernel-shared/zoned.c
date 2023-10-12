@@ -999,6 +999,14 @@ int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices)
 	return ret;
 }
 
+bool btrfs_sb_zone_exists(struct btrfs_device *device, u64 bytenr)
+{
+	u32 zone_num = sb_bytenr_to_sb_zone(bytenr,
+					    ilog2(device->zone_info->zone_size));
+
+	return zone_num + 1 <= device->zone_info->nr_zones - 1;
+}
+
 #endif
 
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info)

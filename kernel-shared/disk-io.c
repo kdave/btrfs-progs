@@ -1998,6 +1998,13 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	return transid > 0 ? 0 : -1;
 }
 
+static bool check_sb_location(struct btrfs_device *device, u64 bytenr)
+{
+	if (!device->zone_info)
+		return bytenr + BTRFS_SUPER_INFO_SIZE <= device->total_bytes;
+	return btrfs_sb_zone_exists(device, bytenr);
+}
+
 static int write_dev_supers(struct btrfs_fs_info *fs_info,
 			    struct btrfs_super_block *sb,
 			    struct btrfs_device *device)
@@ -2048,7 +2055,7 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		if (bytenr + BTRFS_SUPER_INFO_SIZE > device->total_bytes)
+		if (!check_sb_location(device, bytenr))
 			break;
 
 		btrfs_set_super_bytenr(sb, bytenr);

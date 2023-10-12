@@ -153,6 +153,7 @@ int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo);
 int zero_zone_blocks(int fd, struct btrfs_zoned_device_info *zinfo, off_t start,
 		     size_t len);
 int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices);
+bool btrfs_sb_zone_exists(struct btrfs_device *device, u64 bytenr);
 
 #else
 
@@ -223,6 +224,11 @@ static inline int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices)
 static inline bool zoned_profile_supported(u64 map_type, bool rst)
 {
 	return false;
+}
+
+static inline bool btrfs_sb_zone_exists(struct btrfs_device *device, u64 bytenr)
+{
+	return true;
 }
 
 #endif /* BTRFS_ZONED */
