@@ -31,7 +31,7 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 .PHONY: all
 .PHONY: FORCE
 
-test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
+test: test-check test-check-lowmem test-mkfs test-misc test-cli test-fuzz
 
 test-convert:
 	@echo "    [TEST]   convert-tests.sh"

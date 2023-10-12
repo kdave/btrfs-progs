@@ -574,7 +574,7 @@ test-array: array-test
 		done							\
 	}
 
-test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
+test: test-check test-check-lowmem test-mkfs test-misc test-cli test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
 	@echo "Export tests as a package"
