@@ -1567,8 +1567,16 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			block_count = device_get_partition_size_fd_stat(fd, &statbuf);
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
-		if (block_count < source_dir_size)
-			block_count = source_dir_size;
+		if (block_count < source_dir_size) {
+			if (S_ISREG(statbuf.st_mode)) {
+				block_count = source_dir_size;
+			} else {
+				warning(
+"the target device %llu (%s) is smaller than the calculated source directory size %llu (%s), mkfs may fail",
+					block_count, pretty_size(block_count),
+					source_dir_size, pretty_size(source_dir_size));
+			}
+		}
 		ret = zero_output_file(fd, block_count);
 		if (ret) {
 			error("unable to zero the output file");
