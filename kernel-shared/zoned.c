@@ -478,6 +478,21 @@ static int sb_log_location(int fd, struct blk_zone *zones, int rw, u64 *bytenr_r
 	return 0;
 }
 
+static u32 sb_bytenr_to_sb_zone(u64 bytenr, int zone_size_shift)
+{
+	int mirror = -1;
+
+	for (int i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		if (bytenr == btrfs_sb_offset(i)) {
+			mirror = i;
+			break;
+		}
+	}
+	ASSERT(mirror != -1);
+
+	return sb_zone_number(zone_size_shift, mirror);
+}
+
 size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 {
 	size_t count = BTRFS_SUPER_INFO_SIZE;
@@ -489,8 +504,6 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	u32 zone_num;
 	u32 zone_size_sector;
 	size_t rep_size;
-	int mirror = -1;
-	int i;
 	int ret;
 	size_t ret_sz;
 
@@ -532,16 +545,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 
 	ASSERT(IS_ALIGNED(zone_size_sector, sb_size_sector));
 
-	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
-		if (offset == btrfs_sb_offset(i)) {
-			mirror = i;
-			break;
-		}
-	}
-	ASSERT(mirror != -1);
-
-	zone_num = sb_zone_number(ilog2(zone_size_sector) + SECTOR_SHIFT,
-				  mirror);
+	zone_num = sb_bytenr_to_sb_zone(offset, ilog2(zone_size_sector) + SECTOR_SHIFT);
 
 	rep_size = sizeof(struct blk_zone_report) + sizeof(struct blk_zone) * 2;
 	rep = calloc(1, rep_size);
