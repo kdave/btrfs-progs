@@ -201,7 +201,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST,
 		       GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE,
 		       GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE,
-		       GETOPT_VAL_ENABLE_FREE_SPACE_TREE };
+		       GETOPT_VAL_ENABLE_FREE_SPACE_TREE,
+		       GETOPT_VAL_ENABLE_SIMPLE_QUOTA,
+
+		};
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ "convert-to-block-group-tree", no_argument, NULL,
@@ -210,12 +213,14 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 				GETOPT_VAL_DISABLE_BLOCK_GROUP_TREE},
 			{ "convert-to-free-space-tree", no_argument, NULL,
 				GETOPT_VAL_ENABLE_FREE_SPACE_TREE},
+			{ "enable-simple-quota", no_argument, NULL,
+				GETOPT_VAL_ENABLE_SIMPLE_QUOTA },
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "S:rxqfuU:nmM:", long_options, NULL);
+		int c = getopt_long(argc, argv, "S:rxfuU:nmM:", long_options, NULL);
 
 		if (c < 0)
 			break;
@@ -232,10 +237,6 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case 'x':
 			super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
 			btrfstune_cmd_groups[LEGACY] = true;
-			break;
-		case 'q':
-			quota = 1;
-			btrfstune_cmd_groups[QGROUP] = true;
 			break;
 		case 'n':
 			super_flags |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
@@ -276,6 +277,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		case GETOPT_VAL_ENABLE_FREE_SPACE_TREE:
 			to_fst = true;
 			btrfstune_cmd_groups[SPACE_CACHE] = true;
+			break;
+		case GETOPT_VAL_ENABLE_SIMPLE_QUOTA:
+			quota = 1;
+			btrfstune_cmd_groups[QGROUP] = true;
 			break;
 #if EXPERIMENTAL
 		case GETOPT_VAL_CSUM:
