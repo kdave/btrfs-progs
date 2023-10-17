@@ -1381,10 +1381,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		error("the option -r is limited to a single device");
 		goto error;
 	}
-	if (strlen(dev_uuid) != 0 && device_count > 1) {
-		error("the option --device-uuid is limited to a single device");
-		goto error;
-	}
 	if (shrink_rootdir && source_dir == NULL) {
 		error("the option --shrink must be used with --rootdir");
 		goto error;
@@ -1400,6 +1396,21 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		/* We allow non-unique fsid for single device btrfs filesystem. */
 		if (device_count != 1 && !test_uuid_unique(fs_uuid)) {
 			error("non-unique UUID: %s", fs_uuid);
+			goto error;
+		}
+	}
+
+	if (*dev_uuid) {
+		uuid_t dummy_uuid;
+
+		if (uuid_parse(dev_uuid, dummy_uuid) != 0) {
+			error("could not parse device UUID: %s", dev_uuid);
+			goto error;
+		}
+		/* We allow non-unique device uuid for single device filesystem. */
+		if (device_count != 1 && !test_uuid_unique(dev_uuid)) {
+			error("the option --device-uuid %s can be used only for a single device filesystem",
+			      dev_uuid);
 			goto error;
 		}
 	}
