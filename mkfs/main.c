@@ -1964,6 +1964,8 @@ raid_groups:
 		update_chunk_allocation(fs_info, &allocation);
 		printf("Label:              %s\n", label);
 		printf("UUID:               %s\n", mkfs_cfg.fs_uuid);
+		if (dev_uuid[0] != 0)
+			printf("Device UUID:        %s\n", mkfs_cfg.dev_uuid);
 		printf("Node size:          %u\n", nodesize);
 		printf("Sector size:        %u\n", sectorsize);
 		printf("Filesystem size:    %s\n",
