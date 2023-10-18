@@ -872,28 +872,35 @@ cscope: FORCE
 clean-all: clean clean-doc clean-gen
 
 clean: $(CLEANDIRS)
-	@echo "Cleaning"
-	$(Q)$(RM) -f -- $(progs) *.o .deps/*.o.d \
+	@echo "Cleaning tools and libraries"
+	$(Q)$(RM) -f -- $(progs) $(progs_static) mktables \
+		btrfs.box btrfs.box.static \
+		libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links)
+	@echo "Cleaning object files and dependencies"
+	$(Q)$(RM) -f -- *.o .deps/*.o.d  \
+		check/*.o check/.deps/*.o.d \
+		cmds/*.o cmds/.deps/*.o.d \
+		common/*.o common/.deps/*.o.d \
+		convert/*.o convert/.deps/*.o.d \
+		crypto/*.o crypto/.deps/*.o.d \
+		image/*.o image/.deps/*.o.d \
 		kernel-lib/*.o kernel-lib/.deps/*.o.d \
 		kernel-shared/*.o kernel-shared/.deps/*.o.d \
-		image/*.o image/.deps/*.o.d \
-		convert/*.o convert/.deps/*.o.d \
-		mkfs/*.o mkfs/.deps/*.o.d check/*.o check/.deps/*.o.d \
-		cmds/*.o cmds/.deps/*.o.d common/*.o common/.deps/*.o.d \
-		crypto/*.o crypto/.deps/*.o.d \
-		tune/*.o tune/.deps/*.o.d \
+		kernel-shared/*.o kernel-shared/.deps/*.o.d \
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
-		*.gcno *.gcda *.gcov */*.gcno */*.gcda */*/.gcov \
-	      ioctl-test quick-test library-test library-test-static \
-              mktables btrfs.static mkfs.btrfs.static fssum \
-	      btrfs.box btrfs.box.static json-formatter-test \
-	      hash-speedtest array-test \
-	      $(check_defs) \
-	      libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links) \
-	      $(progs_static) \
-	      libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d
+		libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d \
+		mkfs/*.o mkfs/.deps/*.o.d \
+		tune/*.o tune/.deps/*.o.d
 	$(Q)$(RM) -fd -- .deps */.deps */*/.deps
+	@echo "Cleaning test targets"
+	$(Q)$(RM) -f -- \
+		array-test fsstress fsstum hash-speedtest hash-vectest ioctl-test \
+		json-formatter-test library-test library-test-static quick-test
+	@echo "Cleanin other generated files"
+	$(Q)$(RM) -f -- $(check_defs) \
+		*.gcno *.gcda *.gcov */*.gcno */*.gcda */*/.gcov
 ifeq ($(PYTHON_BINDINGS),1)
+	@echo "Cleanin libbtrfs python generated files"
 	$(Q)cd libbtrfsutil/python; \
 		$(PYTHON) setup.py $(SETUP_PY_Q) clean -a
 endif
@@ -907,9 +914,10 @@ clean-gen:
 	$(Q)$(RM) -rf -- libbtrfs/version.h config.status config.cache config.log \
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags TAGS \
+		libbtrfsutil/libbtrfsutil.pc \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log include/config.h include/config.h.in~ aclocal.m4 \
-		configure autom4te.cache/
+		configure configure~ autom4te.cache/
 
 clean-dep:
 	@echo "Cleaning dependency files"
