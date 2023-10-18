@@ -16,6 +16,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,12 +114,13 @@ static const char * const subvolume_cmd_group_usage[] = {
 };
 
 static const char * const cmd_subvolume_create_usage[] = {
-	"btrfs subvolume create [-i <qgroupid>] [<dest>/]<name>",
+	"btrfs subvolume create [options] [<dest>/]<name>",
 	"Create a subvolume",
 	"Create a subvolume <name> in <dest>.  If <dest> is not given",
 	"subvolume <name> will be created in the current directory.",
 	"",
 	OPTLINE("-i <qgroupid>", "add the newly created subvolume to a qgroup. This option can be given multiple times."),
+	OPTLINE("-p|--parents", "create any missing parent directories for each argument (like mkdir -p)"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
@@ -135,10 +137,17 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 	char	*dst;
 	struct btrfs_qgroup_inherit *inherit = NULL;
 	DIR	*dirstream = NULL;
+	bool create_parents = false;
 
 	optind = 0;
 	while (1) {
-		int c = getopt(argc, argv, "c:i:");
+		int c;
+		static const struct option long_options[] = {
+			{ "parents", no_argument, NULL, 'p' },
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "i:p", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -156,6 +165,9 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 				retval = res;
 				goto out;
 			}
+			break;
+		case 'p':
+			create_parents = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -195,6 +207,35 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 	if (len > BTRFS_VOL_NAME_MAX) {
 		error("subvolume name too long: %s", newname);
 		goto out;
+	}
+
+	if (create_parents) {
+		char p[PATH_MAX] = { 0 };
+		char dstdir_dup[PATH_MAX];
+		char *token;
+
+		strncpy_null(dstdir_dup, dstdir);
+		if (dstdir_dup[0] == '/')
+			strcat(p, "/");
+
+		token = strtok(dstdir_dup, "/");
+		while (token) {
+			strcat(p, token);
+			res = path_is_dir(p);
+			if (res == -ENOENT) {
+				res = mkdir(p, 0777);
+				if (res < 0) {
+					error("failed to create directory %s: %m", p);
+					goto out;
+				}
+			} else if (res <= 0) {
+				errno = res;
+				error("failed to check directory %s before creation: %m", p);
+				goto out;
+			}
+			strcat(p, "/");
+			token = strtok(NULL, "/");
+		}
 	}
 
 	fddst = btrfs_open_dir(dstdir, &dirstream, 1);

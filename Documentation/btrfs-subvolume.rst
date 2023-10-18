@@ -49,7 +49,7 @@ do not affect the files in the original subvolume.
 SUBCOMMAND
 -----------
 
-create [-i <qgroupid>] [<dest>/]<name>
+create [options] [<dest>/]<name>
         Create a subvolume *name* in *dest*.
 
         If *dest* is not given, subvolume *name* will be created in the current
@@ -60,6 +60,9 @@ create [-i <qgroupid>] [<dest>/]<name>
         -i <qgroupid>
                 Add the newly created subvolume to a qgroup. This option can be given multiple
                 times.
+
+        -p|--parents
+                Create any missing parent directories for each argument (like :command:`mkdir -p`).
 
 delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid> <path>
         Delete the subvolume(s) from the filesystem.
