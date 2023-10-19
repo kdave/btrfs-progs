@@ -119,7 +119,6 @@ struct sb_field {
 	{ .name = "root",			.type = TYPE_U64 },
 	{ .name = "chunk_root",			.type = TYPE_U64 },
 	{ .name = "log_root",			.type = TYPE_U64 },
-	{ .name = "log_root_transid",		.type = TYPE_U64 },
 	{ .name = "total_bytes",		.type = TYPE_U64 },
 	{ .name = "bytes_used",			.type = TYPE_U64 },
 	{ .name = "root_dir_objectid",		.type = TYPE_U64 },
@@ -238,7 +237,6 @@ static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char 
 		MOD_FIELD(root, set, val)
 		MOD_FIELD(chunk_root, set, val)
 		MOD_FIELD(log_root, set, val)
-		MOD_FIELD(log_root_transid, set, val)
 		MOD_FIELD(total_bytes, set, val)
 		MOD_FIELD(bytes_used, set, val)
 		MOD_FIELD(root_dir_objectid, set, val)
