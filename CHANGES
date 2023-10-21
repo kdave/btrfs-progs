@@ -40,6 +40,39 @@ btrfs-progs-6.5.2 (2023-10-03)
       * updated tests and CI
       * sync sources with kernel
 
+btrfs-progs-6.5.3 (2023-10-21)
+""""""""""""""""""""""""""""""
+   * mkfs:
+      * add short aliases for -O specification, block-group-tree (bgt),
+        free-space-tree (fst), raid-stripe-tree (rst)
+      * don't try to resize the image (namely when backed by file) when --rootdir
+        contains sparse file larger than the image
+      * also copy xattr/permissions/ugid/timestamps of the top --rootdir directory
+      * add new option --device-uuid to let user specify exact uuid of the
+        device item (only for single device filesystems)
+   * check:
+      * on zoned devices, use correct super block offsets when repairing
+      * check inline extent refs order
+   * subvolume create: add new option --parent to create missing path
+     components of the given path (like mkdir -p)
+   * rescue clear-ino-cache: new command moved from 'btrfs check' implementing
+     the same as option --clear-ino-cache (to be deprecated and removed in the
+     future)
+   * dump-tree: allow '-' in tree identifier names for option -t
+   * btrfstune:
+      * drop short option and add long option to enable squota
+      * tune space reservation and batch size for block-group-tree conversion
+   * scrub status: print correct value of "Bytes scrubbed" for unfinished runs
+   * qgroup show: fix crash when attempting to print path of stale qgroups
+   * experimental features:
+      * move build of raid-stripe-tree out for testing but it's still considered
+        experimental
+   * other:
+      * shell completion updates
+      * sync raid-stripe-tree code with kernel
+      * build fixes
+      * new and updated tests
+
 btrfs-progs-6.4 (skipped)
 -------------------------
 
