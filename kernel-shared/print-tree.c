@@ -487,38 +487,43 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	ptr = (unsigned long)iref;
 	end = (unsigned long)ei + item_size;
 	while (ptr < end) {
+		u64 seq;
+
 		iref = (struct btrfs_extent_inline_ref *)ptr;
 		type = btrfs_extent_inline_ref_type(eb, iref);
 		offset = btrfs_extent_inline_ref_offset(eb, iref);
+		seq = offset;
 		switch (type) {
 		case BTRFS_TREE_BLOCK_REF_KEY:
-			printf("\t\ttree block backref root ");
+			printf("\t\t(%u 0x%llx) tree block backref root ", type, seq);
 			print_objectid(stdout, offset, 0);
 			printf("\n");
 			break;
 		case BTRFS_SHARED_BLOCK_REF_KEY:
-			printf("\t\tshared block backref parent %llu\n",
-			       (unsigned long long)offset);
+			printf("\t\t(%u 0x%llx) shared block backref parent %llu\n",
+			       type, seq, offset);
 			break;
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
-			printf("\t\textent data backref root ");
-			print_objectid(stdout,
-		(unsigned long long)btrfs_extent_data_ref_root(eb, dref), 0);
+			seq = hash_extent_data_ref(
+					btrfs_extent_data_ref_root(eb, dref),
+					btrfs_extent_data_ref_objectid(eb, dref),
+					btrfs_extent_data_ref_offset(eb, dref));
+			printf("\t\t(%u 0x%llx) extent data backref root ", type, seq);
+			print_objectid(stdout, btrfs_extent_data_ref_root(eb, dref), 0);
 			printf(" objectid %llu offset %llu count %u\n",
-			       (unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
+			       btrfs_extent_data_ref_objectid(eb, dref),
 			       btrfs_extent_data_ref_offset(eb, dref),
 			       btrfs_extent_data_ref_count(eb, dref));
 			break;
 		case BTRFS_SHARED_DATA_REF_KEY:
 			sref = (struct btrfs_shared_data_ref *)(iref + 1);
-			printf("\t\tshared data backref parent %llu count %u\n",
-			       (unsigned long long)offset,
-			       btrfs_shared_data_ref_count(eb, sref));
+			printf("\t\t(%u 0x%llx) shared data backref parent %llu count %u\n",
+			       type, seq, offset, btrfs_shared_data_ref_count(eb, sref));
 			break;
 		case BTRFS_EXTENT_OWNER_REF_KEY:
-			printf("\t\textent owner root %llu\n",
-			       (unsigned long long)offset);
+			printf("\t\(%u 0x%llx) textent owner root %llu\n",
+			       type, seq, offset);
 			break;
 		default:
 			return;
