@@ -64,6 +64,7 @@
 #define UNKNOWN_TYPE		(1 << 6) /* Unknown type */
 #define ACCOUNTING_MISMATCH	(1 << 7) /* Used space accounting error */
 #define CHUNK_TYPE_MISMATCH	(1 << 8)
+#define BACKREF_OUT_OF_ORDER	(1 << 9)
 
 int check_fs_roots_lowmem(void);
 int check_chunks_and_extents_lowmem(void);

@@ -4234,6 +4234,7 @@ static int check_extent_item(struct btrfs_path *path)
 	unsigned long ptr;
 	int slot = path->slots[0];
 	int type;
+	int last_type = 0;
 	u32 nodesize = btrfs_super_nodesize(gfs_info->super_copy);
 	u32 item_size = btrfs_item_size(eb, slot);
 	u64 flags;
@@ -4245,6 +4246,8 @@ static int check_extent_item(struct btrfs_path *path)
 	u64 owner;
 	u64 owner_offset;
 	u64 super_gen;
+	u64 seq;
+	u64 last_seq = U64_MAX;
 	int metadata = 0;
 	/* To handle corrupted values in skinny backref */
 	u64 level;
@@ -4342,6 +4345,32 @@ next:
 	iref = (struct btrfs_extent_inline_ref *)ptr;
 	type = btrfs_extent_inline_ref_type(eb, iref);
 	offset = btrfs_extent_inline_ref_offset(eb, iref);
+	if (type == BTRFS_EXTENT_DATA_REF_KEY) {
+		dref = (struct btrfs_extent_data_ref *)(&iref->offset);
+		seq = hash_extent_data_ref(
+				btrfs_extent_data_ref_root(eb, dref),
+				btrfs_extent_data_ref_objectid(eb, dref),
+				btrfs_extent_data_ref_offset(eb, dref));
+	} else {
+		seq = offset;
+	}
+	/*
+	 * The @type should be ascending, while inside the same type, the
+	 * @seq should be descending.
+	 */
+	if (type < last_type)
+		tmp_err |= BACKREF_OUT_OF_ORDER;
+	else if (type > last_type)
+		last_seq = U64_MAX;
+
+	if (seq > last_seq)
+		tmp_err |= BACKREF_OUT_OF_ORDER;
+
+	if (tmp_err & BACKREF_OUT_OF_ORDER)
+		error(
+"inline extent backref (type %u seq 0x%llx) of extent [%llu %u %llu] is out of order",
+		      type, seq, key.objectid, key.type, key.offset);
+
 	switch (type) {
 	case BTRFS_TREE_BLOCK_REF_KEY:
 		root_objectid = offset;
@@ -4420,6 +4449,8 @@ next:
 
 	err |= tmp_err;
 	ptr_offset += btrfs_extent_inline_ref_size(type);
+	last_type = type;
+	last_seq = seq;
 	goto next;
 
 out:
