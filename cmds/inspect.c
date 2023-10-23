@@ -750,7 +750,7 @@ static int cmp_cse_devid_start(const void *va, const void *vb)
 	if (a->start == b->start) {
 		error(
 	"chunks start on same offset in the same device: devid %llu start %llu",
-		    (unsigned long long)a->devid, (unsigned long long)a->start);
+		    a->devid, a->start);
 		return 0;
 	}
 	return 1;
@@ -771,7 +771,7 @@ static int cmp_cse_devid_lstart(const void *va, const void *vb)
 	if (a->lstart == b->lstart) {
 		error(
 "chunks logically start on same offset in the same device: devid %llu start %llu",
-		    (unsigned long long)a->devid, (unsigned long long)a->lstart);
+		    a->devid, a->lstart);
 		return 0;
 	}
 	return 1;
@@ -1434,7 +1434,7 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 				chunk = find_chunk(chunks, num_chunks, logical_offset);
 				if (!chunk) {
 					error("cannot find chunk containing %llu",
-						(unsigned long long)logical_offset);
+						logical_offset);
 					return -ENOENT;
 				}
 			} else {
@@ -1470,7 +1470,7 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 		/* Only single profile */
 		if ((chunk->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) != 0) {
 			error("unsupported block group profile: %llu",
-				(unsigned long long)(chunk->type & BTRFS_BLOCK_GROUP_PROFILE_MASK));
+				chunk->type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 			ret = -EINVAL;
 			goto out;
 		}
