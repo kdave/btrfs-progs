@@ -31,7 +31,7 @@ static int next_key(int i, int max_key) {
 	// return i;
 }
 
-int main(int ac, char **av) {
+int main(int argc, char **argv) {
 	struct btrfs_key ins;
 	struct btrfs_key last = { (u64)-1, 0, 0};
 	char *buf;
@@ -45,9 +45,20 @@ int main(int ac, char **av) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 
+	if (argc < 2) {
+		printf("ERROR: btree-test image\n");
+		return 1;
+	}
+
+	printf("Parameters:\n");
+	printf("  run_size\t%d\n", run_size);
+	printf("  max_key\t%d\n", max_key);
+	printf("  tree_size\t%d\n", tree_size);
+	printf("  file\t%s\n", argv[1]);
+
 	buf = calloc(1, 512);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
+	root = open_ctree(argv[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -76,7 +87,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 	exit(1);
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
+	root = open_ctree(argv[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -98,7 +109,7 @@ int main(int ac, char **av) {
 	}
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
+	root = open_ctree(argv[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -130,7 +141,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
+	root = open_ctree(argv[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -151,7 +162,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
+	root = open_ctree(argv[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
