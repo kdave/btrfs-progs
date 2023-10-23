@@ -344,15 +344,13 @@ static int find_parent_roots(struct ulist *roots, u64 parent)
 	 */
 	ref = find_ref_bytenr(parent);
 	if (!ref) {
-		error("bytenr ref not found for parent %llu",
-				(unsigned long long)parent);
+		error("bytenr ref not found for parent %llu", parent);
 		return -EIO;
 	}
 	node = &ref->bytenr_node;
 	if (ref->bytenr != parent) {
 		error("found bytenr ref does not match parent: %llu != %llu",
-				(unsigned long long)ref->bytenr,
-				(unsigned long long)parent);
+				ref->bytenr, parent);
 		return -EIO;
 	}
 
@@ -367,9 +365,8 @@ static int find_parent_roots(struct ulist *roots, u64 parent)
 		if (prev_node) {
 			prev = rb_entry(prev_node, struct ref, bytenr_node);
 			if (prev->bytenr == parent) {
-				error(
-				"unexpected: prev bytenr same as parent: %llu",
-						(unsigned long long)parent);
+				error("unexpected: prev bytenr same as parent: %llu",
+						parent);
 				return -EIO;
 			}
 		}
@@ -645,8 +642,7 @@ static void print_tree_block(u64 bytenr, struct tree_block *block)
 	struct ref *ref;
 	struct rb_node *node;
 
-	printf("tree block: %llu\t\tlevel: %d\n", (unsigned long long)bytenr,
-	       block->level);
+	printf("tree block: %llu\t\tlevel: %d\n", bytenr, block->level);
 
 	ref = find_ref_bytenr(bytenr);
 	node = &ref->bytenr_node;
@@ -1331,8 +1327,7 @@ static void print_fields(u64 bytes, u64 bytes_compressed, char *prefix,
 			 char *type)
 {
 	printf("%s\t\t%s %llu %s compressed %llu\n",
-	       prefix, type, (unsigned long long)bytes, type,
-	       (unsigned long long)bytes_compressed);
+	       prefix, type, bytes, type, bytes_compressed);
 }
 
 static void print_fields_signed(long long bytes,
