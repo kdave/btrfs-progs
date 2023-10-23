@@ -1227,7 +1227,7 @@ again:
 }
 
 static bool
-keep_running(opnum_t opno, opnum_t operations)
+keep_running(opnum_t opno, opnum_t opcount)
 {
 	int ret;
 
@@ -1243,7 +1243,7 @@ keep_running(opnum_t opno, opnum_t operations)
 		return now.tv_sec <= deadline.tv_sec;
 	}
 
-	return opno < operations;
+	return opno < opcount;
 }
 
 void
@@ -2117,9 +2117,9 @@ non_btrfs_freq(const char *path)
 		ops[btrfs_ops[i]].freq = 0;
 }
 
-static void inode_info(char *str, size_t sz, struct stat64 *s, int verbose)
+static void inode_info(char *str, size_t sz, struct stat64 *s, int be_verbose)
 {
-	if (verbose)
+	if (be_verbose)
 		snprintf(str, sz, "[%ld %ld %d %d %lld %lld]",
 			 verifiable_log ? -1: (long)s->st_ino,
 			 (long)s->st_nlink,  s->st_uid, s->st_gid,
