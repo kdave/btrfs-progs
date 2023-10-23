@@ -85,9 +85,7 @@ int parse_range(const char *range, u64 *start, u64 *end)
 	}
 
 	if (*start > *end) {
-		error("range %llu..%llu doesn't make sense",
-			(unsigned long long)*start,
-			(unsigned long long)*end);
+		error("range %llu..%llu doesn't make sense", *start, *end);
 		return 1;
 	}
 
@@ -136,9 +134,7 @@ int parse_range_strict(const char *range, u64 *start, u64 *end)
 {
 	if (parse_range(range, start, end) == 0) {
 		if (*start >= *end) {
-			error("range %llu..%llu not allowed",
-				(unsigned long long)*start,
-				(unsigned long long)*end);
+			error("range %llu..%llu not allowed", *start, *end);
 			return 1;
 		}
 		return 0;
