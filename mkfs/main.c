@@ -801,8 +801,7 @@ static int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid,
 	if (ret < 0 && ret != -EEXIST) {
 		warning(
 		"inserting uuid item failed (0x%016llx, 0x%016llx) type %u: %d",
-			(unsigned long long)key.objectid,
-			(unsigned long long)key.offset, type, ret);
+			key.objectid, key.offset, type, ret);
 		goto out;
 	}
 
