@@ -904,8 +904,7 @@ static u64 find_root_gen(int fd)
 	/* this ioctl fills in ino_args->treeid */
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_args);
 	if (ret < 0) {
-		error("failed to lookup path for dirid %llu: %m",
-			(unsigned long long)BTRFS_FIRST_FREE_OBJECTID);
+		error("failed to lookup path for dirid %llu: %m", BTRFS_FIRST_FREE_OBJECTID);
 		return 0;
 	}
 
