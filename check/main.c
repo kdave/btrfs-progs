@@ -9966,13 +9966,15 @@ static const char * const cmd_check_usage[] = {
 	OPTLINE("--init-csum-tree", "create a new CRC tree"),
 	OPTLINE("--init-extent-tree", "create a new extent tree"),
 	OPTLINE("--clear-space-cache v1|v2", "clear space cache for v1 or v2"),
-	OPTLINE("--clear-ino-cache", "clear ino cache leftover items"),
 	"",
 	"Check and reporting options:",
 	OPTLINE("--check-data-csum", "verify checksums of data blocks"),
 	OPTLINE("-Q|--qgroup-report", "print a report on qgroup consistency"),
 	OPTLINE("-E|--subvol-extents <subvolid>", "print subvolume extents and sharing state"),
 	OPTLINE("-p|--progress", "indicate progress"),
+	"",
+	"Deprecated or moved options:",
+	OPTLINE("--clear-ino-cache", "clear ino cache leftover items (moved to 'rescue' group)"),
 	NULL
 };
 
