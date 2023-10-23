@@ -742,9 +742,9 @@ btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbt
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
-quick-test: quick-test.o $(objects) libbtrfsutil.a $(libs_shared)
-	@echo "    [LD]     $@"
-	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+btree-test: tests/btree-test.c $(objects) libbtrfsutil.a $(libs_shared)
+	@echo "    [CC]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 ioctl-test.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC]     $@"
@@ -895,7 +895,7 @@ clean: $(CLEANDIRS)
 	@echo "Cleaning test targets"
 	$(Q)$(RM) -f -- \
 		array-test fsstress fsstum hash-speedtest hash-vectest ioctl-test \
-		json-formatter-test library-test library-test-static quick-test
+		json-formatter-test library-test library-test-static btree-test
 	@echo "Cleanin other generated files"
 	$(Q)$(RM) -f -- $(check_defs) \
 		*.gcno *.gcda *.gcov */*.gcno */*.gcda */*/.gcov
