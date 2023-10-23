@@ -218,14 +218,12 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	if (ret < 0) {
 		fprintf(stderr,
 			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %m\n",
-			(unsigned long long)subvol_id, ret);
+			subvol_id, ret);
 		return ret;
 	}
 
 	if (search_arg.key.nr_items < 1) {
-		fprintf(stderr,
-			"failed to lookup subvol_id %llu!\n",
-			(unsigned long long)subvol_id);
+		fprintf(stderr, "failed to lookup subvol_id %llu!\n", subvol_id);
 		return -ENOENT;
 	}
 	search_header = (struct btrfs_ioctl_search_header *)search_arg.buf;
