@@ -807,6 +807,7 @@ static int load_device_info(int fd, struct array *devinfos)
 				device_get_partition_size((const char *)dev_info.path);
 		}
 		info->size = dev_info.total_bytes;
+		ndevs++;
 	}
 
 	if (ndevs != fi_args.num_devices) {
