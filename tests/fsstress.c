@@ -6,7 +6,7 @@
 
 /*
  * Copied from fstests/ltp/fsstress.c, modified to make it compile without XFS
- * features and headers
+ * features and headers but with some compile-time stubs.
  */
 
 #include <linux/fs.h>
@@ -67,6 +67,109 @@ bool have_io_uring;			/* to indicate runtime availability */
 #define FS_IOC_SETFLAGS                 _IOW('f', 2, long)
 #endif
 
+#define XFS_IOC_FSGETXATTR	FS_IOC_FSGETXATTR
+#define XFS_IOC_FSSETXATTR	FS_IOC_FSSETXATTR
+
+#define	XFS_XFLAG_REALTIME	FS_XFLAG_REALTIME
+
+#define XFS_IOC_FSGEOMETRY           _IOR('X', 126, struct xfs_fsop_geom)
+struct xfs_fsop_geom {
+	__u32		blocksize;	/* filesystem (data) block size */
+	__u32		rtextsize;	/* realtime extent size		*/
+	__u32		agblocks;	/* fsblocks in an AG		*/
+	__u32		agcount;	/* number of allocation groups	*/
+	__u32		logblocks;	/* fsblocks in the log		*/
+	__u32		sectsize;	/* (data) sector size, bytes	*/
+	__u32		inodesize;	/* inode size in bytes		*/
+	__u32		imaxpct;	/* max allowed inode space(%)	*/
+	__u64		datablocks;	/* fsblocks in data subvolume	*/
+	__u64		rtblocks;	/* fsblocks in realtime subvol	*/
+	__u64		rtextents;	/* rt extents in realtime subvol*/
+	__u64		logstart;	/* starting fsblock of the log	*/
+	unsigned char	uuid[16];	/* unique id of the filesystem	*/
+	__u32		sunit;		/* stripe unit, fsblocks	*/
+	__u32		swidth;		/* stripe width, fsblocks	*/
+	__s32		version;	/* structure version		*/
+	__u32		flags;		/* superblock version flags	*/
+	__u32		logsectsize;	/* log sector size, bytes	*/
+	__u32		rtsectsize;	/* realtime sector size, bytes	*/
+	__u32		dirblocksize;	/* directory block size, bytes	*/
+	__u32		logsunit;	/* log stripe unit, bytes	*/
+	uint32_t	sick;		/* o: unhealthy fs & rt metadata */
+	uint32_t	checked;	/* o: checked fs & rt metadata	*/
+	__u64		reserved[17];	/* reserved space		*/
+};
+
+#define XFS_IOC_ERROR_INJECTION	     _IOW('X', 116, struct xfs_error_injection)
+#define XFS_IOC_ERROR_CLEARALL	     _IOW('X', 117, struct xfs_error_injection)
+typedef struct xfs_error_injection {
+	__s32		fd;
+	__s32		errtag;
+} xfs_error_injection_t;
+
+#define XFS_IOC_DIOINFO		_IOR ('X', 30, struct dioattr)
+struct dioattr {
+	__u32		d_mem;		/* data buffer memory alignment */
+	__u32		d_miniosz;	/* min xfer size		*/
+	__u32		d_maxiosz;	/* max xfer size		*/
+};
+
+#define XFS_IOC_FSBULKSTAT	     _IOWR('X', 101, struct xfs_fsop_bulkreq)
+#define XFS_IOC_FSBULKSTAT_SINGLE    _IOWR('X', 102, struct xfs_fsop_bulkreq)
+typedef struct xfs_bstime {
+	__kernel_long_t tv_sec;		/* seconds		*/
+	__s32		tv_nsec;	/* and nanoseconds	*/
+} xfs_bstime_t;
+
+struct xfs_bstat {
+	__u64		bs_ino;		/* inode number			*/
+	__u16		bs_mode;	/* type and mode		*/
+	__u16		bs_nlink;	/* number of links		*/
+	__u32		bs_uid;		/* user id			*/
+	__u32		bs_gid;		/* group id			*/
+	__u32		bs_rdev;	/* device value			*/
+	__s32		bs_blksize;	/* block size			*/
+	__s64		bs_size;	/* file size			*/
+	xfs_bstime_t	bs_atime;	/* access time			*/
+	xfs_bstime_t	bs_mtime;	/* modify time			*/
+	xfs_bstime_t	bs_ctime;	/* inode change time		*/
+	int64_t		bs_blocks;	/* number of blocks		*/
+	__u32		bs_xflags;	/* extended flags		*/
+	__s32		bs_extsize;	/* extent size			*/
+	__s32		bs_extents;	/* number of extents		*/
+	__u32		bs_gen;		/* generation count		*/
+	__u16		bs_projid_lo;	/* lower part of project id	*/
+#define	bs_projid	bs_projid_lo	/* (previously just bs_projid)	*/
+	__u16		bs_forkoff;	/* inode fork offset in bytes	*/
+	__u16		bs_projid_hi;	/* higher part of project id	*/
+	uint16_t	bs_sick;	/* sick inode metadata		*/
+	uint16_t	bs_checked;	/* checked inode metadata	*/
+	unsigned char	bs_pad[2];	/* pad space, unused		*/
+	__u32		bs_cowextsize;	/* cow extent size		*/
+	__u32		bs_dmevmask;	/* DMIG event mask		*/
+	__u16		bs_dmstate;	/* DMIG state info		*/
+	__u16		bs_aextents;	/* attribute number of extents	*/
+};
+
+struct xfs_fsop_bulkreq {
+	__u64		*lastip;	/* last inode # pointer		*/
+	__s32		icount;		/* count of entries in buffer	*/
+	void		*ubuffer;/* user buffer for inode desc.	*/
+	__s32		*ocount;	/* output count pointer		*/
+};
+
+#define XFS_IOC_RESVSP64	_IOW('X', 42, struct xfs_flock64)
+#define XFS_IOC_UNRESVSP64	_IOW('X', 43, struct xfs_flock64)
+typedef struct xfs_flock64 {
+	__s16		l_type;
+	__s16		l_whence;
+	__s64		l_start;
+	__s64		l_len;		/* len == 0 means until end of file */
+	__s32		l_sysid;
+	__u32		l_pid;
+	__s32		l_pad[4];	/* reserve area			    */
+} xfs_flock64_t;
+
 #include <math.h>
 #define XFS_ERRTAG_MAX		17
 #define XFS_IDMODULO_MAX	31	/* user/group IDs (1 << x)  */
@@ -83,6 +186,12 @@ bool have_io_uring;			/* to indicate runtime availability */
 #if !defined(SYS_renameat2) && defined(__i386__)
 #define SYS_renameat2 353
 #endif
+
+static inline int xfsctl(const char *path, int fd, int cmd, void *p)
+{
+	return ioctl(fd, cmd, p);
+}
+
 
 #if 0
 static int renameat2(int dfd1, const char *path1,
@@ -112,12 +221,6 @@ roundup_64(unsigned long long x, unsigned int y)
 	return rounddown_64(x + y - 1, y);
 }
 
-struct dioattr {
-	__u32		d_mem;		/* data buffer memory alignment */
-	__u32		d_miniosz;	/* min xfer size		*/
-	__u32		d_maxiosz;	/* max xfer size		*/
-};
-
 #ifndef RENAME_NOREPLACE
 #define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
 #endif
@@ -132,13 +235,12 @@ struct dioattr {
 
 typedef enum {
 	OP_AFSYNC,
-	/* OP_ALLOCSP, */
 	OP_AREAD,
 	OP_ATTR_REMOVE,
 	OP_ATTR_SET,
 	OP_AWRITE,
-	/* OP_BULKSTAT, */
-	/* OP_BULKSTAT1, */
+	OP_BULKSTAT,
+	OP_BULKSTAT1,
 	OP_CHOWN,
 	OP_CLONERANGE,
 	OP_COPYRANGE,
@@ -149,7 +251,6 @@ typedef enum {
 	OP_FALLOCATE,
 	OP_FDATASYNC,
 	OP_FIEMAP,
-	/* OP_FREESP, */
 	OP_FSYNC,
 	OP_GETATTR,
 	OP_GETDENTS,
@@ -172,7 +273,7 @@ typedef enum {
 	OP_RNOREPLACE,
 	OP_REXCHANGE,
 	OP_RWHITEOUT,
-	/* OP_RESVSP, */
+	OP_RESVSP,
 	OP_RMDIR,
 	OP_SETATTR,
 	OP_SETFATTR,
@@ -186,12 +287,12 @@ typedef enum {
 	OP_SYNC,
 	OP_TRUNCATE,
 	OP_UNLINK,
-	/* OP_UNRESVSP, */
+	OP_UNRESVSP,
 	OP_URING_READ,
 	OP_URING_WRITE,
 	OP_WRITE,
 	OP_WRITEV,
-	/* OP_XCHGRANGE, */
+	OP_XCHGRANGE,
 	OP_LAST
 } opty_t;
 
@@ -267,8 +368,8 @@ void	aread_f(opnum_t, long);
 void	attr_remove_f(opnum_t, long);
 void	attr_set_f(opnum_t, long);
 void	awrite_f(opnum_t, long);
-/* void	bulkstat_f(opnum_t, long); */
-/* void	bulkstat1_f(opnum_t, long); */
+void	bulkstat_f(opnum_t, long);
+void	bulkstat1_f(opnum_t, long);
 void	chown_f(opnum_t, long);
 void	clonerange_f(opnum_t, long);
 void	copyrange_f(opnum_t, long);
@@ -302,7 +403,7 @@ void	rename_f(opnum_t, long);
 void	rnoreplace_f(opnum_t, long);
 void	rexchange_f(opnum_t, long);
 void	rwhiteout_f(opnum_t, long);
-/* void	resvsp_f(opnum_t, long); */
+void	resvsp_f(opnum_t, long);
 void	rmdir_f(opnum_t, long);
 void	setattr_f(opnum_t, long);
 void	setfattr_f(opnum_t, long);
@@ -316,12 +417,12 @@ void	symlink_f(opnum_t, long);
 void	sync_f(opnum_t, long);
 void	truncate_f(opnum_t, long);
 void	unlink_f(opnum_t, long);
-/* void	unresvsp_f(opnum_t, long); */
+void	unresvsp_f(opnum_t, long);
 void	uring_read_f(opnum_t, long);
 void	uring_write_f(opnum_t, long);
 void	write_f(opnum_t, long);
 void	writev_f(opnum_t, long);
-/* void	xchgrange_f(opnum_t, long); */
+void	xchgrange_f(opnum_t, long);
 
 char	*xattr_flag_to_string(int);
 
@@ -332,8 +433,8 @@ struct opdesc	ops[OP_LAST]	= {
 	[OP_ATTR_REMOVE]   = {"attr_remove",   attr_remove_f,	0, 1 },
 	[OP_ATTR_SET]	   = {"attr_set",      attr_set_f,	0, 1 },
 	[OP_AWRITE]	   = {"awrite",	       awrite_f,	1, 1 },
-	/* [OP_BULKSTAT]	   = {"bulkstat",      bulkstat_f,	1, 0 }, */
-	/* [OP_BULKSTAT1]	   = {"bulkstat1",     bulkstat1_f,	1, 0 }, */
+	[OP_BULKSTAT]	   = {"bulkstat",      bulkstat_f,	1, 0 },
+	[OP_BULKSTAT1]	   = {"bulkstat1",     bulkstat1_f,	1, 0 },
 	[OP_CHOWN]	   = {"chown",	       chown_f,		3, 1 },
 	[OP_CLONERANGE]	   = {"clonerange",    clonerange_f,	4, 1 },
 	[OP_COPYRANGE]	   = {"copyrange",     copyrange_f,	4, 1 },
@@ -369,7 +470,7 @@ struct opdesc	ops[OP_LAST]	= {
 	[OP_RNOREPLACE]	   = {"rnoreplace",    rnoreplace_f,	2, 1 },
 	[OP_REXCHANGE]	   = {"rexchange",     rexchange_f,	2, 1 },
 	[OP_RWHITEOUT]	   = {"rwhiteout",     rwhiteout_f,	2, 1 },
-	/* [OP_RESVSP]	   = {"resvsp",	       resvsp_f,	1, 1 }, */
+	[OP_RESVSP]	   = {"resvsp",	       resvsp_f,	1, 1 },
 	[OP_RMDIR]	   = {"rmdir",	       rmdir_f,		1, 1 },
 	/* set attribute flag (FS_IOC_SETFLAGS ioctl) */
 	[OP_SETATTR]	   = {"setattr",       setattr_f,	0, 1 },
@@ -386,12 +487,12 @@ struct opdesc	ops[OP_LAST]	= {
 	[OP_SYNC]	   = {"sync",	       sync_f,		1, 1 },
 	[OP_TRUNCATE]	   = {"truncate",      truncate_f,	2, 1 },
 	[OP_UNLINK]	   = {"unlink",	       unlink_f,	1, 1 },
-	/* [OP_UNRESVSP]	   = {"unresvsp",      unresvsp_f,	1, 1 }, */
+	[OP_UNRESVSP]	   = {"unresvsp",      unresvsp_f,	1, 1 },
 	[OP_URING_READ]	   = {"uring_read",    uring_read_f,	1, 0 },
 	[OP_URING_WRITE]   = {"uring_write",   uring_write_f,	1, 1 },
 	[OP_WRITE]	   = {"write",	       write_f,		4, 1 },
 	[OP_WRITEV]	   = {"writev",	       writev_f,	4, 1 },
-	/* [OP_XCHGRANGE]	   = {"xchgrange",     xchgrange_f,	2, 1 }, */
+	[OP_XCHGRANGE]	   = {"xchgrange",     xchgrange_f,	2, 1 },
 }, *ops_end;
 
 flist_t	flist[FT_nft] = {
@@ -408,7 +509,7 @@ int		errrange;
 int		errtag;
 opty_t		*freq_table;
 int		freq_table_size;
-/* struct xfs_fsop_geom	geom; */
+struct xfs_fsop_geom	geom;
 char		*homedir;
 int		*ilist;
 int		ilistlen;
@@ -546,13 +647,13 @@ int main(int argc, char **argv)
 	char		rpath[PATH_MAX];
 	int		fd;
 	int		i;
-	/* int		j; */
+	int		j;
 	char		*p;
 	int		stat;
 	struct timeval	t;
-	/* ptrdiff_t	srval; */
+	ptrdiff_t	srval;
 	int             nousage = 0;
-	/* xfs_error_injection_t	        err_inj; */
+	xfs_error_injection_t	        err_inj;
 	struct sigaction action;
 	int		loops = 1;
 	const char	*allopts = "cd:e:f:i:l:m:M:n:o:p:rRs:S:vVwx:X:zH";
@@ -730,7 +831,6 @@ int main(int argc, char **argv)
 		seed = (int)t.tv_sec ^ (int)t.tv_usec;
 		printf("seed = %ld\n", seed);
 	}
-#if 0
 	i = xfsctl(buf, fd, XFS_IOC_FSGEOMETRY, &geom);
 	if (i >= 0 && geom.rtblocks)
 		rtpct = MIN(MAX(geom.rtblocks * 100 /
@@ -769,7 +869,6 @@ int main(int argc, char **argv)
 		}
 	} else
 		close(fd);
-#endif
 
 	setpgid(0, 0);
 	action.sa_handler = sg_handler;
@@ -848,7 +947,6 @@ int main(int argc, char **argv)
 	while (wait(&stat) > 0)
 		continue;
 
-#if 0
 	if (errtag != 0) {
 		err_inj.errtag = 0;
 		err_inj.fd = fd;
@@ -862,7 +960,6 @@ int main(int argc, char **argv)
 		}
 		close(fd);
 	}
-#endif
 
 	free(freq_table);
 	unlink(buf);
@@ -2126,6 +2223,22 @@ static void inode_info(char *str, size_t sz, struct stat64 *s, int be_verbose)
 			 (long long) s->st_blocks, (long long) s->st_size);
 }
 
+#ifdef AIO
+static int io_get_single_event(struct io_event *event)
+{
+	int ret;
+
+	/*
+	 * We can get -EINTR if competing with io_uring using signal
+	 * based notifications. For that case, just retry the wait.
+	 */
+	do {
+		ret = io_getevents(io_ctx, 1, 1, event, NULL);
+	} while (ret == -EINTR);
+	return ret;
+}
+#endif
+
 void
 afsync_f(opnum_t opno, long r)
 {
@@ -2165,7 +2278,7 @@ afsync_f(opnum_t opno, long r)
 		close(fd);
 		return;
 	}
-	if ((e = io_getevents(io_ctx, 1, 1, &event, NULL)) != 1) {
+	if ((e = io_get_single_event(&event)) != 1) {
 		if (v)
 			printf("%d/%lld: afsync - io_getevents failed %d\n",
 			       procid, opno, e);
@@ -2232,9 +2345,7 @@ do_aio_rw(opnum_t opno, long r, int flags)
 			       f.path, st);
 		goto aio_out;
 	}
-#if 0
 	if (xfsctl(f.path, fd, XFS_IOC_DIOINFO, &diob) < 0) {
-#endif
 		if (v)
 			printf(
 			"%d/%lld: do_aio_rw - xfsctl(XFS_IOC_DIOINFO) %s%s return %d,"
@@ -2242,9 +2353,7 @@ do_aio_rw(opnum_t opno, long r, int flags)
 				procid, opno, f.path, st, errno);
 		diob.d_mem = diob.d_miniosz = stb.st_blksize;
 		diob.d_maxiosz = rounddown_64(INT_MAX, diob.d_miniosz);
-#if 0
 	}
-#endif
 	dio_env = getenv("XFS_DIO_MIN");
 	if (dio_env)
 		diob.d_mem = diob.d_miniosz = atoi(dio_env);
@@ -2281,7 +2390,7 @@ do_aio_rw(opnum_t opno, long r, int flags)
 			       procid, opno, iswrite ? "awrite" : "aread", e);
 		goto aio_out;
 	}
-	if ((e = io_getevents(io_ctx, 1, 1, &event, NULL)) != 1) {
+	if ((e = io_get_single_event(&event)) != 1) {
 		if (v)
 			printf("%d/%lld: %s - io_getevents failed %d\n",
 			       procid, opno, iswrite ? "awrite" : "aread", e);
@@ -2517,7 +2626,6 @@ awrite_f(opnum_t opno, long r)
 #endif
 }
 
-#if 0
 void
 bulkstat_f(opnum_t opno, long r)
 {
@@ -2561,7 +2669,6 @@ bulkstat1_f(opnum_t opno, long r)
 	struct xfs_bstat	t;
 	int		v;
 	struct xfs_fsop_bulkreq bsr;
-        
 
 	good = random() & 1;
 	if (good) {
@@ -2603,7 +2710,6 @@ bulkstat1_f(opnum_t opno, long r)
 		       verifiable_log ? -1LL : (long long)ino, e);
 	close(fd);
 }
-#endif
 
 void
 chown_f(opnum_t opno, long r)
@@ -2630,7 +2736,6 @@ chown_f(opnum_t opno, long r)
 	free_pathname(&f);
 }
 
-#if 0
 /* exchange some arbitrary range of f1 to f2...fn. */
 void
 xchgrange_f(
@@ -2794,8 +2899,6 @@ out_fpath1:
 	free_pathname(&fpath1);
 #endif
 }
-
-#endif
 
 /* reflink some arbitrary range of f1 to f2. */
 void
@@ -3594,7 +3697,6 @@ creat_f(opnum_t opno, long r)
 	e1 = 0;
 	check_cwd();
 	if (fd >= 0) {
-#if 0
 		if (extsize &&
 		    xfsctl(f.path, fd, XFS_IOC_FSGETXATTR, &a) >= 0) {
 			if (type == FT_RTF) {
@@ -3611,7 +3713,6 @@ creat_f(opnum_t opno, long r)
 				e1 = errno;
 		}
 		add_to_flist(type, id, parid, 0);
-#endif
 		close(fd);
 	}
 	if (v) {
@@ -3673,9 +3774,7 @@ dread_f(opnum_t opno, long r)
 		close(fd);
 		return;
 	}
-#if 0
 	if (xfsctl(f.path, fd, XFS_IOC_DIOINFO, &diob) < 0) {
-#endif
 		if (v)
 			printf(
 			"%d/%lld: dread - xfsctl(XFS_IOC_DIOINFO) %s%s return %d,"
@@ -3683,9 +3782,7 @@ dread_f(opnum_t opno, long r)
 				procid, opno, f.path, st, errno);
 		diob.d_mem = diob.d_miniosz = stb.st_blksize;
 		diob.d_maxiosz = rounddown_64(INT_MAX, diob.d_miniosz);
-#if 0
 	}
-#endif
 
 	dio_env = getenv("XFS_DIO_MIN");
 	if (dio_env)
@@ -3755,18 +3852,14 @@ dwrite_f(opnum_t opno, long r)
 		return;
 	}
 	inode_info(st, sizeof(st), &stb, v);
-#if 0
 	if (xfsctl(f.path, fd, XFS_IOC_DIOINFO, &diob) < 0) {
-#endif
 		if (v)
 			printf("%d/%lld: dwrite - xfsctl(XFS_IOC_DIOINFO)"
 				" %s%s return %d, fallback to stat()\n",
 			       procid, opno, f.path, st, errno);
 		diob.d_mem = diob.d_miniosz = stb.st_blksize;
 		diob.d_maxiosz = rounddown_64(INT_MAX, diob.d_miniosz);
-#if 0
 	}
-#endif
 
 	dio_env = getenv("XFS_DIO_MIN");
 	if (dio_env)
@@ -4876,7 +4969,6 @@ rwhiteout_f(opnum_t opno, long r)
 	do_renameat2(opno, r, RENAME_WHITEOUT);
 }
 
-#if 0
 void
 resvsp_f(opnum_t opno, long r)
 {
@@ -4930,7 +5022,6 @@ resvsp_f(opnum_t opno, long r)
 	free_pathname(&f);
 	close(fd);
 }
-#endif
 
 void
 rmdir_f(opnum_t opno, long r)
@@ -5346,7 +5437,6 @@ unlink_f(opnum_t opno, long r)
 	free_pathname(&f);
 }
 
-#if 0
 void
 unresvsp_f(opnum_t opno, long r)
 {
@@ -5400,7 +5490,6 @@ unresvsp_f(opnum_t opno, long r)
 	free_pathname(&f);
 	close(fd);
 }
-#endif
 
 void
 uring_read_f(opnum_t opno, long r)
