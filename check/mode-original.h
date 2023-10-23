@@ -136,19 +136,19 @@ struct root_item_record {
 	struct btrfs_key drop_key;
 };
 
-#define REF_ERR_NO_DIR_ITEM		(1 << 0)
-#define REF_ERR_NO_DIR_INDEX		(1 << 1)
-#define REF_ERR_NO_INODE_REF		(1 << 2)
-#define REF_ERR_DUP_DIR_ITEM		(1 << 3)
-#define REF_ERR_DUP_DIR_INDEX		(1 << 4)
-#define REF_ERR_DUP_INODE_REF		(1 << 5)
-#define REF_ERR_INDEX_UNMATCH		(1 << 6)
-#define REF_ERR_FILETYPE_UNMATCH	(1 << 7)
-#define REF_ERR_NAME_TOO_LONG		(1 << 8) // 100
-#define REF_ERR_NO_ROOT_REF		(1 << 9)
-#define REF_ERR_NO_ROOT_BACKREF		(1 << 10)
-#define REF_ERR_DUP_ROOT_REF		(1 << 11)
-#define REF_ERR_DUP_ROOT_BACKREF	(1 << 12)
+#define REF_ERR_NO_DIR_ITEM		(1U <<  0)
+#define REF_ERR_NO_DIR_INDEX		(1U <<  1)
+#define REF_ERR_NO_INODE_REF		(1U <<  2)
+#define REF_ERR_DUP_DIR_ITEM		(1U <<  3)
+#define REF_ERR_DUP_DIR_INDEX		(1U <<  4)
+#define REF_ERR_DUP_INODE_REF		(1U <<  5)
+#define REF_ERR_INDEX_UNMATCH		(1U <<  6)
+#define REF_ERR_FILETYPE_UNMATCH	(1U <<  7)
+#define REF_ERR_NAME_TOO_LONG		(1U <<  8) // 100
+#define REF_ERR_NO_ROOT_REF		(1U <<  9)
+#define REF_ERR_NO_ROOT_BACKREF		(1U << 10)
+#define REF_ERR_DUP_ROOT_REF		(1U << 11)
+#define REF_ERR_DUP_ROOT_BACKREF	(1U << 12)
 
 struct file_extent_hole {
 	struct rb_node node;
@@ -166,29 +166,29 @@ struct unaligned_extent_rec_t {
 	u64 bytenr;
 };
 
-#define I_ERR_NO_INODE_ITEM		(1 << 0)
-#define I_ERR_NO_ORPHAN_ITEM		(1 << 1)
-#define I_ERR_DUP_INODE_ITEM		(1 << 2)
-#define I_ERR_DUP_DIR_INDEX		(1 << 3)
-#define I_ERR_ODD_DIR_ITEM		(1 << 4)
-#define I_ERR_ODD_FILE_EXTENT		(1 << 5)
-#define I_ERR_BAD_FILE_EXTENT		(1 << 6)
-#define I_ERR_FILE_EXTENT_OVERLAP	(1 << 7)
-#define I_ERR_FILE_EXTENT_DISCOUNT	(1 << 8) // 100
-#define I_ERR_DIR_ISIZE_WRONG		(1 << 9)
-#define I_ERR_FILE_NBYTES_WRONG		(1 << 10) // 400
-#define I_ERR_ODD_CSUM_ITEM		(1 << 11)
-#define I_ERR_SOME_CSUM_MISSING		(1 << 12)
-#define I_ERR_LINK_COUNT_WRONG		(1 << 13)
-#define I_ERR_UNALIGNED_EXTENT_REC	(1 << 14)
-#define I_ERR_FILE_EXTENT_TOO_LARGE	(1 << 15)
-#define I_ERR_ODD_INODE_FLAGS		(1 << 16)
-#define I_ERR_INLINE_RAM_BYTES_WRONG	(1 << 17)
-#define I_ERR_MISMATCH_DIR_HASH		(1 << 18)
-#define I_ERR_INVALID_IMODE		(1 << 19)
-#define I_ERR_INVALID_GEN		(1 << 20)
-#define I_ERR_INVALID_NLINK		(1 << 21)
-#define I_ERR_INVALID_XATTR		(1 << 22)
+#define I_ERR_NO_INODE_ITEM		(1U <<  0)
+#define I_ERR_NO_ORPHAN_ITEM		(1U <<  1)
+#define I_ERR_DUP_INODE_ITEM		(1U <<  2)
+#define I_ERR_DUP_DIR_INDEX		(1U <<  3)
+#define I_ERR_ODD_DIR_ITEM		(1U <<  4)
+#define I_ERR_ODD_FILE_EXTENT		(1U <<  5)
+#define I_ERR_BAD_FILE_EXTENT		(1U <<  6)
+#define I_ERR_FILE_EXTENT_OVERLAP	(1U <<  7)
+#define I_ERR_FILE_EXTENT_DISCOUNT	(1U <<  8) // 100
+#define I_ERR_DIR_ISIZE_WRONG		(1U <<  9)
+#define I_ERR_FILE_NBYTES_WRONG		(1U << 10) // 400
+#define I_ERR_ODD_CSUM_ITEM		(1U << 11)
+#define I_ERR_SOME_CSUM_MISSING		(1U << 12)
+#define I_ERR_LINK_COUNT_WRONG		(1U << 13)
+#define I_ERR_UNALIGNED_EXTENT_REC	(1U << 14)
+#define I_ERR_FILE_EXTENT_TOO_LARGE	(1U << 15)
+#define I_ERR_ODD_INODE_FLAGS		(1U << 16)
+#define I_ERR_INLINE_RAM_BYTES_WRONG	(1U << 17)
+#define I_ERR_MISMATCH_DIR_HASH		(1U << 18)
+#define I_ERR_INVALID_IMODE		(1U << 19)
+#define I_ERR_INVALID_GEN		(1U << 20)
+#define I_ERR_INVALID_NLINK		(1U << 21)
+#define I_ERR_INVALID_XATTR		(1U << 22)
 
 struct inode_record {
 	struct list_head backrefs;
