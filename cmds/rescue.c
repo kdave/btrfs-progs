@@ -456,6 +456,67 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(rescue_clear_ino_cache, "clear-ino-cache");
 
+static const char * const cmd_rescue_clear_space_cache_usage[] = {
+	"btrfs rescue clear-space-cache (v1|v2) <device>",
+	"completely remove the v1 or v2 free space cache",
+	NULL
+};
+
+static int cmd_rescue_clear_space_cache(const struct cmd_struct *cmd,
+					int argc, char **argv)
+{
+	struct open_ctree_args oca = { 0 };
+	struct btrfs_fs_info *fs_info;
+	char *devname;
+	char *version_string;
+	int clear_version;
+	int ret;
+
+	clean_args_no_options(cmd, argc, argv);
+
+	if (check_argc_exact(argc, 3))
+		return 1;
+
+	version_string = argv[optind];
+	devname = argv[optind + 1];
+	oca.filename = devname;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_EXCLUSIVE;
+
+	if (strncasecmp(version_string, "v1", strlen("v1")) == 0) {
+		clear_version = 1;
+	} else if (strncasecmp(version_string, "v2", strlen("v2")) == 0) {
+		clear_version = 2;
+		oca.flags |= OPEN_CTREE_INVALIDATE_FST;
+	} else {
+		error("invalid version string, has \"%s\" expect \"v1\" or \"v2\"",
+		      version_string);
+		return 1;
+	}
+	ret = check_mounted(devname);
+	if (ret < 0) {
+		errno = -ret;
+		error("could not check mount status: %m");
+		return 1;
+	}
+	if (ret > 0) {
+		error("%s is currently mounted", devname);
+		return 1;
+	}
+	fs_info = open_ctree_fs_info(&oca);
+	if (!fs_info) {
+		error("cannot open file system");
+		return 1;
+	}
+	ret = do_clear_free_space_cache(fs_info, clear_version);
+	close_ctree(fs_info->tree_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to clear free space cache: %m");
+	}
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(rescue_clear_space_cache, "clear-space-cache");
+
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
@@ -467,6 +528,7 @@ static const struct cmd_group rescue_cmd_group = {
 		&cmd_struct_rescue_fix_device_size,
 		&cmd_struct_rescue_create_control_device,
 		&cmd_struct_rescue_clear_ino_cache,
+		&cmd_struct_rescue_clear_space_cache,
 		&cmd_struct_rescue_clear_uuid_tree,
 		NULL
 	}
