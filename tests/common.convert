@@ -83,6 +83,8 @@ convert_test_prep_fs() {
 	reiserfs)
 		force=-ff
 		mountopts="-o acl,user_xattr,attrs" ;;
+	ntfs)
+		force=-F ;;
 	*)
 		_fail "unknown filesystem to convert: $fstype"
 	esac
@@ -235,6 +237,7 @@ convert_test_post_rollback() {
 	case "$1" in
 		ext[234]) types=ext2,ext3,ext4 ;;
 		reiserfs) types=reiserfs ;;
+		ntfs) types=ntfs ;;
 		*) _fail "unknown filesystem type to check: $1" ;;
 	esac
 
@@ -291,6 +294,21 @@ check_kernel_support_reiserfs()
 {
 	if ! grep -iq 'reiserfs' /proc/filesystems; then
 		echo "WARNING: reiserfs filesystem not listed in /proc/filesystems, some tests might be skipped"
+		return 1
+	fi
+	return 0
+}
+
+load_module_ntfs()
+{
+	# Load NTFS3 that has write support
+	$SUDO_HELPER modprobe ntfs3
+}
+
+check_kernel_support_ntfs()
+{
+	if ! grep -iq 'ntfs' /proc/filesystems; then
+		echo "WARNING: ntfs filesystem not listed in /proc/filesystems, some tests might be skipped"
 		return 1
 	fi
 	return 0
