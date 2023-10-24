@@ -37,6 +37,7 @@ struct cmd_group;
 
 #define GETOPT_VAL_HELP				520
 #define GETOPT_VAL_PARAM			521
+#define GETOPT_VAL_DRY_RUN			522
 
 #define ARGV0_BUF_SIZE	PATH_MAX
 
@@ -83,7 +84,7 @@ struct cmd_group;
 					"Global options:"
 
 #define HELPINFO_INSERT_FORMAT		"--format TYPE"
-
+#define HELPINFO_INSERT_DRY_RUN OPTLINE("--dry-run", "do not do any active/changing actions")
 #define HELPINFO_INSERT_VERBOSE	OPTLINE("-v|--verbose", "increase output verbosity")
 #define HELPINFO_INSERT_QUIET	OPTLINE("-q|--quiet", "print only errors")
 
