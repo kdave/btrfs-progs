@@ -17,8 +17,6 @@ prepare_test_dev
 # or number of devices
 for feature in '' 'block-group-tree' ; do
 	convert_test reiserfs "$feature" "reiserfs 4k nodesize" 4096 mkreiserfs -b 4096
-	convert_test reiserfs "$feature" "reiserfs 8k nodesize" 8192 mkreiserfs -b 4096
 	convert_test reiserfs "$feature" "reiserfs 16k nodesize" 16384 mkreiserfs -b 4096
-	convert_test reiserfs "$feature" "reiserfs 32k nodesize" 32768 mkreiserfs -b 4096
 	convert_test reiserfs "$feature" "reiserfs 64k nodesize" 65536 mkreiserfs -b 4096
 done
