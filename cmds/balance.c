@@ -291,8 +291,8 @@ static int do_balance_v1(int fd)
 }
 
 enum {
-	BALANCE_START_FILTERS = 1 << 0,
-	BALANCE_START_NOWARN  = 1 << 1
+	BALANCE_START_FILTERS = 1U << 0,
+	BALANCE_START_NOWARN  = 1U << 1
 };
 
 static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
