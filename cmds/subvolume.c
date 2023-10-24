@@ -313,6 +313,7 @@ static const char * const cmd_subvolume_delete_usage[] = {
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
+	HELPINFO_INSERT_DRY_RUN,
 	NULL
 };
 
@@ -483,6 +484,10 @@ again:
 	else
 		pr_verbose(LOG_DEFAULT, "subvolid=%llu\n", subvolid);
 
+	if (bconf_is_dry_run())
+		goto out;
+
+	/* Start deleting. */
 	if (subvolid == 0)
 		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
 	else
@@ -540,7 +545,7 @@ keep_fd:
 	if (cnt < argc)
 		goto again;
 
-	if (commit_mode == COMMIT_AFTER) {
+	if (commit_mode == COMMIT_AFTER && !bconf_is_dry_run()) {
 		int slot;
 
 		/*
@@ -573,7 +578,7 @@ keep_fd:
 
 	return ret;
 }
-static DEFINE_SIMPLE_COMMAND(subvolume_delete, "delete");
+static DEFINE_COMMAND_WITH_FLAGS(subvolume_delete, "delete", CMD_DRY_RUN);
 
 static const char * const cmd_subvolume_snapshot_usage[] = {
 	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> { <subdir>/<name> | <subdir> }",
