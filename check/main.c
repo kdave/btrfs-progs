@@ -9965,7 +9965,6 @@ static const char * const cmd_check_usage[] = {
 	"Repair options:",
 	OPTLINE("--init-csum-tree", "create a new CRC tree"),
 	OPTLINE("--init-extent-tree", "create a new extent tree"),
-	OPTLINE("--clear-space-cache v1|v2", "clear space cache for v1 or v2"),
 	"",
 	"Check and reporting options:",
 	OPTLINE("--check-data-csum", "verify checksums of data blocks"),
@@ -9975,6 +9974,7 @@ static const char * const cmd_check_usage[] = {
 	"",
 	"Deprecated or moved options:",
 	OPTLINE("--clear-ino-cache", "clear ino cache leftover items (moved to 'rescue' group)"),
+	OPTLINE("--clear-space-cache v1|v2", "clear space cache for v1 or v2 (moved to 'rescue' group)"),
 	NULL
 };
 
@@ -10234,6 +10234,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (clear_space_cache) {
+		warning("--clear-space-cache option is deprecated, please use \"btrfs rescue clear-space-cache\" instead");
 		ret = do_clear_free_space_cache(gfs_info, clear_space_cache);
 		err |= !!ret;
 		goto close_out;

@@ -56,6 +56,13 @@ clear-ino-cache <device>
 	The `inode cache` feature (enabled by mount option "inode_cache") has been
 	completely removed in 5.11 kernel.
 
+clear-space-cache <v1|v2> <device>
+	Completely remove the on-disk data of free space cache of given version.
+
+	Especially for v1 free space cache, `clear_cache` mount option would only
+	remove the cache for updated block groups, the remaining would not be removed.
+	Thus this command is provided to manually clear the free space cache.
+
 clear-uuid-tree <device>
         Clear UUID tree, so that kernel can re-generate it at next read-write
         mount.

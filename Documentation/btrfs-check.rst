@@ -83,6 +83,10 @@ SAFE OR ADVISORY OPTIONS
 
         See also the *clear_cache* mount option.
 
+	.. warning::
+		This option is deprecated, please use `btrfs rescue clear-space-cache`
+		instead, this option would be removed in the future eventually.
+
 --clear-ino-cache
         remove leftover items pertaining to the deprecated `inode cache` feature
 
