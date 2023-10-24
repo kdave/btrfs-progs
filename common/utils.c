@@ -1000,6 +1000,16 @@ void bconf_save_param(const char *str)
 	}
 }
 
+void bconf_set_dry_run(void)
+{
+	pr_verbose(LOG_INFO, "Dry-run requested\n");
+	bconf.dry_run = 1;
+}
+
+bool bconf_is_dry_run(void)
+{
+	return bconf.dry_run == 1;
+}
 
 /* Returns total size of main memory in bytes, -1UL if error. */
 unsigned long total_memory(void)

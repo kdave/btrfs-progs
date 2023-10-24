@@ -44,6 +44,7 @@ static const char * const btrfs_cmd_group_usage[] = {
 	"  -v|--verbose      increase verbosity of the subcommand\n"
 	"  -q|--quiet        print only errors\n"
 	"  --log <level>     set log level (default, info, verbose, debug, quiet)\n"
+	"  --dry-run         if supported, do not do any active/changing actions\n"
 	"\n"
 	"Options for the main command only:\n"
 	"  --help            print condensed help for all subcommands\n"
@@ -119,7 +120,7 @@ parse_command_token(const char *arg, const struct cmd_group *grp)
 	return cmd;
 }
 
-static void check_output_format(const struct cmd_struct *cmd)
+static void check_command_flags(const struct cmd_struct *cmd)
 {
 	if (cmd->next)
 		return;
@@ -127,6 +128,11 @@ static void check_output_format(const struct cmd_struct *cmd)
 	if (!(cmd->flags & bconf.output_format & CMD_FORMAT_MASK)) {
 		error("output format %s is unsupported for this command",
 			output_format_name(bconf.output_format));
+		exit(1);
+	}
+
+	if (bconf.dry_run && !(cmd->flags & CMD_DRY_RUN)) {
+		error("--dry-run option not supported for %s\n", cmd->token);
 		exit(1);
 	}
 }
@@ -165,7 +171,7 @@ int handle_command_group(const struct cmd_struct *cmd, int argc,
 	subcmd = parse_command_token(argv[0], cmd->next);
 
 	handle_help_options_next_level(subcmd, argc, argv);
-	check_output_format(subcmd);
+	check_command_flags(subcmd);
 
 	fixup_argv0(argv, subcmd->token);
 	return cmd_execute(subcmd, argc, argv);
@@ -288,6 +294,7 @@ static int handle_global_options(int argc, char **argv)
 		{ "quiet", no_argument, NULL, 'q' },
 		{ "log", required_argument, NULL, OPT_LOG },
 		{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
+		{ "dry-run", no_argument, NULL, GETOPT_VAL_DRY_RUN },
 		{ NULL, 0, NULL, 0}
 	};
 	int shift;
@@ -315,6 +322,9 @@ static int handle_global_options(int argc, char **argv)
 			break;
 		case GETOPT_VAL_PARAM:
 			bconf_save_param(optarg);
+			break;
+		case GETOPT_VAL_DRY_RUN:
+			bconf_set_dry_run();
 			break;
 		case 'v':
 			bconf_be_verbose();
