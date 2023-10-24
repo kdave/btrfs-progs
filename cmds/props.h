@@ -18,10 +18,10 @@
 #define __BTRFS_PROPS_H__
 
 enum prop_object_type {
-	prop_object_dev		= (1 << 0),
-	prop_object_root	= (1 << 1),
-	prop_object_subvol	= (1 << 2),
-	prop_object_inode	= (1 << 3),
+	prop_object_dev		= (1U << 0),
+	prop_object_root	= (1U << 1),
+	prop_object_subvol	= (1U << 2),
+	prop_object_inode	= (1U << 3),
 	__prop_object_max,
 };
 
