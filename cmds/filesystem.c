@@ -36,6 +36,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-lib/list_sort.h"
+#include "kernel-lib/overflow.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/compression.h"
 #include "kernel-shared/volumes.h"
@@ -903,6 +904,7 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	OPTLINE("-s start", "defragment only from byte onward"),
 	OPTLINE("-l len", "defragment only up to len bytes"),
 	OPTLINE("-t size", "target extent size hint (default: 32M)"),
+	OPTLINE("--step SIZE", "process the range in given steps, flush after each one"),
 	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
@@ -916,6 +918,48 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 
 static struct btrfs_ioctl_defrag_range_args defrag_global_range;
 static int defrag_global_errors;
+static u64 defrag_global_step;
+
+static int defrag_range_in_steps(int fd, const struct stat *st) {
+	int ret = 0;
+	u64 end;
+	struct btrfs_ioctl_defrag_range_args range;
+
+	if (defrag_global_step == 0)
+		return ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, &defrag_global_range);
+
+	/*
+	 * If start is set but length is not within or beyond the u64 range,
+	 * assume it's the rest of the range.
+	 */
+	if (check_add_overflow(defrag_global_range.start, defrag_global_range.len, &end))
+	    end = (u64)-1;
+
+	range = defrag_global_range;
+	range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
+	while (range.start < end) {
+		u64 start;
+
+		range.len = defrag_global_step;
+		pr_verbose(LOG_VERBOSE, "defrag range step: start=%llu len=%llu step=%llu\n",
+			   range.start, range.len, defrag_global_step);
+		ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, &range);
+		if (ret < 0)
+			return ret;
+		if (check_add_overflow(range.start, defrag_global_step, &start))
+			break;
+		range.start = start;
+		/*
+		 * Avoid -EINVAL when starting the next ioctl, this can still
+		 * happen if the file size changes since the time of stat().
+		 */
+		if (start >= (u64)st->st_size)
+			break;
+	}
+
+	return ret;
+}
+
 static int defrag_callback(const char *fpath, const struct stat *sb,
 		int typeflag, struct FTW *ftwbuf)
 {
@@ -928,7 +972,7 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 		if (fd < 0) {
 			goto error;
 		}
-		ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, &defrag_global_range);
+		ret = defrag_range_in_steps(fd, sb);
 		close(fd);
 		if (ret && errno == ENOTTY) {
 			error(
@@ -994,7 +1038,14 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	defrag_global_errors = 0;
 	optind = 0;
 	while(1) {
-		int c = getopt(argc, argv, "vrc::fs:l:t:");
+		enum { GETOPT_VAL_STEP = GETOPT_VAL_FIRST };
+		static const struct option long_options[] = {
+			{ "step", required_argument, NULL, GETOPT_VAL_STEP },
+			{ NULL, 0, NULL, 0 }
+		};
+		int c;
+
+		c = getopt_long(argc, argv, "vrc::fs:l:t:", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -1030,6 +1081,14 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			break;
 		case 'r':
 			recursive = true;
+			break;
+		case GETOPT_VAL_STEP:
+			defrag_global_step = parse_size_from_string(optarg);
+			if (defrag_global_step < SZ_256K) {
+				warning("step %llu too small, adjusting to 256KiB\n",
+					   defrag_global_step);
+				defrag_global_step = SZ_256K;
+			}
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1112,8 +1171,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			ret = 0;
 		} else {
 			pr_verbose(LOG_INFO, "%s\n", argv[i]);
-			ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE,
-					&defrag_global_range);
+			ret = defrag_range_in_steps(fd, &st);
 			defrag_err = errno;
 			if (ret && defrag_err == ENOTTY) {
 				error(

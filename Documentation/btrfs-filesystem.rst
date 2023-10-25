@@ -139,6 +139,11 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 depending on the state of the free space and fragmentation or other internal
                 logic. Reasonable values are from tens to hundreds of megabytes.
 
+        --step SIZE
+                Perform defragmention in the range in SIZE steps and flush (*-f*) after each one.
+                The range is default (the whole file) or given by *-s* and *-l*, split into
+                the steps or done in one go if the step is larger. Minimum range size is 256KiB.
+
         -v
                 (deprecated) alias for global *-v* option
 
