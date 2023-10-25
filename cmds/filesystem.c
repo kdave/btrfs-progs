@@ -1242,6 +1242,7 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		ret = 1;
 		goto out;
 	}
+	ret = 0;
 
 	/* Cancel does not need to determine the device number. */
 	if (strcmp(amount, "cancel") == 0) {
@@ -1351,7 +1352,7 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 
 out:
 	free(di_args);
-	return 0;
+	return ret;
 }
 
 static int cmd_filesystem_resize(const struct cmd_struct *cmd,
