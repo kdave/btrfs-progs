@@ -1210,19 +1210,21 @@ static const char * const cmd_filesystem_resize_usage[] = {
 	NULL
 };
 
-static int check_resize_args(const char *amount, const char *path) {
+static int check_resize_args(const char *amount, const char *path, u64 *devid_ret) {
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
 	int ret, i, dev_idx = -1;
 	u64 devid = 1;
+	u64 mindev = (u64)-1;
+	int mindev_idx = 0;
 	const char *res_str = NULL;
 	char *devstr = NULL, *sizestr = NULL;
 	u64 new_size = 0, old_size = 0, diff = 0;
 	int mod = 0;
 	char amount_dup[BTRFS_VOL_NAME_MAX];
 
+	*devid_ret = (u64)-1;
 	ret = get_fs_info(path, &fi_args, &di_args);
-
 	if (ret) {
 		error("unable to retrieve fs info");
 		return 1;
@@ -1238,6 +1240,13 @@ static int check_resize_args(const char *amount, const char *path) {
 	if (strlen(amount) != ret) {
 		error("newsize argument is too long");
 		ret = 1;
+		goto out;
+	}
+
+	/* Cancel does not need to determine the device number. */
+	if (strcmp(amount, "cancel") == 0) {
+		/* Different format, print and exit */
+		pr_verbose(LOG_DEFAULT, "Request to cancel resize\n");
 		goto out;
 	}
 
@@ -1260,24 +1269,40 @@ static int check_resize_args(const char *amount, const char *path) {
 
 	dev_idx = -1;
 	for(i = 0; i < fi_args.num_devices; i++) {
+		if (di_args[i].devid < mindev) {
+			mindev = di_args[i].devid;
+			mindev_idx = i;
+		}
 		if (di_args[i].devid == devid) {
 			dev_idx = i;
 			break;
 		}
 	}
 
-	if (dev_idx < 0) {
+	if (devstr && dev_idx < 0) {
+		/* Devid specified but not found. */
 		error("cannot find devid: %lld", devid);
 		ret = 1;
 		goto out;
+	} else if (!devstr && devid == 1 && dev_idx < 0) {
+		/*
+		 * No device specified, assuming implicit 1 but it doess not
+		 * exist. Use minimum device as fallback.
+		 */
+		warning("no devid specified means devid 1 which does not exist, using\n"
+			"\t lowest devid %llu as a fallback", mindev);
+		*devid_ret = mindev;
+		devid = mindev;
+		dev_idx = mindev_idx;
+	} else {
+		/*
+		 * Use the initial value 1 or the parsed number but don't
+		 * return it by devid_ret as the resize string works as-is.
+		 */
 	}
 
 	if (strcmp(sizestr, "max") == 0) {
 		res_str = "max";
-	} else if (strcmp(sizestr, "cancel") == 0) {
-		/* Different format, print and exit */
-		pr_verbose(LOG_DEFAULT, "Request to cancel resize\n");
-		goto out;
 	} else {
 		if (sizestr[0] == '-') {
 			mod = -1;
@@ -1336,6 +1361,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	int	fd, res, len, e;
 	char	*amount, *path;
 	DIR	*dirstream = NULL;
+	u64 devid;
 	int ret;
 	bool enqueue = false;
 	bool cancel = false;
@@ -1400,14 +1426,21 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		}
 	}
 
-	ret = check_resize_args(amount, path);
+	ret = check_resize_args(amount, path, &devid);
 	if (ret != 0) {
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
 
 	memset(&args, 0, sizeof(args));
-	strncpy_null(args.name, amount);
+	if (devid == (u64)-1) {
+		/* Ok to copy the string verbatim. */
+		strncpy_null(args.name, amount);
+	} else {
+		/* The implicit devid 1 needs to be adjusted. */
+		snprintf(args.name, sizeof(args.name) - 1, "%llu:%s", devid, amount);
+	}
+	pr_verbose(LOG_VERBOSE, "adjust resize argument to: %s\n", args.name);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
