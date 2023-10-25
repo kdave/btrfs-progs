@@ -352,7 +352,7 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 		goto out;
 	free_extent_buffer(uuid_root->node);
 	free_extent_buffer(uuid_root->commit_root);
-	kfree(uuid_root);
+	free(uuid_root);
 out:
 	if (ret < 0)
 		btrfs_abort_transaction(trans, ret);
