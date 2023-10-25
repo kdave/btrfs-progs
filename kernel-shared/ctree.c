@@ -341,7 +341,7 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 	struct btrfs_root_item root_item = { 0 };
 	int ret;
 
-	new_root = malloc(sizeof(*new_root));
+	new_root = kmalloc(sizeof(*new_root), GFP_KERNEL);
 	if (!new_root)
 		return -ENOMEM;
 
@@ -439,7 +439,7 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 
 free:
 	free_extent_buffer(node);
-	free(new_root);
+	kfree(new_root);
 	return ret;
 }
 

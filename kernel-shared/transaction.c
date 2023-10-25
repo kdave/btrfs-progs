@@ -420,7 +420,7 @@ error:
 	btrfs_abort_transaction(trans, ret);
 	clean_dirty_buffers(trans);
 	btrfs_destroy_delayed_refs(trans);
-	free(trans);
+	kfree(trans);
 	return ret;
 }
 
