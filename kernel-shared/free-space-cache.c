@@ -383,12 +383,12 @@ static int __load_free_space_cache(struct btrfs_root *root,
 
 		ret = io_ctl_read_entry(&io_ctl, e, &type);
 		if (ret) {
-			free(e);
+			kfree(e);
 			goto free_cache;
 		}
 
 		if (!e->bytes) {
-			free(e);
+			kfree(e);
 			goto free_cache;
 		}
 
@@ -397,7 +397,7 @@ static int __load_free_space_cache(struct btrfs_root *root,
 			if (ret) {
 				fprintf(stderr,
 				       "Duplicate entries in free space cache\n");
-				free(e);
+				kfree(e);
 				goto free_cache;
 			}
 		} else {
@@ -405,7 +405,7 @@ static int __load_free_space_cache(struct btrfs_root *root,
 			num_bitmaps--;
 			e->bitmap = kzalloc(ctl->sectorsize, GFP_NOFS);
 			if (!e->bitmap) {
-				free(e);
+				kfree(e);
 				goto free_cache;
 			}
 			ret = link_free_space(ctl, e);
@@ -413,8 +413,8 @@ static int __load_free_space_cache(struct btrfs_root *root,
 			if (ret) {
 				fprintf(stderr,
 				       "Duplicate entries in free space cache\n");
-				free(e->bitmap);
-				free(e);
+				kfree(e->bitmap);
+				kfree(e);
 				goto free_cache;
 			}
 			list_add_tail(&e->list, &bitmaps);
@@ -771,7 +771,7 @@ static void try_merge_free_space(struct btrfs_free_space_ctl *ctl,
 	if (right_info && !right_info->bitmap) {
 		unlink_free_space(ctl, right_info);
 		info->bytes += right_info->bytes;
-		free(right_info);
+		kfree(right_info);
 	}
 
 	if (left_info && !left_info->bitmap &&
@@ -779,7 +779,7 @@ static void try_merge_free_space(struct btrfs_free_space_ctl *ctl,
 		unlink_free_space(ctl, left_info);
 		info->offset = left_info->offset;
 		info->bytes += left_info->bytes;
-		free(left_info);
+		kfree(left_info);
 	}
 }
 
@@ -829,8 +829,8 @@ void __btrfs_remove_free_space_cache(struct btrfs_free_space_ctl *ctl)
 	while ((node = rb_last(&ctl->free_space_offset)) != NULL) {
 		info = rb_entry(node, struct btrfs_free_space, offset_index);
 		unlink_free_space(ctl, info);
-		free(info->bitmap);
-		free(info);
+		kfree(info->bitmap);
+		kfree(info);
 	}
 }
 
@@ -893,8 +893,8 @@ again:
 					break;
 				bytes = ctl->unit;
 			}
-			free(e->bitmap);
-			free(e);
+			kfree(e->bitmap);
+			kfree(e);
 			goto again;
 		}
 		if (!prev)
@@ -903,7 +903,7 @@ again:
 			unlink_free_space(ctl, prev);
 			unlink_free_space(ctl, e);
 			prev->bytes += e->bytes;
-			free(e);
+			kfree(e);
 			link_free_space(ctl, prev);
 			goto again;
 		}

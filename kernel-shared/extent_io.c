@@ -175,7 +175,7 @@ static void free_extent_buffer_final(struct extent_buffer *eb)
 		BUG_ON(eb->fs_info->cache_size < eb->len);
 		eb->fs_info->cache_size -= eb->len;
 	}
-	free(eb);
+	kfree(eb);
 }
 
 static void free_extent_buffer_internal(struct extent_buffer *eb, bool free_now)
@@ -281,7 +281,7 @@ struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 			return NULL;
 		ret = insert_cache_extent(&fs_info->extent_cache, &eb->cache_node);
 		if (ret) {
-			free(eb);
+			kfree(eb);
 			return NULL;
 		}
 		list_add_tail(&eb->lru, &fs_info->lru);
@@ -345,7 +345,7 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 	}
 	/* Allocate memory for the full stripe */
 	for (i = 0; i < num_stripes; i++) {
-		pointers[i] = malloc(BTRFS_STRIPE_LEN);
+		pointers[i] = kmalloc(BTRFS_STRIPE_LEN, GFP_KERNEL);
 		if (!pointers[i]) {
 			ret = -ENOMEM;
 			goto out;
@@ -414,10 +414,10 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 			BTRFS_STRIPE_LEN, len);
 	ret = 0;
 out:
-	free(failed_stripe_bitmap);
+	kfree(failed_stripe_bitmap);
 	for (i = 0; i < num_stripes; i++)
-		free(pointers[i]);
-	free(pointers);
+		kfree(pointers[i]);
+	kfree(pointers);
 	return ret;
 }
 
@@ -442,12 +442,12 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 	if (mirror > 1 && multi->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		ret = read_raid56(info, buf, logical, read_len, mirror, multi,
 				  raid_map);
-		free(multi);
-		free(raid_map);
+		kfree(multi);
+		kfree(raid_map);
 		*len = read_len;
 		return ret;
 	}
-	free(raid_map);
+	kfree(raid_map);
 	device = multi->stripes[0].dev;
 
 	if (device->fd <= 0) {
@@ -512,7 +512,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 			this_len = min(this_len, bytes_left);
 			this_len = min(this_len, (u64)info->nodesize);
 
-			eb = malloc(sizeof(struct extent_buffer) + this_len);
+			eb = kmalloc(sizeof(struct extent_buffer) + this_len, GFP_KERNEL);
 			if (!eb) {
 				error_msg(ERROR_MSG_MEMORY, "extent buffer");
 				ret = -ENOMEM;
@@ -528,7 +528,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 						       stripe_len, raid_map);
 			BUG_ON(ret < 0);
 
-			free(eb);
+			kfree(eb);
 			kfree(raid_map);
 			raid_map = NULL;
 		} else while (dev_nr < multi->num_stripes) {

@@ -340,7 +340,7 @@ static int report_zones(int fd, const char *file,
 	/* Allocate a zone report */
 	rep_size = sizeof(struct blk_zone_report) +
 		   sizeof(struct blk_zone) * BTRFS_REPORT_NR_ZONES;
-	rep = malloc(rep_size);
+	rep = kmalloc(rep_size, GFP_KERNEL);
 	if (!rep) {
 		error_msg(ERROR_MSG_MEMORY, "zone report");
 		exit(1);
@@ -386,7 +386,7 @@ static int report_zones(int fd, const char *file,
 			 zone[rep->nr_zones - 1].len;
 	}
 
-	free(rep);
+	kfree(rep);
 
 	return 0;
 }
@@ -592,14 +592,14 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 			return (rw == WRITE ? count : 0);
 		error("zoned: failed to read zone info of %u and %u: %m",
 		      zone_num, zone_num + 1);
-		free(rep);
+		kfree(rep);
 		return 0;
 	}
 
 	zones = (struct blk_zone *)(rep + 1);
 
 	ret = sb_log_location(fd, zones, rw, &mapped);
-	free(rep);
+	kfree(rep);
 	/*
 	 * Special case: no superblock found in the zones. This case happens
 	 * when initializing a file-system.
@@ -938,7 +938,7 @@ out:
 	if (!ret)
 		cache->write_offset = cache->alloc_offset;
 
-	free(alloc_offsets);
+	kfree(alloc_offsets);
 	return ret;
 }
 

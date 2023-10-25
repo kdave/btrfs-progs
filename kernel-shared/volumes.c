@@ -644,10 +644,10 @@ again:
 		device->writeable = 0;
 		list_del(&device->dev_list);
 		/* free the memory */
-		free(device->name);
-		free(device->label);
-		free(device->zone_info);
-		free(device);
+		kfree(device->name);
+		kfree(device->label);
+		kfree(device->zone_info);
+		kfree(device);
 	}
 
 	seed_devices = fs_devices->seed;
@@ -658,11 +658,11 @@ again:
 		orig = fs_devices;
 		fs_devices = seed_devices;
 		list_del(&orig->fs_list);
-		free(orig);
+		kfree(orig);
 		goto again;
 	} else {
 		list_del(&fs_devices->fs_list);
-		free(fs_devices);
+		kfree(fs_devices);
 	}
 
 	return ret;
@@ -2797,12 +2797,12 @@ static int split_eb_for_raid56(struct btrfs_fs_info *info,
 		}
 		ebs[i] = eb;
 	}
-	free(tmp_ebs);
+	kfree(tmp_ebs);
 	return ret;
 clean_up:
 	for (i = 0; i < num_stripes; i++)
-		free(tmp_ebs[i]);
-	free(tmp_ebs);
+		kfree(tmp_ebs[i]);
+	kfree(tmp_ebs);
 	return ret;
 }
 
@@ -2817,11 +2817,11 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 	int alloc_size = eb->len;
 	void **pointers;
 
-	ebs = malloc(sizeof(*ebs) * multi->num_stripes);
-	pointers = malloc(sizeof(*pointers) * multi->num_stripes);
+	ebs = kmalloc(sizeof(*ebs) * multi->num_stripes, GFP_KERNEL);
+	pointers = kmalloc(sizeof(*pointers) * multi->num_stripes, GFP_KERNEL);
 	if (!ebs || !pointers) {
-		free(ebs);
-		free(pointers);
+		kfree(ebs);
+		kfree(pointers);
 		return -ENOMEM;
 	}
 
@@ -2842,7 +2842,7 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			}
 			continue;
 		}
-		new_eb = malloc(sizeof(*eb) + alloc_size);
+		new_eb = kmalloc(sizeof(*eb) + alloc_size, GFP_KERNEL);
 		if (!new_eb) {
 			ret = -ENOMEM;
 			goto out_free_split;
@@ -2885,11 +2885,11 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 out_free_split:
 	for (i = 0; i < multi->num_stripes; i++) {
 		if (ebs[i] != eb)
-			free(ebs[i]);
+			kfree(ebs[i]);
 	}
 out:
-	free(ebs);
-	free(pointers);
+	kfree(ebs);
+	kfree(pointers);
 
 	return ret;
 }

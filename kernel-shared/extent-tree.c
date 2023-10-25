@@ -2738,7 +2738,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 		return -ENOMEM;
 	ret = read_block_group_item(cache, path, &key);
 	if (ret < 0) {
-		free(cache);
+		kfree(cache);
 		return ret;
 	}
 	set_free_space_tree_thresholds(fs_info, cache);
@@ -2747,7 +2747,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	set_avail_alloc_bits(fs_info, cache->flags);
 	ret = btrfs_chunk_readonly(fs_info, cache->start);
 	if (ret < 0) {
-		free(cache);
+		kfree(cache);
 		return ret;
 	}
 	if (ret)
@@ -2757,7 +2757,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	ret = update_space_info(fs_info, cache->flags, cache->length,
 				cache->used, &space_info);
 	if (ret < 0) {
-		free(cache);
+		kfree(cache);
 		return ret;
 	}
 	cache->space_info = space_info;
@@ -3477,7 +3477,7 @@ static int free_block_group_cache(struct btrfs_trans_handle *trans,
 			goto out;
 	}
 	remove_cache_extent(&fs_info->mapping_tree.cache_tree, ce);
-	free(map);
+	kfree(map);
 out:
 	return ret;
 }
