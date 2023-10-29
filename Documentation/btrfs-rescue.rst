@@ -32,7 +32,7 @@ chunk-recover [options] <device>
    slow especially executed on a large device.
 
 fix-device-size <device>
-        fix device size and super block total bytes values that are do not match
+        fix device size and super block total bytes values that do not match
 
         Kernel 4.11 starts to check the device size more strictly and this might
         mismatch the stored value of total bytes. See the exact error message below.
