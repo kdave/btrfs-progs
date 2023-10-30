@@ -57,6 +57,7 @@
 #include "common/box.h"
 #include "common/units.h"
 #include "common/string-utils.h"
+#include "common/string-table.h"
 #include "cmds/commands.h"
 #include "check/qgroup-verify.h"
 #include "mkfs/common.h"
@@ -486,11 +487,13 @@ static int _cmp_device_by_id(void *priv, struct list_head *a,
 	       list_entry(b, struct btrfs_device, dev_list)->devid;
 }
 
-static void list_all_devices(struct btrfs_root *root)
+static void list_all_devices(struct btrfs_root *root, bool is_zoned)
 {
 	struct btrfs_fs_devices *fs_devices;
 	struct btrfs_device *device;
 	int number_of_devices = 0;
+	struct string_table *tab;
+	int row, col;
 
 	fs_devices = root->fs_info->fs_devices;
 
@@ -501,15 +504,31 @@ static void list_all_devices(struct btrfs_root *root)
 
 	printf("Number of devices:  %d\n", number_of_devices);
 	printf("Devices:\n");
-	printf("   ID        SIZE  PATH\n");
-	list_for_each_entry(device, &fs_devices->devices, dev_list) {
-		printf("  %3llu  %10s  %s\n",
-			device->devid,
-			pretty_size(device->total_bytes),
-			device->name);
-	}
+	if (is_zoned)
+		tab = table_create(4, number_of_devices + 1);
+	else
+		tab = table_create(3, number_of_devices + 1);
+	tab->spacing = STRING_TABLE_SPACING_2;
+	col = 0;
+	table_printf(tab, col++, 0, ">   ID");
+	table_printf(tab, col++, 0, ">      SIZE");
+	if (is_zoned)
+		table_printf(tab, col++, 0, ">ZONES");
+	table_printf(tab, col++, 0, "<PATH");
 
+	row = 1;
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		col = 0;
+		table_printf(tab, col++, row, ">%llu", device->devid);
+		table_printf(tab, col++, row, ">%s", pretty_size(device->total_bytes));
+		if (is_zoned)
+			table_printf(tab, col++, row, ">%u", device->zone_info->nr_zones);
+		table_printf(tab, col++, row, "<%s", device->name);
+		row++;
+	}
+	table_dump(tab);
 	printf("\n");
+	table_free(tab);
 }
 
 static bool is_temp_block_group(struct extent_buffer *node,
@@ -2016,7 +2035,7 @@ raid_groups:
 		printf("Checksum:           %s\n",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));
 
-		list_all_devices(root);
+		list_all_devices(root, opt_zoned);
 
 		if (mkfs_cfg.csum_type == BTRFS_CSUM_TYPE_SHA256) {
 			printf(
