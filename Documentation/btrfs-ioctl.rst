@@ -240,10 +240,7 @@ LIST OF IOCTLS
    * - Name
      - Description
      - Data
-   * - BTRFS_IOC_SUBVOL_CREATE
-     - (obsolete) create a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - BTRFS_IOC_SNAP_CREATE
+   * - :ref:`BTRFS_IOC_SNAP_CREATE<BTRFS_IOC_SNAP_CREATE>`
      - (obsolete) create a snapshot of a subvolume
      - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - BTRFS_IOC_DEFRAG
@@ -252,9 +249,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_RESIZE
      -
      -
-   * - BTRFS_IOC_SCAN_DEV
-     -
-     -
+   * - :ref:`BTRFS_IOC_SCAN_DEV<BTRFS_IOC_SCAN_DEV>`
+     - scan and register a given device path with filesystem module
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - :ref:`BTRFS_IOC_SYNC<BTRFS_IOC_SYNC>`
      - Sync the filesystem, possibly process queued up work
      - NULL
@@ -273,12 +270,12 @@ LIST OF IOCTLS
    * - BTRFS_IOC_CLONE_RANGE
      -
      -
-   * - BTRFS_IOC_SUBVOL_CREATE
-     -
-     -
-   * - BTRFS_IOC_SNAP_DESTROY
-     -
-     -
+   * - :ref:`BTRFS_IOC_SUBVOL_CREATE<BTRFS_IOC_SUBVOL_CREATE>`
+     - (obsolete) create a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - :ref:`BTRFS_IOC_SNAP_DESTROY<BTRFS_IOC_SNAP_DESTROY>`
+     - (obsolete) delete a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - BTRFS_IOC_DEFRAG_RANGE
      -
      -
@@ -291,9 +288,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_INO_LOOKUP
      -
      -
-   * - BTRFS_IOC_DEFAULT_SUBVOL
-     -
-     -
+   * - :ref:`BTRFS_IOC_DEFAULT_SUBVOL<BTRFS_IOC_DEFAULT_SUBVOL>`
+     - set the default subvolume id
+     - uint64_t
    * - BTRFS_IOC_SPACE_INFO
      -
      -
@@ -421,29 +418,7 @@ LIST OF IOCTLS
 DETAILED DESCRIPTION
 --------------------
 
-BTRFS_IOC_SUBVOL_CREATE
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-   obsoleted by :ref:`BTRFS_IOC_SUBVOL_CREATE_V2<BTRFS_IOC_SUBVOL_CREATE_V2>`
-
-*(since: 3.0, obsoleted: 4.0)* Create a subvolume.
-
-.. list-table::
-   :header-rows: 1
-
-   * - Field
-     - Description
-   * - ioctl fd
-     - file descriptor of the parent directory of the new subvolume
-   * - ioctl args
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - args.fd
-     - ignored
-   * - args.name
-     - name of the subvolume, although the buffer can be almost 4k, the file
-       size is limited by Linux VFS to 255 characters and must not contain a slash
-       ('/')
+.. _BTRFS_IOC_SNAP_CREATE:
 
 BTRFS_IOC_SNAP_CREATE
 ~~~~~~~~~~~~~~~~~~~~~
@@ -466,9 +441,33 @@ BTRFS_IOC_SNAP_CREATE
      - file descriptor of any directory inside the subvolume to snapshot,
        must be on the same filesystem
    * - args.name
-     - name of the subvolume, although the buffer can be almost 4k, the file
+     - name of the subvolume, although the buffer can be almost 4KiB, the file
        size is limited by Linux VFS to 255 characters and must not contain a slash
        ('/')
+
+.. _BTRFS_IOC_SCAN_DEV:
+
+BTRFS_IOC_SCAN_DEV
+~~~~~~~~~~~~~~~~~~
+
+Scan and register a given device in the filesystem module, which can be later
+used for automatic device and filesystem association at mount time. This
+operates on the control device, not files from a mounted filesystem.
+Can be safely called repeatedly with same device path.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the control device :file:`/dev/btrfs-control`
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - ignored
+   * - args.name
+     - full path of the device
 
 .. _BTRFS_IOC_SYNC:
 
@@ -488,6 +487,76 @@ subvolume cleaning or queued defragmentation.
      - file descriptor of any file or directory in the filesystem
    * - ioctl args
      - NULL
+
+.. _BTRFS_IOC_SUBVOL_CREATE:
+
+BTRFS_IOC_SUBVOL_CREATE
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   obsoleted by :ref:`BTRFS_IOC_SUBVOL_CREATE_V2<BTRFS_IOC_SUBVOL_CREATE_V2>`
+
+*(since: 3.0, obsoleted: 4.0)* Create a subvolume.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the parent directory of the new subvolume
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - ignored
+   * - args.name
+     - name of the subvolume, although the buffer can be almost 4KiB, the file
+       size is limited by Linux VFS to 255 characters and must not contain a slash
+       ('/')
+
+.. _BTRFS_IOC_SNAP_DESTROY:
+
+BTRFS_IOC_SNAP_DESTROY
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   obsoleted by :ref:`BTRFS_IOC_SNAP_DESTROY_V2<BTRFS_IOC_SNAP_DESTROY_V2>`
+
+*(since: 2.6.33, obsoleted: 5.7)* Delete a subvolume.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the parent directory of the new subvolume
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - ignored
+   * - args.name
+     - name of the subvolume, although the buffer can be almost 4KiB, the file
+       size is limited by Linux VFS to 255 characters and must not contain a slash
+       ('/')
+
+.. _BTRFS_IOC_DEFAULT_SUBVOL:
+
+BTRFS_IOC_DEFAULT_SUBVOL
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set the given subvolume id as the default one when mounting the filesystem
+without `subvol=path` or `subvolid=id` options.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the directory inside which to create the new snapshot
+   * - ioctl args
+     - numeric value of subvolume to become default (uint64_t)
 
 .. _BTRFS_IOC_SNAP_CREATE_V2:
 
@@ -513,7 +582,7 @@ Create a snapshot of a subvolume.
    * - args.flags
      - any subset of `BTRFS_SUBVOL_RDONLY` to make the new snapshot read-only,
        or `BTRFS_SUBVOL_QGROUP_INHERIT` to apply the `qgroup_inherit` field
-   * - name
+   * - args.name
      - the name, under the ioctl fd, for the new subvolume
 
 .. _BTRFS_IOC_SUBVOL_CREATE_V2:
@@ -547,7 +616,7 @@ BTRFS_IOC_SUBVOL_CREATE_V2
        (:ref:`struct btrfs_qgroup_inherit<struct_btrfs_qgroup_inherit>`) and
        limits (:ref:`struct btrfs_qgroup_limit<struct_btrfs_qgroup_limit>`)
    * - name
-     - name of the subvolume, although the buffer can be almost 4k, the file
+     - name of the subvolume, although the buffer can be almost 4KiB, the file
        size is limited by Linux VFS to 255 characters and must not contain a
        slash ('/')
 

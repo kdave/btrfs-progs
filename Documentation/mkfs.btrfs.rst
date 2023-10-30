@@ -333,6 +333,18 @@ block-group-tree
         enabled at *mkfs* time is possible, see :doc:`btrfstune`. Online
         conversion is not possible.
 
+.. _mkfs-feature-raid-stripe-tree:
+
+raid-stripe-tree
+        (kernel support since 6.7)
+
+        New tree for logical file extent mapping where the physical mapping
+        may not match on multiple devices. this is now used in zoned mode to
+        implement RAID0/RAID1* profiles, but can be used in non-zoned mode as
+        well. The support for RAID56 is in development and will eventually
+        fix the problems with the current implementation. This is a backward
+        incompatible feature and has to be enabled at mkfs time.
+
 squota
 	(kernel support since 6.7)
 

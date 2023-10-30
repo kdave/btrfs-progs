@@ -13,7 +13,7 @@ in meeting your performance expectations for your specific workload.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.5**
+**The table is based on the latest released linux kernel: 6.6**
 
 The columns for each feature reflect the status of the implementation
 in following ways:
@@ -123,6 +123,10 @@ in following ways:
      - :statusok:`OK`
      - OK
      -
+   * - Temporary UUID
+     - 6.7
+     - 6.7
+     -
    * - :doc:`Seeding<Seeding-device>`
      - :statusok:`OK`
      - OK
@@ -131,6 +135,10 @@ in following ways:
      - :statusmok:`mostly OK`
      - mostly OK
      - qgroups with many snapshots slows down balance
+   * - :doc:`Quotas, simple qgroups<Qgroups>`
+     - 6.7
+     - 6.7
+     - simplified qgroup accounting, better performance
    * - :doc:`Swapfile<Swapfile>`
      - :statusok:`OK`
      - n/a
@@ -226,7 +234,11 @@ converted later).
      - :statusok:`OK`
      - OK
      -
-   * - :ref:`Block group tree`<mkfs-feature-block-group-tree>`
+   * - :ref:`Block group tree<mkfs-feature-block-group-tree>`
+     - :statusok:`OK`
+     - OK
+     -
+   * - :ref:`Raid stripe tree<mkfs-feature-raid-stripe-tree>`
      - :statusok:`OK`
      - OK
      -
@@ -321,7 +333,7 @@ are unaffected by the zoned device constraints.
      - Notes
    * - Boot
      - :statusincompat:`incompatible`
-     - The blocks where partition table is stored is used for super block
+     - The blocks where partition table is stored are used for super block
    * - Mixed block groups
      - :statusincompat:`incompatible`
      - Interleaving data and metadata would lead to out of order write
@@ -343,6 +355,12 @@ are unaffected by the zoned device constraints.
    * - Free space tree
      - :statusok:`supported`
      -
+   * - Block group tree
+     - :statusok:`supported`
+     -
+   * - Raid stripe tree
+     - :statusok:`supported`
+     - Allows to use RAID in zoned mode
    * - Filesystem resize
      - :statusok:`supported`
      -
@@ -352,9 +370,12 @@ are unaffected by the zoned device constraints.
    * - Metadata UUID change
      - :statusok:`supported`
      -
-   * - RAID (all)
+   * - RAID0, RAID1*
+     - :statusok:`supported`
+     - requires `raid-stripe-tree`
+   * - RAID56
      - not implemented
-     - This requires raid-stripe-tree feature which is still work in progress
+     - will be supported once raid-stripe-tree support is implemented
    * - discard
      - not implemented
      - May not be required at all due to automatic zone reclaim

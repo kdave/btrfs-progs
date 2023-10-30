@@ -93,6 +93,16 @@ features see :doc:`Status<Status>` page.
         finalizing the directory, the cache also gains significant speedups (up
         to 10x).
 
+6.7 - raid-stripe-tree
+        New tree for logical mapping, allows some RAID modes for zoned mode.
+
+6.7 - simplified quota accounting
+        A simplified mode of qgroups accounting
+
+6.7 - temporary fsid
+        Mount of cloned devices is now possible, the filesystem will get a new
+        randomly generated UUID on mount
+
 5.x
 ---
 
