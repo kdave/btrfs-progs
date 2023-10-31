@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <sys/sysinfo.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
@@ -337,8 +338,23 @@ int get_fsid(const char *path, u8 *fsid, int silent)
 {
 	int ret;
 	int fd;
+	int flags = O_RDONLY;
+	struct stat st;
 
-	fd = open(path, O_RDONLY);
+	ret = stat(path, &st);
+	if (ret < 0) {
+		if (!silent)
+			error("failed to stat %s: %m", path);
+		return -errno;
+	}
+	/*
+	 * Open in non-blocking mode in case that path is a fifo or a special
+	 * character device where opening gets stuck (but is interruptible).
+	 */
+	if ((st.st_mode & S_IFMT) == S_IFCHR || (st.st_mode & S_IFMT) == S_IFIFO)
+		flags |= O_NONBLOCK;
+
+	fd = open(path, flags);
 	if (fd < 0) {
 		if (!silent)
 			error("failed to open %s: %m", path);
