@@ -9,35 +9,34 @@ on:
     branches:
       - devel
 jobs:
-  build:
+  build-simple:
+    name: Simple build tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: uname -a
-      - run: sudo modprobe btrfs
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure
-      - name: Make
-        run: make V=1
-      - name: Musl build
-        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
       - name: Make static
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
-      - name: Tests cli
-        run: sudo make TEST_LOG=dump test-cli
-      - name: Tests mkfs
-        run: sudo make TEST_LOG=dump test-mkfs
-      - name: Tests check
-        run: sudo make TEST_LOG=dump test-check
-      - name: Tests check (lowmem)
-        run: sudo make TEST_LOG=dump test-check-lowmem
-      - name: Tests misc
-        run: sudo make TEST_LOG=dump test-misc
-      - name: Tests fuzz
-        run: sudo make TEST_LOG=dump test-fuzz
+  build-musl:
+    name: Build test on musl
+    runs-on: ubuntu-latest
+    steps:
+      - name: Musl build
+        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+  test-quick:
+    name: Quick tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1
       - name: Tests json formatter
         run: make test-json
       - name: Tests string-table formatter
@@ -54,3 +53,27 @@ jobs:
         run: make hash-speedtest && ./hash-speedtest 1
       - name: Tests hash (correctness)
         run: make hash-vectest && ./hash-vectest
+  test-all:
+    name: Functional tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: uname -a
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure
+      - name: Make
+        run: make V=1
+      - name: Tests cli
+        run: sudo make TEST_LOG=dump test-cli
+      - name: Tests mkfs
+        run: sudo make TEST_LOG=dump test-mkfs
+      - name: Tests check
+        run: sudo make TEST_LOG=dump test-check
+      - name: Tests check (lowmem)
+        run: sudo make TEST_LOG=dump test-check-lowmem
+      - name: Tests misc
+        run: sudo make TEST_LOG=dump test-misc
+      - name: Tests fuzz
+        run: sudo make TEST_LOG=dump test-fuzz
