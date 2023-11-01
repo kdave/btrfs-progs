@@ -14,9 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx
       - name: Configure
         run: ./autogen.sh && ./configure
+      - name: Documentation
+        run: make V=1 -C Documentation
       - name: Make static
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
@@ -32,7 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
@@ -53,27 +57,59 @@ jobs:
         run: make hash-speedtest && ./hash-speedtest 1
       - name: Tests hash (correctness)
         run: make hash-vectest && ./hash-vectest
-  test-all:
-    name: Functional tests
+  test-mkfs:
+    name: Test mkfs.btrfs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: uname -a
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure
+        run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
         run: make V=1
-      - name: Tests cli
-        run: sudo make TEST_LOG=dump test-cli
       - name: Tests mkfs
         run: sudo make TEST_LOG=dump test-mkfs
+  test-check:
+    name: Test btrfs check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1
       - name: Tests check
         run: sudo make TEST_LOG=dump test-check
       - name: Tests check (lowmem)
         run: sudo make TEST_LOG=dump test-check-lowmem
+  test-misc:
+    name: Test misc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1
       - name: Tests misc
         run: sudo make TEST_LOG=dump test-misc
+  test-other:
+    name: Test cli, fuzz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1
+      - name: Tests cli
+        run: sudo make TEST_LOG=dump test-cli
       - name: Tests fuzz
         run: sudo make TEST_LOG=dump test-fuzz
