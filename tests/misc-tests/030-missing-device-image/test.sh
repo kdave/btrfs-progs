@@ -32,6 +32,7 @@ test_missing()
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d raid1 -m raid1 "$dev1" "$dev2"
 
 	# fill the fs with some data, we could create space cache
+	cond_wait_for_loopdevs
 	run_check $SUDO_HELPER mount "$dev1" "$TEST_MNT"
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/a" bs=1M count=10
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/b" bs=4k count=1000 conv=sync

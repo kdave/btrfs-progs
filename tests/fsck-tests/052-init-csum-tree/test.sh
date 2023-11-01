@@ -21,6 +21,7 @@ run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_MNT/nodatasum_file" \
 	bs=16k count=1 status=noxfer > /dev/null 2>&1
 
 # Revert to default datasum
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount -o remount,datasum "$TEST_MNT"
 
 # Then create an inode with datasum, but all preallocated extents

@@ -24,6 +24,7 @@ test_get_info()
 	# device RAID0 as the same.
 	# Thus kernel may create new SINGLE chunks, causing extra warning
 	# when testing single device RAID0.
+	cond_wait_for_loopdevs
 	run_check $SUDO_HELPER mount -o ro "$dev1" "$TEST_MNT"
 	run_check_stdout "$TOP/btrfs" filesystem df "$TEST_MNT" > "$tmp_out"
 	if grep -q "Multiple block group profiles detected" "$tmp_out"; then

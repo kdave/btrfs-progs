@@ -23,9 +23,11 @@ loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show dev2)
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$loop1"
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$loop2"
 
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
 run_check $SUDO_HELPER mkdir "$TEST_MNT/ddis"
 run_check $SUDO_HELPER mkdir "$TEST_MNT/ddis-not-a-mount"
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount "$loop2" "$TEST_MNT/ddis"
 
 echo "some data" | $SUDO_HELPER tee "$TEST_MNT/ddis/file" > /dev/null

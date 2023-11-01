@@ -20,6 +20,7 @@ run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d raid1 "${loopdevs[@]}"
 # Move the device, changing its path, simulating the device being missing
 run_check $SUDO_HELPER mv "$dev2" /dev/loop-non-existent
 
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount -o degraded $dev1 $TEST_MNT
 
 if ! run_check_stdout $SUDO_HELPER "$TOP/btrfs" filesystem show "$TEST_MNT" | \

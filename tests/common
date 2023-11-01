@@ -648,6 +648,9 @@ run_check_mount_test_dev()
 		_fail "Invalid \$TEST_MNT: $TEST_MNT"
 	}
 
+	# Wait for loopdevs before mount as this could fail in the CI for some reason
+	cond_wait_for_loopdevs
+
 	run_check $SUDO_HELPER mount -t btrfs $loop_opt "$@" "$TEST_DEV" "$TEST_MNT"
 }
 
@@ -834,6 +837,7 @@ prepare_loopdevs()
 		chmod a+rw "$loopdev_prefix$i"
 		truncate -s0 "$loopdev_prefix$i"
 		truncate -s2g "$loopdev_prefix$i"
+		run_check sync "$loopdev_prefix$i"
 		loopdevs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show "$loopdev_prefix$i"`
 	done
 }
@@ -849,6 +853,22 @@ cleanup_loopdevs()
 		rm -- "$loopdev_prefix$i"
 	done
 	run_check $SUDO_HELPER losetup --all
+}
+
+# Loop devices may not be ready for mount after mkfs (observed in the CI), wait
+# for them explicitly. Errors are reported but tolerated, the mount could succeed
+# eventually or the whole test will fail anyway.
+wait_for_loopdevs()
+{
+	for dev in ${loopdevs[@]}; do
+		run_mayfail $SUDO_HELPER "$TOP/btrfs" device ready "$dev"
+	done
+}
+
+cond_wait_for_loopdevs() {
+	if [ -n "${loopdevs[1]}" ]; then
+		wait_for_loopdevs
+	fi
 }
 
 init_env()

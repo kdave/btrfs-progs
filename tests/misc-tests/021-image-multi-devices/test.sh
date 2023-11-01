@@ -19,6 +19,7 @@ loop3=${loopdevs[3]}
 # Create the test file system.
 
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$loop1" "$loop2"
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
 run_check $SUDO_HELPER dd bs=1M count=1 if=/dev/zero of="$TEST_MNT/foobar"
 orig_md5=$(run_check_stdout stat "$TEST_MNT/foobar" | md5sum | cut -d ' ' -f 1)
@@ -38,6 +39,7 @@ run_check $SUDO_HELPER "$TOP/btrfs-image" -r "$IMAGE" "$loop3"
 # Run check to make sure there is nothing wrong for the recovered image
 run_check $SUDO_HELPER "$TOP/btrfs" check "$loop3"
 
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount "$loop3" "$TEST_MNT"
 new_md5=$(run_check_stdout stat "$TEST_MNT/foobar" | md5sum | cut -d ' ' -f 1)
 run_check $SUDO_HELPER umount "$TEST_MNT"

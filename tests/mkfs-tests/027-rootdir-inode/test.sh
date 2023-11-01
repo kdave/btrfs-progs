@@ -25,6 +25,7 @@ check_global_prereq getfattr
 # doesn't support xattr.
 # Instead we go $TEST_TOP/btrfs-progs-mkfs-tests-027.XXXXXX/ instead.
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$tmp_dev"
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount -t btrfs "$tmp_dev" "$TEST_MNT"
 
 run_check $SUDO_HELPER mkdir "$TEST_MNT/source_dir/"
@@ -39,6 +40,7 @@ run_check $SUDO_HELPER setfattr -n user.foobar "$TEST_MNT/source_dir/foobar"
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" --rootdir "$TEST_MNT/source_dir" -f "$real_dev"
 run_check $SUDO_HELPER umount "$TEST_MNT"
 
+cond_wait_for_loopdevs
 run_check $SUDO_HELPER mount -t btrfs "$real_dev" "$TEST_MNT"
 
 new_mode=$(run_check_stdout $SUDO_HELPER stat "$TEST_MNT/" | grep "Uid:")

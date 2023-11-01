@@ -47,6 +47,7 @@ nextdevice() {
 	run_check $SUDO_HELPER "$TOP/btrfs" device add ${loopdevs[$nextdev]} "$TEST_MNT"
 	# Although seed sprout would make the fs RW, explicitly remount it RW
 	# just in case of future behavior change.
+	cond_wait_for_loopdevs
 	run_check $SUDO_HELPER mount -o remount,rw "$TEST_MNT"
 	# Rewrite the file
 	md5sum=$(run_check_stdout md5sum "$TEST_MNT/file$nextdev" | awk '{print $1}')
