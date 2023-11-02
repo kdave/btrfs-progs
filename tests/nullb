@@ -123,7 +123,7 @@ function _parse_zone_size() {
 		_dbg "ARG: $1"
 		if [ "$1" = '-z' ]; then
 			zonesize="$2"
-			if [ -z "$size" ]; then
+			if [ -z "$zonesize" ]; then
 				_error "-z requires size"
 			fi
 			shift
