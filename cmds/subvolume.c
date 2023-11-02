@@ -114,81 +114,38 @@ static const char * const subvolume_cmd_group_usage[] = {
 };
 
 static const char * const cmd_subvolume_create_usage[] = {
-	"btrfs subvolume create [options] [<dest>/]<name>",
-	"Create a subvolume",
-	"Create a subvolume <name> in <dest>.  If <dest> is not given",
-	"subvolume <name> will be created in the current directory.",
+	"btrfs subvolume create [options] [<dest>/]<name> [[<dest2>/]<name2> ...]",
+	"Create subvolume(s)",
+	"Create subvolume(s) at specified destination.  If <dest> is not given",
+	"subvolume <name> will be created in the current directory. Options apply",
+	"to all created subvolumes.",
 	"",
-	OPTLINE("-i <qgroupid>", "add the newly created subvolume to a qgroup. This option can be given multiple times."),
+	OPTLINE("-i <qgroupid>", "add the newly created subvolume(s) to a qgroup. This option can be given multiple times."),
 	OPTLINE("-p|--parents", "create any missing parent directories for each argument (like mkdir -p)"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
-static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **argv)
+static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *inherit,
+				bool create_parents)
 {
-	int	retval, res, len;
+	int ret;
+	int len;
 	int	fddst = -1;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
 	char	*newname;
 	char	*dstdir;
-	char	*dst;
-	struct btrfs_qgroup_inherit *inherit = NULL;
 	DIR	*dirstream = NULL;
-	bool create_parents = false;
 
-	optind = 0;
-	while (1) {
-		int c;
-		static const struct option long_options[] = {
-			{ "parents", no_argument, NULL, 'p' },
-			{ NULL, 0, NULL, 0 }
-		};
-
-		c = getopt_long(argc, argv, "i:p", long_options, NULL);
-		if (c < 0)
-			break;
-
-		switch (c) {
-		case 'c':
-			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
-			if (res) {
-				retval = res;
-				goto out;
-			}
-			break;
-		case 'i':
-			res = btrfs_qgroup_inherit_add_group(&inherit, optarg);
-			if (res) {
-				retval = res;
-				goto out;
-			}
-			break;
-		case 'p':
-			create_parents = true;
-			break;
-		default:
-			usage_unknown_option(cmd, argv);
-		}
-	}
-
-	if (check_argc_exact(argc - optind, 1)) {
-		retval = 1;
-		goto out;
-	}
-
-	dst = argv[optind];
-
-	retval = 1;	/* failure */
-	res = path_is_dir(dst);
-	if (res < 0 && res != -ENOENT) {
-		errno = -res;
+	ret = path_is_dir(dst);
+	if (ret < 0 && ret != -ENOENT) {
+		errno = -ret;
 		error("cannot access %s: %m", dst);
 		goto out;
 	}
-	if (res >= 0) {
+	if (ret >= 0) {
 		error("target path already exists: %s", dst);
 		goto out;
 	}
@@ -230,15 +187,15 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 		token = strtok(dstdir_dup, "/");
 		while (token) {
 			strcat(p, token);
-			res = path_is_dir(p);
-			if (res == -ENOENT) {
-				res = mkdir(p, 0777);
-				if (res < 0) {
+			ret = path_is_dir(p);
+			if (ret == -ENOENT) {
+				ret = mkdir(p, 0777);
+				if (ret < 0) {
 					error("failed to create directory %s: %m", p);
 					goto out;
 				}
-			} else if (res <= 0) {
-				errno = res;
+			} else if (ret <= 0) {
+				errno = ret ;
 				error("failed to check directory %s before creation: %m", p);
 				goto out;
 			}
@@ -261,27 +218,86 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 		args.size = btrfs_qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
 
-		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE_V2, &args);
+		ret = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE_V2, &args);
 	} else {
 		struct btrfs_ioctl_vol_args	args;
 
 		memset(&args, 0, sizeof(args));
 		strncpy_null(args.name, newname);
 
-		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
+		ret = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	}
 
-	if (res < 0) {
+	if (ret < 0) {
 		error("cannot create subvolume: %m");
 		goto out;
 	}
 
-	retval = 0;	/* success */
 out:
 	close_file_or_dir(fddst, dirstream);
-	free(inherit);
 	free(dupname);
 	free(dupdir);
+
+	return ret;
+}
+static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int retval, ret;
+	struct btrfs_qgroup_inherit *inherit = NULL;
+	bool has_error = false;
+	bool create_parents = false;
+
+	optind = 0;
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{ "parents", no_argument, NULL, 'p' },
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "i:p", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case 'c':
+			ret = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
+			if (ret) {
+				retval = ret;
+				goto out;
+			}
+			break;
+		case 'i':
+			ret = btrfs_qgroup_inherit_add_group(&inherit, optarg);
+			if (ret) {
+				retval = ret;
+				goto out;
+			}
+			break;
+		case 'p':
+			create_parents = true;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+
+	if (check_argc_min(argc - optind, 1)) {
+		retval = 1;
+		goto out;
+	}
+
+	retval = 1;
+
+	for (int i = optind; i < argc; i++) {
+		ret = create_one_subvolume(argv[i], inherit, create_parents);
+		if (ret < 0)
+			has_error = true;
+	}
+	if (!has_error)
+		retval = 0;
+out:
+	free(inherit);
 
 	return retval;
 }

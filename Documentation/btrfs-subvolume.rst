@@ -49,11 +49,18 @@ do not affect the files in the original subvolume.
 SUBCOMMAND
 -----------
 
-create [options] [<dest>/]<name>
-        Create a subvolume *name* in *dest*.
+create [options] [<dest>/]<name> [[<dest2>/]<name2> ...]
+        Create subvolume(s) at the destination(s).
 
-        If *dest* is not given, subvolume *name* will be created in the current
-        directory.
+        If *dest* part of the path is not given, subvolume *name* will be
+        created in the current directory.
+
+	If multiple desinations are given, then given options are applied to all
+	subvolumes.
+
+	If failure happens for any of the destinations, the command would
+	still retry the remaining destinations, but would return 1 to indicate
+	the failure (similar to what :command:`mkdir` would do.
 
         ``Options``
 
