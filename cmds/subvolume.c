@@ -194,8 +194,17 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 	}
 
 	dupname = strdup(dst);
+	if (!dupname) {
+		error_msg(ERROR_MSG_MEMORY, "duplicating %s", dst);
+		goto out;
+	}
 	newname = basename(dupname);
+
 	dupdir = strdup(dst);
+	if (!dupdir) {
+		error_msg(ERROR_MSG_MEMORY, "duplicating %s", dst);
+		goto out;
+	}
 	dstdir = dirname(dupdir);
 
 	if (!test_issubvolname(newname)) {
