@@ -220,6 +220,9 @@
  */
 #define BTRFS_METADATA_ITEM_KEY	169
 
+/* Extent owner, used by squota. */
+#define BTRFS_EXTENT_OWNER_REF_KEY	172
+
 #define BTRFS_TREE_BLOCK_REF_KEY	176
 
 #define BTRFS_EXTENT_DATA_REF_KEY	178
@@ -229,9 +232,6 @@
 #define BTRFS_SHARED_BLOCK_REF_KEY	182
 
 #define BTRFS_SHARED_DATA_REF_KEY	184
-
-/* Extent owner, used by squota. */
-#define BTRFS_EXTENT_OWNER_REF_KEY	188
 
 /*
  * block groups give us hints into the extent allocation trees.  Which
