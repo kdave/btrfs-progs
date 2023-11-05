@@ -27,6 +27,11 @@ btrfs-progs-6.6 (2023-11-03)
       * CI updates
       * documentation updates
 
+btrfs-progs-6.6.1 (2023-11-05)
+""""""""""""""""""""""""""""""
+   * fix device scanning ioctl definition, accidental change to the 'forget' ioctl
+     that breaks mounting multi-device filesystems
+
 btrfs-progs-6.5 (2023-09-01)
 ----------------------------
    * crc32c implementation speedup (3x)
