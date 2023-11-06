@@ -980,7 +980,7 @@ void bconf_add_param(const char *key, const char *value)
 {
 	struct config_param *param;
 
-	param = calloc(sizeof(*param), 1);
+	param = calloc(1, sizeof(*param));
 	if (!param)
 		return;
 	param->key = strdup(key);

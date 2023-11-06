@@ -1641,7 +1641,7 @@ static int qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n,
 			 (*inherit)->num_excl_copies;
 	}
 
-	out = calloc(sizeof(*out) + sizeof(out->qgroups[0]) * (nitems + n), 1);
+	out = calloc(1, sizeof(*out) + sizeof(out->qgroups[0]) * (nitems + n));
 	if (out == NULL) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
