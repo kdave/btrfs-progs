@@ -578,11 +578,20 @@ setup_root_helper()
 # Check if btrfs is compiled with CONFIG_BTRFS_FS_POSIX_ACL, may need TEST_DEV.
 check_kernel_support_acl()
 {
+	if [ -f /sys/fs/btrfs/features/acl ]; then
+		if grep -q 0 /sys/fs/btrfs/features/acl; then
+			_not_run "ACL is not compiled in"
+		fi
+		return
+	fi
+
+	# It is an older kernel without acl sysfs interface.
 	if [ -f /proc/config.gz ] && \
 	   ! zgrep -q "^CONFIG_BTRFS_FS_POSIX_ACL=y" /proc/config.gz; then
 		_not_run "ACL is not compiled in"
 	fi
 
+	# If kernel is without the /proc/config.gz file.
 	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
