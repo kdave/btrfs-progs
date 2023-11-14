@@ -286,6 +286,19 @@ static int check_btrfs_object(const char *object)
 {
 	int ret;
 	u8 fsid[BTRFS_FSID_SIZE];
+	struct stat st;
+
+	ret = stat(object, &st);
+	if (ret < 0)
+		return 0;
+
+	/*
+	 * Don't try to read fsid on char devices, this will fail anyway. In
+	 * some cases opening the device can trigger some system events (like a
+	 * watchdog) so do only stat.
+	 */
+	if ((st.st_mode & S_IFMT) == S_IFCHR || (st.st_mode & S_IFMT) == S_IFIFO)
+		return 0;
 
 	ret = get_fsid(object, fsid, 0);
 	if (ret < 0)
