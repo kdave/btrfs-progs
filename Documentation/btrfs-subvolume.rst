@@ -136,7 +136,8 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
         Path filtering:
 
         -o
-                print only subvolumes below specified <path>.
+                print only subvolumes below specified <path>. Note that this is not a
+                recursive command, and won't show nested subvolumes under <path>.
         -a
                 print all the subvolumes in the filesystem and distinguish between
                 absolute and relative path with respect to the given *path*.
