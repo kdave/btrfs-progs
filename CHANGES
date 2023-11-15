@@ -32,6 +32,13 @@ btrfs-progs-6.6.1 (2023-11-05)
    * fix device scanning ioctl definition, accidental change to the 'forget' ioctl
      that breaks mounting multi-device filesystems
 
+btrfs-progs-6.6.2 (2023-11-15)
+""""""""""""""""""""""""""""""
+   * squota: change key number of EXTENT_OWNER_REF_KEY, sync with kernel 6.7-rc1
+   * property set/get: completely skip char devices, trying to set properties
+     and open /dev/watchdog* causes a reboot
+   * other: build warnings, test updates, documentation updates
+
 btrfs-progs-6.5 (2023-09-01)
 ----------------------------
    * crc32c implementation speedup (3x)
