@@ -21,6 +21,7 @@ dependencies are not desired.
 - libgcrypt >= 1.8.0
 - libsodium >= 1.0.4
 - libkcapi >= 1.0.0
+- Botan >= 2.19.0
 
 Optionally, multipath device detection requires libudev and running udev
 daemon, as it's the only source of the path information. Static build has a

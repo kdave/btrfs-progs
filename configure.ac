@@ -236,7 +236,7 @@ if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
 fi
 
 AC_ARG_WITH([crypto],
-	    AS_HELP_STRING([[[]--with-crypto[[=builtin]]]], [provider of cryptographic primitives: builtin, libgcrypt, libsodium, libkcapi]),
+	    AS_HELP_STRING([[[]--with-crypto[[=builtin]]]], [provider of cryptographic primitives: builtin, libgcrypt, libsodium, libkcapi, botan]),
   [], [with_crypto=builtin]
 )
 
@@ -246,6 +246,7 @@ CRYPTOPROVIDER_BUILTIN=0
 CRYPTOPROVIDER_LIBGCRYPT=0
 CRYPTOPROVIDER_LIBSODIUM=0
 CRYPTOPROVIDER_LIBKCAPI=0
+CRYPTOPROVIDER_BOTAN=0
 if test "$with_crypto" = "builtin"; then
 	cryptoprovider="builtin"
 	CRYPTOPROVIDER_BUILTIN=1
@@ -264,6 +265,11 @@ elif test "$with_crypto" = "libkcapi"; then
 	PKG_CHECK_MODULES(KCAPI, [libkcapi >= 1.0.0])
 	CRYPTOPROVIDER_LIBKCAPI=1
 	cryptoproviderversion=`${PKG_CONFIG} libkcapi --modversion`
+elif test "$with_crypto" = "botan"; then
+	cryptoprovider="botan"
+	PKG_CHECK_MODULES(BOTAN, [botan-2 >= 2.19.0])
+	CRYPTOPROVIDER_BOTAN=1
+	cryptoproviderversion=`${PKG_CONFIG} botan-2 --modversion`
 else
 	AC_MSG_ERROR([unrecognized crypto provider: $with_crypto])
 fi
@@ -275,6 +281,8 @@ AC_SUBST([CRYPTOPROVIDER_LIBSODIUM])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_LIBSODIUM],[$CRYPTOPROVIDER_LIBSODIUM],[Use libsodium])
 AC_SUBST([CRYPTOPROVIDER_LIBKCAPI])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_LIBKCAPI],[$CRYPTOPROVIDER_LIBKCAPI],[Use libkcapi])
+AC_SUBST([CRYPTOPROVIDER_BOTAN])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER_BOTAN],[$CRYPTOPROVIDER_BOTAN],[Use Botan])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER],["$cryptoprovider"],[Crypto implementation source name])
 
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],

@@ -180,3 +180,58 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 }
 
 #endif
+
+#if CRYPTOPROVIDER_BOTAN == 1
+
+#include <botan/ffi.h>
+
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+}
+
+int hash_sha256(const u8 *buf, size_t len, u8 *out)
+{
+	botan_hash_t hash;
+	static bool initialized = false;
+	int ret;
+
+	if (!initialized) {
+		ret = botan_hash_init(&hash, "SHA-256", 0);
+		if (ret < 0) {
+			fprintf(stderr, "HASH: cannot instantiate sha256, error %d\n", ret);
+			exit(1);
+		}
+		initialized = true;
+	} else {
+		botan_hash_clear(hash);
+	}
+	botan_hash_update(hash, buf, len);
+	botan_hash_final(hash, out);
+	/* botan_hash_destroy(hash); */
+	return 0;
+}
+
+int hash_blake2b(const u8 *buf, size_t len, u8 *out)
+{
+	botan_hash_t hash;
+	static bool initialized = false;
+	int ret;
+
+	if (!initialized) {
+		ret = botan_hash_init(&hash, "BLAKE2b(256)", 0);
+		if (ret < 0) {
+			fprintf(stderr, "HASH: cannot instantiate sha256, error %d\n", ret);
+			exit(1);
+		}
+		initialized = true;
+	} else {
+		botan_hash_clear(hash);
+	}
+	botan_hash_update(hash, buf, len);
+	botan_hash_final(hash, out);
+	/* botan_hash_destroy(hash); */
+	return 0;
+}
+
+#endif

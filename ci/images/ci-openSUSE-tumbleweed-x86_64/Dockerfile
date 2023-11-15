@@ -26,7 +26,8 @@ RUN zypper install -y --no-recommends glibc-devel-static libblkid-devel-static \
 	    libzstd-devel-static lzo-devel-static zlib-devel-static
 
 RUN zypper install -y --no-recommends gcc13
-RUN zypper install -y --no-recommends libgcrypt-devel libsodium-devel libkcapi-devel
+RUN zypper install -y --no-recommends libgcrypt-devel libsodium-devel libkcapi-devel \
+	   libbotan-devel
 
 COPY ./test-build .
 COPY ./run-tests .

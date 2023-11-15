@@ -36,6 +36,7 @@ buildme builtin
 buildme libgcrypt
 buildme libsodium
 buildme libkcapi
+buildme botan
 
 echo "VERDICT:"
 echo "$verdict"

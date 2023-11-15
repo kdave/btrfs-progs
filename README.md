@@ -123,8 +123,8 @@ Build dependencies are listed in [INSTALL](INSTALL). Implementation of checksum/
 functions is provided by copies of the respective sources to avoid adding
 dependencies that would make deployments in rescue or limited environments
 harder. The implementations are portable and there are optimized versions for
-some architectures.  Optionally it's possible to use libgcrypt, libsodium or
-libkcapi implementations.
+some architectures.  Optionally it's possible to use libgcrypt, libsodium,
+libkcapi or Botan implementations.
 
 * CRC32C: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/
 * XXHASH: https://github.com/Cyan4973/xxHash
