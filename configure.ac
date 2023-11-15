@@ -45,19 +45,73 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
 
-AX_CHECK_COMPILE_FLAG([-msse2], [HAVE_CFLAG_msse2=1], [HAVE_CFLAG_msse2=0])
+AC_MSG_CHECKING([whether the compiler supports -msse2])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <emmintrin.h>
+
+int main() {
+    __m128i a = _mm_setzero_si128();
+    return 0;
+}
+]])],
+    [AC_MSG_RESULT([yes])
+     HAVE_CFLAG_msse2=1],
+    [AC_MSG_RESULT([no])
+     HAVE_CFLAG_msse2=0])
 AC_SUBST([HAVE_CFLAG_msse2])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msse2], [$HAVE_CFLAG_msse2], [Compiler supports -msse2])
 
-AX_CHECK_COMPILE_FLAG([-msse4.1], [HAVE_CFLAG_msse41=1], [HAVE_CFLAG_msse41=0])
+AC_MSG_CHECKING([whether the compiler supports -msse4.1])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <smmintrin.h>
+
+int main() {
+    __m128 a = _mm_setzero_ps();
+    a = _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT);
+    return 0;
+}
+]])],
+    [AC_MSG_RESULT([yes])
+     HAVE_CFLAG_msse41=1],
+    [AC_MSG_RESULT([no])
+     HAVE_CFLAG_msse41=0])
 AC_SUBST([HAVE_CFLAG_msse41])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msse41], [$HAVE_CFLAG_msse41], [Compiler supports -msse4.1])
 
-AX_CHECK_COMPILE_FLAG([-mavx2], [HAVE_CFLAG_mavx2=1], [HAVE_CFLAG_mavx2=0])
+AC_MSG_CHECKING([whether the compiler supports -mavx2])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <immintrin.h>
+
+int main() {
+    __m256i a = _mm256_setzero_si256();
+    a = _mm256_add_epi64(a, a);
+    return 0;
+}
+]])],
+    [AC_MSG_RESULT([yes])
+     HAVE_CFLAG_mavx2=1],
+    [AC_MSG_RESULT([no])
+     HAVE_CFLAG_mavx2=0])
 AC_SUBST([HAVE_CFLAG_mavx2])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_mavx2], [$HAVE_CFLAG_mavx2], [Compiler supports -mavx2])
 
-AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
+AC_MSG_CHECKING([whether the compiler supports -msha])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <immintrin.h>
+#include <smmintrin.h>
+#include <wmmintrin.h>
+
+int main() {
+    __m128i a = _mm_setzero_si128();
+    __m128i b = _mm_setzero_si128();
+    a = _mm_sha1rnds4_epu32(a, b, 0);
+    return 0;
+}
+]])],
+    [AC_MSG_RESULT([yes])
+     HAVE_CFLAG_msha=1],
+    [AC_MSG_RESULT([no])
+     HAVE_CFLAG_msha=0])
 AC_SUBST([HAVE_CFLAG_msha])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
 
