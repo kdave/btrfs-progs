@@ -235,3 +235,56 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 }
 
 #endif
+
+#if CRYPTOPROVIDER_OPENSSL == 1
+
+#include <openssl/params.h>
+#include <openssl/evp.h>
+
+void hash_init_accel(void)
+{
+	crc32c_init_accel();
+}
+
+int hash_sha256(const u8 *buf, size_t len, u8 *out)
+{
+	EVP_MD_CTX *ctx = NULL;
+
+	if (!ctx) {
+		ctx = EVP_MD_CTX_new();
+		if (!ctx) {
+			fprintf(stderr, "HASH: cannot instantiate sha256\n");
+			exit(1);
+		}
+	}
+	EVP_DigestInit(ctx, EVP_sha256());
+	EVP_DigestUpdate(ctx, buf, len);
+	EVP_DigestFinal(ctx, out, NULL);
+	/* EVP_MD_CTX_free(ctx); */
+	return 0;
+}
+
+int hash_blake2b(const u8 *buf, size_t len, u8 *out)
+{
+	EVP_MD_CTX *ctx = NULL;
+	size_t digest_size = 256 / 8;
+	const OSSL_PARAM params[] = {
+		OSSL_PARAM_size_t("size", &digest_size),
+		OSSL_PARAM_END
+	};
+
+	if (!ctx) {
+		ctx = EVP_MD_CTX_new();
+		if (!ctx) {
+			fprintf(stderr, "HASH: cannot instantiate sha256\n");
+			exit(1);
+		}
+	}
+	EVP_DigestInit_ex2(ctx, EVP_blake2b512(), params);
+	EVP_DigestUpdate(ctx, buf, len);
+	EVP_DigestFinal(ctx, out, NULL);
+	/* EVP_MD_CTX_free(ctx); */
+	return 0;
+}
+
+#endif

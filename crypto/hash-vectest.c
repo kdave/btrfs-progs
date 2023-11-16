@@ -491,6 +491,14 @@ static const struct hash_testspec test_spec[] = {
 		.hash = hash_sha256,
 		.backend = CRYPTOPROVIDER_BOTAN + 1
 	}, {
+		.name = "SHA256-openssl",
+		.digest_size = 32,
+		.testvec = sha256_tv,
+		.count = ARRAY_SIZE(sha256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_sha256,
+		.backend = CRYPTOPROVIDER_OPENSSL + 1
+	}, {
 		.name = "SHA256-NI",
 		.digest_size = 32,
 		.testvec = sha256_tv,
@@ -538,6 +546,14 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_NONE,
 		.hash = hash_blake2b,
 		.backend = CRYPTOPROVIDER_BOTAN + 1
+	}, {
+		.name = "BLAKE2-openssl",
+		.digest_size = 32,
+		.testvec = blake2b_256_tv,
+		.count = ARRAY_SIZE(blake2b_256_tv),
+		.cpu_flag = CPU_FLAG_NONE,
+		.hash = hash_blake2b,
+		.backend = CRYPTOPROVIDER_OPENSSL + 1
 	}, {
 		.name = "BLAKE2-SSE2",
 		.digest_size = 32,

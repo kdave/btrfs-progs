@@ -133,6 +133,9 @@ build_make_targets
 conf='--with-crypto=botan'
 build_make_targets
 
+conf='--with-crypto=openssl'
+build_make_targets
+
 # Old architectures
 conf='--with-crypto=builtin'
 buildme_cflags '-march=core2'
