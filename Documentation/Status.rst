@@ -388,7 +388,7 @@ are unaffected by the zoned device constraints.
 
 
 Details that do not fit the table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 Defrag
 ^^^^^^

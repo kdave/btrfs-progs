@@ -3,6 +3,17 @@
 Welcome to BTRFS documentation!
 ===============================
 
+BTRFS is a modern copy on write (COW) filesystem for Linux aimed at
+implementing advanced features while also focusing on fault tolerance, repair
+and easy administration. You can read more about the features in the
+:doc:`introduction<Introduction>` or choose from the pages below. Documentation
+for for command line tools :doc:`btrfs`, :doc:`mkfs.btrfs` and others
+is in the :doc:`manual pages<man-index>`.
+
+.. raw:: html
+
+   <table><tr><td class="main-table-col">
+
 .. toctree::
    :maxdepth: 1
    :caption: Overview
@@ -20,9 +31,13 @@ Welcome to BTRFS documentation!
    INSTALL
    Source-repositories
 
+.. raw:: html
+
+   </td><td class="main-table-col">
+
 .. toctree::
    :maxdepth: 1
-   :caption: Features:
+   :caption: Features
 
    Common-features
    Custom-ioctls
@@ -48,6 +63,10 @@ Welcome to BTRFS documentation!
    Volume-management
    Zoned-mode
 
+.. raw:: html
+
+   </td><td class="main-table-col">
+
 .. toctree::
    :maxdepth: 1
    :caption: Developer documentation
@@ -63,6 +82,19 @@ Welcome to BTRFS documentation!
    dev/dev-internal-apis
    dev/ReleaseChecklist
    btrfs-ioctl
+
+
+.. raw:: html
+
+   </td></tr></table>
+
+.. raw:: html
+
+   <hr />
+
+This documentation is still work in progress, not everything from the original
+wiki https://btrfs.wiki.kernel.org has been moved here. Below are starting points
+for missing contents.
 
 .. toctree::
    :maxdepth: 1

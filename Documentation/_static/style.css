@@ -35,3 +35,12 @@
 .statusincompat {
 	color: goldenrod;
 };
+
+table.main-table {
+	border: 1px;
+	width: 100%;
+}
+
+td.main-table-col {
+	width: 33%;
+}
