@@ -37,6 +37,18 @@ The release tags are signed with a GPG key ID `F2B4 1200 C54E FB30 380C  1756 C5
 release tarballs are hosted at [kernel.org](https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/).
 See file [CHANGES](CHANGES) or [changelogs on RTD](https://btrfs.readthedocs.io/en/latest/CHANGES.html).
 
+Releases with changelog are also published at [Github release page](https://github.com/kdave/btrfs-progs/releases).
+
+### Static binaries
+
+For each release there are static binaries of `btrfs` and `btrfs.box` provided.
+These can be used in rescue environments and are built for `x86_64`
+architecture (with maximum backward compatibility), inside the [Github Actions
+workflow](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml).
+The `btrfs.box` is an all-in-one tool in the [busybox](https://www.busybox.net)
+style, the functionality is determined by the binary names (either symlink,
+hradlink or a file copy).
+
 Reporting bugs
 --------------
 
