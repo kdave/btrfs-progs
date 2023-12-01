@@ -574,6 +574,8 @@ test-array: array-test
 		done							\
 	}
 
+test-api: test-json test-string-table test-array
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress

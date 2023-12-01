@@ -31,10 +31,8 @@ jobs:
         run: sudo make D=gcov TEST_LOG=dump test-misc
       - name: Tests fuzz
         run: sudo make D=gcov TEST_LOG=dump test-fuzz
-      - name: Tests json formatter
-        run: make D=gcov test-json
-      - name: Tests string-table formatter
-        run: make D=gcov test-string-table
+      - name: Test internal APIs
+        run: make D=gcov test-api
       - name: Libbtrfsutil test
         run: make D=gcov test-libbtrfsutil
       - name: Libbtrfs build test

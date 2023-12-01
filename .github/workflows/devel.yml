@@ -41,10 +41,8 @@ jobs:
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
         run: make V=1
-      - name: Tests json formatter
-        run: make test-json
-      - name: Tests string-table formatter
-        run: make test-string-table
+      - name: Test internal APIs
+        run: make test-api
       - name: Libbtrfsutil test
         run: make test-libbtrfsutil
       - name: Libbtrfs build test
