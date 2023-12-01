@@ -437,29 +437,25 @@ int device_get_queue_param(const char *file, const char *param, char *buf, size_
  */
 u64 device_get_zone_unusable(int fd, u64 flags)
 {
-	char buf[64];
-	int sys_fd;
-	u64 unusable = DEVICE_ZONE_UNUSABLE_UNKNOWN;
+	int ret;
+	u64 unusable;
 
 	/* Don't report it for a regular fs */
-	sys_fd = sysfs_open_fsid_file(fd, "features/zoned");
-	if (sys_fd < 0)
+	ret = sysfs_open_fsid_file(fd, "features/zoned");
+	if (ret < 0)
 		return DEVICE_ZONE_UNUSABLE_UNKNOWN;
-	close(sys_fd);
-	sys_fd = -1;
+	close(ret);
+	ret = -1;
 
 	if ((flags & BTRFS_BLOCK_GROUP_DATA) == BTRFS_BLOCK_GROUP_DATA)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/data/bytes_zone_unusable");
+		ret = sysfs_read_fsid_file_u64(fd, "allocation/data/bytes_zone_unusable", &unusable);
 	else if ((flags & BTRFS_BLOCK_GROUP_METADATA) == BTRFS_BLOCK_GROUP_METADATA)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/metadata/bytes_zone_unusable");
+		ret = sysfs_read_fsid_file_u64(fd, "allocation/metadata/bytes_zone_unusable", &unusable);
 	else if ((flags & BTRFS_BLOCK_GROUP_SYSTEM) == BTRFS_BLOCK_GROUP_SYSTEM)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/system/bytes_zone_unusable");
+		ret = sysfs_read_fsid_file_u64(fd, "allocation/system/bytes_zone_unusable", &unusable);
 
-	if (sys_fd < 0)
+	if (ret < 0)
 		return DEVICE_ZONE_UNUSABLE_UNKNOWN;
-	sysfs_read_file(sys_fd, buf, sizeof(buf));
-	unusable = strtoull(buf, NULL, 10);
-	close(sys_fd);
 
 	return unusable;
 }
