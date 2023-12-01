@@ -194,13 +194,16 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	DIR	*dirstream = NULL;
 	bool enqueue = false;
 	bool cancel = false;
+	bool force = false;
 
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST };
+		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST,
+		       GETOPT_VAL_FORCE };
 		static const struct option long_options[] = {
 			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
+			{ "force", no_argument, NULL, GETOPT_VAL_FORCE },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -210,6 +213,9 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		switch (c) {
 		case GETOPT_VAL_ENQUEUE:
 			enqueue = true;
+			break;
+		case GETOPT_VAL_FORCE:
+			force = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -236,6 +242,25 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		if (strcmp("cancel", argv[i]) == 0) {
 			cancel = true;
 			pr_verbose(LOG_DEFAULT, "Request to cancel running device deletion\n");
+		}
+	}
+
+	if (!cancel && argc - optind > 2) {
+		warning("there are %d devices for removal, this will not remove them at once\n"
+			"\t but one by one and the remaining devices can still be written to.\n"
+			"\t Use --force to skip the timeout.\n"
+			"\t If this is not expected, press Ctrl-C to stop.\n",
+			argc - optind - 1);
+		if (force) {
+			pr_verbose(LOG_DEFAULT, "Safety timeout skipped due to --force\n\n");
+		} else {
+			int delay = 10;
+
+			while (delay) {
+				printf("%2d", delay--);
+				fflush(stdout);
+				sleep(1);
+			}
 		}
 	}
 

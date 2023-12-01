@@ -45,15 +45,24 @@ remove [options] <device>|<devid> [<device>|<devid>...] <path>
         Remove device(s) from a filesystem identified by <path>
 
         Device removal must satisfy the profile constraints, otherwise the command
-        fails. The filesystem must be converted to profile(s) that would allow the
-        removal. This can typically happen when going down from 2 devices to 1 and
-        using the RAID1 profile. See the section :ref:`Typical use cases<man-device-typical-use-cases>`.
+        fails and cannot be enforced. The filesystem must be converted to
+        profile(s) that would allow the removal. This can for example happen when
+        going down from 2 devices to 1 and using the RAID1 profile. See the
+        section :ref:`Typical use cases<man-device-typical-use-cases>`.
 
         The operation can take long as it needs to move all data from the device.
 
+        .. note::
+                It's possible to specify more than one device on the command
+                line but the devices will be removed one by one, not at once.
+                This means that the remaining devices to be deleted can be
+                still used for writes. In that case there's a warning and safety
+                timeout as this can be confusing and unexpected. The timeout can
+                be overridden by option *--force*.
+
         It is possible to delete the device that was used to mount the filesystem. The
-        device entry in the mount table will be replaced by another device name with
-        the lowest device id.
+        device entry in the mount table (:file:`/proc/self/mounts`) will be
+        replaced by another device name with the lowest device id.
 
         If the filesystem is mounted in degraded mode (*-o degraded*), special term
         *missing* can be used for *device*. In that case, the first device that is
@@ -70,6 +79,10 @@ remove [options] <device>|<devid> [<device>|<devid>...] <path>
 
         --enqueue
                 wait if there's another exclusive operation running, otherwise continue
+
+        --force
+                skip the safety timeout when there are multiple devices for removal, this
+                does not force removing devices that would break the profile constraints
 
 delete <device>|<devid> [<device>|<devid>...] <path>
         Alias of remove kept for backward compatibility
