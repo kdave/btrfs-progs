@@ -108,6 +108,7 @@ int sysfs_read_file_u64(const char *name, u64 *value)
 	if (ret < 0)
 		goto out;
 	/* Raw value in any numeric format should work, followed by a newline. */
+	errno = 0;
 	*value = strtoull(str, NULL, 0);
 out:
 	close(fd);
@@ -127,6 +128,7 @@ int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
 	if (ret < 0)
 		goto out;
 	/* Raw value in any numeric format should work, followed by a newline. */
+	errno = 0;
 	*value = strtoull(str, NULL, 0);
 out:
 	close(fd);

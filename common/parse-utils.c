@@ -158,6 +158,7 @@ u64 parse_size_from_string(const char *s)
 		error("size value '%s' is less equal than 0", s);
 		exit(1);
 	}
+	errno = 0;
 	ret = strtoull(s, &endptr, 10);
 	if (endptr == s) {
 		error("size value '%s' is invalid", s);
