@@ -14,7 +14,6 @@ Btrfs is a copy on write (COW) filesystem for Linux aimed at implementing
 advanced features while focusing on fault tolerance, repair and easy
 administration.
 
-
 This repository hosts following utilities and also documentation:
 
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.readthedocs.io/en/latest/btrfs.html))
@@ -84,8 +83,8 @@ The development model of btrfs-progs shares a lot with the kernel model. The
 
 The pull requests on Github may be used for code or documentation
 contributions. There are basic build checks enabled in the Github actions CI
-(first time contributors' pull requests may need an approval). The status can
-be checked at the [workflow page](https://github.com/kdave/btrfs-progs/actions/workflows/pull-request.yml).
+for pull requests. The status can be checked at the
+[workflow page](https://github.com/kdave/btrfs-progs/actions/workflows/pull-request.yml).
 
 * open a PR against branches *devel* or *master*
 * push update to the same branch if you need to
@@ -101,8 +100,15 @@ or update your editor settings manually.
 Testing
 -------
 
-The testing documentation can be found in [tests/](tests/README.md) and
-continuous integration/container images in [ci/](ci/README.md).
+The documentation for writing and running tests can be found in
+[tests/](tests/README.md) and continuous integration/container images in
+[ci/](ci/README.md).
+
+Development branches are tested by Github
+[Action workflows](https://github.com/kdave/btrfs-progs/actions).
+
+Code coverage provided by [codecov.io](https://codecov.io) can be found
+[here](https://codecov.io/gh/kdave/btrfs-progs).
 
 Documentation updates
 ---------------------
@@ -123,13 +129,18 @@ Build dependencies are listed in [INSTALL](INSTALL). Implementation of checksum/
 functions is provided by copies of the respective sources to avoid adding
 dependencies that would make deployments in rescue or limited environments
 harder. The implementations are portable and there are optimized versions for
-some architectures.  Optionally it's possible to use libgcrypt, libsodium,
-libkcapi, Botan or OpenSSL implementations.
+some architectures.  Optionally it's possible to use
+[libgcrypt](https://www.gnupg.org/software/libgcrypt/index.html),
+[libsodium](https://doc.libsodium.org),
+[libkcapi](https://www.chronox.de/libkcapi.html),
+[Botan](https://botan.randombit.net) or
+[OpenSSL](https://www.openssl.org) implementations.
 
-* CRC32C: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/
-* XXHASH: https://github.com/Cyan4973/xxHash
-* SHA256: https://tools.ietf.org/html/rfc4634
-* BLAKE2: https://github.com/BLAKE2/BLAKE2
+The builtin implemtations uses the following sources:
+[CRC32C](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git),
+[XXHASH](https://github.com/Cyan4973/xxHash),
+[SHA256](https://tools.ietf.org/html/rfc4634),
+[BLAKE2](https://github.com/BLAKE2/BLAKE2).
 
 Some other code is borrowed from kernel, eg. the raid5 tables or data structure
 implementation (list, rb-tree).
