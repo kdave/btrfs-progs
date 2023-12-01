@@ -438,25 +438,18 @@ static void free_send_info(struct btrfs_send *sctx)
 
 static u32 get_sysfs_proto_supported(void)
 {
-	int fd;
 	int ret;
-	char buf[32] = {};
-	char *end = NULL;
 	u64 version;
 
-	fd = sysfs_open_file("features/send_stream_version");
-	if (fd < 0) {
+	ret = sysfs_read_file_u64("features/send_stream_version", &version);
+	if (ret < 0) {
 		/*
-		 * No file is either no version support or old kernel with just
-		 * v1.
+		 * No file or error is either no version support or old kernel
+		 * with just v1.
 		 */
 		return 1;
 	}
-	ret = sysfs_read_file(fd, buf, sizeof(buf));
-	close(fd);
-	if (ret <= 0)
-		return 1;
-	version = strtoull(buf, &end, 10);
+
 	if (version == ULLONG_MAX && errno == ERANGE)
 		return 1;
 	if (version > U32_MAX) {
