@@ -9,7 +9,7 @@ setup_root_helper
 
 image=$(extract_image "./ino-cache-enabled.raw.xz")
 
-run_check "$TOP/btrfs" check --clear-ino-cache "$image"
+run_check "$TOP/btrfs" rescue clear-ino-cache "$image"
 run_check "$TOP/btrfs" check "$image"
 
 # Check for FREE_INO items for toplevel subvol

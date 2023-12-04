@@ -9994,7 +9994,6 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int init_csum_tree = 0;
 	int readonly = 0;
 	int clear_space_cache = 0;
-	int clear_ino_cache = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
@@ -10118,8 +10117,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_CLEAR_INO_CACHE:
-				clear_ino_cache = 1;
-				ctree_flags |= OPEN_CTREE_WRITES;
+				error("--clear-ino-cache option is deprecated, please use \"btrfs rescue clear-ino-cache\" instead");
+				exit(1);
 				break;
 			case GETOPT_VAL_FORCE:
 				force = 1;
@@ -10231,13 +10230,6 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		warning("--clear-space-cache option is deprecated, please use \"btrfs rescue clear-space-cache\" instead");
 		ret = do_clear_free_space_cache(gfs_info, clear_space_cache);
 		err |= !!ret;
-		goto close_out;
-	}
-
-	if (clear_ino_cache) {
-		warning("--clear-ino-cache option is deprecated, please use \"btrfs rescue clear-ino-cache\" instead");
-		ret = clear_ino_cache_items(gfs_info);
-		err = ret;
 		goto close_out;
 	}
 

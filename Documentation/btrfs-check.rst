@@ -101,13 +101,6 @@ SAFE OR ADVISORY OPTIONS
 		This option is deprecated, please use `btrfs rescue clear-space-cache`
 		instead, this option would be removed in the future eventually.
 
---clear-ino-cache
-        remove leftover items pertaining to the deprecated `inode cache` feature
-
-	.. warning::
-		This option is deprecated, please use `btrfs rescue clear-ino-cache`
-		instead, this option would be removed in the future eventually.
-
 DANGEROUS OPTIONS
 -----------------
 
@@ -146,6 +139,16 @@ DANGEROUS OPTIONS
 
         This option also skips the delay and warning in the repair mode (see
         *--repair*).
+
+DEPRECATED OR MOVED OPTIONS
+---------------------------
+
+--clear-ino-cache
+        (removed: 6.7)
+
+        remove leftover items pertaining to the deprecated *inode cache* feature,
+        please use :ref:`btrfs rescue clear-ino-cache<man-rescue-clear-ino-cache>`
+        instead
 
 EXIT STATUS
 -----------

@@ -489,7 +489,8 @@ inode_cache, noinode_cache
 
         .. note::
                 The functionality has been removed in 5.11, any stale data created by
-                previous use of the *inode_cache* option can be removed by :command:`btrfs check --clear-ino-cache`.
+                previous use of the *inode_cache* option can be removed by
+                :ref:`btrfs rescue clear-ino-cache<man-rescue-clear-ino-cache>`.
 
 
 NOTES ON GENERIC MOUNT OPTIONS
