@@ -45,6 +45,8 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
 
+if test "x$target_cpu" == 'xx86_64'; then
+
 AX_CHECK_COMPILE_FLAG([-msse2], [HAVE_CFLAG_msse2=1], [HAVE_CFLAG_msse2=0])
 AC_SUBST([HAVE_CFLAG_msse2])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msse2], [$HAVE_CFLAG_msse2], [Compiler supports -msse2])
@@ -60,6 +62,8 @@ AC_DEFINE_UNQUOTED([HAVE_CFLAG_mavx2], [$HAVE_CFLAG_mavx2], [Compiler supports -
 AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
 AC_SUBST([HAVE_CFLAG_msha])
 AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
+
+fi
 
 AX_CHECK_COMPILE_FLAG([-std=gnu11], [],
 	[AC_MSG_ERROR([std=gnu11 compiler required])])
