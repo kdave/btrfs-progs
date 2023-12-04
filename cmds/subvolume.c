@@ -334,6 +334,8 @@ static const char * const cmd_subvolume_delete_usage[] = {
 	OPTLINE("-c|--commit-after", "wait for transaction commit at the end of the operation"),
 	OPTLINE("-C|--commit-each", "wait for transaction commit after deleting each subvolume"),
 	OPTLINE("-i|--subvolid", "subvolume id of the to be removed subvolume"),
+	OPTLINE("--delete-qgroup", "also delete the qgroup 0/subvolid if it exists"),
+	OPTLINE("--no-delete-qgroup", "do not delete the qgroup 0/subvolid if it exists (default)"),
 	OPTLINE("-v|--verbose", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
@@ -362,15 +364,20 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 	enum btrfs_util_error err;
 	uint64_t default_subvol_id, target_subvol_id = 0;
+	bool opt_delete_qgroup = false;
 
 	optind = 0;
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_DELETE_QGROUP = GETOPT_VAL_FIRST,
+		       GETOPT_VAL_NO_DELETE_QGROUP };
 		static const struct option long_options[] = {
 			{"commit-after", no_argument, NULL, 'c'},
 			{"commit-each", no_argument, NULL, 'C'},
 			{"subvolid", required_argument, NULL, 'i'},
 			{"verbose", no_argument, NULL, 'v'},
+			{"delete-qgroup", no_argument, NULL, GETOPT_VAL_DELETE_QGROUP },
+			{"no-delete-qgroup", no_argument, NULL, GETOPT_VAL_NO_DELETE_QGROUP },
 			{NULL, 0, NULL, 0}
 		};
 
@@ -390,6 +397,12 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 			break;
 		case 'v':
 			bconf_be_verbose();
+			break;
+		case GETOPT_VAL_DELETE_QGROUP:
+			opt_delete_qgroup = true;
+			break;
+		case GETOPT_VAL_NO_DELETE_QGROUP:
+			opt_delete_qgroup = false;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -525,6 +538,19 @@ again:
 			warning("deletion failed with EPERM, you don't have permissions or send may be in progress");
 		ret = 1;
 		goto out;
+	} else if (opt_delete_qgroup) {
+		struct btrfs_ioctl_qgroup_create_args args = { .qgroupid = target_subvol_id };
+
+		ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
+		if (ret == 0) {
+			pr_verbose(LOG_DEFAULT, "Delete qgroup 0/%" PRIu64 "\n", target_subvol_id);
+		} else if (ret < 0 && (errno == ENOTCONN || errno == ENOENT)) {
+			/* Quotas not enabled, or there's no qgroup. */
+		} else {
+			warning("unable to delete qgroup 0/%llu: %m", subvolid);
+		}
+		/* Qgroup errors are not fatal. */
+		ret = 0;
 	}
 
 	if (commit_mode == COMMIT_EACH) {

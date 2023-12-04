@@ -112,6 +112,13 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         -i|--subvolid <subvolid>
                 subvolume id to be removed instead of the <path> that should point to the
                 filesystem with the subvolume
+
+        --delete-qgroup
+                also delete the qgroup 0/subvolid if it exists
+
+        --no-delete-qgroup
+                do not delete the 0/subvolid qgroup (default)
+
         -v|--verbose
                 (deprecated) alias for global *-v* option
 
