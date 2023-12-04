@@ -57,6 +57,20 @@ SAFE OR ADVISORY OPTIONS
 -E|--subvol-extents <subvolid>
         show extent state for the given subvolume
 
+--mode <MODE>
+        select mode of operation regarding memory and IO
+
+        The *MODE* can be one of:
+
+        original
+                The metadata are read into memory and verified, thus the requirements are high
+                on large filesystems and can even lead to out-of-memory conditions.  The
+                possible workaround is to export the block device over network to a machine
+                with enough memory.
+        lowmem
+                This mode is supposed to address the high memory consumption at the cost of
+                increased IO when it needs to re-read blocks.  This may increase run time.
+
 -p|--progress
         indicate progress at various checking phases
 
@@ -116,24 +130,6 @@ DANGEROUS OPTIONS
 
         .. warning::
                 Do not use unless you know what you're doing.
-
---mode <MODE>
-        select mode of operation regarding memory and IO
-
-        The *MODE* can be one of:
-
-        original
-                The metadata are read into memory and verified, thus the requirements are high
-                on large filesystems and can even lead to out-of-memory conditions.  The
-                possible workaround is to export the block device over network to a machine
-                with enough memory.
-        lowmem
-                This mode is supposed to address the high memory consumption at the cost of
-                increased IO when it needs to re-read blocks.  This may increase run time.
-
-        .. note::
-                *lowmem* mode does not work with *--repair* yet, and is still considered
-                experimental.
 
 .. _man-check-option-force:
 

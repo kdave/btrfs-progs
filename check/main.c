@@ -9960,7 +9960,7 @@ static const char * const cmd_check_usage[] = {
 			"is quiescent in a quiescent state which may not be possible to guarantee"),
 	OPTLINE("--mode <MODE>", "allows choice of memory/IO trade-offs where MODE is one of:"),
 	OPTLINE("", "original - read inodes and extents to memory (requires more memory, does less IO)"),
-	OPTLINE("", "lowmem   - try to use less memory but read blocks again when needed (experimental)"),
+	OPTLINE("", "lowmem   - try to use less memory but read blocks again when needed"),
 	"",
 	"Repair options:",
 	OPTLINE("--init-csum-tree", "create a new CRC tree"),
@@ -10158,12 +10158,6 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 		printf("\nStarting repair.\n");
 	}
-
-	/*
-	 * experimental and dangerous
-	 */
-	if (opt_check_repair && check_mode == CHECK_MODE_LOWMEM)
-		warning("low-memory mode repair support is only partial");
 
 	printf("Opening filesystem to check...\n");
 
