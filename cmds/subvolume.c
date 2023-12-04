@@ -510,7 +510,8 @@ again:
 		goto out;
 	}
 
-	pr_verbose(LOG_DEFAULT, "Delete subvolume (%s): ",
+	pr_verbose(LOG_DEFAULT, "Delete subvolume %" PRIu64 " (%s): ",
+		target_subvol_id,
 		commit_mode == COMMIT_EACH ||
 		(commit_mode == COMMIT_AFTER && cnt + 1 == argc) ?
 		"commit" : "no-commit");
