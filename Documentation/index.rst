@@ -73,6 +73,7 @@ is in the :doc:`manual pages<man-index>`.
 
    dev/Development-notes
    dev/Developer-s-FAQ
+   DocConventions
    dev/Experimental
    dev/dev-btrfs-design
    dev/dev-btrees
@@ -103,4 +104,3 @@ for missing contents.
    Quick-start
    Interoperability
    trouble-index
-   DocConventions
