@@ -258,12 +258,12 @@ LIST OF IOCTLS
    * - BTRFS_IOC_CLONE
      -
      -
-   * - BTRFS_IOC_ADD_DEV
-     -
-     -
-   * - BTRFS_IOC_RM_DEV
-     -
-     -
+   * - :ref:`BTRFS_IOC_ADD_DEV<BTRFS_IOC_ADD_DEV>`
+     - add a device to the filesystem by path
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - :ref:`BTRFS_IOC_RM_DEV<BTRFS_IOC_RM_DEV>`
+     - delete a device from the filesystem by path
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
    * - BTRFS_IOC_BALANCE
      -
      -
@@ -487,6 +487,61 @@ subvolume cleaning or queued defragmentation.
      - file descriptor of any file or directory in the filesystem
    * - ioctl args
      - NULL
+
+.. _BTRFS_IOC_ADD_DEV:
+
+BTRFS_IOC_ADD_DEV
+~~~~~~~~~~~~~~~~~
+
+Add a given block device to the filesystem. Unlike the command :command:`btrfs device add`
+there's are no safety checks (like existence of another filesystem on the
+device), device preparataion (like TRIM or zone reset), so use it with care.
+
+This is a filesystem-exclusive operation and it will fail if there's another
+one already running, with one exception, when there's a paused balance.
+
+Required permissions: CAP_SYS_ADMIN
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file or directory in the filesystem
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - ignored
+   * - args.name
+     - full path of the block device to be added
+
+.. _BTRFS_IOC_RM_DEV:
+
+BTRFS_IOC_RM_DEV
+~~~~~~~~~~~~~~~~
+
+Remove a device from the filesystem specified by it's path, or cancel
+a running device deletion by special path ``cancel``.
+
+This is a filesystem-exclusive operation and it will fail if there's another
+one already running.
+
+Required permissions: CAP_SYS_ADMIN
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file or directory in the filesystem
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - args.fd
+     - ignored
+   * - args.name
+     - full path of the block device to be deleted or string *"cancel"*
 
 .. _BTRFS_IOC_SUBVOL_CREATE:
 
