@@ -71,3 +71,5 @@ man_pages = [
     ('mkfs.btrfs', 'mkfs.btrfs', 'create a btrfs filesystem', '', 8),
     ('btrfs-man5', 'btrfs', 'topics about the BTRFS filesystem (mount options, supported file attributes and other)', '', 5),
 ]
+
+extensions = [ 'sphinx_rtd_theme' ]

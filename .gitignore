@@ -73,6 +73,7 @@
 .*
 !.editorconfig
 !.github
+!.readthedocs.yaml
 
 /ci/images/*/devel.tar.gz
 
