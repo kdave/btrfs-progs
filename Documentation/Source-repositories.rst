@@ -7,9 +7,15 @@ Kernel module
 -------------
 
 The kernel.org git repository is not used for development, only for pull
-requests that go to Linus and for linux-next integration:
+requests that go to Linus and for `linux-next <https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git>`__
+integration:
 
-* https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- pull requests, branch *for-next* gets pulled to the linux-next tree
+* https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git -- pull request source
+* branch `for-next <https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git/log/?h=for-next>`__
+  gets pulled to the *linux-next* tree, is rebased and contains base
+  development branches and topic branches
+* branch `next-fixes <https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git/log/?h=next-fixes>`__
+  has fixes for the next upcoming *rcN* and is usually turned into a pull request
 
 The following git repositories are used for development and are updated with
 patches from the mailing list:
@@ -21,16 +27,20 @@ Branches are usually pushed to both repositories, either can be used.
 
 There are:
 
-* main queue with patches for next development cycle (branch name *misc-next*)
-* queue with patches for current release cycle (the name has the version, e.g. *for-4.15* or *misc-4.15*).
+* `misc-next <https://github.com/kdave/btrfs-devel/tree/misc-next>`_) -
+  main queue with patches for next development cycle, this branch is usually
+  based on the last *rcN* tag of Linus' git tree
+* e.g. *for-4.15* or *misc-4.15* - queue with patches for current release cycle,
+  the version changes
 * topic branches, e.g. from a patchset picked from mailing list
-* snapshots of *for-next*, that contain all of the above (e.g. for-next-20200512)
+* snapshots of `for-next <https://github.com/kdave/btrfs-devel/tree/for-next>`_,
+  that contain all of the above (e.g. for-next-20200512)
 
-Note that the branches get rebased.  The base point for patches depend on the
-development phase.  See :ref:`development schedule<devfaq-development-schedule>`.
-Independent changes can be based on the *linus/master* branch, changes that
-could depend on patches that have been added to one of the queues should use
-that as a base.
+Note that the branches get rebased or updated (fixed typos, added Reviewed-by
+tags etc).  The base point for patches depend on the development phase.  See
+:ref:`development schedule<devfaq-development-schedule>`.  Independent changes
+can be based on the *linus/master* branch, changes that could depend on patches
+that have been added to one of the queues should use that as a base.
 
 btrfs-progs git repository
 --------------------------
@@ -40,16 +50,16 @@ Official repositories
 
 The sources of the userspace utilities can be obtained from these repositories:
 
-* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git (
-  http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary)
-  -- release repository, not for development
+* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git
+  (`<http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary>`__)
+  - release repository, not for development
 
 The **master** branch contains the latest released version and is never rebased.
 
 Development git repositories:
 
-* git://github.com/kdave/btrfs-progs.git (https://github.com/kdave/btrfs-progs)
-* git://gitlab.com/kdave/btrfs-progs.git (https://gitlab.com/kdave/btrfs-progs)
+* git://github.com/kdave/btrfs-progs.git (`<https://github.com/kdave/btrfs-progs>`__)
+* git://gitlab.com/kdave/btrfs-progs.git (`<https://gitlab.com/kdave/btrfs-progs>`__)
 
 For build dependencies and installation instructions please see
 https://github.com/kdave/btrfs-progs/blob/master/INSTALL
