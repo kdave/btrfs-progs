@@ -134,17 +134,34 @@ status [options] <path>|<device>
              Uncorrectable:  72
              Unverified:     0
 
-       *  *Corrected* -- number of bad blocks that were repaired from another copy
-       *  *Uncorrectable* -- errors detected at read time but not possible to repair from other copy
-       *  *Unverified* -- transient errors, first read failed but a retry
-          succeeded, may be affected by lower layers that group or split IO requests
-       *  *Error summary* -- followed by a more detailed list of errors found
+        *  *Corrected* -- number of bad blocks that were repaired from another copy
+        *  *Uncorrectable* -- errors detected at read time but not possible to repair from other copy
+        *  *Unverified* -- transient errors, first read failed but a retry
+           succeeded, may be affected by lower layers that group or split IO requests
+        *  *Error summary* -- followed by a more detailed list of errors found
 
-          *  *csum* -- checksum mismatch
-          *  *super* -- super block errors, unless the error is fixed
-             immediately, the next commit will overwrite superblock
-          *  *verify* -- metadata block header errors
-          *  *read* -- blocks can't be read due to IO errors
+           *  *csum* -- checksum mismatch
+           *  *super* -- super block errors, unless the error is fixed
+              immediately, the next commit will overwrite superblock
+           *  *verify* -- metadata block header errors
+           *  *read* -- blocks can't be read due to IO errors
+
+        It's possible to set a per-device limit via file
+        :file:`sysfs/fs/btrfs/FSID/devinfo/scrub_speed_max`. In that case
+        the limit is printed on the *Rate:* line if option *-d* is specified,
+        or without it on a single-device filesystem.
+
+        .. code-block:: none
+
+           Rate:             989.0MiB/s (limit 1.0G/s)
+
+        On a multi-device filesystem with at least one device limit the
+        overall stats cannot print the limit without *-d* so there's a not that
+        some limits are set:
+
+        .. code-block:: none
+
+           Rate:             36.37MiB/s (some device limits set)
 
 EXIT STATUS
 -----------

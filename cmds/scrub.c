@@ -48,6 +48,7 @@
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "common/sysfs-utils.h"
 #include "common/help.h"
 #include "cmds/commands.h"
 
@@ -92,6 +93,7 @@ struct scrub_progress {
 	pthread_mutex_t progress_mutex;
 	int ioprio_class;
 	int ioprio_classdata;
+	u64 limit;
 };
 
 struct scrub_file_record {
@@ -142,7 +144,7 @@ static void print_scrub_full(struct btrfs_scrub_progress *sp)
 } while (0)
 
 static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_stats *s,
-		u64 bytes_total)
+				u64 bytes_total, u64 limit)
 {
 	u64 err_cnt;
 	u64 err_cnt2;
@@ -195,11 +197,23 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 	 * by --raw, otherwise it's human readable
 	 */
 	if (unit_mode == UNITS_RAW) {
-		pr_verbose(LOG_DEFAULT, "Rate:             %s/s\n",
+		pr_verbose(LOG_DEFAULT, "Rate:             %s/s",
 			pretty_size_mode(bytes_per_sec, UNITS_RAW));
+		if (limit > 1)
+			pr_verbose(LOG_DEFAULT, " (limit %s/s)",
+				   pretty_size_mode(limit, UNITS_RAW));
+		else if (limit == 1)
+			pr_verbose(LOG_DEFAULT, " (some device limits set)");
+		pr_verbose(LOG_DEFAULT, "\n");
 	} else {
-		pr_verbose(LOG_DEFAULT, "Rate:             %s/s\n",
+		pr_verbose(LOG_DEFAULT, "Rate:             %s/s",
 			pretty_size(bytes_per_sec));
+		if (limit > 1)
+			pr_verbose(LOG_DEFAULT, " (limit %s/s)",
+				   pretty_size(limit));
+		else if (limit == 1)
+			pr_verbose(LOG_DEFAULT, " (some device limits set)");
+		pr_verbose(LOG_DEFAULT, "\n");
 	}
 
 	pr_verbose(LOG_DEFAULT, "Error summary:   ");
@@ -313,7 +327,8 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 
 static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 				struct btrfs_scrub_progress *p, int raw,
-				const char *append, struct scrub_stats *ss)
+				const char *append, struct scrub_stats *ss,
+				u64 limit)
 {
 	pr_verbose(LOG_DEFAULT, "\nScrub device %s (id %llu) %s\n", di->path, di->devid,
 	       append ? append : "");
@@ -330,26 +345,39 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 			 * accurate (e.g. mostly empty block groups).
 			 */
 			print_scrub_summary(p, ss, p->data_bytes_scrubbed +
-						   p->tree_bytes_scrubbed);
+					    p->tree_bytes_scrubbed, limit);
 		} else {
 			/*
 			 * For any canceled/interrupted/running scrub, we're
 			 * not sure how many bytes we're really going to scrub,
 			 * thus we use device's used bytes instead.
 			 */
-			print_scrub_summary(p, ss, di->bytes_used);
+			print_scrub_summary(p, ss, di->bytes_used, limit);
 		}
 	}
 }
 
-static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw, u64 bytes_total)
+/*
+ * Print summary stats for the whole filesystem. If there's only one device
+ * print the limit if set, otherwise a special value to print a note that
+ * limits are set.
+ */
+static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw, u64 bytes_total,
+			  u64 nr_devices, u64 limit)
 {
 	_print_scrub_ss(&fs_stat->s);
 
-	if (raw)
+	if (raw) {
 		print_scrub_full(&fs_stat->p);
-	else
-		print_scrub_summary(&fs_stat->p, &fs_stat->s, bytes_total);
+	} else {
+		/*
+		 * Limit for the whole filesystem stats does not make sense,
+		 * but if there's any device with a limit then print it.
+		 */
+		if (nr_devices != 1)
+			limit = 1;
+		print_scrub_summary(&fs_stat->p, &fs_stat->s, bytes_total, limit);
+	}
 }
 
 static void free_history(struct scrub_file_record **last_scrubs)
@@ -1158,6 +1186,20 @@ static int is_scrub_running_in_kernel(int fd,
 	return 0;
 }
 
+static u64 read_scrub_device_limit(int fd, u64 devid)
+{
+	char path[PATH_MAX] = { 0 };
+	u64 limit;
+	int ret;
+
+	/* /sys/fs/btrfs/FSID/devinfo/1/scrub_speed_max */
+	snprintf(path, sizeof(path), "devinfo/%llu/scrub_speed_max", devid);
+	ret = sysfs_read_fsid_file_u64(fd, path, &limit);
+	if (ret < 0)
+		limit = 0;
+	return limit;
+}
+
 static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		       bool resume)
 {
@@ -1361,6 +1403,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		sp[i].scrub_args.flags = readonly ? BTRFS_SCRUB_READONLY : 0;
 		sp[i].ioprio_class = ioprio_class;
 		sp[i].ioprio_classdata = ioprio_classdata;
+		sp[i].limit = read_scrub_device_limit(fdmnt, devid);
 	}
 
 	if (!n_start && !n_resume) {
@@ -1553,6 +1596,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	if (do_print) {
 		const char *append = "done";
 		u64 total_bytes_scrubbed = 0;
+		u64 limit = 0;
 
 		if (!do_stats_per_dev)
 			init_fs_stat(&fs_stat);
@@ -1560,12 +1604,15 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			struct btrfs_scrub_progress *cur_progress =
 						&sp[i].scrub_args.progress;
 
+			/* Save last limit only, works for single device filesystem. */
+			limit = sp[i].limit;
 			if (do_stats_per_dev) {
 				print_scrub_dev(&di_args[i],
 						cur_progress,
 						print_raw,
 						sp[i].ret ? "canceled" : "done",
-						&sp[i].stats);
+						&sp[i].stats,
+						sp[i].limit);
 			} else {
 				if (sp[i].ret)
 					append = "canceled";
@@ -1576,7 +1623,8 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		}
 		if (!do_stats_per_dev) {
 			pr_verbose(LOG_DEFAULT, "scrub %s for %s\n", append, fsid);
-			print_fs_stat(&fs_stat, print_raw, total_bytes_scrubbed);
+			print_fs_stat(&fs_stat, print_raw, total_bytes_scrubbed,
+				      fi_args.num_devices, limit);
 		}
 	}
 
@@ -1845,26 +1893,33 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (do_stats_per_dev) {
 		for (i = 0; i < fi_args.num_devices; ++i) {
+			u64 limit;
+
+			limit = read_scrub_device_limit(fdmnt, di_args[i].devid);
 			last_scrub = last_dev_scrub(past_scrubs,
 							di_args[i].devid);
 			if (!last_scrub) {
 				print_scrub_dev(&di_args[i], NULL, print_raw,
-						NULL, NULL);
+						NULL, NULL, limit);
 				continue;
 			}
 			last_scrub->stats.in_progress = in_progress;
 			print_scrub_dev(&di_args[i], &last_scrub->p, print_raw,
 					last_scrub->stats.finished ?
 							"history" : "status",
-					&last_scrub->stats);
+					&last_scrub->stats, limit);
 		}
 	} else {
 		u64 total_bytes_used = 0;
 		struct btrfs_ioctl_space_info *sp = si_args->spaces;
+		u64 limit = 0;
 
 		init_fs_stat(&fs_stat);
 		fs_stat.s.in_progress = in_progress;
 		for (i = 0; i < fi_args.num_devices; ++i) {
+			/* Save the last limit only, works for a single device filesystem. */
+			limit = read_scrub_device_limit(fdmnt, di_args[i].devid);
+
 			last_scrub = last_dev_scrub(past_scrubs,
 							di_args[i].devid);
 			if (!last_scrub)
@@ -1879,7 +1934,8 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 			/* This is still slightly off for RAID56 */
 			total_bytes_used += sp->used_bytes * factor;
 		}
-		print_fs_stat(&fs_stat, print_raw, total_bytes_used);
+		print_fs_stat(&fs_stat, print_raw, total_bytes_used,
+			      fi_args.num_devices, limit);
 	}
 
 out:
