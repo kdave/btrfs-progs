@@ -65,12 +65,13 @@ the subvolume on the filesystem that produced the stream. The use case relies
 on matching data on both sides. Changing the subvolume to read-write after it
 has been received requires to reset the *received_uuid*. As this is a notable
 change and could potentially break the incremental send use case, performing
-it by :command:`btrfs property set` requires force if that is really desired by user.
+it by :ref:`btrfs property set<man-property-set>` requires force if that is
+really desired by user.
 
 .. note::
    The safety checks have been implemented in 5.14.2, any subvolumes previously
    received (with a valid *received_uuid*) and read-write status may exist and
-   could still lead to problems with send/receive. You can use :command:`btrfs subvolume show`
+   could still lead to problems with send/receive. You can use :ref:`btrfs subvolume show<man-subvolume-show>`
    to identify them. Flipping the flags to read-only and back to
    read-write will reset the *received_uuid* manually.  There may exist a
    convenience tool in the future.
@@ -153,6 +154,8 @@ directories in the target snapshot preserve their original inode numbers.
 .. note::
    Inode number is not a filesystem-wide unique identifier, some applications
    assume that. Please use pair *subvolumeid:inodenumber* for that purpose.
+   The subvolume id can be read by :ref:`btrfs inspect-internal rootid<man-inspect-rootid>`
+   or by the ioctl :ref:`BTRFS_IOC_INO_LOOKUP`.
 
 Performance
 -----------

@@ -177,6 +177,18 @@ DATA STRUCTURES AND DEFINITIONS
                 __u8 reserved[944];			/* pad to 1k */
         };
 
+.. _struct_btrfs_ioctl_ino_lookup_args:
+
+.. code-block:: c
+
+        #define BTRFS_INO_LOOKUP_PATH_MAX               4080
+
+        struct btrfs_ioctl_ino_lookup_args {
+                __u64 treeid;
+                __u64 objectid;
+                char name[BTRFS_INO_LOOKUP_PATH_MAX];
+        };
+
 .. _constants-table:
 
 .. list-table::
@@ -195,6 +207,8 @@ DATA STRUCTURES AND DEFINITIONS
    * - BTRFS_VOL_NAME_MAX
      - 255
    * - BTRFS_LABEL_SIZE
+     - 256
+   * - BTRFS_FIRST_FREE_OBJECTID
      - 256
 
 OVERVIEW
@@ -230,10 +244,14 @@ library dependency. Backward compatibility is guaranteed and incompatible
 changes usually lead to a new version of the ioctl. Enhancements of existing
 ioctls can happen and depend on additional flags to be set. Zeroed unused
 space is commonly understood as a mechanism to communicate the compatibility
-between kernel and userspace and thus zeroing is really important. In exceptional
+between kernel and userspace and thus *zeroing is really important*. In exceptional
 cases this is not enough and further flags need to be passed to distinguish
 between zero as implicit unused initialization and a valid zero value. Such
 cases are documented.
+
+File descriptors of regular files are obtained by ``int fd = open()``, directories
+opened as ``DIR *dir = opendir()`` can be converted to the corresponding
+file descriptor by ``fd = dirfd(dir)``.
 
 LIST OF IOCTLS
 --------------
@@ -289,9 +307,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_TREE_SEARCH_V2
      -
      -
-   * - BTRFS_IOC_INO_LOOKUP
-     -
-     -
+   * - :ref:`BTRFS_IOC_INO_LOOKUP<BTRFS_IOC_INO_LOOKUP>`
+     - resolve inode number to path, or lookup containing subvolume id
+     - :ref:`struct btrfs_ioctl_ino_lookup_args<struct_btrfs_ioctl_ino_lookup_args>`
    * - :ref:`BTRFS_IOC_DEFAULT_SUBVOL<BTRFS_IOC_DEFAULT_SUBVOL>`
      - set the default subvolume id
      - uint64_t
@@ -378,10 +396,10 @@ LIST OF IOCTLS
      -
    * - :ref:`BTRFS_IOC_GET_FSLABEL<BTRFS_IOC_GET_FSLABEL>`
      - read filesystem label
-     - char buffer[BTRFS_LABEL_SIZE]
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
    * - :ref:`BTRFS_IOC_SET_FSLABEL<BTRFS_IOC_SET_FSLABEL>`
      - set the filesystem label
-     - char buffer[BTRFS_LABEL_SIZE]
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
    * - BTRFS_IOC_GET_DEV_STATS
      -
      -
@@ -598,6 +616,50 @@ BTRFS_IOC_SNAP_DESTROY
      - name of the subvolume, although the buffer can be almost 4KiB, the file
        size is limited by Linux VFS to 255 characters and must not contain a slash
        ('/')
+
+.. _BTRFS_IOC_INO_LOOKUP:
+
+BTRFS_IOC_INO_LOOKUP
+~~~~~~~~~~~~~~~~~~~~
+
+Resolve inode number to a path (requires CAP_SYS_ADMIN), or read a containing
+subvolume id of the given file (unrestricted, special case).  The size of the
+path name buffer is shorter than *PATH_MAX* (4096), it's possible that the path
+is trimmed due to that. Also implemented by
+:ref:`btrfs inspect-internal rootid<man-inspect-rootid>`.
+
+The general case needs CAP_SYS_ADMIN and can resolve any file to its path.
+The special case for reading the containing subvolume is not restricted:
+
+.. code-block:: c
+
+        struct btrfs_ioctl_ino_lookup_args args;
+
+        fd = open("file", ...);
+        args.treeid = 0;
+        args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+        ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+        /* args.treeid now contains the subvolume id */
+
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the file or directory to lookup the subvolumeid
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_ino_lookup_args<struct_btrfs_ioctl_ino_lookup_args>`
+   * - args.treeid
+     - subvolume id against which the path should be resolved (needs
+       CAP_SYS_ADMIN), or 0 so the subvolume containing *fd* will be used
+   * - args.objectid
+     - inode number to lookup, *INODE_REF_KEY* with that key.objectid, or
+       :ref:`BTRFS_FIRST_FREE_OBJECTID<constants-table>` as special case to
+       read only the tree id and clear the *args.name* buffer
+   * - args.name
+     - path relative to the toplevel subvolume, or empty string
 
 .. _BTRFS_IOC_DEFAULT_SUBVOL:
 

@@ -184,6 +184,8 @@ du [options] <path> [<path>..]
         --tbytes
                 show sizes in TiB, or TB with --si.
 
+.. _man-filesystem-label:
+
 label [<device>|<mountpoint>] [<newlabel>]
         Show or update the label of a filesystem. This works on a mounted filesystem or
         a filesystem image.

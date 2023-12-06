@@ -14,10 +14,14 @@ Bootloaders
 
 .. include:: ch-bootloaders.rst
 
+.. _administration-limits:
+
 Filesystem limits
 -----------------
 
 .. include:: ch-fs-limits.rst
+
+.. _administration-flexibility:
 
 Flexibility
 -----------

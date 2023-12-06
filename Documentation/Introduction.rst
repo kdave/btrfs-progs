@@ -12,38 +12,36 @@ and easy administration. Its main features and benefits are:
 Feature overview:
 
 *  Extent based file storage
-*  2\ :sup:`64` byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
-*  Space-efficient packing of small files
+*  2\ :sup:`64` byte == 16 EiB :ref:`maximum file size<administration-limits>` (practical limit is 8 EiB due to Linux VFS)
+*  :doc:`Space-efficient packing of small files<Inline-files>`
 *  Space-efficient indexed directories
-*  Dynamic inode allocation
-*  Writable snapshots, read-only snapshots
-*  Subvolumes (separate internal filesystem roots)
-*  Checksums on data and metadata (crc32c, xxhash, sha256, blake2b)
-*  Compression (ZLIB, LZO, ZSTD), heuristics
-*  Integrated multiple device support
+*  :ref:`Dynamic inode allocation<administration-flexibility>`
+*  :doc:`Writable snapshots, read-only snapshots, subvolumes (separate internal filesystem roots)<Subvolumes>`
+*  :doc:`Checksums on data and metadata<Checksumming>` (crc32c, xxhash, sha256, blake2b)
+*  :doc:`Compression (ZLIB, LZO, ZSTD), heuristics<Compression>`
+*  :doc:`Integrated multiple device support<Volume-management>`:
 
-    *  File Striping
-    *  File Mirroring
-    *  File Striping+Mirroring
-    *  Single and Dual Parity implementations (experimental, not production-ready)
-*  SSD (flash storage) awareness (TRIM/Discard for reporting free blocks for
-   reuse) and optimizations (e.g. avoiding unnecessary seek optimizations,
-   sending writes in clusters, even if they are from unrelated files. This
-   results in larger write operations and faster write throughput)
-*  Efficient incremental backup
-*  Background scrub process for finding and repairing errors of files with redundant copies
-*  Online filesystem defragmentation
-*  Offline filesystem check
-*  In-place conversion of existing ext2/3/4 and reiserfs file systems
-*  Seed devices. Create a (readonly) filesystem that acts as a template to seed
-   other Btrfs filesystems. The original filesystem and devices are included as
-   a readonly starting point for the new filesystem. Using copy on write, all
-   modifications are stored on different devices; the original is unchanged.
-*  Subvolume-aware quota support
-*  Send/receive of subvolume changes
+    * File Striping (like RAID0)
+    * File Mirroring (like RAID1 up to 4 copies)
+    * File Striping+Mirroring (like RAID10)
+    * Single and Dual Parity implementations (like RAID5/6, experimental, not production-ready)
 
-    *  Efficient incremental filesystem mirroring
-*  Batch, or out-of-band deduplication (happens after writes, not during)
-*  Swapfile support
-*  Tree-checker, post-read and pre-write metadata verification
-*  Zoned mode support (SMR/ZBC/ZNS friendly allocation)
+*  SSD/NVMe (flash storage) awareness, :doc:`TRIM/Discard<Trim>` for reporting free blocks for
+   reuse and optimizations (e.g. avoiding unnecessary seek optimizations,
+   sending writes in clusters.
+*  :doc:`Background scrub<Scrub>` process for finding and repairing errors of files with redundant copies
+*  :doc:`Online filesystem defragmentation<Defragmentation>`
+*  :doc:`Offline filesystem check<btrfs-check>`
+*  :doc:`In-place conversion<Convert>` of existing ext2/3/4 and reiserfs filesystems
+*  :doc:`Seeding device.<Seeding-device>` Create a (readonly) filesystem that
+   acts as a template to seed other Btrfs filesystems. The original filesystem
+   and devices are included as a readonly starting point for the new filesystem.
+   Using copy on write, all modifications are stored on different devices; the
+   original is unchanged.
+*  :doc:`Subvolume-aware quota<Qgroups>` support
+*  :doc:`Send/receive of subvolume changes<Send-receive>`, efficient
+   incremental filesystem mirroring and backup
+*  :doc:`Batch, or out-of-band deduplication<Deduplication>` (happens after writes, not during)
+*  :doc:`Swapfile support<Swapfile>`
+*  :doc:`Tree-checker<Tree-checker>`, post-read and pre-write metadata verification
+*  :doc:`Zoned mode support<Zoned-mode>` (SMR/ZBC/ZNS friendly allocation, emulated on non-zoned devices)

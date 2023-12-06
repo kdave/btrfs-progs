@@ -73,6 +73,8 @@ get [-t <type>] <object> [<name>]
 list [-t <type>] <object>
         List available properties with their descriptions for the given object.
 
+.. _man-property-set:
+
 set [-f] [-t <type>] <object> <name> <value>
         Set *value* of property *name* on a given btrfs object.
 
