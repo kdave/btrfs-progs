@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev
       - name: Configure
-        run: ./autogen.sh && ./configure
+        run: ./autogen.sh && ./configure --disable-documentation
       - name: Make static
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
