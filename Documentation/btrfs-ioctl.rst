@@ -177,6 +177,8 @@ DATA STRUCTURES AND DEFINITIONS
                 __u8 reserved[944];			/* pad to 1k */
         };
 
+.. _constants-table:
+
 .. list-table::
    :header-rows: 1
 
@@ -192,6 +194,8 @@ DATA STRUCTURES AND DEFINITIONS
      - 4087
    * - BTRFS_VOL_NAME_MAX
      - 255
+   * - BTRFS_LABEL_SIZE
+     - 256
 
 OVERVIEW
 --------
@@ -372,12 +376,12 @@ LIST OF IOCTLS
    * - BTRFS_IOC_QUOTA_RESCAN_WAIT
      -
      -
-   * - BTRFS_IOC_GET_FSLABEL
-     -
-     -
-   * - BTRFS_IOC_SET_FSLABEL
-     -
-     -
+   * - :ref:`BTRFS_IOC_GET_FSLABEL<BTRFS_IOC_GET_FSLABEL>`
+     - read filesystem label
+     - char buffer[BTRFS_LABEL_SIZE]
+   * - :ref:`BTRFS_IOC_SET_FSLABEL<BTRFS_IOC_SET_FSLABEL>`
+     - set the filesystem label
+     - char buffer[BTRFS_LABEL_SIZE]
    * - BTRFS_IOC_GET_DEV_STATS
      -
      -
@@ -709,6 +713,47 @@ Change the flags of a subvolume.
      - file descriptor of the subvolume to modify
    * - ioctl args
      - uint64_t, either 0 or `BTRFS_SUBVOL_RDONLY`
+
+.. _BTRFS_IOC_GET_FSLABEL:
+
+BTRFS_IOC_GET_FSLABEL
+~~~~~~~~~~~~~~~~~~~~~
+
+Read the label of the filesystem into a given buffer. Alternatively it
+can be read from :file:`/sys/fs/btrfs/FSID/label` though it requires to
+know the FSID of the filesystem.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file/directory in the filesystem
+   * - ioctl args
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
+
+.. _BTRFS_IOC_SET_FSLABEL:
+
+BTRFS_IOC_SET_FSLABEL
+~~~~~~~~~~~~~~~~~~~~~
+
+Set the label of filesystem from given buffer. The maximum length also accounts
+for terminating NUL character. Alternatively it can be also set by writing to
+:file:`/sys/fs/btrfs/FSID/label` though it requires to know the FSID of the
+filesystem (and an explicit commit before the change is permanent).
+
+Required permissions: CAP_SYS_ADMIN
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file/directory in the filesystem
+   * - ioctl args
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
 
 .. _BTRFS_IOC_FS_INFO:
 
