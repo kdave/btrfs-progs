@@ -350,7 +350,7 @@ usage [options] <path> [<path>...]
           the *min* is the lower bound of the estimate in case multiple
           profiles are present
         * *Free (statfs, df)* -- the amount of space available for data as
-          reported by the **statfs** syscall, also returned as *Avail* in the
+          reported by the **statfs/statvfs** syscall, also returned as *Avail* in the
           output of **df**. The value is calculated in a different way and may
           not match the estimate in some cases (e.g.  multiple profiles).
         * *Data ratio* -- ratio of total space for data including redundancy or

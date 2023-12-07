@@ -16,7 +16,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include <linux/limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -476,7 +476,7 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 	u64 zone_unusable = 0;
 	double max_data_ratio = 1.0;
 	bool mixed = false;
-	struct statfs statfs_buf;
+	struct statvfs statvfs_buf;
 	struct btrfs_ioctl_feature_flags feature_flags;
 
 	sargs = load_space_info(fd, path);
@@ -603,10 +603,10 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 	if (unit_mode != UNITS_HUMAN)
 		width = 18;
 
-	ret = statfs(path, &statfs_buf);
+	ret = statvfs(path, &statvfs_buf);
 	if (ret) {
-		warning("cannot get space info with statfs() on '%s': %m", path);
-		memset(&statfs_buf, 0, sizeof(statfs_buf));
+		warning("cannot get space info with statvfs() on '%s': %m", path);
+		memset(&statvfs_buf, 0, sizeof(statvfs_buf));
 		ret = 0;
 	}
 
@@ -639,7 +639,7 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 		pretty_size_mode(free_estimated, unit_mode));
 	pr_verbose(LOG_DEFAULT, "min: %s)\n", pretty_size_mode(free_min, unit_mode));
 	pr_verbose(LOG_DEFAULT, "    Free (statfs, df):\t\t%*s\n", width,
-		pretty_size_mode(statfs_buf.f_bavail * statfs_buf.f_bsize, unit_mode));
+		pretty_size_mode(statvfs_buf.f_bavail * statvfs_buf.f_bsize, unit_mode));
 	pr_verbose(LOG_DEFAULT, "    Data ratio:\t\t\t%*.2f\n",
 		width, data_ratio);
 	pr_verbose(LOG_DEFAULT, "    Metadata ratio:\t\t%*.2f\n",
