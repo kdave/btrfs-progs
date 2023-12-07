@@ -23,6 +23,29 @@ cancel <path>|<device>
         The progress is saved in the status file so :command:`btrfs scrub resume` can
         continue from the last position.
 
+limit [options] <path>
+	Show scrub limits set on devices of the given filesystem.
+
+        ``Options``
+
+        --raw
+                print all numbers raw values in bytes without the *B* suffix
+        --human-readable
+                print human friendly numbers, base 1024, this is the default
+        --iec
+                select the 1024 base for the following options, according to
+                the IEC standard
+        --si
+                select the 1000 base for the following options, according to the SI standard
+        --kbytes
+                show sizes in KiB, or kB with --si
+        --mbytes
+                show sizes in MiB, or MB with --si
+        --gbytes
+                show sizes in GiB, or GB with --si
+        --tbytes
+                show sizes in TiB, or TB with --si
+
 resume [-BdqrR] <path>|<device>
         Resume a cancelled or interrupted scrub on the filesystem identified by
         *path* or on a given *device*. The starting point is read from the

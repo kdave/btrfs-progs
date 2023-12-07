@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <dirent.h>
+#include <getopt.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -48,7 +49,11 @@
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "common/device-utils.h"
 #include "common/sysfs-utils.h"
+#include "common/string-table.h"
+#include "common/string-utils.h"
+#include "common/parse-utils.h"
 #include "common/help.h"
 #include "cmds/commands.h"
 
@@ -1950,6 +1955,114 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(scrub_status, "status");
 
+static const char * const cmd_scrub_limit_usage[] = {
+	"btrfs scrub limit [options] <path>",
+	"Show scrub limits set on devices of the given filesystem.",
+	"",
+	HELPINFO_UNITS_LONG,
+	NULL
+};
+
+static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	struct btrfs_ioctl_fs_info_args fi_args = { 0 };
+	char fsid[BTRFS_UUID_UNPARSED_SIZE];
+	struct string_table *table = NULL;
+	int ret;
+	int fd = -1;
+	DIR *dirstream = NULL;
+	int cols, idx;
+
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
+
+	optind = 0;
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	fd = open_file_or_dir(argv[optind], &dirstream);
+	if (fd < 0)
+		return 1;
+
+	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
+	if (ret < 0) {
+		error("failed to read filesystem info: %m");
+		ret = 1;
+		goto out;
+	}
+	if (fi_args.num_devices == 0) {
+		error("no devices found");
+		ret = 1;
+		goto out;
+	}
+	uuid_unparse(fi_args.fsid, fsid);
+	pr_verbose(LOG_DEFAULT, "UUID: %s\n", fsid);
+
+	cols = 3;
+	table = table_create(cols, 2 + fi_args.num_devices);
+	if (!table) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = 1;
+		goto out;
+	}
+	table->spacing = STRING_TABLE_SPACING_2;
+	idx = 0;
+	table_printf(table, idx++, 0, ">Id");
+	table_printf(table, idx++, 0, ">Limit");
+	table_printf(table, idx++, 0, ">Path");
+	for (int i = 0; i < cols; i++)
+	     table_printf(table, i, 1, "*-");
+
+	for (u64 devid = 1, i = 0; devid <= fi_args.max_id; devid++) {
+		u64 limit;
+		struct btrfs_ioctl_dev_info_args di_args = { 0 };
+
+		ret = device_get_info(fd, devid, &di_args);
+		if (ret == -ENODEV) {
+			continue;
+		} else if (ret < 0) {
+			errno = -ret;
+			error("cannot read devid %llu info: %m", devid);
+			goto out;
+		}
+
+		limit = read_scrub_device_limit(fd, di_args.devid);
+		idx = 0;
+		table_printf(table, idx++, 2 + i, ">%llu", di_args.devid);
+		if (limit > 0) {
+			table_printf(table, idx++, 2 + i, ">%s",
+				     pretty_size_mode(limit, unit_mode));
+		} else {
+			table_printf(table, idx++, 2 + i, ">%s", "-");
+		}
+		table_printf(table, idx++, 2 + i, "<%s", di_args.path);
+		i++;
+	}
+	table_dump(table);
+
+out:
+	if (table)
+		table_free(table);
+	close_file_or_dir(fd, dirstream);
+
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(scrub_limit, "limit");
+
 static const char scrub_cmd_group_info[] =
 "verify checksums of data and metadata";
 
@@ -1959,6 +2072,7 @@ static const struct cmd_group scrub_cmd_group = {
 		&cmd_struct_scrub_cancel,
 		&cmd_struct_scrub_resume,
 		&cmd_struct_scrub_status,
+		&cmd_struct_scrub_limit,
 		NULL
 	}
 };
