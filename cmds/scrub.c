@@ -159,7 +159,14 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 	time_t sec_eta;
 
 	bytes_scrubbed = p->data_bytes_scrubbed + p->tree_bytes_scrubbed;
-	if (s->duration > 0)
+	/*
+	 * If duration is zero seconds (rounded down), then the Rate metric
+	 * should still reflect the amount of bytes that have been processed
+	 * in under a second.
+	 */
+	if (s->duration == 0)
+		bytes_per_sec = bytes_scrubbed;
+	else
 		bytes_per_sec = bytes_scrubbed / s->duration;
 	if (bytes_per_sec > 0)
 		sec_left = (bytes_total - bytes_scrubbed) / bytes_per_sec;
