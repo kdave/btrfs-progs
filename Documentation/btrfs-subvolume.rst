@@ -272,6 +272,8 @@ sync <path> [subvolid...]
         deletion. If no subvolume id is given, wait until all current deletion requests
         are completed, but do not wait for subvolumes deleted in the meantime.
 
+        If the filesystem status changes to read-only then the waiting is interrupted.
+
         ``Options``
 
         -s <N>

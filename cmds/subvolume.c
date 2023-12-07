@@ -17,6 +17,7 @@
 #include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,10 +79,13 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 	size_t i;
 	enum btrfs_util_error err;
 	size_t done = 0;
+	bool statvfs_warned = false;
 
 	pr_verbose(LOG_DEFAULT, "Waiting for %zu subvolume%s\n", count,
 			(count > 1 ? "s" : ""));
 	while (1) {
+		struct statvfs st;
+		int ret;
 		bool clean = true;
 
 		for (i = 0; i < count; i++) {
@@ -102,6 +106,15 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 		}
 		if (clean)
 			break;
+
+		ret = fstatvfs(fd, &st);
+		if (ret < 0 && !statvfs_warned) {
+			statvfs_warned = true;
+			warning("cannot check read-only status of the filesystem: %m");
+		} else if (st.f_flag & ST_RDONLY) {
+			warning("filesystem is now read-only");
+			return 1;
+		}
 		sleep(sleep_interval);
 	}
 
