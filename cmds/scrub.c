@@ -1523,6 +1523,12 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		devid = di_args[i].devid;
 		gettimeofday(&tv, NULL);
 		sp[i].stats.t_start = tv.tv_sec;
+		pr_verbose(LOG_DEFAULT, "Starting scrub on devid %llu", devid);
+		if (sp[i].limit > 0)
+			pr_verbose(LOG_DEFAULT, " (limit %s/s)\n", pretty_size(sp[i].limit));
+		else
+			pr_verbose(LOG_DEFAULT, "\n");
+
 		ret = pthread_create(&t_devs[i], NULL,
 					scrub_one_dev, &sp[i]);
 		if (ret) {
