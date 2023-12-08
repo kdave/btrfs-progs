@@ -42,7 +42,8 @@ static int sysfs_open_fsid_file_flags(int fd, const char *filename, int flags)
 	if (ret < 0)
 		return ret;
 
-	return open(sysfs_file, flags);
+	ret = open(sysfs_file, flags);
+	return (ret < 0 ? -errno : ret);
 }
 
 int sysfs_open_fsid_file(int fd, const char *filename)
@@ -67,7 +68,8 @@ static int sysfs_open_file_flags(const char *name, int flags)
 	ret = path_cat_out(path, "/sys/fs/btrfs", name);
 	if (ret < 0)
 		return ret;
-	return open(path, flags);
+	ret = open(path, flags);
+	return (ret < 0 ? -errno : ret);
 }
 
 int sysfs_open_file(const char *name)
@@ -101,7 +103,8 @@ int sysfs_open_fsid_dir(int fd, const char *dirname)
 	if (ret < 0)
 		return ret;
 
-	return open(sysfs_file, O_DIRECTORY | O_RDONLY);
+	ret = open(sysfs_file, O_DIRECTORY | O_RDONLY);
+	return (ret < 0 ? -errno : ret);
 }
 
 /*
@@ -109,15 +112,21 @@ int sysfs_open_fsid_dir(int fd, const char *dirname)
  */
 int sysfs_read_file(int fd, char *buf, size_t size)
 {
+	int ret;
+
 	lseek(fd, 0, SEEK_SET);
 	memset(buf, 0, size);
-	return read(fd, buf, size);
+	ret = read(fd, buf, size);
+	return (ret < 0 ? -errno : ret);
 }
 
 int sysfs_write_file(int fd, const char *buf, size_t size)
 {
+	int ret;
+
 	lseek(fd, 0, SEEK_SET);
-	return write(fd, buf, size);
+	ret = write(fd, buf, size);
+	return (ret < 0 ? -errno : ret);
 }
 
 int sysfs_read_file_u64(const char *name, u64 *value)
@@ -136,6 +145,7 @@ int sysfs_read_file_u64(const char *name, u64 *value)
 	/* Raw value in any numeric format should work, followed by a newline. */
 	errno = 0;
 	*value = strtoull(str, NULL, 0);
+	ret = -errno;
 out:
 	close(fd);
 	return ret;
@@ -172,6 +182,7 @@ int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
 	/* Raw value in any numeric format should work, followed by a newline. */
 	errno = 0;
 	*value = strtoull(str, NULL, 0);
+	ret = -errno;
 out:
 	close(fd);
 	return ret;

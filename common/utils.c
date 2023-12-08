@@ -1293,9 +1293,9 @@ int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue
 
 	sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
 	if (sysfs_fd < 0) {
-		if (errno == ENOENT)
+		if (sysfs_fd == -ENOENT)
 			return 0;
-		return -errno;
+		return sysfs_fd;
 	}
 
 	exclop = get_fs_exclop(fd);

@@ -500,6 +500,7 @@ u64 device_get_zone_size(int fd, const char *name)
 		/* /sys/fs/btrfs/FSID/devices/NAME/queue/chunk_sectors */
 		queue_fd = sysfs_open_fsid_file(fd, queue);
 		if (queue_fd < 0) {
+			queue_fd = -1;
 			ret = 0;
 			break;
 		}
