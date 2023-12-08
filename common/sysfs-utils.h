@@ -20,10 +20,15 @@
 #include <stddef.h>
 
 int sysfs_open_file(const char *name);
+int sysfs_open_file_rw(const char *name);
 int sysfs_open_fsid_file(int fd, const char *filename);
+int sysfs_open_fsid_file_rw(int fd, const char *filename);
 int sysfs_open_fsid_dir(int fd, const char *dirname);
 int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value);
+int sysfs_write_fsid_file_u64(int fd, const char *name, u64 value);
 int sysfs_read_file(int fd, char *buf, size_t size);
+int sysfs_write_file(int fd, const char *buf, size_t size);
 int sysfs_read_file_u64(const char *name, u64 *value);
+int sysfs_write_file_u64(const char *name, u64 value);
 
 #endif

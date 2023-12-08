@@ -26,7 +26,7 @@
  * Open a file in fsid directory in sysfs and return the file descriptor or
  * error
  */
-int sysfs_open_fsid_file(int fd, const char *filename)
+static int sysfs_open_fsid_file_flags(int fd, const char *filename, int flags)
 {
 	u8 fsid[BTRFS_UUID_SIZE];
 	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
@@ -42,14 +42,24 @@ int sysfs_open_fsid_file(int fd, const char *filename)
 	if (ret < 0)
 		return ret;
 
-	return open(sysfs_file, O_RDONLY);
+	return open(sysfs_file, flags);
+}
+
+int sysfs_open_fsid_file(int fd, const char *filename)
+{
+	return sysfs_open_fsid_file_flags(fd, filename, O_RDONLY);
+}
+
+int sysfs_open_fsid_file_rw(int fd, const char *filename)
+{
+	return sysfs_open_fsid_file_flags(fd, filename, O_RDWR);
 }
 
 /*
  * Open a file in the toplevel sysfs directory and return the file descriptor
  * or error.
  */
-int sysfs_open_file(const char *name)
+static int sysfs_open_file_flags(const char *name, int flags)
 {
 	char path[PATH_MAX];
 	int ret;
@@ -57,7 +67,17 @@ int sysfs_open_file(const char *name)
 	ret = path_cat_out(path, "/sys/fs/btrfs", name);
 	if (ret < 0)
 		return ret;
-	return open(path, O_RDONLY);
+	return open(path, flags);
+}
+
+int sysfs_open_file(const char *name)
+{
+	return sysfs_open_file_flags(name, O_RDONLY);
+}
+
+int sysfs_open_file_rw(const char *name)
+{
+	return sysfs_open_file_flags(name, O_RDWR);
 }
 
 /*
@@ -94,6 +114,12 @@ int sysfs_read_file(int fd, char *buf, size_t size)
 	return read(fd, buf, size);
 }
 
+int sysfs_write_file(int fd, const char *buf, size_t size)
+{
+	lseek(fd, 0, SEEK_SET);
+	return write(fd, buf, size);
+}
+
 int sysfs_read_file_u64(const char *name, u64 *value)
 {
 	int fd = -1;
@@ -115,6 +141,22 @@ out:
 	return ret;
 }
 
+int sysfs_write_file_u64(const char *name, u64 value)
+{
+	int fd;
+	int ret;
+	char str[32] = { 0 };
+
+	fd = sysfs_open_file_rw(name);
+	if (fd < 0)
+		return fd;
+
+	ret = snprintf(str, sizeof(str), "%llu", value);
+	ret = sysfs_write_file(fd, str, ret);
+	close(fd);
+	return ret;
+}
+
 int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
 {
 	int ret;
@@ -131,6 +173,21 @@ int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
 	errno = 0;
 	*value = strtoull(str, NULL, 0);
 out:
+	close(fd);
+	return ret;
+}
+
+int sysfs_write_fsid_file_u64(int fd, const char *name, u64 value)
+{
+	int ret;
+	char str[32] = { 0 };
+
+	fd = sysfs_open_fsid_file_rw(fd, name);
+	if (fd < 0)
+		return fd;
+
+	ret = snprintf(str, sizeof(str), "%llu", value);
+	ret = sysfs_write_file(fd, str, ret);
 	close(fd);
 	return ret;
 }
