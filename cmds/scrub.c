@@ -50,6 +50,7 @@
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/device-utils.h"
+#include "common/parse-utils.h"
 #include "common/sysfs-utils.h"
 #include "common/string-table.h"
 #include "common/string-utils.h"
@@ -1212,6 +1213,17 @@ static u64 read_scrub_device_limit(int fd, u64 devid)
 	return limit;
 }
 
+static u64 write_scrub_device_limit(int fd, u64 devid, u64 limit)
+{
+	char path[PATH_MAX] = { 0 };
+	int ret;
+
+	/* /sys/fs/btrfs/FSID/devinfo/1/scrub_speed_max */
+	snprintf(path, sizeof(path), "devinfo/%llu/scrub_speed_max", devid);
+	ret = sysfs_write_fsid_file_u64(fd, path, limit);
+	return ret;
+}
+
 static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		       bool resume)
 {
@@ -1970,8 +1982,10 @@ static DEFINE_SIMPLE_COMMAND(scrub_status, "status");
 
 static const char * const cmd_scrub_limit_usage[] = {
 	"btrfs scrub limit [options] <path>",
-	"Show scrub limits set on devices of the given filesystem.",
+	"Show or set scrub limits on devices of the given filesystem.",
 	"",
+	OPTLINE("-d|--devid DEVID", "select the device by DEVID to apply the limit"),
+	OPTLINE("-l|--limit SIZE", "set the limit of the device to SIZE (size units with suffix), or 0 to reset to unlimited"),
 	HELPINFO_UNITS_LONG,
 	NULL
 };
@@ -1985,6 +1999,10 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	int fd = -1;
 	DIR *dirstream = NULL;
 	int cols, idx;
+	u64 opt_devid = 0;
+	bool devid_set = false;
+	u64 opt_limit = 0;
+	bool limit_set = false;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
@@ -1992,20 +2010,35 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
+			{ "devid", required_argument, NULL, 'd' },
+			{ "limit", required_argument, NULL, 'l' },
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "", long_options, NULL);
+		c = getopt_long(argc, argv, "d:l:", long_options, NULL);
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'd':
+			opt_devid = arg_strtou64(optarg);
+			devid_set = true;
+			break;
+		case 'l':
+			opt_limit = parse_size_from_string(optarg);
+			limit_set = true;
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
+
+	if ((devid_set && !limit_set) || (!devid_set && limit_set)) {
+		error("--devid and --limit must be set together");
+		return 1;
+	}
 
 	fd = open_file_or_dir(argv[optind], &dirstream);
 	if (fd < 0)
@@ -2024,6 +2057,34 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	uuid_unparse(fi_args.fsid, fsid);
 	pr_verbose(LOG_DEFAULT, "UUID: %s\n", fsid);
+
+	if (devid_set) {
+		/* Set one device only. */
+		struct btrfs_ioctl_dev_info_args di_args = { 0 };
+		u64 limit;
+
+		ret = device_get_info(fd, opt_devid, &di_args);
+		if (ret == -ENODEV) {
+			error("device with devid %llu not found", opt_devid);
+			ret = 1;
+			goto out;
+		}
+		limit = read_scrub_device_limit(fd, opt_devid);
+		pr_verbose(LOG_DEFAULT, "Set scrub limit of devid %llu from %s%s to %s%s\n",
+			   opt_devid,
+			   limit > 0 ? pretty_size_mode(limit, unit_mode) : "unlimited",
+			   limit > 0 ? "/s" : "",
+			   opt_limit > 0 ? pretty_size_mode(opt_limit, unit_mode) : "unlimited",
+			   opt_limit > 0 ? "/s" : "");
+		ret = write_scrub_device_limit(fd, opt_devid, opt_limit);
+		if (ret < 0) {
+			errno = -ret;
+			error("cannot write to the sysfs file: %m");
+			ret = 1;
+		}
+		ret = 0;
+		goto out;
+	}
 
 	cols = 3;
 	table = table_create(cols, 2 + fi_args.num_devices);

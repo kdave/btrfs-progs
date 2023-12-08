@@ -26,9 +26,15 @@ cancel <path>|<device>
 .. _man-scrub-limit:
 
 limit [options] <path>
-	Show scrub limits set on devices of the given filesystem.
+	Show or set scrub limits on devices of the given filesystem.
 
         ``Options``
+
+        -d|--devid DEVID
+                select the device by DEVID to apply the limit
+        -l|--limit SIZE
+                set the limit of the device to SIZE (size units with suffix),
+                or 0 to reset to *unlimited*
 
         --raw
                 print all numbers raw values in bytes without the *B* suffix
