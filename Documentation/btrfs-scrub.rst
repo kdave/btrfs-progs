@@ -23,6 +23,8 @@ cancel <path>|<device>
         The progress is saved in the status file so :command:`btrfs scrub resume` can
         continue from the last position.
 
+.. _man-scrub-limit:
+
 limit [options] <path>
 	Show scrub limits set on devices of the given filesystem.
 
@@ -90,10 +92,11 @@ start [-BdrRf] <path>|<device>
         ``Deprecated options``
 
         -c <ioprio_class>
-                set IO priority class (see ``ionice(1)`` manpage) if the IO
+                set IO priority class (see ``ionice(1)`` manual page) if the IO
                 scheduler configured for the device supports ionice. This is
-                not supported byg BFQ or Kyber but is *not* supported by
-                mq-deadline.
+                only supported by BFQ or Kyber but is *not* supported by
+                mq-deadline. Please read the section about
+                :ref:`IO limiting<scrub-io-limiting>`.
         -n <ioprio_classdata>
                 set IO priority classdata (see ``ionice(1)`` manpage)
         -q
@@ -172,7 +175,8 @@ status [options] <path>|<device>
         It's possible to set a per-device limit via file
         :file:`sysfs/fs/btrfs/FSID/devinfo/scrub_speed_max`. In that case
         the limit is printed on the *Rate:* line if option *-d* is specified,
-        or without it on a single-device filesystem.
+        or without it on a single-device filesystem.  Read more about tat in
+        section about :ref:`scrub IO limiting<scrub-io-limiting>`.
 
         .. code-block:: none
 
