@@ -49,6 +49,23 @@ The `btrfs.box` is an all-in-one tool in the [busybox](https://www.busybox.net)
 style, the functionality is determined by the binary names (either symlink,
 hradlink or a file copy).
 
+### Feature compatibility
+
+The *btrfs-progs* of version *X.Y* declare support of kernel features of the same
+version. New progs on old kernel are expected to work, limited only by features
+provided by the kernel.
+
+### Build compatibility
+
+Build is supported on the [GNU C library](https://www.gnu.org/software/libc/)
+as the primary target, and on the [musl libc](https://musl.libc.org/).
+
+The supported compilers are [gcc](https://gcc.gnu.org/) (minimal version 4.8)
+and [clang](https://clang.llvm.org/) (minimal version 3.4).
+
+Build tests are done on [several distributions](https://github.com/kdave/btrfs-progs/blob/master/.github/workflows/ci-build-test.yml), see
+[Github actions workflow](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml).
+
 Reporting bugs
 --------------
 
@@ -62,7 +79,6 @@ preference:
 * IRC (irc.libera.chat #btrfs) -- good for discussions eg. if a bug is already
   known, but reports could miss developers' attention
 * please don't use https://bugzilla.kernel.org for btrfs-progs bugs
-
 
 Development
 -----------
