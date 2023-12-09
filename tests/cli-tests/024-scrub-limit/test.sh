@@ -43,6 +43,10 @@ done
 cd "$here"
 run_check "$TOP/btrfs" scrub limit "$TEST_MNT"
 
+# Set limits for all devices
+run_check $SUDO_HELPER "$TOP/btrfs" scrub limit -a -l 30m "$TEST_MNT"
+run_check "$TOP/btrfs" scrub limit "$TEST_MNT"
+
 run_check_umount_test_dev
 
 cleanup_loopdevs

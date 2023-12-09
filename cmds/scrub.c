@@ -1984,6 +1984,7 @@ static const char * const cmd_scrub_limit_usage[] = {
 	"btrfs scrub limit [options] <path>",
 	"Show or set scrub limits on devices of the given filesystem.",
 	"",
+	OPTLINE("-a|--all", "apply the limit to all devices"),
 	OPTLINE("-d|--devid DEVID", "select the device by DEVID to apply the limit"),
 	OPTLINE("-l|--limit SIZE", "set the limit of the device to SIZE (size units with suffix), or 0 to reset to unlimited"),
 	HELPINFO_UNITS_LONG,
@@ -2003,6 +2004,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	bool devid_set = false;
 	u64 opt_limit = 0;
 	bool limit_set = false;
+	bool all_set = false;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
@@ -2010,16 +2012,20 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
+			{ "all", no_argument, NULL, 'a' },
 			{ "devid", required_argument, NULL, 'd' },
 			{ "limit", required_argument, NULL, 'l' },
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "d:l:", long_options, NULL);
+		c = getopt_long(argc, argv, "ad:l:", long_options, NULL);
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'a':
+			all_set = true;
+			break;
 		case 'd':
 			opt_devid = arg_strtou64(optarg);
 			devid_set = true;
@@ -2035,8 +2041,21 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	if ((devid_set && !limit_set) || (!devid_set && limit_set)) {
+	if (devid_set && all_set) {
+		error("--all and --devid cannot be used at the same time");
+		return 1;
+	}
+
+	if (devid_set && !limit_set) {
 		error("--devid and --limit must be set together");
+		return 1;
+	}
+	if (all_set && !limit_set) {
+		error("--all and --limit must be set together");
+		return 1;
+	}
+	if (!all_set && !devid_set && limit_set) {
+		error("--limit must be used with either --all or --deivd");
 		return 1;
 	}
 
@@ -2081,6 +2100,37 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 			errno = -ret;
 			error("cannot write to the sysfs file: %m");
 			ret = 1;
+		}
+		ret = 0;
+		goto out;
+	}
+
+	if (all_set && limit_set) {
+		/* Set on all devices. */
+		for (u64 devid = 1; devid <= fi_args.max_id; devid++) {
+			u64 limit;
+			struct btrfs_ioctl_dev_info_args di_args = { 0 };
+
+			ret = device_get_info(fd, devid, &di_args);
+			if (ret == -ENODEV) {
+				continue;
+			} else if (ret < 0) {
+				errno = -ret;
+				error("cannot read devid %llu info: %m", devid);
+				goto out;
+			}
+			limit = read_scrub_device_limit(fd, di_args.devid);
+			pr_verbose(LOG_DEFAULT, "Set scrub limit of devid %llu from %s%s to %s%s\n",
+				   devid,
+				   limit > 0 ? pretty_size_mode(limit, unit_mode) : "unlimited",
+				   limit > 0 ? "/s" : "",
+				   opt_limit > 0 ? pretty_size_mode(opt_limit, unit_mode) : "unlimited",
+				   opt_limit > 0 ? "/s" : "");
+			ret = write_scrub_device_limit(fd, devid, opt_limit);
+			if (ret < 0) {
+				error("cannot write to the sysfs file of devid %llu: %m", devid);
+				goto out;
+			}
 		}
 		ret = 0;
 		goto out;

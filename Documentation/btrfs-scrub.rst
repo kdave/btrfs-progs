@@ -35,6 +35,8 @@ limit [options] <path>
         -l|--limit SIZE
                 set the limit of the device to SIZE (size units with suffix),
                 or 0 to reset to *unlimited*
+	-a|--all
+                apply the limit to all devices
 
         --raw
                 print all numbers raw values in bytes without the *B* suffix
