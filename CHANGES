@@ -39,6 +39,24 @@ btrfs-progs-6.6.2 (2023-11-15)
      and open /dev/watchdog* causes a reboot
    * other: build warnings, test updates, documentation updates
 
+btrfs-progs-6.6.3 (2023-12-14)
+""""""""""""""""""""""""""""""
+   * subvol create: accept multiple arguments
+   * subvol delete: print the subvolume id in the output
+   * subvol sync: check if the filesystems is still writeable so it does not
+     wait indefinitely
+   * device delete: add a timeout and warning when deleting multiple devices
+   * scrub status: report limit if set in sysfs/../scrub_speed_max
+   * scrub limit: new command to show or set the per-device scrub limits
+   * scrub start: report the limit if set
+   * build:
+      * fix CPU feature detection on aarch64
+      * support Botan and OpenSSL (3.2+) as crypto backends
+   * other:
+      * documentation updates, RTD config update
+      * new and updated tests
+      * CI updates
+
 btrfs-progs-6.5 (2023-09-01)
 ----------------------------
    * crc32c implementation speedup (3x)
