@@ -45,7 +45,7 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
 
-if test "x$target_cpu" == 'xx86_64'; then
+if test "x$target_cpu" = 'xx86_64'; then
 
 AX_CHECK_COMPILE_FLAG([-msse2], [HAVE_CFLAG_msse2=1], [HAVE_CFLAG_msse2=0])
 AC_SUBST([HAVE_CFLAG_msse2])
