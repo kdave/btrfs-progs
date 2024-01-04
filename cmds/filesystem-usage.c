@@ -478,6 +478,8 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 	bool mixed = false;
 	struct statvfs statvfs_buf;
 	struct btrfs_ioctl_feature_flags feature_flags;
+	bool raid56 = false;
+	bool unreliable_allocated = false;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -518,8 +520,10 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 		 * computed separately. Setting ratio to 0 will not account
 		 * the chunks in this loop.
 		 */
-		if (flags & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		if (flags & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 			ratio = 0;
+			raid56 = true;
+		}
 
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
@@ -608,6 +612,18 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 		warning("cannot get space info with statvfs() on '%s': %m", path);
 		memset(&statvfs_buf, 0, sizeof(statvfs_buf));
 		ret = 0;
+	}
+
+	/*
+	 * If we don't have any chunk information (e.g. due to missing
+	 * privileges) and there's a raid56 profile, the computation of
+	 * "unallocated", "data/metadata ratio", "free estimated" are wrong.
+	 */
+	unreliable_allocated = (raid56 && chunkinfos->length == 0);
+	if (unreliable_allocated) {
+		warning("radid56 found, we cannots compute some values, run as root if needed");
+		ret = 1;
+		goto exit;
 	}
 
 	pr_verbose(LOG_DEFAULT, "Overall:\n");
