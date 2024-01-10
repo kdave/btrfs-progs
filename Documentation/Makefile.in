@@ -28,6 +28,13 @@ man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
 
 .PHONY: all man help
+.PHONY: contents.rst
+
+# Workaround for old sphinx that requires the contents.rst file
+contents.rst:
+	@if [ "$$(sphinx-build --version | cut -d' ' -f2)" \< "1.7.7" ]; then \
+		touch contents.rst; \
+	fi
 
 # Build manual pages by default
 
@@ -53,6 +60,8 @@ uninstall:
 clean:
 	$(QUIET_RM)$(RM) -rf $(BUILDDIR)/*
 	$(QUIET_RM)$(RM) -df -- $(BUILDDIR)
+	$(QUIET_RM)$(RM) -f contents.rst
+
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -79,5 +79,6 @@
 
 /Documentation/Makefile
 /Documentation/_build
+/Documentation/contents.rst
 
 *.patch
