@@ -15,7 +15,7 @@ The Btrfs btree provides a generic facility to store a variety of data
 types. Internally it only knows about three data structures: keys,
 items, and a block header:
 
-.. code-block::
+.. code-block:: none
 
    struct btrfs_header {
            u8 csum[32];
@@ -30,7 +30,7 @@ items, and a block header:
            u8 level;
    }
 
-.. code-block::
+.. code-block:: none
 
    struct btrfs_disk_key {
           __le64 objectid;
@@ -38,7 +38,7 @@ items, and a block header:
           __le64 offset;
    }
 
-.. code-block::
+.. code-block:: none
 
    struct btrfs_item {
           struct btrfs_disk_key key;
@@ -311,7 +311,7 @@ field of the root block may be different from the objectid of the
 snapshot. So, when dropping references on tree roots, the objectid of
 the root structure is always used. When a backref is deleted:
 
-.. code-block::
+.. code-block:: none
 
    if backref was for a tree root:
         root_objectid = root->root_key.objectid

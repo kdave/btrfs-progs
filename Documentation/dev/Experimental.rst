@@ -11,7 +11,7 @@ filed as issues.
 
 In the code use it like:
 
-.. code-block::
+.. code-block:: none
 
     if (EXPERIMENTAL) {
         ...
@@ -22,7 +22,7 @@ where it would break default build.
 
 Or:
 
-.. code-block::
+.. code-block:: none
 
     #if EXPERIMENTAL
     ...

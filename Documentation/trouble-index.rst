@@ -12,7 +12,7 @@ Error: parent transid verify error
 Reason: result of a failed internal consistency check of the filesystem's metadata.
 Type: permanent
 
-.. code-block::
+.. code-block:: none
 
    [ 4007.489730] BTRFS error (device vdb): parent transid verify failed on 30736384 wanted 10 found 8
 
@@ -59,7 +59,7 @@ persisted and possibly making old copies available.
 The most obvious way how to exhaust space is to create a file until the data
 chunks are full:
 
-.. code-block::
+.. code-block:: none
 
    $ df -h .
    Filesystem      Size  Used Avail Use% Mounted on
@@ -98,7 +98,7 @@ action is possible. If not, ENOSPC is returned.
 Error: unable to start balance with target metadata profile
 -----------------------------------------------------------
 
-.. code-block::
+.. code-block:: none
 
    unable to start balance with target metadata profile 32
 
@@ -111,7 +111,7 @@ Error: balance will reduce metadata integrity
 
 The full message in system log
 
-.. code-block::
+.. code-block:: none
 
    balance will reduce metadata integrity, use force if you want this
 
@@ -126,7 +126,7 @@ The preferred way is to use the :command:`wipefs` utility that is part of the
 *util-linux* package. Running the command with the device will not destroy
 the data, just list the detected filesystems:
 
-.. code-block::
+.. code-block:: none
 
    # wipefs /dev/sda
    offset               type
@@ -137,7 +137,7 @@ the data, just list the detected filesystems:
 Remove the filesystem signature at a given offset or wipe all recognized
 signatures on the device:
 
-.. code-block::
+.. code-block:: none
 
    # wipefs -o 0x10040 /dev/sda
    8 bytes [5f 42 48 52 66 53 5f 4d] erased at offset 0x10040 (btrfs)
@@ -172,7 +172,7 @@ at 64MiB, the third one at 256GiB. The following lines reset the signature
 on all the three copies:
 
 
-.. code-block::
+.. code-block:: none
 
    # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
    # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
@@ -180,7 +180,7 @@ on all the three copies:
 
 If you want to restore the super block signatures:
 
-.. code-block::
+.. code-block:: none
 
    # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
    # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))

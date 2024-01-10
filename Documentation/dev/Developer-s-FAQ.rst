@@ -178,7 +178,7 @@ For the next iteration, add a short description of the changes made, under the
 first **---** (triple dash) marker in the patch. For example (see also Example
 3):
 
-.. code-block::
+.. code-block:: none
 
    ---
    V3: renamed variable

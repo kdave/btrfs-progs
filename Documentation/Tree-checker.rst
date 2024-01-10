@@ -30,7 +30,7 @@ fine.
 
 A message may look like:
 
-.. code-block::
+.. code-block:: none
 
    [ 1716.823895] BTRFS critical (device vdb): corrupt leaf: root=18446744073709551607 block=38092800 slot=0, invalid key objectid: has 1 expect 6 or [256, 18446744073709551360] or 18446744073709551604
    [ 1716.829499] BTRFS info (device vdb): leaf 38092800 gen 19 total ptrs 4 free space 15851 owner 18446744073709551607
@@ -54,7 +54,7 @@ checksum is found to be valid. This protects against changes to the metadata
 that could possibly also update the checksum, less likely to happen accidentally
 but rather due to intentional corruption or fuzzing.
 
-.. code-block::
+.. code-block:: none
 
    [ 4823.612832] BTRFS critical (device vdb): corrupt leaf: root=7 block=30474240 slot=0, invalid nritems, have 0 should not be 0 for non-root leaf
    [ 4823.616798] BTRFS error (device vdb): block=30474240 read time tree block corruption detected

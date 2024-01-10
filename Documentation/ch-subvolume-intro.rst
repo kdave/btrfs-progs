@@ -138,7 +138,7 @@ Mounting a read-write snapshot as read-only is possible and will not change the
 The name of the mounted subvolume is stored in file :file:`/proc/self/mountinfo` in
 the 4th column:
 
-.. code-block::
+.. code-block:: none
 
    27 21 0:19 /subv1 /mnt rw,relatime - btrfs /dev/sda rw,space_cache
               ^^^^^^
