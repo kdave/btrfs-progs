@@ -160,12 +160,14 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	}
 	if (ret >= 0) {
 		error("target path already exists: %s", dst);
+		ret = -EEXIST;
 		goto out;
 	}
 
 	dupname = strdup(dst);
 	if (!dupname) {
 		error_msg(ERROR_MSG_MEMORY, "duplicating %s", dst);
+		ret = -ENOMEM;
 		goto out;
 	}
 	newname = basename(dupname);
@@ -173,18 +175,21 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	dupdir = strdup(dst);
 	if (!dupdir) {
 		error_msg(ERROR_MSG_MEMORY, "duplicating %s", dst);
+		ret = -ENOMEM;
 		goto out;
 	}
 	dstdir = dirname(dupdir);
 
 	if (!test_issubvolname(newname)) {
 		error("invalid subvolume name: %s", newname);
+		ret = -EINVAL;
 		goto out;
 	}
 
 	len = strlen(newname);
 	if (len > BTRFS_VOL_NAME_MAX) {
 		error("subvolume name too long: %s", newname);
+		ret = -EINVAL;
 		goto out;
 	}
 
@@ -208,6 +213,8 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 					goto out;
 				}
 			} else if (ret <= 0) {
+				if (ret == 0)
+					ret = -EEXIST;
 				errno = ret ;
 				error("failed to check directory %s before creation: %m", p);
 				goto out;
@@ -218,8 +225,10 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	}
 
 	fddst = btrfs_open_dir(dstdir, &dirstream, 1);
-	if (fddst < 0)
+	if (fddst < 0) {
+		ret = fddst;
 		goto out;
+	}
 
 	pr_verbose(LOG_DEFAULT, "Create subvolume '%s/%s'\n", dstdir, newname);
 	if (inherit) {
