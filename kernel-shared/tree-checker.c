@@ -33,6 +33,7 @@
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/extent_io.h"
+#include "kernel-shared/print-tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/internal.h"
@@ -95,6 +96,8 @@ static void generic_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 /*
@@ -123,6 +126,8 @@ static void file_extent_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
 		key.objectid, key.offset, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 /*
@@ -183,6 +188,8 @@ static void dir_item_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
 		key.objectid, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 /*
@@ -669,6 +676,8 @@ static void block_group_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
 		key.objectid, key.offset, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 static int check_block_group_item(struct extent_buffer *leaf,
@@ -800,6 +809,8 @@ static void chunk_err(const struct extent_buffer *leaf,
 			   BTRFS_CHUNK_TREE_OBJECTID, leaf->start, slot,
 			   logical, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)leaf, 0);
 }
 
 /*
@@ -1025,6 +1036,8 @@ static void dev_item_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
 		key.objectid, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 static int check_dev_item(struct extent_buffer *leaf,
@@ -1279,6 +1292,8 @@ static void extent_err(const struct extent_buffer *eb, int slot,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		eb->start, slot, bytenr, len, &vaf);
 	va_end(args);
+
+	btrfs_print_tree((struct extent_buffer *)eb, 0);
 }
 
 static int check_extent_item(struct extent_buffer *leaf,
