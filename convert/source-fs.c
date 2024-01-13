@@ -23,6 +23,8 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/transaction.h"
+#include "common/utils.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/extent-cache.h"
@@ -183,6 +185,7 @@ int convert_insert_dirent(struct btrfs_trans_handle *trans,
 {
 	int ret;
 	u64 inode_size;
+	struct btrfs_inode_item dummy_iitem = { 0 };
 	struct btrfs_key location = {
 		.objectid = objectid,
 		.offset = 0,
@@ -192,6 +195,23 @@ int convert_insert_dirent(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_dir_item(trans, root, name, name_len,
 				    dir, &location, file_type, index_cnt);
 	if (ret)
+		return ret;
+
+	btrfs_set_stack_inode_mode(&dummy_iitem, btrfs_type_to_imode(file_type));
+	btrfs_set_stack_inode_generation(&dummy_iitem, trans->transid);
+	btrfs_set_stack_inode_transid(&dummy_iitem, trans->transid);
+	/*
+	 * We must have an INOTE_ITEM before INODE_REF, or tree-checker won't
+	 * be happy.
+	 * The content of the INODE_ITEM would be properly updated when iterating
+	 * that child inode, but we should still try to make it as valid as
+	 * possible, or we may still trigger some tree checker.
+	 */
+	ret = btrfs_insert_inode(trans, root, objectid, &dummy_iitem);
+	/* The inode item is already there, just skip it. */
+	if (ret == -EEXIST)
+		ret = 0;
+	if (ret < 0)
 		return ret;
 	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
 				     objectid, dir, index_cnt);

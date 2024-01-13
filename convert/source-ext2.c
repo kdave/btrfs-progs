@@ -857,6 +857,10 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	struct btrfs_key inode_key;
 	struct btrfs_path path = { 0 };
 
+	inode_key.objectid = objectid;
+	inode_key.type = BTRFS_INODE_ITEM_KEY;
+	inode_key.offset = 0;
+
 	if (ext2_inode->i_links_count == 0)
 		return 0;
 
@@ -878,13 +882,23 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	ext2_convert_inode_flags(&btrfs_inode, ext2_inode);
 
 	/*
-	 * The inode item must be inserted before any file extents/dir items/xattrs,
-	 * or we may trigger tree-checker. File extents/dir items/xattrs require
-	 * the previous item has the same key objectid.
+	 * The inode may already be created (with dummy contents), in that
+	 * case we don't need to do anything yet.
+	 * The inode item would be updated at the end anyway.
 	 */
-	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
-	if (ret < 0)
-		return ret;
+	ret = btrfs_lookup_inode(trans, root, &path, &inode_key, 1);
+	btrfs_release_path(&path);
+	if (ret > 0) {
+		/*
+		 * No inode item yet, the inode item must be inserted before
+		 * any file extents/dir items/xattrs, or we may trigger
+		 * tree-checker. File extents/dir items/xattrs require the
+		 * previous item to have the same key objectid.
+		 */
+		ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
+		if (ret < 0)
+			return ret;
+	}
 
 	switch (ext2_inode->i_mode & S_IFMT) {
 	case S_IFREG:
@@ -917,10 +931,6 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	 * Update the inode item, as above insert never updates the inode's
 	 * nbytes and size.
 	 */
-	inode_key.objectid = objectid;
-	inode_key.type = BTRFS_INODE_ITEM_KEY;
-	inode_key.offset = 0;
-
 	ret = btrfs_lookup_inode(trans, root, &path, &inode_key, 1);
 	if (ret > 0)
 		ret = -ENOENT;
