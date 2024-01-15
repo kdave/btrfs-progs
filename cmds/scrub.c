@@ -1947,8 +1947,11 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 		init_fs_stat(&fs_stat);
 		fs_stat.s.in_progress = in_progress;
 		for (i = 0; i < fi_args.num_devices; ++i) {
-			/* Save the last limit only, works for a single device filesystem. */
-			limit = read_scrub_device_limit(fdmnt, di_args[i].devid);
+			/* On a multi-device filesystem, keep the lowest limit only. */
+			u64 this_limit = read_scrub_device_limit(fdmnt, di_args[i].devid);
+			if (!limit || (this_limit && this_limit < limit)) {
+				limit = this_limit;
+			}
 
 			last_scrub = last_dev_scrub(past_scrubs,
 							di_args[i].devid);
