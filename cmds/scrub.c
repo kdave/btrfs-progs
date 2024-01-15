@@ -1634,8 +1634,10 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			struct btrfs_scrub_progress *cur_progress =
 						&sp[i].scrub_args.progress;
 
-			/* Save last limit only, works for single device filesystem. */
-			limit = sp[i].limit;
+			/* On a multi-device filesystem, keep the lowest limit only. */
+			if (!limit || (sp[i].limit && sp[i].limit < limit))
+				limit = sp[i].limit;
+
 			if (do_stats_per_dev) {
 				print_scrub_dev(&di_args[i],
 						cur_progress,
