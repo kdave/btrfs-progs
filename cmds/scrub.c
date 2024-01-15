@@ -387,7 +387,7 @@ static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw, u64 bytes_tota
 		 * Limit for the whole filesystem stats does not make sense,
 		 * but if there's any device with a limit then print it.
 		 */
-		if (nr_devices != 1)
+		if (nr_devices != 1 && limit)
 			limit = 1;
 		print_scrub_summary(&fs_stat->p, &fs_stat->s, bytes_total, limit);
 	}
