@@ -4719,6 +4719,17 @@ static int check_chunk_item(struct extent_buffer *eb, int slot)
 	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
 	length = btrfs_chunk_length(eb, chunk);
 	chunk_end = chunk_key.offset + length;
+	if (!IS_ALIGNED(chunk_key.offset, BTRFS_STRIPE_LEN) ||
+	    !IS_ALIGNED(length, BTRFS_STRIPE_LEN)) {
+		if (get_env_bool("BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT")) {
+			error("chunk[%llu %llu) is not fully aligned to BTRFS_STRIPE_LEN (%u)",
+				chunk_key.offset, length, BTRFS_STRIPE_LEN);
+			err |= BYTES_UNALIGNED;
+			goto out;
+		}
+		warning("chunk[%llu %llu) is not fully aligned to BTRFS_STRIPE_LEN (%u)",
+			chunk_key.offset, length, BTRFS_STRIPE_LEN);
+	}
 	ret = btrfs_check_chunk_valid(eb, chunk, chunk_key.offset);
 	if (ret < 0) {
 		error("chunk[%llu %llu) is invalid", chunk_key.offset,

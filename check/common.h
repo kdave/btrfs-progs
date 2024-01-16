@@ -78,6 +78,7 @@ struct chunk_record {
 	u32 io_align;
 	u32 io_width;
 	u32 sector_size;
+	bool unaligned;
 	struct stripe stripes[0];
 };
 

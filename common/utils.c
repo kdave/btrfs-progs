@@ -956,6 +956,25 @@ u8 rand_u8(void)
 	return (u8)(rand_u32());
 }
 
+/*
+ * Parse a boolean value from an environment variable.
+ *
+ * As long as the environment variable is not set to "0", "n" or "\0",
+ * it would return true.
+ */
+bool get_env_bool(const char *env_name)
+{
+	char *env_value_str;
+
+	env_value_str = getenv(env_name);
+	if (!env_value_str)
+		return false;
+	if (env_value_str[0] == '0' || env_value_str[0] == 'n' ||
+	    env_value_str[0] == 0)
+		return false;
+	return true;
+}
+
 void btrfs_config_init(void)
 {
 	bconf.output_format = CMD_FORMAT_TEXT;

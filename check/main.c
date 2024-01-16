@@ -5265,6 +5265,9 @@ struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
 	rec->num_stripes = num_stripes;
 	rec->sub_stripes = btrfs_chunk_sub_stripes(leaf, ptr);
 
+	if (!IS_ALIGNED(rec->cache.start, BTRFS_STRIPE_LEN) ||
+	    !IS_ALIGNED(rec->cache.size, BTRFS_STRIPE_LEN))
+		rec->unaligned = true;
 	for (i = 0; i < rec->num_stripes; ++i) {
 		rec->stripes[i].devid =
 			btrfs_stripe_devid_nr(leaf, ptr, i);
@@ -8386,6 +8389,7 @@ int check_chunks(struct cache_tree *chunk_cache,
 	struct chunk_record *chunk_rec;
 	struct block_group_record *bg_rec;
 	struct device_extent_record *dext_rec;
+	bool strict_alignment = get_env_bool("BTRFS_DEBUG_STRICT_CHUNK_ALIGNMENT");
 	int err;
 	int ret = 0;
 
@@ -8393,6 +8397,22 @@ int check_chunks(struct cache_tree *chunk_cache,
 	while (chunk_item) {
 		chunk_rec = container_of(chunk_item, struct chunk_record,
 					 cache);
+		if (chunk_rec->unaligned && !silent) {
+			if (strict_alignment) {
+				error(
+		"chunk[%llu %llu) is not fully aligned to BTRFS_STRIPE_LEN (%u)",
+				      chunk_rec->cache.start,
+				      chunk_rec->cache.start + chunk_rec->cache.size,
+				      BTRFS_STRIPE_LEN);
+				ret = -EINVAL;
+			} else {
+				warning(
+		"chunk[%llu %llu) is not fully aligned to BTRFS_STRIPE_LEN (%u)",
+				      chunk_rec->cache.start,
+				      chunk_rec->cache.start + chunk_rec->cache.size,
+				      BTRFS_STRIPE_LEN);
+			}
+		}
 		err = check_chunk_refs(chunk_rec, block_group_cache,
 				       dev_extent_cache, silent);
 		if (err < 0)
