@@ -147,9 +147,11 @@ convert_test_acl() {
 # $1: features, argument of -O, can be empty
 # $2: nodesize, argument of -N, can be empty
 convert_test_do_convert() {
+	export BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT=y
 	run_check "$TOP/btrfs-convert" ${1:+-O "$1"} ${2:+-N "$2"} "$TEST_DEV"
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 	run_check "$TOP/btrfs" inspect-internal dump-super -Ffa "$TEST_DEV"
+	unset BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT
 }
 
 # post conversion check, verify file permissions.
