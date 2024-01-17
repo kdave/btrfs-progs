@@ -102,6 +102,19 @@ jobs:
         run: make V=1
       - name: Tests misc
         run: sudo make TEST_LOG=dump test-misc
+  test-convert:
+    name: Test btrfs-convert
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1
+      - name: Tests convert
+        run: sudo make TEST_LOG=dump test-convert
   test-other:
     name: Test cli, fuzz
     runs-on: ubuntu-latest
