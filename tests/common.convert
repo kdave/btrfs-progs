@@ -146,9 +146,15 @@ convert_test_acl() {
 # do conversion with given features and nodesize, fsck afterwards
 # $1: features, argument of -O, can be empty
 # $2: nodesize, argument of -N, can be empty
+# #3: (optional) filesystem type, default: btrfs
 convert_test_do_convert() {
 	export BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT=y
-	run_check "$TOP/btrfs-convert" ${1:+-O "$1"} ${2:+-N "$2"} "$TEST_DEV"
+	if [ "$3" = "ntfs" ]; then
+		# Features and nodesize are not supported
+		run_check "ntfs2btrfs" "$TEST_DEV"
+	else
+		run_check "$TOP/btrfs-convert" ${1:+-O "$1"} ${2:+-N "$2"} "$TEST_DEV"
+	fi
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 	run_check "$TOP/btrfs" inspect-internal dump-super -Ffa "$TEST_DEV"
 	unset BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT
@@ -278,7 +284,7 @@ convert_test() {
 
 	run_check_umount_test_dev
 
-	convert_test_do_convert "$features" "$nodesize"
+	convert_test_do_convert "$features" "$nodesize" "$fstype"
 	convert_test_post_checks_all "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
 	rm -- "$CHECKSUMTMP"
 	rm -- "$EXT_PERMTMP"
