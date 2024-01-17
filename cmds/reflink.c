@@ -25,6 +25,7 @@
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "common/help.h"
 #include "cmds/commands.h"
 
@@ -76,7 +77,7 @@ static void parse_reflink_range(const char *str, u64 *from, u64 *length, u64 *to
 		error("wrong range spec near %s", str);
 		exit(1);
 	}
-	*from = parse_size_from_string(tmp);
+	*from = arg_strtou64_with_suffix(tmp);
 	str++;
 
 	/* Parse length */
@@ -91,11 +92,11 @@ static void parse_reflink_range(const char *str, u64 *from, u64 *length, u64 *to
 		error("wrong range spec near %s", str);
 		exit(1);
 	}
-	*length = parse_size_from_string(tmp);
+	*length = arg_strtou64_with_suffix(tmp);
 	str++;
 
 	/* Parse to, until end of string */
-	*to = parse_size_from_string(str);
+	*to = arg_strtou64_with_suffix(str);
 }
 
 static int reflink_apply_range(int fd_in, int fd_out, const struct reflink_range *range)

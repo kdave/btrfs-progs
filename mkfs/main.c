@@ -1264,7 +1264,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				ret = 1;
 				goto error;
 			case 'n':
-				nodesize = parse_size_from_string(optarg);
+				nodesize = arg_strtou64_with_suffix(optarg);
 				nodesize_forced = true;
 				break;
 			case 'L':
@@ -1329,10 +1329,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 				}
 			case 's':
-				sectorsize = parse_size_from_string(optarg);
+				sectorsize = arg_strtou64_with_suffix(optarg);
 				break;
 			case 'b':
-				block_count = parse_size_from_string(optarg);
+				block_count = arg_strtou64_with_suffix(optarg);
 				opt_zero_end = false;
 				break;
 			case 'v':

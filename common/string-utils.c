@@ -67,3 +67,22 @@ u64 arg_strtou64(const char *str)
 	return value;
 }
 
+u64 arg_strtou64_with_suffix(const char *str)
+{
+	u64 value;
+	int ret;
+
+	ret = parse_u64_with_suffix(str, &value);
+	if (ret == -ERANGE) {
+		error("%s is too large", str);
+		exit(1);
+	} else if (ret == -EINVAL) {
+		error("%s is not a valid numeric value with supported size suffixes", str);
+		exit(1);
+	} else if (ret < 0) {
+		errno = -ret;
+		error("failed to parse string '%s': %m", str);
+		exit(1);
+	}
+	return value;
+}

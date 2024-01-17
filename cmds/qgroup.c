@@ -40,6 +40,7 @@
 #include "common/help.h"
 #include "common/units.h"
 #include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "common/format-output.h"
 #include "common/messages.h"
 #include "cmds/commands.h"
@@ -2114,7 +2115,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	if (!strcasecmp(argv[optind], "none"))
 		size = -1ULL;
 	else
-		size = parse_size_from_string(argv[optind]);
+		size = arg_strtou64_with_suffix(argv[optind]);
 
 	memset(&args, 0, sizeof(args));
 	if (compressed)

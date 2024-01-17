@@ -34,7 +34,7 @@
 #include "common/device-utils.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
-#include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "common/messages.h"
 #include "mkfs/common.h"
 
@@ -102,7 +102,7 @@ u64 zone_size(const char *file)
 
 		tmp = bconf_param_value("zone-size");
 		if (tmp) {
-			size = parse_size_from_string(tmp);
+			size = arg_strtou64_with_suffix(tmp);
 			if (!is_power_of_2(size) || size < BTRFS_MIN_ZONE_SIZE ||
 			    size > BTRFS_MAX_ZONE_SIZE) {
 				error("invalid emulated zone size %llu", size);

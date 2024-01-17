@@ -2035,7 +2035,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 			devid_set = true;
 			break;
 		case 'l':
-			opt_limit = parse_size_from_string(optarg);
+			opt_limit = arg_strtou64_with_suffix(optarg);
 			limit_set = true;
 			break;
 		default:

@@ -53,6 +53,7 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "common/filesystem-utils.h"
 #include "common/format-output.h"
 #include "cmds/commands.h"
@@ -1065,13 +1066,13 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 				bconf_be_verbose();
 			break;
 		case 's':
-			start = parse_size_from_string(optarg);
+			start = arg_strtou64_with_suffix(optarg);
 			break;
 		case 'l':
-			len = parse_size_from_string(optarg);
+			len = arg_strtou64_with_suffix(optarg);
 			break;
 		case 't':
-			thresh = parse_size_from_string(optarg);
+			thresh = arg_strtou64_with_suffix(optarg);
 			if (thresh > (u32)-1) {
 				warning(
 			    "target extent size %llu too big, trimmed to %u",
@@ -1083,7 +1084,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			recursive = true;
 			break;
 		case GETOPT_VAL_STEP:
-			defrag_global_step = parse_size_from_string(optarg);
+			defrag_global_step = arg_strtou64_with_suffix(optarg);
 			if (defrag_global_step < SZ_256K) {
 				warning("step %llu too small, adjusting to 256KiB\n",
 					   defrag_global_step);
@@ -1312,8 +1313,8 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 			mod = 1;
 			sizestr++;
 		}
-		diff = parse_size_from_string(sizestr);
-		if (!diff) {
+		ret = parse_u64_with_suffix(sizestr, &diff);
+		if (ret < 0) {
 			error("failed to parse size %s", sizestr);
 			ret = 1;
 			goto out;
@@ -1605,7 +1606,7 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 
 		switch (c) {
 		case 's':
-			size = parse_size_from_string(optarg);
+			size = arg_strtou64_with_suffix(optarg);
 			/* Minimum limit reported by mkswap */
 			if (size < 40 * SZ_1K) {
 				error("swapfile needs to be at least 40 KiB");

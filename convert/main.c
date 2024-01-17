@@ -114,6 +114,7 @@
 #include "common/path-utils.h"
 #include "common/help.h"
 #include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "common/fsfeatures.h"
 #include "common/device-scan.h"
 #include "common/box.h"
@@ -1925,7 +1926,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				packing = 0;
 				break;
 			case 'N':
-				nodesize = parse_size_from_string(optarg);
+				nodesize = arg_strtou64_with_suffix(optarg);
 				break;
 			case 'r':
 				rollback = 1;
