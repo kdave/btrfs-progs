@@ -121,7 +121,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_TO_STRING2(compat, 3,4),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
-		.desc		= "quota support (qgroups)"
+		.desc		= "hierarchical quota group support (qgroups)"
 	},
 	{
 		.name		= "extref",
@@ -172,7 +172,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_TO_STRING2(compat, 4,5),
 		VERSION_TO_STRING2(safe, 4,9),
 		VERSION_TO_STRING2(default, 5,15),
-		.desc		= "free space tree (space_cache=v2)"
+		.desc		= "free space tree, improved space tracking (space_cache=v2)"
 	},
 	{
 		.name		= "raid1c34",
@@ -191,7 +191,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_TO_STRING2(compat, 5,12),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
-		.desc		= "support zoned devices"
+		.desc		= "support zoned (SMR/ZBC/ZNS) devices"
 	},
 #endif
 #if EXPERIMENTAL
@@ -219,7 +219,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_TO_STRING2(compat, 6,1),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
-		.desc		= "block group tree to reduce mount time"
+		.desc		= "block group tree, more efficient block group tracking to reduce mount time"
 	},
 	{
 		.name		= "rst",
@@ -235,7 +235,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_TO_STRING2(compat, 6,7),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
-		.desc		= "raid stripe tree"
+		.desc		= "raid stripe tree, enhanced file extent tracking"
 	},
 	{
 		.name		= "squota",
