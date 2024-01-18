@@ -2026,13 +2026,7 @@ raid_groups:
 			printf("  Zone size:        %s\n",
 			       pretty_size(fs_info->zone_size));
 		btrfs_parse_fs_features_to_string(features_buf, &features);
-#if EXPERIMENTAL
 		printf("Features:           %s\n", features_buf);
-#else
-		printf("Incompat features:  %s\n", features_buf);
-		btrfs_parse_runtime_features_to_string(features_buf, &features);
-		printf("Runtime features:   %s\n", features_buf);
-#endif
 		printf("Checksum:           %s\n",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));
 
