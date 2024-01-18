@@ -122,15 +122,20 @@ OPTIONS
 -s|--sectorsize <size>
         Specify the sectorsize, the minimum data block allocation unit.
 
+        .. note::
+                Versions prior to 6.7 set the sectorsize matching the host CPU
+                page size, starting in 6.7 this is 4KiB for cross-architecture
+                compatibility. Please read more about the :doc:`subpage block size support<Subpage>`
+                and :ref:`its status<status-subpage-block-size>`.
+
         By default, the value is 4KiB, but it can be manually set to match the
-        system page size. However, if the sector size is different from the page
+        system page size (e.g. using command :command:`getconf PAGE_SIZE`).
+        However, if the sector size is different from the page
         size, the resulting filesystem may not be mountable by the current
         kernel, apart from the default 4KiB. Hence, using this option is not
         advised unless you intend to mount it on a system with the suitable
         page size.
 
-        .. note::
-                Versions prior to 6.7 set the sectorsize matching to the page size.
 
 -L|--label <string>
         Specify a label for the filesystem. The *string* should be less than 256
