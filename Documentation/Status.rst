@@ -123,10 +123,10 @@ in following ways:
      - :statusok:`OK`
      - OK
      -
-   * - Temporary UUID
+   * - Temporary FSID
      - 6.7
      - 6.7
-     -
+     - Single devices with same FSID can be mounted repeatedly, getting a temporary UUID.
    * - :doc:`Seeding<Seeding-device>`
      - :statusok:`OK`
      - OK
@@ -135,10 +135,10 @@ in following ways:
      - :statusmok:`mostly OK`
      - mostly OK
      - qgroups with many snapshots slows down balance
-   * - :doc:`Quotas, simple qgroups<Qgroups>`
+   * - :doc:`Squota, simplified qgroups<Qgroups>`
      - 6.7
      - 6.7
-     - simplified qgroup accounting, better performance
+     - simplified qgroup accounting, better performance, specific use case
    * - :doc:`Swapfile<Swapfile>`
      - :statusok:`OK`
      - n/a
@@ -148,14 +148,14 @@ in following ways:
      - OK
      -
    * - :doc:`Subpage block size<Subpage>`
-     - :statusmok:`mostly OK`
-     - mostly OK
-     - Also see table below for more detailed compatibility.
+     - :statusok:`OK`
+     - OK
+     - Also see :ref:`table below<status-subpage-block-size>` for compatibility.
    * - :doc:`Zoned mode<Zoned-mode>`
      - :statusmok:`mostly OK`
      - mostly OK
-     - Not yet feature complete but moderately stable, also see table below
-       for more detailed compatibility.
+     - Not yet feature complete but moderately stable, also see :ref:`table below<status-zoned>`
+       for compatibility.
 
 Block group profiles
 ^^^^^^^^^^^^^^^^^^^^
@@ -221,19 +221,19 @@ converted later).
    * - :ref:`extended-refs<mkfs-feature-extended-refs>`
      - :statusok:`OK`
      - OK
-     -
+     - mkfs.btrfs default since 3.12
    * - :ref:`skinny-metadata<mkfs-feature-skinny-metadata>`
      - :statusok:`OK`
      - OK
-     -
+     - mkfs.btrfs default since 3.18
    * - :ref:`no-holes<mkfs-feature-no-holes>`
      - :statusok:`OK`
      - OK
-     -
+     - mkfs.btrfs default since 5.15
    * - :ref:`Free space tree<mkfs-feature-free-space-tree>`
      - :statusok:`OK`
      - OK
-     -
+     - mkfs.btrfs default since 5.15
    * - :ref:`Block group tree<mkfs-feature-block-group-tree>`
      - :statusok:`OK`
      - OK
@@ -242,6 +242,10 @@ converted later).
      - :statusok:`OK`
      - OK
      -
+   * - :doc:`Squota<Qgroups>`
+     - :statusok:`OK`
+     - OK
+     - Simplified tracking needs on-disk format update, but may work in a limited way without it.
 
 Interoperability
 ^^^^^^^^^^^^^^^^
@@ -318,6 +322,7 @@ sector size is 4KiB as this allows cross-architecture compatibility.
      - The list of supported sector sizes on a given version can be found
        in file :file:`/sys/fs/btrfs/features/supported_sectorsizes`
 
+.. _status-zoned:
 
 Zoned mode
 ----------
