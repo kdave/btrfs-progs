@@ -628,8 +628,10 @@ int btrfs_check_sectorsize(u32 sectorsize)
 
 	if (!sectorsize_checked)
 		warning(
-"the filesystem may not be mountable, sectorsize %u doesn't match page size %u",
-			sectorsize, page_size);
+"sectorsize %u does not match host CPU page size %u, with kernels 6.x and up\n"
+"\t the 4KiB sectorsize is supported on all architectures but other combinations\n"
+"\t may fail the filesystem mount, use \"--sectorsize %u\" to override that\n",
+			sectorsize, page_size, page_size);
 	return 0;
 }
 

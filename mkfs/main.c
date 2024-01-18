@@ -2000,7 +2000,8 @@ raid_groups:
 		if (dev_uuid[0] != 0)
 			printf("Device UUID:        %s\n", mkfs_cfg.dev_uuid);
 		printf("Node size:          %u\n", nodesize);
-		printf("Sector size:        %u\n", sectorsize);
+		printf("Sector size:        %u\t(CPU page size: %lu)\n",
+		       sectorsize, sysconf(_SC_PAGESIZE));
 		printf("Filesystem size:    %s\n",
 			pretty_size(btrfs_super_total_bytes(fs_info->super_copy)));
 		printf("Block group profiles:\n");
