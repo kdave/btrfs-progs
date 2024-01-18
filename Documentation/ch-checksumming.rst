@@ -34,20 +34,27 @@ there's no increase. Each data block has a separate checksum stored, with
 additional overhead of the b-tree leaves.
 
 Approximate relative performance of the algorithms, measured against CRC32C
-using reference software implementations on a 3.5GHz intel CPU:
+using implementations on a 11th gen 3.6GHz intel CPU:
 
-========  ============   =======  ================
+========  ============   =======  ================================
 Digest    Cycles/4KiB    Ratio    Implementation
-========  ============   =======  ================
-CRC32C            1700      1.00  CPU instruction
-XXHASH            2500      1.44  reference impl.
-SHA256          105000        61  reference impl.
-SHA256           36000        21  libgcrypt/AVX2
-SHA256           63000        37  libsodium/AVX2
-BLAKE2b          22000        13  reference impl.
-BLAKE2b          19000        11  libgcrypt/AVX2
-BLAKE2b          19000        11  libsodium/AVX2
-========  ============   =======  ================
+========  ============   =======  ================================
+CRC32C             470      1.00  CPU instruction, PCL combination
+XXHASH             870       1.9  reference impl.
+SHA256            7600        16  libgcrypt
+SHA256            8500        18  openssl
+SHA256            8700        18  botan
+SHA256           32000        68  builtin, CPU instruction
+SHA256           37000        78  libsodium
+SHA256           78000       166  builtin, reference impl.
+BLAKE2b          10000        21  builtin/AVX2
+BLAKE2b          10900        23  libgcrypt
+BLAKE2b          13500        29  builtin/SSE41
+BLAKE2b          13700        29  libsodium
+BLAKE2b          14100        30  openssl
+BLAKE2b          14500        31  kcapi
+BLAKE2b          14500        34  builtin, reference impl.
+========  ============   =======  ================================
 
 Many kernels are configured with SHA256 as built-in and not as a module.
 The accelerated versions are however provided by the modules and must be loaded
