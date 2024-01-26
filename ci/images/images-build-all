@@ -1,9 +1,13 @@
 #!/bin/sh
-
 # Rebuild all docker images
+# Run after: images-base-update
+
 for dir in ci-*; do
 	echo "Build $dir"
 	cd "$dir"
+	# Do not build images with any stale branch snapshot, scripts ran
+	# locally will update that as needed
+	rm devel.tar.gz
 	./docker-build
 	cd ..
 done

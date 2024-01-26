@@ -1,0 +1,16 @@
+#!/bin/sh
+# After pull and build push all images to the hub
+# Run after: images-build-all
+
+echo "You are not supposed to run this"
+exit 1
+
+hubname=kdave
+tag=latest
+
+for dir in ci-*; do
+	echo "Enter $dir"
+	dir="${dir,,}"
+	echo docker push "$hubname/$dir:$tag"
+	docker push "$hubname/$dir:$tag"
+done
