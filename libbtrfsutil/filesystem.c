@@ -19,10 +19,51 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
 #include "btrfsutil_internal.h"
+
+
+PUBLIC enum btrfs_util_error btrfs_util_get_label(const char *path,
+						  char **label_ret)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_get_label_fd(fd, label_ret);
+	if (err)
+		return err;
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_get_label_fd(int fd,
+						     char **label_ret)
+{
+	int ret;
+	size_t len;
+
+	char label[BTRFS_PATH_NAME_MAX];
+	ret = ioctl(fd, BTRFS_IOC_GET_FSLABEL, label);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SUBVOL_SETFLAGS_FAILED;
+
+	len = strlen(label);
+	*label_ret = malloc(len + 1);
+	if (!*label_ret)
+		return BTRFS_UTIL_ERROR_NO_MEMORY;
+
+	memcpy(*label_ret, label, len);
+	label_ret[len] = '\0';
+
+	return BTRFS_UTIL_OK;
+}
 
 PUBLIC enum btrfs_util_error btrfs_util_sync(const char *path)
 {

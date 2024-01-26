@@ -71,3 +71,7 @@ class TestFilesystem(BtrfsTestCase):
                 new_generation = self.super_generation()
                 self.assertGreater(new_generation, old_generation)
                 old_generation = new_generation
+
+    def test_get_label(self):
+        label = btrfsutil.get_label(self.mountpoint)
+        self.assertIsNotNone(label)

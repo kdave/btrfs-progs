@@ -53,6 +53,8 @@ static const char * const error_messages[] = {
 		"Could not resolve subvolume path with BTRFS_IOC_INO_LOOKUP_USER",
 	[BTRFS_UTIL_ERROR_FS_INFO_FAILED] =
 		"Could not get filesystem information",
+	[BTRFS_UTIL_ERROR_FS_GET_LABEL_FAILED] =
+		"Could not get filesystem label",
 };
 
 PUBLIC const char *btrfs_util_strerror(enum btrfs_util_error err)

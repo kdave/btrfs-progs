@@ -67,6 +67,7 @@ enum btrfs_util_error {
 	BTRFS_UTIL_ERROR_GET_SUBVOL_ROOTREF_FAILED,
 	BTRFS_UTIL_ERROR_INO_LOOKUP_USER_FAILED,
 	BTRFS_UTIL_ERROR_FS_INFO_FAILED,
+	BTRFS_UTIL_ERROR_FS_GET_LABEL_FAILED,
 };
 
 /**
@@ -77,6 +78,24 @@ enum btrfs_util_error {
  * Return: Error description.
  */
 const char *btrfs_util_strerror(enum btrfs_util_error err);
+
+/**
+ * btrfs_util_get_label() - Get the filesystem label for a
+ * filesystem.
+ * @path: Path on a Btrfs filesystem.
+ * @label: Returned filesytem label.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_get_label(const char *path,
+					   char **label);
+
+/**
+ * btrfs_util_get_label_fd() - See
+ * btrfs_util_get_label().
+ */
+enum btrfs_util_error btrfs_util_get_label_fd(int fd,
+					      char **label);
 
 /**
  * btrfs_util_sync() - Force a sync on a specific Btrfs filesystem.
