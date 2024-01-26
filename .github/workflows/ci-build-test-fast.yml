@@ -1,0 +1,87 @@
+# Backward compatibility build tests on various distros
+#
+# - all compatibility docker image build tests (no local build)
+# - same as ci-build-test.yml but does not rebuild the docker images here but
+#   pulls them from docker hub, which is faster overall but may get out of sync
+
+name: CI image tests fast
+run-name: CI image tests fast
+on:
+  push:
+    branches:
+      - "ci/**"
+      - devel
+jobs:
+  check-centos7:
+    name: CI Centos 7
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Centos7
+        run: sudo docker run kdave/ci-centos-7-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-libudev
+  check-centos8:
+    name: CI Centos 8
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Centos8
+        run: sudo docker run kdave/ci-centos-8-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned --disable-libudev
+  check-leap153:
+    name: CI Leap 15.3
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Leap 15.3
+        run: sudo docker run kdave/ci-opensuse-leap-15.3-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
+  check-leap154:
+    name: CI Leap 15.4
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Leap 15.4
+        run: sudo docker run kdave/ci-opensuse-leap-15.4-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
+  check-musl:
+    name: CI Musl
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Musl
+        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+  check-musl-32bit:
+    name: CI Musl (32bit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Musl (32bit)
+        run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+  check-tumbleweed:
+    name: CI Tumbleweed
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Tumbleweed
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation
+  check-tumbleweed-libgcrypt:
+    name: CI Tumbleweed (libgcrypt)
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Tumbleweed (libgcrypt)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libgcrypt
+  check-tumbleweed-libsodium:
+    name: CI Tumbleweed (libsodium)
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Tumbleweed (libsodium)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libsodium
+  check-tumbleweed-libkcapi:
+    name: CI Tumbleweed (libkcapi)
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Tumbleweed (libkcapi)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libkcapi
+  check-tumbleweed-botan:
+    name: CI Tumbleweed (Botan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Tumbleweed (Botan)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan
+#   check-tumbleweed-openssl:
+#     name: CI Tumbleweed (OpenSSL)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - name: CI Tumbleweed (OpenSSL)
+#         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl
