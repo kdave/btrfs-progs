@@ -8,4 +8,4 @@ image=$(basename `pwd` | tr '[A-Z]' '[a-z]')
 # Make sure the file exists as it's required but can be empty. In that case
 # it's downloaded when ./test-build is executed
 touch devel.tar.gz
-docker buildx build --platform linux/386 -t "$prefix/$image" .
+docker build --platform linux/386 -t "$prefix/$image" .
