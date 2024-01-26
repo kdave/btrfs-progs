@@ -32,7 +32,7 @@ COPY ./test-build .
 COPY ./run-tests .
 COPY ./devel.tar.gz .
 
-CMD ./test-build devel --disable-documentation --disable-zoned
+CMD ./test-build devel --disable-documentation --disable-libudev --disable-zoned
 
 # Continue with:
 # cd /tmp

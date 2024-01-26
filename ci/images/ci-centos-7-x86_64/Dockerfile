@@ -29,7 +29,7 @@ COPY ./test-build .
 COPY ./run-tests .
 COPY ./devel.tar.gz .
 
-CMD ./test-build devel --disable-documentation
+CMD ./test-build devel --disable-documentation --disable-libudev
 
 # Continue with:
 # cd /tmp
