@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
@@ -27,22 +27,22 @@ jobs:
           sha256sum btrfs.static | tee btrfs.static.sha256
           sha256sum btrfs.box.static | tee btrfs.box.static.sha256
       - name: Save artifacts - btrfs.static
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: btrfs.static
           path: btrfs.static
       - name: Save artifacts - btrfs.static.sha256
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: btrfs.static.sha256
           path: btrfs.static.sha256
       - name: Save artifacts - btrfs.box.static
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: btrfs.box.static
           path: btrfs.box.static
       - name: Save artifacts - btrfs.box.static.sha256
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: btrfs.box.static.sha256
           path: btrfs.box.static.sha256

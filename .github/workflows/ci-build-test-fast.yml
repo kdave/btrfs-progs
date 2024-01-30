@@ -82,6 +82,6 @@ jobs:
 #     name: CI Tumbleweed (OpenSSL)
 #     runs-on: ubuntu-latest
 #     steps:
-#       - uses: actions/checkout@v3
+#       - uses: actions/checkout@v4
 #       - name: CI Tumbleweed (OpenSSL)
 #         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl
