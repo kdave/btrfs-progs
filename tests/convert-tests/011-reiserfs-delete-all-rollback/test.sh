@@ -40,6 +40,10 @@ do_test() {
 
 	convert_test_do_convert "$features" "$nodesize"
 
+	if ! convert_can_mount "$features"; then
+		return 0
+	fi
+
 	run_check_mount_test_dev
 	convert_test_post_check_checksums "$CHECKSUMTMP"
 
@@ -66,7 +70,7 @@ do_test() {
 
 # Iterate over defaults and options that are not tied to hardware capabilities
 # or number of devices
-for feature in '' 'block-group-tree' ; do
+for feature in '' 'block-group-tree' 'raid-stripe-tree'; do
 	do_test "$feature" "reiserfs 4k nodesize" 4096 mkreiserfs -b 4096
 	do_test "$feature" "reiserfs 16k nodesize" 16384 mkreiserfs -b 4096
 	do_test "$feature" "reiserfs 64k nodesize" 65536 mkreiserfs -b 4096
