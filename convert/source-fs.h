@@ -41,12 +41,14 @@ struct task_ctx {
 
 #define SOURCE_FS_NAME_LEN	(16)
 
-#define CONVERT_FLAG_DATACSUM		(1U << 0)
-#define CONVERT_FLAG_INLINE_DATA	(1U << 1)
-#define CONVERT_FLAG_XATTR		(1U << 2)
-#define CONVERT_FLAG_COPY_LABEL		(1U << 3)
-#define CONVERT_FLAG_SET_LABEL		(1U << 4)
-#define CONVERT_FLAG_COPY_FSID		(1U << 5)
+enum {
+	CONVERT_FLAG_DATACSUM		= (1U << 0),
+	CONVERT_FLAG_INLINE_DATA	= (1U << 1),
+	CONVERT_FLAG_XATTR		= (1U << 2),
+	CONVERT_FLAG_COPY_LABEL		= (1U << 3),
+	CONVERT_FLAG_SET_LABEL		= (1U << 4),
+	CONVERT_FLAG_COPY_FSID		= (1U << 5),
+};
 
 /* 23.2.5 acl_tag_t values */
 

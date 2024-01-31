@@ -22,16 +22,20 @@
 #include "kernel-lib/bitops.h"
 #include "kernel-shared/uapi/btrfs.h"
 
-#define BTRFS_SCAN_MOUNTED	(1ULL << 0)
-#define BTRFS_SCAN_LBLKID	(1ULL << 1)
+enum {
+	BTRFS_SCAN_MOUNTED	= (1ULL << 0),
+	BTRFS_SCAN_LBLKID	= (1ULL << 1)
+};
 
 #define BTRFS_UPDATE_KERNEL	1
 
-#define BTRFS_ARG_UNKNOWN	0
-#define BTRFS_ARG_MNTPOINT	1
-#define BTRFS_ARG_UUID		2
-#define BTRFS_ARG_BLKDEV	3
-#define BTRFS_ARG_REG		4
+enum {
+	BTRFS_ARG_UNKNOWN,
+	BTRFS_ARG_MNTPOINT,
+	BTRFS_ARG_UUID,
+	BTRFS_ARG_BLKDEV,
+	BTRFS_ARG_REG,
+};
 
 #define SEEN_FSID_HASH_SIZE 256
 
