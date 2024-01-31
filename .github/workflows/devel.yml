@@ -76,6 +76,13 @@ jobs:
         run: make V=1
       - name: Tests mkfs
         run: sudo make TEST_LOG=dump test-mkfs
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mkfs-tests-results.txt
+          path: tests/mkfs-tests-results.txt
+          if-no-files-found: ignore
   test-check:
     name: Test btrfs check
     runs-on: ubuntu-latest
@@ -91,6 +98,13 @@ jobs:
         run: sudo make TEST_LOG=dump test-check
       - name: Tests check (lowmem)
         run: sudo make TEST_LOG=dump test-check-lowmem
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fsck-tests-results.txt
+          path: tests/fsck-tests-results.txt
+          if-no-files-found: ignore
   test-misc:
     name: Test misc
     runs-on: ubuntu-latest
@@ -104,6 +118,13 @@ jobs:
         run: make V=1
       - name: Tests misc
         run: sudo make TEST_LOG=dump test-misc
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: misc-tests-results.txt
+          path: tests/misc-tests-results.txt
+          if-no-files-found: ignore
   test-convert:
     name: Test btrfs-convert
     runs-on: ubuntu-latest
@@ -117,6 +138,13 @@ jobs:
         run: make V=1
       - name: Tests convert
         run: sudo make TEST_LOG=dump test-convert
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: convert-tests-results.txt
+          path: tests/convert-tests-results.txt
+          if-no-files-found: ignore
   test-other:
     name: Test cli, fuzz
     runs-on: ubuntu-latest
@@ -130,5 +158,19 @@ jobs:
         run: make V=1
       - name: Tests cli
         run: sudo make TEST_LOG=dump test-cli
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-tests-results.txt
+          path: tests/cli-tests-results.txt
+          if-no-files-found: ignore
       - name: Tests fuzz
         run: sudo make TEST_LOG=dump test-fuzz
+      - name: Save logs to artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-tests-results.txt
+          path: tests/fuzz-tests-results.txt
+          if-no-files-found: ignore

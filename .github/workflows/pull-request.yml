@@ -41,3 +41,10 @@ jobs:
         run: sudo make TEST_LOG=dump test-misc
       - name: Tests fuzz
         run: sudo make TEST_LOG=dump test-fuzz
+      - name: Save logs on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "tests/*-results.txt"
+          if-no-files-found: ignore

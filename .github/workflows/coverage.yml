@@ -55,3 +55,10 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/lcov-info
+      - name: Save logs on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "tests/*-results.txt"
+          if-no-files-found: ignore
