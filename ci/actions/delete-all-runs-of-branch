@@ -1,0 +1,37 @@
+#!/bin/sh -e
+
+type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
+type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
+
+repo="kdave/btrfs-progs"
+branch="$1"
+
+if [ -z "$branch" ]; then
+	echo "ERROR: $0 branch"
+	exit 1
+fi
+
+notthatone() {
+	echo "ERROR: protected branch, will not remove: $1"
+	exit 1
+}
+
+case "$branch" in
+	master) notthatone "$branch";;
+	devel) notthatone "$branch";;
+	coverage-test) notthatone "$branch";;
+	release-test) notthatone "$branch";;
+esac
+
+echo "Delete all runs of branch $branch, are you sure? [y/N]"
+read -n 1 answer
+if ! [ "$answer" = 'y' ]; then
+	echo "INFO: not deleting"
+	exit 0
+fi
+echo
+
+for id in $(gh run -R "$repo" list --json databaseId --branch "$branch" | jq '.[].databaseId'); do
+	echo "Delete run $id"
+	gh run -R "$repo" delete "$id"
+done
