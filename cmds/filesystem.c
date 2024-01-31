@@ -709,6 +709,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 	struct btrfs_fs_devices *fs_devices;
 	struct btrfs_root *root = NULL;
 	char *search = NULL;
+	char *canon_path = NULL;
 	int ret;
 	/* default, search both kernel and udev */
 	int where = -1;
@@ -790,8 +791,15 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 		}
 	}
 
-	if (where == BTRFS_SCAN_LBLKID)
+	if (where == BTRFS_SCAN_LBLKID) {
+		/*
+		 * Blkid needs canonicalized paths, eg. when the /dev/dm-0 is
+		 * passed on command line.
+		 */
+		canon_path = path_canonicalize(search);
+		search = canon_path;
 		goto devs_only;
+	}
 
 	/* show mounted btrfs */
 	ret = btrfs_scan_kernel(search, unit_mode);
@@ -850,6 +858,7 @@ devs_only:
 		free_fs_devices(fs_devices);
 	}
 out:
+	free(canon_path);
 	if (root)
 		close_ctree(root);
 	free_seen_fsid(seen_fsid_hash);
