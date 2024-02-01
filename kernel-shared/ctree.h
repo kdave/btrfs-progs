@@ -404,6 +404,15 @@ struct btrfs_fs_info {
 	u32 sectorsize;
 	u32 stripesize;
 	u32 leaf_data_size;
+
+	/*
+	 * For open_ctree_fs_info() to hold the initial fd until close.
+	 *
+	 * For writeable open_ctree_fs_info() call, we should not close
+	 * the fd until the fs_info is properly closed, or it will trigger
+	 * udev scan while our fs is not properly initialized.
+	 */
+	int initial_fd;
 	u16 csum_type;
 	u16 csum_size;
 
