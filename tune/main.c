@@ -535,6 +535,7 @@ out:
 	}
 	close_ctree(root);
 	btrfs_close_all_devices();
+	close(fd);
 
 free_out:
 	return ret;
