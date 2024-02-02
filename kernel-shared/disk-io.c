@@ -913,6 +913,7 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->metadata_alloc_profile = (u64)-1;
 	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
 	fs_info->nr_global_roots = 1;
+	fs_info->initial_fd = -1;
 
 	return fs_info;
 
@@ -1690,7 +1691,10 @@ struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_args *oca)
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, oca);
-	close(fp);
+	if (info)
+		info->initial_fd = fp;
+	else
+		close(fp);
 	return info;
 }
 
@@ -2297,6 +2301,8 @@ skip_commit:
 
 	btrfs_release_all_roots(fs_info);
 	ret = btrfs_close_devices(fs_info->fs_devices);
+	if (fs_info->initial_fd >= 0)
+		close(fs_info->initial_fd);
 	btrfs_cleanup_all_caches(fs_info);
 	btrfs_free_fs_info(fs_info);
 	if (!err)
