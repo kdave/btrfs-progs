@@ -178,5 +178,5 @@ References
 
 * [Documentation](https://btrfs.readthedocs.io)
 * [Manual pages](https://btrfs.readthedocs.io/en/latest/man-index.html)
-* [Changes -- brfs-progs](https://btrfs.readthedocs.io/en/latest/CHANGES.html)
+* [Changes -- btrfs-progs](https://btrfs.readthedocs.io/en/latest/CHANGES.html)
 * [Features by kernel version](https://btrfs.readthedocs.io/en/latest/Feature-by-version.html)
