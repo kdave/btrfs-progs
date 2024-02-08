@@ -374,7 +374,6 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	char	*dupdname = NULL;
 	char	*dupvname = NULL;
 	char	*path = NULL;
-	DIR	*dirstream = NULL;
 	int commit_mode = 0;
 	bool subvol_path_not_found = false;
 	u8 fsid[BTRFS_FSID_SIZE];
@@ -498,7 +497,7 @@ again:
 	if (subvolid > 0)
 		dname = dupvname;
 
-	fd = btrfs_open_dir(dname, &dirstream, 1);
+	fd = btrfs_open_dir_fd(dname);
 	if (fd < 0) {
 		ret = 1;
 		goto out;
@@ -592,7 +591,7 @@ again:
 			goto out;
 		}
 
-		if (add_seen_fsid(fsid, seen_fsid_hash, fd, dirstream) == 0) {
+		if (add_seen_fsid(fsid, seen_fsid_hash, fd) == 0) {
 			uuid_unparse(fsid, uuidbuf);
 			pr_verbose(LOG_INFO, "  new fs is found for '%s', fsid: %s\n",
 				   path, uuidbuf);
@@ -606,10 +605,9 @@ again:
 	}
 
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 keep_fd:
 	fd = -1;
-	dirstream = NULL;
 	free(dupdname);
 	free(dupvname);
 	dupdname = NULL;

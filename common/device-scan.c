@@ -313,8 +313,7 @@ int is_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[])
 	return 0;
 }
 
-int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[],
-		int fd, DIR *dirstream)
+int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[], int fd)
 {
 	u8 hash = fsid[0];
 	int slot = hash % SEEN_FSID_HASH_SIZE;
@@ -342,7 +341,6 @@ insert:
 	alloc->next = NULL;
 	memcpy(alloc->fsid, fsid, BTRFS_FSID_SIZE);
 	alloc->fd = fd;
-	alloc->dirstream = dirstream;
 
 	if (seen)
 		seen->next = alloc;
@@ -362,7 +360,7 @@ void free_seen_fsid(struct seen_fsid *seen_fsid_hash[])
 		seen = seen_fsid_hash[slot];
 		while (seen) {
 			next = seen->next;
-			close_file_or_dir(seen->fd, seen->dirstream);
+			close(seen->fd);
 			free(seen);
 			seen = next;
 		}

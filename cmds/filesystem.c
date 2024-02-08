@@ -307,7 +307,7 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices,
 	u64 devs_found = 0;
 	u64 total;
 
-	if (add_seen_fsid(fs_devices->fsid, seen_fsid_hash, -1, NULL))
+	if (add_seen_fsid(fs_devices->fsid, seen_fsid_hash, -1))
 		return;
 
 	uuid_unparse(fs_devices->fsid, uuidbuf);
@@ -352,7 +352,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 	struct btrfs_ioctl_dev_info_args *tmp_dev_info;
 	int ret;
 
-	ret = add_seen_fsid(fs_info->fsid, seen_fsid_hash, -1, NULL);
+	ret = add_seen_fsid(fs_info->fsid, seen_fsid_hash, -1);
 	if (ret == -EEXIST)
 		return 0;
 	else if (ret)

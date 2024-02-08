@@ -43,7 +43,6 @@ struct btrfs_trans_handle;
 struct seen_fsid {
 	u8 fsid[BTRFS_FSID_SIZE];
 	struct seen_fsid *next;
-	DIR *dirstream;
 	int fd;
 };
 
@@ -58,8 +57,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 int is_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[]);
-int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[],
-		int fd, DIR *dirstream);
+int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[], int fd);
 void free_seen_fsid(struct seen_fsid *seen_fsid_hash[]);
 int test_uuid_unique(const char *uuid_str);
 
