@@ -39,4 +39,9 @@ int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose);
 
 void close_file_or_dir(int fd, DIR *dirstream);
 
+int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_only);
+int btrfs_open_file_or_dir_fd(const char *path);
+int btrfs_open_dir_fd(const char *path);
+int btrfs_open_mnt_fd(const char *path, bool verbose);
+
 #endif
