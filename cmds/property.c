@@ -175,12 +175,11 @@ static int prop_compression(enum prop_object_type type,
 	int ret;
 	ssize_t sret;
 	int fd = -1;
-	DIR *dirstream = NULL;
 	char *buf = NULL;
 	char *xattr_name = NULL;
 	int open_flags = value ? O_RDWR : O_RDONLY;
 
-	fd = open_file_or_dir3(object, &dirstream, open_flags);
+	fd = btrfs_open_fd2(object, false, open_flags == O_RDWR, false);
 	if (fd == -1) {
 		ret = -errno;
 		error("failed to open %s: %m", object);
@@ -232,7 +231,7 @@ out:
 	free(xattr_name);
 	free(buf);
 	if (fd >= 0)
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 
 	return ret;
 }

@@ -1013,7 +1013,6 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	bool recursive = false;
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
-	DIR *dirstream;
 
 	/*
 	 * Kernel 4.19+ supports defragmention of files open read-only,
@@ -1151,8 +1150,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		struct stat st;
 		int defrag_err = 0;
 
-		dirstream = NULL;
-		fd = open_file_or_dir3(argv[i], &dirstream, defrag_open_mode);
+		fd = btrfs_open_fd2(argv[i], false, defrag_open_mode == O_RDWR, false);
 		if (fd < 0) {
 			error("cannot open %s: %m", argv[i]);
 			ret = -errno;
@@ -1186,7 +1184,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 				error(
 "defrag range ioctl not supported in this kernel version, 2.6.33 and newer is required");
 				defrag_global_errors++;
-				close_file_or_dir(fd, dirstream);
+				close(fd);
 				break;
 			}
 			if (ret) {
@@ -1198,7 +1196,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 next:
 		if (ret)
 			defrag_global_errors++;
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 	}
 
 	if (defrag_global_errors)
