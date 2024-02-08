@@ -62,7 +62,6 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 {
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
-	DIR	*dirstream = NULL;
 	bool discard = true;
 	bool force = false;
 	int last_dev;
@@ -105,7 +104,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	last_dev = argc - 1;
 	mntpnt = argv[last_dev];
 
-	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
+	fdmnt = btrfs_open_dir_fd(mntpnt);
 	if (fdmnt < 0)
 		return 1;
 
@@ -113,7 +112,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	if (ret != 0) {
 		if (ret < 0)
 			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fdmnt, dirstream);
+		close(fdmnt);
 		return 1;
 	}
 
@@ -181,7 +180,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 
 error_out:
 	btrfs_warn_multiple_profiles(fdmnt);
-	close_file_or_dir(fdmnt, dirstream);
+	close(fdmnt);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(device_add, "add");
@@ -191,7 +190,6 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 {
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
-	DIR	*dirstream = NULL;
 	bool enqueue = false;
 	bool cancel = false;
 	bool force = false;
@@ -227,7 +225,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 
 	mntpnt = argv[argc - 1];
 
-	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
+	fdmnt = btrfs_open_dir_fd(mntpnt);
 	if (fdmnt < 0)
 		return 1;
 
@@ -236,7 +234,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		if (cancel) {
 			error("cancel requested but another device specified: %s\n",
 				argv[i]);
-			close_file_or_dir(fdmnt, dirstream);
+			close(fdmnt);
 			return 1;
 		}
 		if (strcmp("cancel", argv[i]) == 0) {
@@ -271,7 +269,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 			if (ret < 0)
 				error(
 			"unable to check status of exclusive operation: %m");
-			close_file_or_dir(fdmnt, dirstream);
+			close(fdmnt);
 			return 1;
 		}
 	}
@@ -337,7 +335,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	}
 
 	btrfs_warn_multiple_profiles(fdmnt);
-	close_file_or_dir(fdmnt, dirstream);
+	close(fdmnt);
 	return !!ret;
 }
 
@@ -900,12 +898,11 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 
 	for (i = optind; i < argc; i++) {
 		int fd;
-		DIR *dirstream = NULL;
 
 		if (i > 1)
 			pr_verbose(LOG_DEFAULT, "\n");
 
-		fd = btrfs_open_dir(argv[i], &dirstream, 1);
+		fd = btrfs_open_dir_fd(argv[i]);
 		if (fd < 0) {
 			ret = 1;
 			break;
@@ -913,7 +910,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 
 		ret = _cmd_device_usage(fd, argv[i], unit_mode);
 		btrfs_warn_multiple_profiles(fd);
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 
 		if (ret)
 			break;

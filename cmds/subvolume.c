@@ -150,7 +150,6 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	char	*dupdir = NULL;
 	char	*newname;
 	char	*dstdir;
-	DIR	*dirstream = NULL;
 
 	ret = path_is_dir(dst);
 	if (ret < 0 && ret != -ENOENT) {
@@ -224,7 +223,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		}
 	}
 
-	fddst = btrfs_open_dir(dstdir, &dirstream, 1);
+	fddst = btrfs_open_dir_fd(dstdir);
 	if (fddst < 0) {
 		ret = fddst;
 		goto out;
@@ -256,7 +255,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	}
 
 out:
-	close_file_or_dir(fddst, dirstream);
+	close(fddst);
 	free(dupname);
 	free(dupdir);
 
@@ -684,7 +683,6 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	enum btrfs_util_error err;
 	struct btrfs_ioctl_vol_args_v2	args;
 	struct btrfs_qgroup_inherit *inherit = NULL;
-	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
 	memset(&args, 0, sizeof(args));
 	optind = 0;
@@ -771,11 +769,11 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		goto out;
 	}
 
-	fddst = btrfs_open_dir(dstdir, &dirstream1, 1);
+	fddst = btrfs_open_dir_fd(dstdir);
 	if (fddst < 0)
 		goto out;
 
-	fd = btrfs_open_dir(subvol, &dirstream2, 1);
+	fd = btrfs_open_dir_fd(subvol);
 	if (fd < 0)
 		goto out;
 
@@ -810,8 +808,8 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	retval = 0;	/* success */
 
 out:
-	close_file_or_dir(fddst, dirstream1);
-	close_file_or_dir(fd, dirstream2);
+	close(fddst);
+	close(fd);
 	free(inherit);
 	free(dupname);
 	free(dupdir);
@@ -835,7 +833,6 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 	int fd = -1;
 	int ret = 1;
 	uint64_t default_id;
-	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 	struct btrfs_util_subvolume_info subvol;
 	struct format_ctx fctx;
@@ -846,7 +843,7 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_dir(argv[1], &dirstream, 1);
+	fd = btrfs_open_dir_fd(argv[1]);
 	if (fd < 0)
 		return 1;
 
@@ -898,7 +895,7 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 
 	ret = 0;
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 #if EXPERIMENTAL
@@ -1369,7 +1366,6 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 	int ret;
 	char *subvol;
 	u64 last_gen;
-	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 
 	clean_args_no_options(cmd, argc, argv);
@@ -1386,19 +1382,19 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 		return 1;
 	}
 
-	fd = btrfs_open_dir(subvol, &dirstream, 1);
+	fd = btrfs_open_dir_fd(subvol);
 	if (fd < 0)
 		return 1;
 
 	err = btrfs_util_sync_fd(fd);
 	if (err) {
 		error_btrfs_util(err);
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 		return 1;
 	}
 
 	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(subvolume_find_new, "find-new");
@@ -1795,7 +1791,6 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 {
 	int fd = -1;
 	int ret = 1;
-	DIR *dirstream = NULL;
 	uint64_t *ids = NULL;
 	size_t id_count, i;
 	int sleep_interval = 1;
@@ -1825,7 +1820,7 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
+	fd = btrfs_open_dir_fd(argv[optind]);
 	if (fd < 0) {
 		ret = 1;
 		goto out;
@@ -1878,7 +1873,7 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 
 out:
 	free(ids);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 
 	return !!ret;
 }

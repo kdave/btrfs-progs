@@ -1587,7 +1587,6 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 	char *subvol;
 	bool is_list_all = false;
 	bool is_only_in_path = false;
-	DIR *dirstream = NULL;
 	enum btrfs_list_layout layout = BTRFS_LIST_LAYOUT_DEFAULT;
 
 	filter_set = btrfs_list_alloc_filter_set();
@@ -1689,7 +1688,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 
 	subvol = argv[optind];
-	fd = btrfs_open_dir(subvol, &dirstream, 1);
+	fd = btrfs_open_dir_fd(subvol);
 	if (fd < 0) {
 		ret = -1;
 		error("can't access '%s'", subvol);
@@ -1729,7 +1728,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 			layout, !is_list_all && !is_only_in_path, NULL);
 
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	if (filter_set)
 		free(filter_set);
 	if (comparer_set)

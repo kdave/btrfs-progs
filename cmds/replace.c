@@ -378,7 +378,6 @@ static int cmd_replace_status(const struct cmd_struct *cmd,
 	char *path;
 	int once = 0;
 	int ret;
-	DIR *dirstream = NULL;
 
 	optind = 0;
 	while ((c = getopt(argc, argv, "1")) != -1) {
@@ -395,12 +394,12 @@ static int cmd_replace_status(const struct cmd_struct *cmd,
 		return 1;
 
 	path = argv[optind];
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
 	ret = print_replace_status(fd, path, once);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(replace_status, "status");
@@ -546,7 +545,6 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 	int c;
 	int fd;
 	char *path;
-	DIR *dirstream = NULL;
 
 	optind = 0;
 	while ((c = getopt(argc, argv, "")) != -1) {
@@ -561,14 +559,14 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 		return 1;
 
 	path = argv[optind];
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
 	args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_CANCEL;
 	args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 	ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	if (ret < 0) {
 		error("ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %m", path);
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)

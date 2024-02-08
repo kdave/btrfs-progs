@@ -299,9 +299,8 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 {
 	int fd;
 	int ret;
-	DIR *dirstream = NULL;
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
@@ -309,7 +308,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	if (ret != 0) {
 		if (ret < 0)
 			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 		return 1;
 	}
 
@@ -348,7 +347,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	}
 
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 
@@ -606,7 +605,6 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 	const char *path;
 	int fd;
 	int ret;
-	DIR *dirstream = NULL;
 
 	clean_args_no_options(cmd, argc, argv);
 
@@ -615,7 +613,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
@@ -630,7 +628,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 	}
 
 	btrfs_warn_multiple_profiles(fd);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(balance_pause, "pause");
@@ -647,7 +645,6 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 	const char *path;
 	int fd;
 	int ret;
-	DIR *dirstream = NULL;
 
 	clean_args_no_options(cmd, argc, argv);
 
@@ -656,7 +653,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
@@ -671,7 +668,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 	}
 
 	btrfs_warn_multiple_profiles(fd);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(balance_cancel, "cancel");
@@ -689,7 +686,6 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 {
 	struct btrfs_ioctl_balance_args args;
 	const char *path;
-	DIR *dirstream = NULL;
 	int fd;
 	int ret;
 
@@ -700,7 +696,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
@@ -734,7 +730,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 			   args.stat.completed, args.stat.considered);
 	}
 
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(balance_resume, "resume");
@@ -760,7 +756,6 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 {
 	struct btrfs_ioctl_balance_args args;
 	const char *path;
-	DIR *dirstream = NULL;
 	int fd;
 	int ret;
 
@@ -790,7 +785,7 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 2;
 
@@ -828,7 +823,7 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 
 	ret = 1;
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(balance_status, "status");

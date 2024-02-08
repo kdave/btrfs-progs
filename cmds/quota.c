@@ -41,17 +41,16 @@ static int quota_ctl(int cmd, char *path)
 	int ret = 0;
 	int fd;
 	struct btrfs_ioctl_quota_ctl_args args;
-	DIR *dirstream = NULL;
 
 	memset(&args, 0, sizeof(args));
 	args.cmd = cmd;
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_QUOTA_CTL, &args);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	if (ret < 0) {
 		error("quota command failed: %m");
 		return 1;
@@ -148,7 +147,6 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	char *path = NULL;
 	struct btrfs_ioctl_quota_rescan_args args;
 	unsigned long ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
-	DIR *dirstream = NULL;
 	bool wait_for_completion = false;
 
 	optind = 0;
@@ -193,7 +191,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 
 	path = argv[optind];
-	fd = btrfs_open_dir(path, &dirstream, 1);
+	fd = btrfs_open_dir_fd(path);
 	if (fd < 0)
 		return 1;
 
@@ -203,7 +201,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS) {
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 		if (ret < 0) {
 			error("could not obtain quota rescan status: %m");
 			return 1;
@@ -221,7 +219,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 		fflush(stdout);
 	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {
 		error("quota rescan failed: %m");
-		close_file_or_dir(fd, dirstream);
+		close(fd);
 		return 1;
 	}
 
@@ -230,12 +228,12 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 		e = errno;
 		if (ret < 0) {
 			error("quota rescan wait failed: %m");
-			close_file_or_dir(fd, dirstream);
+			close(fd);
 			return 1;
 		}
 	}
 
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return 0;
 }
 static DEFINE_SIMPLE_COMMAND(quota_rescan, "rescan");
