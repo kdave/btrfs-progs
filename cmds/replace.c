@@ -136,7 +136,6 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	bool force_using_targetdev = false;
 	u64 dstdev_block_count;
 	bool do_not_background = false;
-	DIR *dirstream = NULL;
 	u64 srcdev_size;
 	u64 dstdev_size;
 	bool enqueue = false;
@@ -184,7 +183,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		return 1;
 	path = argv[optind + 2];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
+	fdmnt = btrfs_open_mnt_fd(path, true);
 	if (fdmnt < 0)
 		goto leave_with_error;
 
@@ -200,7 +199,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	if (ret != 0) {
 		if (ret < 0)
 			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fdmnt, dirstream);
+		close(fdmnt);
 		goto leave_with_error;
 	}
 
@@ -348,7 +347,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			goto leave_with_error;
 		}
 	}
-	close_file_or_dir(fdmnt, dirstream);
+	close(fdmnt);
 	return 0;
 
 leave_with_error:
