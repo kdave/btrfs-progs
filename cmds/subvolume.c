@@ -1566,7 +1566,6 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	char *fullpath = NULL;
 	int fd = -1;
 	int ret = 1;
-	DIR *dirstream1 = NULL;
 	int by_rootid = 0;
 	int by_uuid = 0;
 	u64 rootid_arg = 0;
@@ -1624,7 +1623,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 	}
 
-	fd = open_file_or_dir(fullpath, &dirstream1);
+	fd = btrfs_open_fd2(fullpath, false, true, false);
 	if (fd < 0) {
 		error("can't access '%s'", fullpath);
 		goto out;
@@ -1762,7 +1761,7 @@ out2:
 
 out:
 	free(subvol_path);
-	close_file_or_dir(fd, dirstream1);
+	close(fd);
 	free(fullpath);
 	return !!ret;
 }

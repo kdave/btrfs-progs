@@ -1999,7 +1999,6 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	struct string_table *table = NULL;
 	int ret;
 	int fd = -1;
-	DIR *dirstream = NULL;
 	int cols, idx;
 	u64 opt_devid = 0;
 	bool devid_set = false;
@@ -2060,7 +2059,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 		return 1;
 	}
 
-	fd = open_file_or_dir(argv[optind], &dirstream);
+	fd = btrfs_open_fd2(argv[optind], false, true, false);
 	if (fd < 0)
 		return 1;
 
@@ -2182,7 +2181,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 out:
 	if (table)
 		table_free(table);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 
 	return !!ret;
 }

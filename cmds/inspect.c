@@ -1020,7 +1020,6 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	int ret;
 	int fd;
 	int i;
-	DIR *dirstream = NULL;
 	unsigned unit_mode;
 	char *sortmode = NULL;
 	bool with_usage = true;
@@ -1083,7 +1082,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = open_file_or_dir(path, &dirstream);
+	fd = btrfs_open_fd2(path, false, true, false);
 	if (fd < 0) {
 	        error("cannot access '%s': %m", path);
 		return 1;
@@ -1187,7 +1186,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	}
 
 	ret = print_list_chunks(&ctx, sortmode, unit_mode, with_usage, with_empty);
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 
 out_nomem:
 	free(ctx.stats);

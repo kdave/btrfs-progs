@@ -211,7 +211,6 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	struct btrfs_ioctl_dev_info_args *di_args;
 	struct btrfs_ioctl_dev_info_args tmp;
 	char mp[PATH_MAX];
-	DIR *dirstream = NULL;
 
 	memset(fi_args, 0, sizeof(*fi_args));
 
@@ -251,7 +250,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	}
 
 	/* at this point path must not be for a block device */
-	fd = open_file_or_dir(path, &dirstream);
+	fd = btrfs_open_fd2(path, false, true, false);
 	if (fd < 0) {
 		ret = -errno;
 		goto out;
@@ -317,7 +316,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	}
 
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 	return ret;
 }
 
