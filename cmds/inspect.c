@@ -369,14 +369,13 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 	int ret;
 	int fd = -1;
 	u64 rootid;
-	DIR *dirstream = NULL;
 
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_file_or_dir(argv[optind], &dirstream, 1);
+	fd = btrfs_open_file_or_dir_fd(argv[optind]);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;
@@ -391,7 +390,7 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 
 	pr_verbose(LOG_DEFAULT, "%llu\n", rootid);
 out:
-	close_file_or_dir(fd, dirstream);
+	close(fd);
 
 	return !!ret;
 }
