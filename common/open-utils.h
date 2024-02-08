@@ -28,16 +28,6 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 			bool noscan);
 int check_mounted(const char* file);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
-int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
-
-int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags);
-int open_file_or_dir(const char *fname, DIR **dirstream);
-
-int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only);
-int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
-int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose);
-
-void close_file_or_dir(int fd, DIR *dirstream);
 
 int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_only);
 int btrfs_open_file_or_dir_fd(const char *path);
