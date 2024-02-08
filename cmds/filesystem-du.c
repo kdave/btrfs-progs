@@ -456,7 +456,7 @@ static int du_add_file(const char *filename, int dirfd,
 		ret = sprintf(pathp, "/%s", filename);
 	pathp += ret;
 
-	fd = open_file_or_dir3(path, &dirstream, O_RDONLY);
+	fd = btrfs_open_fd2(path, false, false, false);
 	if (fd < 0) {
 		ret = -errno;
 		goto out;
@@ -488,6 +488,12 @@ static int du_add_file(const char *filename, int dirfd,
 			goto out_close;
 	} else if (S_ISDIR(st.st_mode)) {
 		struct rb_root *root = shared_extents;
+
+		dirstream = fdopendir(fd);
+		if (!dirstream) {
+			ret = -errno;
+			goto out_close;
+		}
 
 		/*
 		 * We collect shared extents in an rb_root, the top
@@ -542,7 +548,15 @@ static int du_add_file(const char *filename, int dirfd,
 		*ret_shared = file_shared;
 
 out_close:
-	close_file_or_dir(fd, dirstream);
+	/*
+	 * If dirstream is not NULL, it is derived from fd, so it is enough to
+	 * close the former.
+	 */
+	if (dirstream)
+		closedir(dirstream);
+	else
+		close(fd);
+
 out:
 	/* reset path to just before this element */
 	pathp = pathtmp;
