@@ -55,7 +55,7 @@ create [options] [<dest>/]<name> [[<dest2>/]<name2> ...]
         If *dest* part of the path is not given, subvolume *name* will be
         created in the current directory.
 
-	If multiple desinations are given, then given options are applied to all
+        If multiple destinations are given, then the given options are applied to all
 	subvolumes.
 
 	If failure happens for any of the destinations, the command would
