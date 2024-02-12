@@ -380,6 +380,9 @@ are unaffected by the zoned device constraints.
    * - discard
      - not implemented
      - May not be required at all due to automatic zone reclaim
+   * - subpage blocksize
+     - not implemented
+     - Missing support for compressed data
    * - fsverity
      - TBD
      -

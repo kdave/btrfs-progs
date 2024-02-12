@@ -367,8 +367,8 @@ Core changes:
 -  remove obsolete time-based delayed ref throttling logic when
    truncating items
 
-6.5 (Aug? 2023)
-^^^^^^^^^^^^^^^
+6.5 (Aug 2023)
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.5-rc1 <https://git.kernel.org/linus/cc423f6337d0a5ff1906f3b3d465d28c0d1705f6>`__,
@@ -395,6 +395,107 @@ User visible changes:
 -  the ``async=discard`` has been enabled in 6.2 unconditionally, but for
    zoned mode it does not make that much sense to do it asynchronously as
    the zones are reset as needed
+
+6.6 (Oct 2023)
+^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.6-rc1 <https://git.kernel.org/linus/547635c6ac47c7556d6954935b189defe90422f7>`__,
+`v6.6-rc2 <https://git.kernel.org/linus/3669558bdf354cd352be955ef2764cde6a9bf5ec>`__,
+`v6.6-rc3 <https://git.kernel.org/linus/a229cf67ab851a6e92395f37ed141d065176575a>`__,
+`v6.6-rc4 <https://git.kernel.org/linus/cac405a3bfa21a6e17089ae2f355f34594bfb543>`__,
+`v6.6-rc5 <https://git.kernel.org/linus/7de25c855b63453826ef678420831f98331d85fd>`__,
+`v6.6-rc6 <https://git.kernel.org/linus/759d1b653f3c7c2249b7fe5f6b218f87a5842822>`__,
+`v6.6-rc7 (1) <https://git.kernel.org/linus/7cf4bea77ab60742c128c2ceb4b1b8078887b823>`__,
+`v6.6-rc8 (2) <https://git.kernel.org/linus/e017769f4ce20dc0d3fa3220d4d359dcc4431274>`__,
+
+Notable fixes:
+
+- scrub performance drop due to rewrite in 6.4 partially restored, the drop is
+  noticeable on fast PCIe devices, -66% and restored to -33% of the original
+- copy directory permissions and time when creating a stub subvolume
+- fix transaction commit stalls when auto relocation is running and blocks
+  other tasks that want to commit
+- change behaviour of readdir()/rewinddir() when new directory entries are
+  created after opendir(), properly tracking the last entry
+
+Core:
+
+- debugging feature integrity checker deprecated, to be removed in 6.7
+- in zoned mode, zones are activated just before the write, making
+  error handling easier, now the overcommit mechanism can be enabled
+  again which improves performance by avoiding more frequent flushing
+- v0 extent handling completely removed, deprecated long time ago
+
+6.7 (Jan 2024)
+^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.7-rc1 <https://git.kernel.org/linus/d5acbc60fafbe0fc94c552ce916dd592cd4c6371>`__,
+`v6.7-rc2 <https://git.kernel.org/linus/9bacdd8996c77c42ca004440be610692275ff9d0>`__,
+`v6.7-rc4 <https://git.kernel.org/linus/18d46e76d7c2eedd8577fae67e3f1d4db25018b0>`__,
+`v6.7-rc6 (1) <https://git.kernel.org/linus/bdb2701f0b6822d711ec34968ccef70b73a91da7>`__,
+`v6.7-rc6 (2) <https://git.kernel.org/linus/0e389834672c723435a44818ed2cabc4dad24429>`__,
+
+New features:
+
+- raid-stripe-tree: New tree for logical file extent mapping where the
+  physical mapping may not match on multiple devices. This is now used in zoned
+  mode to implement RAID0/RAID1* profiles, but can be used in non-zoned mode as
+  well. The support for RAID56 is in development and will eventually fix the
+  problems with the current implementation. This is a backward incompatible
+  feature and has to be enabled at mkfs time.
+
+- simple quota accounting (squota): A simplified mode of qgroup that accounts
+  all space on the initial extent owners (a subvolume), the snapshots are then
+  cheap to create and delete. The deletion of snapshots in fully accounting
+  qgroups is a known CPU/IO performance bottleneck.
+
+  Note: The squota is not suitable for the general use case but works well for
+  containers where the original subvolume exists for the whole time. This is a
+  backward incompatible feature as it needs extending some structures, but can
+  be enabled on an existing filesystem.
+
+- temporary filesystem fsid (temp_fsid): The fsid identifies a filesystem and
+  is hard coded in the structures, which disallows mounting the same fsid found
+  on different devices.
+
+  For a single device filesystem this is not strictly necessary, a new
+  temporary fsid can be generated on mount e.g. after a device is cloned. This
+  will be used by Steam Deck for root partition A/B testing, or can be used for
+  VM root images.
+
+- filesystems with partially finished metadata_uuid conversion cannot be
+  mounted anymore and the uuid fixup has to be done by btrfs-progs (btrfstune).
+
+Performance improvements:
+
+- reduce reservations for checksum deletions (with enabled free space tree by
+  factor of 4), on a sample workload on file with many extents the deletion
+  time decreased by 12%
+
+- make extent state merges more efficient during insertions, reduce rb-tree
+  iterations (run time of critical functions reduced by 5%)
+
+Core changes:
+
+- the integrity check functionality has been removed, this was a debugging
+  feature and removal does not affect other integrity checks like checksums or
+  tree-checker
+
+-  space reservation changes:
+
+   - more efficient delayed ref reservations, this avoids building up too much
+     work or overusing or exhausting the global block reserve in some situations
+   - move delayed refs reservation to the transaction start time, this prevents
+     some ENOSPC corner cases related to exhaustion of global reserve
+
+   - adjust overcommit logic in near full situations, account for one more
+     chunk to eventually allocate metadata chunk, this is mostly relevant for
+     small filesystems (<10GiB)
+
+- single device filesystems are scanned but not registered (except seed
+  devices), this allows temp_fsid to work
 
 5.x
 ---
