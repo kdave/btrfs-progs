@@ -104,7 +104,7 @@ start [-BdrRf] <path>|<device>
                 scheduler configured for the device supports ionice. This is
                 only supported by BFQ or Kyber but is *not* supported by
                 mq-deadline. Please read the section about
-                :ref:`IO limiting<scrub-io-limiting>`.
+                :docref:`IO limiting <btrfs-scrub:scrub-io-limiting>`.
         -n <ioprio_classdata>
                 set IO priority classdata (see ``ionice(1)`` manpage)
         -q
@@ -184,7 +184,7 @@ status [options] <path>|<device>
         :file:`sysfs/fs/btrfs/FSID/devinfo/scrub_speed_max`. In that case
         the limit is printed on the *Rate:* line if option *-d* is specified,
         or without it on a single-device filesystem.  Read more about tat in
-        section about :ref:`scrub IO limiting<scrub-io-limiting>`.
+        section about :docref:`scrub IO limiting <btrfs-scrub:scrub-io-limiting>`.
 
         .. code-block:: none
 

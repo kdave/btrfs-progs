@@ -23,7 +23,7 @@ will continue from the last saved position.
 Scrub can be started only on a mounted filesystem, though it's possible to
 scrub only a selected device. See :ref:`btrfs scrub start<man-scrub-start>` for more.
 
-.. _scrub-io-limiting:
+.. duplabel:: scrub-io-limiting
 
 Bandwidth and IO limiting
 ^^^^^^^^^^^^^^^^^^^^^^^^^

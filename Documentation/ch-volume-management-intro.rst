@@ -27,7 +27,7 @@ RAID level
         standard RAID levels. At the moment the supported ones are: RAID0, RAID1,
         RAID10, RAID5 and RAID6.
 
-.. _man-device-typical-use-cases:
+.. duplabel:: man-device-typical-use-cases
 
 Typical use cases
 -----------------

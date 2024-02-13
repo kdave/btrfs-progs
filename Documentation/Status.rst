@@ -59,7 +59,7 @@ in following ways:
      - :statusmok:`mostly OK`
      -
      - extents get unshared (see below)
-   * - :ref:`Autodefrag<mount-option-autodefrag>`
+   * - :docref:`Autodefrag <Administration:mount-option-autodefrag>`
      - :statusok:`OK`
      -
      -
@@ -99,7 +99,7 @@ in following ways:
      - :statusmok:`mostly OK`
      - mostly OK
      -
-   * - :ref:`Degraded mount<mount-option-degraded>`
+   * - :docref:`Degraded mount <Administration:mount-option-degraded>`
      - :statusok:`OK`
      - n/a
      -

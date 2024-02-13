@@ -27,7 +27,7 @@ acl, noacl
         The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
         mount fails if *acl* is requested but the feature is not compiled in.
 
-.. _mount-option-autodefrag:
+.. duplabel:: mount-option-autodefrag
 
 autodefrag, noautodefrag
         (since: 3.0, default: off)
@@ -172,7 +172,7 @@ datasum, nodatasum
         The cost of checksumming of the blocks in memory is much lower than the IO,
         modern CPUs feature hardware support of the checksumming algorithm.
 
-.. _mount-option-degraded:
+.. duplabel:: mount-option-degraded
 
 degraded
         (default: off)
@@ -194,7 +194,7 @@ degraded
         then the constraint of single/data is not satisfied and the filesystem
         cannot be mounted.
 
-.. _mount-option-device:
+.. duplabel:: mount-option-device
 
 device=<devicepath>
         Specify a path to a device that will be scanned for BTRFS filesystem during

@@ -48,7 +48,7 @@ remove [options] <device>|<devid> [<device>|<devid>...] <path>
         fails and cannot be enforced. The filesystem must be converted to
         profile(s) that would allow the removal. This can for example happen when
         going down from 2 devices to 1 and using the RAID1 profile. See the
-        section :ref:`Typical use cases<man-device-typical-use-cases>`.
+        section :docref:`Typical use cases <btrfs-device:man-device-typical-use-cases>`.
 
         The operation can take long as it needs to move all data from the device.
 
@@ -112,7 +112,8 @@ scan [options] [<device> [<device>...]]
         The command can be run repeatedly. Devices that have been already registered
         remain as such. Reloading the kernel module will drop this information. There's
         an alternative way of mounting multiple-device filesystem without the need for
-        prior scanning. See the mount option :ref:`device<mount-option-device>`.
+        prior scanning. See the mount option
+        :docref:`device <btrfs-man5:mount-option-device>`.
 
         ``Options``
 
