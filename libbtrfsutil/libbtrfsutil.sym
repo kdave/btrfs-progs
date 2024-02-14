@@ -16,6 +16,8 @@ global:
 	btrfs_util_destroy_subvolume_iterator;
 	btrfs_util_get_default_subvolume;
 	btrfs_util_get_default_subvolume_fd;
+	btrfs_util_get_label;
+	btrfs_util_get_label_fd;
 	btrfs_util_get_subvolume_read_only;
 	btrfs_util_get_subvolume_read_only_fd;
 	btrfs_util_is_subvolume;

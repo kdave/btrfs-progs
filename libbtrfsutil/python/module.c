@@ -155,6 +155,12 @@ void path_cleanup(struct path_arg *path)
 }
 
 static PyMethodDef btrfsutil_methods[] = {
+	{"get_label", (PyCFunction)filesystem_get_label,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "get_label(path)\n\n"
+	 "Get the filesystem label.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
 	{"sync", (PyCFunction)filesystem_sync,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "sync(path)\n\n"

@@ -479,6 +479,7 @@ everywhere. The following checklist should help to make sure nothing is missing:
 ### API summary
 
 * filesystem
+  * get_label
   * sync
   * wait for sync
 * subvolume

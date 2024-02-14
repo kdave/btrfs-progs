@@ -19,6 +19,31 @@
 
 #include "btrfsutilpy.h"
 
+PyObject *filesystem_get_label(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	char *label;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&:get_label", keywords,
+					 &path_converter, &path))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_get_label(path.path, &label);
+	else
+		err = btrfs_util_get_label_fd(path.fd, &label);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	return PyUnicode_FromString(label);
+}
+
 PyObject *filesystem_sync(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {"path", NULL};
