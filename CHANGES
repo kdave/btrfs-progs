@@ -16,6 +16,22 @@ btrfs-progs-6.7 (2024-01-22)
       * updated documentation
       * new and updated tests
 
+btrfs-progs-6.7.1 (2024-02-14)
+""""""""""""""""""""""""""""""
+   * convert: raid-stripe-tree can be now enabled for the target filesystem
+   * mkfs:
+      * handle lifetime of open file descriptors so it does not trigger udev
+        that could miss to create the UUID symlinks in /dev
+      * update warning when CPU page size does not match sector size
+      * merge features in summary, no more distinction of incompat and runtime
+        to match the semantics of option -O
+   * fi show: fix recognizing raw device mapper paths
+   * other:
+      * CI updates, build images updates
+      * minor cleanups
+      * minor sync with kernel
+      * documentation updates, fix links to labels in included directories
+
 btrfs-progs-6.6 (2023-11-03)
 ----------------------------
    * new global option --dry-run, now implemented for 'subvolume delete'
