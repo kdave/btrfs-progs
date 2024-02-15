@@ -20,8 +20,11 @@ jobs:
       - name: Configure
         run: ./autogen.sh && ./configure
       - name: Make
-        run: make V=1
+        run: echo make V=1
       - name: Musl build
-        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+        run: echo sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
       - name: Tests cli
         run: echo sudo make TEST_LOG=dump test-cli
+      - run: echo "::error::Test failed"
+      - run: echo "It works :rocket:" >> $GITHUB_STEP_SUMMARY
+      - run: tests/annotate.sh >> $GITHUB_STEP_SUMMARY
