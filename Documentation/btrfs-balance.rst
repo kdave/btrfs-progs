@@ -68,7 +68,7 @@ start [options] <path>
                 or *raid6*
 
         --background|--bg
-                run the balance operation asynchronously in the background, uses ``fork(2)`` to
+                run the balance operation asynchronously in the background, uses :manref:`fork(2)` to
                 start the process that calls the kernel ioctl
 
         --enqueue

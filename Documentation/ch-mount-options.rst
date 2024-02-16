@@ -2,7 +2,7 @@ BTRFS SPECIFIC MOUNT OPTIONS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This section describes mount options specific to BTRFS.  For the generic mount
-options please refer to ``mount(8)`` manual page. The options are sorted alphabetically
+options please refer to :manref:`mount(8)` manual page. The options are sorted alphabetically
 (discarding the *no* prefix).
 
 .. note::
@@ -22,7 +22,7 @@ acl, noacl
         (default: on)
 
         Enable/disable support for POSIX Access Control Lists (ACLs).  See the
-        ``acl(5)`` manual page for more information about ACLs.
+        :manref:`acl(5)` manual page for more information about ACLs.
 
         The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
         mount fails if *acl* is requested but the feature is not compiled in.
@@ -147,7 +147,7 @@ datacow, nodatacow
 
         Enable data copy-on-write for newly created files.
         *Nodatacow* implies *nodatasum*, and disables *compression*. All files created
-        under *nodatacow* are also set the NOCOW file attribute (see ``chattr(1)``).
+        under *nodatacow* are also set the NOCOW file attribute (see :manref:`chattr(1)`).
 
         .. note::
                 If *nodatacow* or *nodatasum* are enabled, compression is disabled.
@@ -162,7 +162,7 @@ datasum, nodatasum
         Enable data checksumming for newly created files.
         *Datasum* implies *datacow*, i.e. the normal mode of operation. All files created
         under *nodatasum* inherit the "no checksums" property, however there's no
-        corresponding file attribute (see ``chattr(1)``).
+        corresponding file attribute (see :manref:`chattr(1)`).
 
         .. note::
                 If *nodatacow* or *nodatasum* are enabled, compression is disabled.
@@ -468,7 +468,7 @@ user_subvol_rm_allowed
                 of the source subvolume, the subvolume deletion has been restricted for that
                 reason. The subvolume creation has been restricted but this mount option is
                 still required. This is a usability issue.
-                Since 4.18, the ``rmdir(2)`` syscall can delete an empty subvolume just like an
+                Since 4.18, the :manref:`rmdir(2)` syscall can delete an empty subvolume just like an
                 ordinary directory. Whether this is possible can be detected at runtime, see
                 *rmdir_subvol* feature in *FILESYSTEM FEATURES*.
 
@@ -496,7 +496,7 @@ inode_cache, noinode_cache
 NOTES ON GENERIC MOUNT OPTIONS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some of the general mount options from ``mount(8)`` that affect BTRFS and are
+Some of the general mount options from :manref:`mount(8)` that affect BTRFS and are
 worth mentioning.
 
 noatime

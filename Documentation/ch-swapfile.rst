@@ -1,6 +1,6 @@
 A swapfile, when active, is a file-backed swap area.  It is supported since kernel 5.0.
-Use ``swapon(8)`` to activate it, until then (respectively again after deactivating it
-with ``swapoff(8)``) it's just a normal file (with NODATACOW set), for which the special
+Use :manref:`swapon(8)` to activate it, until then (respectively again after deactivating it
+with :manref:`swapoff(8)`) it's just a normal file (with NODATACOW set), for which the special
 restrictions for active swapfiles don't apply.
 
 There are some limitations of the implementation in BTRFS and Linux swap

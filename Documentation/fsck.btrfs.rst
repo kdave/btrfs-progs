@@ -11,7 +11,7 @@ DESCRIPTION
 
 **fsck.btrfs** is a type of utility that should exist for any filesystem and is
 called during system setup when the corresponding ``/etc/fstab`` entries
-contain non-zero value for *fs_passno*, see ``fstab(5)`` for more.
+contain non-zero value for *fs_passno*, see :manref:`fstab(5)` for more.
 
 Traditional filesystems need to run their respective fsck utility in case the
 filesystem was not unmounted cleanly and the log needs to be replayed before
@@ -48,5 +48,5 @@ SEE ALSO
 --------
 
 :doc:`btrfs`,
-``fsck(8)``,
-``fstab(5)``
+:manref:`fsck(8)`,
+:manref:`fstab(5)`

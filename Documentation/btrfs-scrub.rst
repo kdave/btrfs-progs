@@ -100,13 +100,13 @@ start [-BdrRf] <path>|<device>
         ``Deprecated options``
 
         -c <ioprio_class>
-                set IO priority class (see ``ionice(1)`` manual page) if the IO
+                set IO priority class (see :manref:`ionice(1)` manual page) if the IO
                 scheduler configured for the device supports ionice. This is
                 only supported by BFQ or Kyber but is *not* supported by
                 mq-deadline. Please read the section about
                 :docref:`IO limiting <btrfs-scrub:scrub-io-limiting>`.
         -n <ioprio_classdata>
-                set IO priority classdata (see ``ionice(1)`` manpage)
+                set IO priority classdata (see :manref:`ionice(1)` manpage)
         -q
                 (deprecated) alias for global *-q* option
 

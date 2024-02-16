@@ -206,7 +206,7 @@ mkswapfile [-s size] file
         activated swapfile cannot be balanced.
 
         Swapfile creation can be achieved by standalone commands too. Activation
-        needs to be done by command ``swapon(8)``. See also command
+        needs to be done by command :manref:`swapon(8)`. See also command
         :command:`btrfs inspect-internal map-swapfile`
         and the :doc:`Swapfile feature<Swapfile>` description.
 
@@ -252,7 +252,7 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
         can expand the partition before enlarging the filesystem and shrink the
         partition after reducing the size of the filesystem.  This can done using
-        ``fdisk(8)`` or ``parted(8)`` to delete the existing partition and recreate
+        :manref:`fdisk(8)` or :manref:`parted(8)` to delete the existing partition and recreate
         it with the new desired size.  When recreating the partition make sure to use
         the same starting partition offset as before.
 
@@ -301,7 +301,7 @@ show [options] [<path>|<uuid>|<device>|<label>]
                 show sizes in TiB, or TB with --si
 
 sync <path>
-        Force a sync of the filesystem at *path*, similar to the ``sync(1)`` command. In
+        Force a sync of the filesystem at *path*, similar to the :manref:`sync(1)` command. In
         addition, it starts cleaning of deleted subvolumes. To wait for the subvolume
         deletion to complete use the :command:`btrfs subvolume sync` command.
 

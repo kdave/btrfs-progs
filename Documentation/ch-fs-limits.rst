@@ -9,7 +9,7 @@ maximum symlink target length
         it's 4095 due to the system limit PATH_MAX
 
         The symlink target may not be a valid path, i.e. the path name components
-        can exceed the limits (NAME_MAX), there's no content validation at ``symlink(3)``
+        can exceed the limits (NAME_MAX), there's no content validation at :manref:`symlink(3)`
         creation.
 
 maximum number of inodes

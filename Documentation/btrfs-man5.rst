@@ -149,7 +149,7 @@ RAID56
 rmdir_subvol
         (since: 4.18)
 
-        indicate that ``rmdir(2)`` syscall can delete an empty subvolume just like an
+        indicate that :manref:`rmdir(2)` syscall can delete an empty subvolume just like an
         ordinary directory. Note that this feature only depends on the kernel version.
 
 skinny_metadata
@@ -440,11 +440,11 @@ STORAGE MODEL, HARDWARE CONSIDERATIONS
 SEE ALSO
 --------
 
-``acl(5)``,
+:manref:`acl(5)`,
 :doc:`btrfs`,
-``chattr(1)``,
-``fstrim(8)``,
-``ioctl(2)``,
+:manref:`chattr(1)`,
+:manref:`fstrim(8)`,
+:manref:`ioctl(2)`,
 :doc:`mkfs.btrfs`,
-``mount(8)``,
-``swapon(8)``
+:manref:`mount(8)`,
+:manref:`swapon(8)`

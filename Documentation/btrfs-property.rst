@@ -14,8 +14,8 @@ The object can be an inode (file or directory), subvolume or the whole
 filesystem.
 
 **btrfs property** provides an unified and user-friendly method to tune different
-btrfs properties instead of using the traditional method like ``chattr(1)`` or
-``lsattr(1)``.
+btrfs properties instead of using the traditional method like :manref:`chattr(1)` or
+:manref:`lsattr(1)`.
 
 Object types
 ^^^^^^^^^^^^
@@ -125,5 +125,5 @@ SEE ALSO
 --------
 
 :doc:`mkfs.btrfs`,
-``lsattr(1)``,
-``chattr(1)``
+:manref:`lsattr(1)`,
+:manref:`chattr(1)`

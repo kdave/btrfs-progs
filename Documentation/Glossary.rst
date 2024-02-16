@@ -142,7 +142,7 @@ fallocate
 	Command line tool in util-linux, and a syscall, that reserves space in
 	the filesystem for a file, without actually writing any file data to
 	the filesystem. First data write will turn the preallocated extents
-        into regular ones. See *fallocate(1)* and *fallocate(2)* manual pages
+        into regular ones. See :manref:`fallocate(1)` and :manref:`fallocate(2)` manual pages
         for more details.
 
 filefrag
@@ -160,12 +160,12 @@ free space cache
 
 fsync
 	On Unix and Unix-like operating systems (of which Linux is the latter),
-	the ``fsync()`` system call causes all buffered file
+	the :manref:`fsync(2)` system call causes all buffered file
 	descriptor related data changes to be flushed to the underlying block
 	device. When a file is modified on a modern operating system the
 	changes are generally not written to the disk immediately but rather
 	those changes are buffered in memory for reasons of performance,
-	calling ``fsync()`` causes any in-memory changes to be written
+	calling :manref:`fsync(2)` causes any in-memory changes to be written
 	to disk.
 
 generation

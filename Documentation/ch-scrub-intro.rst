@@ -29,12 +29,12 @@ Bandwidth and IO limiting
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
-   The ``ionice(1)`` may not be generally supported by all IO schedulers and
+   The :manref:`ionice(1)` may not be generally supported by all IO schedulers and
    the options to :command:`btrfs scrub start` may not work as expected.
 
 In the past when the `CFQ IO scheduler
 <https://en.wikipedia.org/wiki/Completely_fair_queueing>`__ was generally used
-the ``ionice(1)`` syscalls set the priority to *idle* so the IO would not
+the :manref:`ionice(1)` syscalls set the priority to *idle* so the IO would not
 interfere with regular IO. Since the kernel 5.0 the CFQ is not available.
 
 The IO scheduler known to support that is `BFQ

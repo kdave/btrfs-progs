@@ -311,4 +311,4 @@ SEE ALSO
 :doc:`btrfs-quota`,
 :doc:`btrfs-send`,
 :doc:`mkfs.btrfs`,
-``mount(8)``
+:manref:`mount(8)`

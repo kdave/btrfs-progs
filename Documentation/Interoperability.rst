@@ -13,8 +13,7 @@ data. This can be used to limit bandwidth or for accounting. The cgroups can
 be configured directly or e.g. via systemd directives *IOAccounting*,
 *IOWeight* etc.
 
-See also:
-https://www.man7.org/linux/man-pages/man5/systemd.resource-control.5.html
+See also :manref:`systemd.resource-control(5)`.
 
 .. _interop-fsverity:
 
@@ -83,8 +82,7 @@ Example of server side export:
    /mnt/data/subvolume1      192.168.1.2/24(fsid=12345,rw,sync)
    /mnt/data/subvolume2      192.168.1.2/24(fsid=23456,rw,sync)
 
-See also:
-https://www.man7.org/linux/man-pages/man5/exports.5.html
+See also :manref:`exports(5)`.
 
 .. _interop-samba:
 

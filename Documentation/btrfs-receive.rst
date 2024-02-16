@@ -36,7 +36,7 @@ A subvolume is made read-only after the receiving process finishes successfully 
         read the stream from *FILE* instead of stdin,
 
 -C|--chroot
-        confine the process to *path* using ``chroot(1)``
+        confine the process to *path* using :manref:`chroot(1)`
 
 -e
         terminate after receiving an *end cmd* marker in the stream.

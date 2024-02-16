@@ -23,9 +23,9 @@ add [-Kf] <device> [<device>...] <path>
         Add device(s) to the filesystem identified by *path*.
 
         If applicable, a whole device discard (TRIM) operation is performed prior to
-        adding the device. A device with existing filesystem detected by ``blkid(8)``
+        adding the device. A device with existing filesystem detected by :manref:`blkid(8)`
         will prevent device addition and has to be forced. Alternatively the filesystem
-        can be wiped from the device using e.g. the ``wipefs(8)`` tool.
+        can be wiped from the device using e.g. the :manref:`wipefs(8)` tool.
 
         The operation is instant and does not affect existing data. The operation merely
         adds the device to the filesystem structures and creates some block groups

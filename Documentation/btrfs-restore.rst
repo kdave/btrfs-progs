@@ -71,7 +71,7 @@ OPTIONS
         dry run (only list files that would be recovered)
 
 --path-regex <regex>
-        restore only filenames matching a regular expression (``regex(7)``)
+        restore only filenames matching a regular expression (:manref:`regex(7)`)
         with a mandatory format
 
         ``^/(|home(|/username(|/Desktop(|/.*))))$``

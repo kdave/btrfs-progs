@@ -897,4 +897,4 @@ AVAILABILITY
 
 SEE ALSO
 --------
-ioctl(2)
+:manref:`ioctl(2)`

@@ -105,7 +105,7 @@ OPTIONS
 -U <UUID>
         Change fsid to *UUID* in all metadata blocks.
 
-        The *UUID* should be a 36 bytes string in ``printf(3)`` format
+        The *UUID* should be a 36 bytes string in :manref:`printf(3)` format
         ``%08x-%04x-%04x-%04x-%012x``.
         If there is a previous unfinished fsid change, it will continue only if the
         *UUID* matches the unfinished one or if you use the option *-u*.

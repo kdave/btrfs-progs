@@ -616,4 +616,4 @@ SEE ALSO
 :doc:`btrfs-man5`,
 :doc:`btrfs`,
 :doc:`btrfs-balance`,
-``wipefs(8)``
+:manref:`wipefs(8)`
