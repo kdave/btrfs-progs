@@ -15,6 +15,28 @@ Sorted by amount of contributions:
 The following contributed in the past (sorted alphabetically):
 Fujitsu, Fusion-IO, Intel, Linux Foundation, Red Hat, STRATO AG.
 
+.. list-table::
+   :header-rows: 0
+
+   * - .. figure:: plot-contribs.svg
+          :scale: 33%
+          :alt: Contributors
+          :target: `contributors-contribs`_
+
+          Contributors
+     - .. figure:: plot-sloc-lines.svg
+          :scale: 33%
+          :alt: Lines
+          :target: `contributors-lines`_
+
+          Lines
+     - .. figure:: plot-patches.svg
+          :scale: 33%
+          :alt: Patches
+          :target: `contributors-patches`_
+
+          Patches
+
 Statistics for 6.x series
 -------------------------
 
@@ -148,3 +170,27 @@ Statistics for 2.6.x series
    "2.6.37", "17", "44781", "59491",  "83", "+3104 -701"
    "2.6.38", "23", "46573", "61980",  "90", "+3472 -983"
    "2.6.39", "28", "47206", "62859", "102", "+2115 -1236"
+
+Graphs
+------
+
+.. _contributors-contribs:
+
+Contributors
+^^^^^^^^^^^^
+
+.. image:: plot-contribs.svg
+
+.. _contributors-lines:
+
+Lines of code, raw lines
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: plot-sloc-lines.svg
+
+.. _contributors-patches:
+
+Patches
+^^^^^^^
+
+.. image:: plot-patches.svg
