@@ -51,7 +51,7 @@ belong to the same accounting group.
 
 .. code-block:: bash
 
-   $ systemd-run -p "IOBandwidthReadMax=/dev/sdx 10M" btrfs scrub start -B /
+   $ systemd-run -p "IOReadBandwidthMax=/dev/sdx 10M" btrfs scrub start -B /
 
 Since linux 5.14 it's possible to set the per-device bandwidth limits in a
 BTRFS-specific way using files :file:`/sys/fs/btrfs/FSID/devinfo/DEVID/scrub_speed_max`.
