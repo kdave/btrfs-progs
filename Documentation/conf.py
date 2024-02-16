@@ -148,6 +148,26 @@ class DupLabelDirective(Directive):
         set_source_info(self, target_node)
         return [target_node]
 
+# Manual page reference or link to man7.org
+# Syntax: :manref:`page(1)`
+# Backends: html, man
+# - format is strict
+# - html link target is not validated
+def role_manref(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    env = inliner.document.settings.env
+    name, number = text.split('(', 1)
+    number = number.split(')')[0]
+
+    try:
+        ref_node = nodes.reference(text, f"{name}({number})",
+                       refuri=f"https://man7.org/linux/man-pages/man{number}/{name}.{number}.html")
+
+    except Exception as e:
+        inliner.reporter.warning(f"Error creating manref role: {str(e)}", line=lineno)
+        return [], []
+    return [ref_node], []
+
 def setup(app):
     app.add_role('docref', role_docref)
+    app.add_role('manref', role_manref)
     app.add_directive('duplabel', DupLabelDirective)
