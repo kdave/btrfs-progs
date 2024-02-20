@@ -1150,10 +1150,8 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		struct stat st;
 		int defrag_err = 0;
 
-		fd = btrfs_open_fd2(argv[i], false, defrag_open_mode == O_RDWR, false);
+		fd = btrfs_open_fd2(argv[i], true, defrag_open_mode == O_RDWR, false);
 		if (fd < 0) {
-			errno = -fd;
-			error("cannot open %s: %m", argv[i]);
 			ret = fd;
 			goto next;
 		}

@@ -179,10 +179,8 @@ static int prop_compression(enum prop_object_type type,
 	char *xattr_name = NULL;
 	int open_flags = value ? O_RDWR : O_RDONLY;
 
-	fd = btrfs_open_fd2(object, false, open_flags == O_RDWR, false);
+	fd = btrfs_open_fd2(object, true, open_flags == O_RDWR, false);
 	if (fd < 0) {
-		errno = -fd;
-		error("failed to open %s: %m", object);
 		ret = fd;
 		goto out;
 	}
