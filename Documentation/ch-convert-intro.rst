@@ -33,6 +33,13 @@ have a supported data block size (i.e. the same that would be valid for
 :command:`mkfs.btrfs`). This is typically the system page size (4KiB on x86_64
 machines).
 
+.. note::
+
+   Always consider if a mkfs and file copy would not be a better option than
+   the in-place conversion given what was said above. The conversion depends on
+   3rd party libraries and the other filesystems could still evolve and add new
+   features. Not all combinations are covered or tested.
+
 **BEFORE YOU START**
 
 The source filesystem must be clean, e.g. no journal to replay or no repairs
