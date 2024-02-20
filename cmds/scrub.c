@@ -1242,7 +1242,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	bool do_background = true;
 	bool do_wait = false;
 	bool do_print = false;
-	int do_quiet = !bconf.verbose; /*Read the global quiet option if set*/
 	bool do_record = true;
 	bool readonly = false;
 	bool do_stats_per_dev = false;
@@ -1284,7 +1283,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			break;
 		case 'q':
 			bconf_be_quiet();
-			do_quiet = !bconf.verbose;
 			break;
 		case 'r':
 			readonly = true;
@@ -1312,12 +1310,11 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		return 1;
 
 	spc.progress = NULL;
-	if (do_quiet && do_print)
+	if (bconf.verbose == BTRFS_BCONF_QUIET && do_print)
 		do_print = false;
 
 	if (mkdir_p(datafile)) {
-		warning_on(!do_quiet,
-    "cannot create scrub data file, mkdir %s failed: %m. Status recording disabled",
+		warning("cannot create scrub data file, mkdir %s failed: %m, status recording disabled",
 			datafile);
 		do_record = false;
 	}
@@ -1325,20 +1322,19 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	path = argv[optind];
 
-	fdmnt = btrfs_open_mnt_fd(path, !do_quiet);
+	fdmnt = btrfs_open_mnt_fd(path, true);
 	if (fdmnt < 0)
 		return 1;
 
 	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
 		errno = -ret;
-		error_on(!do_quiet,
-			"getting dev info for scrub failed: %m");
+		error("getting dev info for scrub failed: %m");
 		err = 1;
 		goto out;
 	}
 	if (!fi_args.num_devices) {
-		error_on(!do_quiet, "no devices found");
+		error("no devices found");
 		err = 1;
 		goto out;
 	}
@@ -1347,12 +1343,12 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	fdres = scrub_open_file_r(SCRUB_DATA_FILE, fsid);
 	if (fdres < 0 && fdres != -ENOENT) {
 		errno = -fdres;
-		warning_on(!do_quiet, "failed to open status file: %m");
+		warning("failed to open status file: %m");
 	} else if (fdres >= 0) {
-		past_scrubs = scrub_read_file(fdres, !do_quiet);
+		past_scrubs = scrub_read_file(fdres, 1);
 		if (IS_ERR(past_scrubs)) {
 			errno = -PTR_ERR(past_scrubs);
-			warning_on(!do_quiet, "failed to read status file: %m");
+			warning("failed to read status file: %m");
 		}
 		close(fdres);
 	}
@@ -1376,8 +1372,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	 * single devices, there is no reason to prevent this.
 	 */
 	if (!force && is_scrub_running_on_fs(&fi_args, di_args, past_scrubs)) {
-		error_on(!do_quiet,
-			"Scrub is already running.\n"
+		error(  "Scrub is already running.\n"
 			"To cancel use 'btrfs scrub cancel %s'.\n"
 			"To see the status use 'btrfs scrub status [-d] %s'",
 			path, path);
@@ -1390,7 +1385,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	spc.progress = calloc(fi_args.num_devices * 2, sizeof(*spc.progress));
 
 	if (!t_devs || !sp || !spc.progress) {
-		error_on(!do_quiet, "scrub failed: %m");
+		error("scrub failed: %m");
 		err = 1;
 		goto out;
 	}
@@ -1400,7 +1395,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		ret = pthread_mutex_init(&sp[i].progress_mutex, NULL);
 		if (ret) {
 			errno = ret;
-			error_on(!do_quiet, "pthread_mutex_init failed: %m");
+			error("pthread_mutex_init failed: %m");
 			err = 1;
 			goto out;
 		}
@@ -1468,8 +1463,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	if (ret != -1)
 		ret = listen(prg_fd, 100);
 	if (ret == -1) {
-		warning_on(!do_quiet,
-   "failed to open the progress status socket at %s: %m. Progress cannot be queried",
+		warning("failed to open the progress status socket at %s: %m, progress cannot be queried",
 			sock_path[0] ? sock_path :
 			SCRUB_PROGRESS_SOCKET_PATH);
 		if (prg_fd != -1) {
@@ -1486,8 +1480,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 					   fi_args.num_devices);
 		if (ret) {
 			errno = -ret;
-			warning_on(!do_quiet,
-   "failed to write the progress status file: %m. Status recording disabled");
+			warning("failed to write the progress status file: %m, status recording disabled");
 			do_record = false;
 		}
 	}
@@ -1495,7 +1488,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	if (do_background) {
 		pid = fork();
 		if (pid == -1) {
-			error_on(!do_quiet, "cannot scrub, fork failed: %m");
+			error("cannot scrub, fork failed: %m");
 			err = 1;
 			goto out;
 		}
@@ -1513,14 +1506,13 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			}
 			ret = wait(&stat);
 			if (ret != pid) {
-				error_on(!do_quiet, "wait failed (ret=%d): %m",
-					ret);
+				error("wait failed (ret=%d): %m", ret);
 				err = 1;
 				goto out;
 			}
 			if (!WIFEXITED(stat) || WEXITSTATUS(stat)) {
-				error_on(!do_quiet, "scrub process failed");
 				err = WIFEXITED(stat) ? WEXITSTATUS(stat) : -1;
+				error("scrub process failed with error %d", err);
 				goto out;
 			}
 			err = 0;
@@ -1704,12 +1696,11 @@ out:
 	if (nothing_to_resume)
 		return 2;
 	if (e_uncorrectable) {
-		error_on(!do_quiet, "there are uncorrectable errors");
+		error("there are %d uncorrectable errors", e_uncorrectable);
 		return 3;
 	}
 	if (e_correctable)
-		warning_on(!do_quiet,
-			"errors detected during scrubbing, corrected");
+		warning("errors detected during scrubbing, %d corrected", e_correctable);
 
 	return 0;
 }
