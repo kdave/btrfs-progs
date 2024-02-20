@@ -1,7 +1,8 @@
 A BTRFS subvolume is a part of filesystem with its own independent
 file/directory hierarchy and inode number namespace. Subvolumes can share file
 extents. A snapshot is also subvolume, but with a given initial content of the
-original subvolume. A subvolume has always inode number 256.
+original subvolume. A subvolume has always inode number 256 (see more in
+:docref:`Inode numbers <Subvolumes:subvolume-inode-numbers>`).
 
 .. note::
    A subvolume in BTRFS is not like an LVM logical volume, which is block-level
@@ -15,8 +16,8 @@ changed.
 
 A subvolume in BTRFS can be accessed in two ways:
 
-* like any other directory that is accessible to the user
-* like a separately mounted filesystem (options *subvol* or *subvolid*)
+- like any other directory that is accessible to the user
+- like a separately mounted filesystem (options *subvol* or *subvolid*)
 
 In the latter case the parent directory is not visible and accessible. This is
 similar to a bind mount, and in fact the subvolume mount does exactly that.
@@ -143,13 +144,27 @@ the 4th column:
    27 21 0:19 /subv1 /mnt rw,relatime - btrfs /dev/sda rw,space_cache
               ^^^^^^
 
+.. duplabel:: subvolume-inode-numbers
+
 Inode numbers
 -------------
 
-A proper subvolume has always inode number 256. If a subvolume is nested and
-then a snapshot is taken, then the cloned directory entry representing the
-subvolume becomes empty and the inode has number 2. All other files and
-directories in the target snapshot preserve their original inode numbers.
+A directory representing a subvolume has always inode number 256 (sometimes
+also called a root of the subvolume):
+
+.. code-block:: none
+
+   $ ls -lis
+   total 0
+   389111 0 drwxr-xr-x 1 user users 0 Jan 20 12:13 dir
+   389110 0 -rw-r--r-- 1 user users 0 Jan 20 12:13 file
+      256 0 drwxr-xr-x 1 user users 0 Jan 20 12:13 snap1
+      256 0 drwxr-xr-x 1 user users 0 Jan 20 12:13 subv1
+
+If a subvolume is nested and then a snapshot is taken, then the cloned
+directory entry representing the subvolume becomes empty and the inode has
+number 2. All other files and directories in the target snapshot preserve their
+original inode numbers.
 
 .. note::
    Inode number is not a filesystem-wide unique identifier, some applications
