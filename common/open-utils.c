@@ -188,29 +188,29 @@ out:
  *
  * Return the file descriptor or -errno.
  */
-int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_only)
+int btrfs_open_fd2(const char *path, bool read_write, bool dir_only)
 {
 	struct statfs stfs;
 	struct stat st;
 	int ret;
 
 	if (stat(path, &st) < 0) {
-		error_on(verbose, "cannot access '%s': %m", path);
+		error("cannot access '%s': %m", path);
 		return -errno;
 	}
 
 	if (dir_only && !S_ISDIR(st.st_mode)) {
-		error_on(verbose, "not a directory: %s", path);
+		error("not a directory: %s", path);
 		return -ENOTDIR;
 	}
 
 	if (statfs(path, &stfs) < 0) {
-		error_on(verbose, "cannot access '%s': %m", path);
+		error("cannot access '%s': %m", path);
 		return -errno;
 	}
 
 	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
-		error_on(verbose, "not a btrfs filesystem: %s", path);
+		error("not a btrfs filesystem: %s", path);
 		return -EINVAL;
 	}
 
@@ -220,7 +220,7 @@ int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_onl
 		ret = open(path, O_RDWR);
 
 	if (ret < 0) {
-		error_on(verbose, "cannot access '%s': %m", path);
+		error("cannot access '%s': %m", path);
 		ret = -errno;
 	}
 
@@ -229,12 +229,12 @@ int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_onl
 
 int btrfs_open_file_or_dir_fd(const char *path)
 {
-	return btrfs_open_fd2(path, true, true, false);
+	return btrfs_open_fd2(path, true, false);
 }
 
 int btrfs_open_dir_fd(const char *path)
 {
-	return btrfs_open_fd2(path, true, true, true);
+	return btrfs_open_fd2(path, true, true);
 }
 
 /*
@@ -254,7 +254,7 @@ int btrfs_open_mnt_fd(const char *path)
 			error("'%s' is not a mounted btrfs device", path);
 			return -EINVAL;
 		}
-		ret = btrfs_open_fd2(mp, true, true, true);
+		ret = btrfs_open_fd2(mp, true, true);
 	} else {
 		ret = btrfs_open_dir_fd(path);
 	}
