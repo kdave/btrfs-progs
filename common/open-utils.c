@@ -243,7 +243,7 @@ int btrfs_open_dir_fd(const char *path)
  *
  * Return the file descriptor or -errno.
  */
-int btrfs_open_mnt_fd(const char *path, bool verbose)
+int btrfs_open_mnt_fd(const char *path)
 {
 	char mp[PATH_MAX];
 	int ret;
@@ -251,10 +251,10 @@ int btrfs_open_mnt_fd(const char *path, bool verbose)
 	if (path_is_block_device(path)) {
 		ret = get_btrfs_mount(path, mp, sizeof(mp));
 		if (ret < 0) {
-			error_on(verbose, "'%s' is not a mounted btrfs device", path);
+			error("'%s' is not a mounted btrfs device", path);
 			return -EINVAL;
 		}
-		ret = btrfs_open_fd2(mp, verbose, true, true);
+		ret = btrfs_open_fd2(mp, true, true, true);
 	} else {
 		ret = btrfs_open_dir_fd(path);
 	}

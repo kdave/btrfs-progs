@@ -1322,7 +1322,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	path = argv[optind];
 
-	fdmnt = btrfs_open_mnt_fd(path, true);
+	fdmnt = btrfs_open_mnt_fd(path);
 	if (fdmnt < 0)
 		return 1;
 
@@ -1749,7 +1749,7 @@ static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = btrfs_open_mnt_fd(path, true);
+	fdmnt = btrfs_open_mnt_fd(path);
 	if (fdmnt < 0) {
 		ret = 1;
 		goto out;
@@ -1852,7 +1852,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = btrfs_open_mnt_fd(path, true);
+	fdmnt = btrfs_open_mnt_fd(path);
 	if (fdmnt < 0)
 		return 1;
 
