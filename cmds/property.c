@@ -179,7 +179,7 @@ static int prop_compression(enum prop_object_type type,
 	char *xattr_name = NULL;
 	int open_flags = value ? O_RDWR : O_RDONLY;
 
-	fd = btrfs_open_fd2(object, open_flags == O_RDWR, false);
+	fd = btrfs_open_path(object, open_flags == O_RDWR, false);
 	if (fd < 0) {
 		ret = fd;
 		goto out;

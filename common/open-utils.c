@@ -188,7 +188,7 @@ out:
  *
  * Return the file descriptor or -errno.
  */
-int btrfs_open_fd2(const char *path, bool read_write, bool dir_only)
+int btrfs_open_path(const char *path, bool read_write, bool dir_only)
 {
 	struct statfs stfs;
 	struct stat st;
@@ -229,13 +229,13 @@ int btrfs_open_fd2(const char *path, bool read_write, bool dir_only)
 
 int btrfs_open_file_or_dir(const char *path)
 {
-	return btrfs_open_fd2(path, true, false);
+	return btrfs_open_path(path, true, false);
 }
 
 /* Open the path for write and check that it's a directory. */
 int btrfs_open_dir(const char *path)
 {
-	return btrfs_open_fd2(path, true, true);
+	return btrfs_open_path(path, true, true);
 }
 
 /*

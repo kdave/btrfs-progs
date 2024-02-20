@@ -456,7 +456,7 @@ static int du_add_file(const char *filename, int dirfd,
 		ret = sprintf(pathp, "/%s", filename);
 	pathp += ret;
 
-	fd = btrfs_open_fd2(path, false, false);
+	fd = btrfs_open_path(path, false, false);
 	if (fd < 0) {
 		ret = fd;
 		goto out;
