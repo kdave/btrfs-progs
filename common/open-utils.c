@@ -254,7 +254,7 @@ int btrfs_open_mnt_fd(const char *path)
 			error("'%s' is not a mounted btrfs device", path);
 			return -EINVAL;
 		}
-		ret = btrfs_open_fd2(mp, true, true);
+		ret = btrfs_open_dir_fd(mp);
 	} else {
 		ret = btrfs_open_dir_fd(path);
 	}
