@@ -30,7 +30,7 @@ int check_mounted(const char* file);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
 
 int btrfs_open_fd2(const char *path, bool read_write, bool dir_only);
-int btrfs_open_file_or_dir_fd(const char *path);
+int btrfs_open_file_or_dir(const char *path);
 int btrfs_open_dir(const char *path);
 int btrfs_open_mnt(const char *path);
 

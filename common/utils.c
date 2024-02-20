@@ -250,7 +250,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	}
 
 	/* at this point path must not be for a block device */
-	fd = btrfs_open_file_or_dir_fd(path);
+	fd = btrfs_open_file_or_dir(path);
 	if (fd < 0) {
 		ret = fd;
 		goto out;

@@ -1623,7 +1623,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 	}
 
-	fd = btrfs_open_file_or_dir_fd(fullpath);
+	fd = btrfs_open_file_or_dir(fullpath);
 	if (fd < 0) {
 		ret = fd;
 		goto out;
