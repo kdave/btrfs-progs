@@ -458,7 +458,7 @@ static int du_add_file(const char *filename, int dirfd,
 
 	fd = btrfs_open_fd2(path, false, false, false);
 	if (fd < 0) {
-		ret = -errno;
+		ret = fd;
 		goto out;
 	}
 

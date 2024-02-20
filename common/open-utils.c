@@ -185,6 +185,8 @@ out:
 
 /*
  * Open the given path and check if it's a btrfs filesystem.
+ *
+ * Return the file descriptor or -errno.
  */
 int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_only)
 {
@@ -192,24 +194,24 @@ int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_onl
 	struct stat st;
 	int ret;
 
-	if (stat(path, &st) != 0) {
+	if (stat(path, &st) < 0) {
 		error_on(verbose, "cannot access '%s': %m", path);
-		return -1;
+		return -errno;
 	}
 
 	if (dir_only && !S_ISDIR(st.st_mode)) {
 		error_on(verbose, "not a directory: %s", path);
-		return -3;
+		return -ENOTDIR;
 	}
 
-	if (statfs(path, &stfs) != 0) {
+	if (statfs(path, &stfs) < 0) {
 		error_on(verbose, "cannot access '%s': %m", path);
-		return -1;
+		return -errno;
 	}
 
 	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
 		error_on(verbose, "not a btrfs filesystem: %s", path);
-		return -2;
+		return -EINVAL;
 	}
 
 	if (S_ISDIR(st.st_mode) || !read_write)
@@ -219,6 +221,7 @@ int btrfs_open_fd2(const char *path, bool verbose, bool read_write, bool dir_onl
 
 	if (ret < 0) {
 		error_on(verbose, "cannot access '%s': %m", path);
+		ret = -errno;
 	}
 
 	return ret;
@@ -238,7 +241,7 @@ int btrfs_open_dir_fd(const char *path)
  * Given a path, return a file descriptor to the original path name or, if the
  * pathname is a mounted btrfs device, to its mountpoint.
  *
- * On error, return -1, errno should be set.
+ * Return the file descriptor or -errno.
  */
 int btrfs_open_mnt_fd(const char *path, bool verbose)
 {
@@ -249,8 +252,7 @@ int btrfs_open_mnt_fd(const char *path, bool verbose)
 		ret = get_btrfs_mount(path, mp, sizeof(mp));
 		if (ret < 0) {
 			error_on(verbose, "'%s' is not a mounted btrfs device", path);
-			errno = EINVAL;
-			return -1;
+			return -EINVAL;
 		}
 		ret = btrfs_open_fd2(mp, verbose, true, true);
 	} else {

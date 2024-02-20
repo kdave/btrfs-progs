@@ -1625,7 +1625,9 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 
 	fd = btrfs_open_fd2(fullpath, false, true, false);
 	if (fd < 0) {
-		error("can't access '%s'", fullpath);
+		errno = -fd;
+		error("can't access '%s': %m", fullpath);
+		ret = fd;
 		goto out;
 	}
 

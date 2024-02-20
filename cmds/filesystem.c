@@ -1152,8 +1152,9 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 
 		fd = btrfs_open_fd2(argv[i], false, defrag_open_mode == O_RDWR, false);
 		if (fd < 0) {
+			errno = -fd;
 			error("cannot open %s: %m", argv[i]);
-			ret = -errno;
+			ret = fd;
 			goto next;
 		}
 
@@ -1408,7 +1409,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	fd = btrfs_open_dir_fd(path);
 	if (fd < 0) {
 		/* The path is a directory */
-		if (fd == -3) {
+		if (fd == -ENOTDIR) {
 			error(
 		"resize works on mounted filesystems and accepts only\n"
 		"directories as argument. Passing file containing a btrfs image\n"

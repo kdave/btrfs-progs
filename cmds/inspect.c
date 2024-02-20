@@ -1084,6 +1084,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 	fd = btrfs_open_fd2(path, false, true, false);
 	if (fd < 0) {
+		errno = -fd;
 	        error("cannot access '%s': %m", path);
 		return 1;
 	}
