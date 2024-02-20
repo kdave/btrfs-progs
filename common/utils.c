@@ -1345,26 +1345,45 @@ int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue
 		fflush(stdout);
 	}
 
+	/*
+	 * The sysfs file descriptor needs to be reopened and all data read
+	 * before each select().
+	 */
 	while (exclop > 0) {
 		fd_set fds;
 		struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
+		char tmp[1024];
 
+		close(sysfs_fd);
+		sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
+		if (sysfs_fd < 0)
+			return sysfs_fd;
 		FD_ZERO(&fds);
 		FD_SET(sysfs_fd, &fds);
 
+		ret = read(sysfs_fd, tmp, sizeof(tmp));
 		ret = select(sysfs_fd + 1, NULL, NULL, &fds, &tv);
 		if (ret < 0) {
 			ret = -errno;
 			break;
 		}
 		if (ret > 0) {
+			close(sysfs_fd);
+			sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
+			if (sysfs_fd < 0)
+				return sysfs_fd;
+
+			FD_ZERO(&fds);
+			FD_SET(sysfs_fd, &fds);
+
+			ret = read(sysfs_fd, tmp, sizeof(tmp));
 			/*
 			 * Notified before the timeout, check again before
 			 * returning. In case there are more operations
 			 * waiting, we want to reduce the chances to race so
 			 * reuse the remaining time to randomize the order.
 			 */
-			tv.tv_sec /= 2;
+			tv.tv_sec = (tv.tv_sec % 10) + 1;
 			ret = select(sysfs_fd + 1, NULL, NULL, &fds, &tv);
 			exclop = get_fs_exclop(fd);
 			if (exclop <= 0)
