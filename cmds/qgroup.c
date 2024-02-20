@@ -1785,7 +1785,7 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 		error("bad relation requested: %s", path);
 		return 1;
 	}
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -1843,7 +1843,7 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 	}
 	path = argv[optind + 1];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -2028,7 +2028,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 		return 1;
 
 	path = argv[optind];
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0) {
 		free(filter_set);
 		free(comparer_set);
@@ -2143,7 +2143,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	} else
 		usage(cmd, 1);
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -2185,7 +2185,7 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 

@@ -1235,7 +1235,7 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 		struct array chunkinfos = { 0 };
 		struct array devinfos = { 0 };
 
-		fd = btrfs_open_dir_fd(argv[i]);
+		fd = btrfs_open_dir(argv[i]);
 		if (fd < 0) {
 			ret = 1;
 			goto out;

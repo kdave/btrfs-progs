@@ -158,7 +158,7 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -1404,7 +1404,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 
 	cancel = (strcmp("cancel", amount) == 0);
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0) {
 		/* The path is a directory */
 		if (fd == -ENOTDIR) {

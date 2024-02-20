@@ -223,7 +223,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		}
 	}
 
-	fddst = btrfs_open_dir_fd(dstdir);
+	fddst = btrfs_open_dir(dstdir);
 	if (fddst < 0) {
 		ret = fddst;
 		goto out;
@@ -497,7 +497,7 @@ again:
 	if (subvolid > 0)
 		dname = dupvname;
 
-	fd = btrfs_open_dir_fd(dname);
+	fd = btrfs_open_dir(dname);
 	if (fd < 0) {
 		ret = 1;
 		goto out;
@@ -767,11 +767,11 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		goto out;
 	}
 
-	fddst = btrfs_open_dir_fd(dstdir);
+	fddst = btrfs_open_dir(dstdir);
 	if (fddst < 0)
 		goto out;
 
-	fd = btrfs_open_dir_fd(subvol);
+	fd = btrfs_open_dir(subvol);
 	if (fd < 0)
 		goto out;
 
@@ -841,7 +841,7 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_dir_fd(argv[1]);
+	fd = btrfs_open_dir(argv[1]);
 	if (fd < 0)
 		return 1;
 
@@ -1380,7 +1380,7 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 		return 1;
 	}
 
-	fd = btrfs_open_dir_fd(subvol);
+	fd = btrfs_open_dir(subvol);
 	if (fd < 0)
 		return 1;
 
@@ -1817,7 +1817,7 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_dir_fd(argv[optind]);
+	fd = btrfs_open_dir(argv[optind]);
 	if (fd < 0) {
 		ret = 1;
 		goto out;

@@ -128,7 +128,7 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 	if (check_argc_exact(argc - optind, 2))
 		return 1;
 
-	fd = btrfs_open_dir_fd(argv[optind + 1]);
+	fd = btrfs_open_dir(argv[optind + 1]);
 	if (fd < 0)
 		return 1;
 
@@ -212,7 +212,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	loi.flags = flags;
 	loi.inodes = ptr_to_u64(inodes);
 
-	fd = btrfs_open_dir_fd(argv[optind + 1]);
+	fd = btrfs_open_dir(argv[optind + 1]);
 	if (fd < 0) {
 		ret = 12;
 		goto out;
@@ -293,7 +293,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 				strncpy(mount_path, mounted, PATH_MAX);
 				free(mounted);
 
-				path_fd = btrfs_open_dir_fd(mount_path);
+				path_fd = btrfs_open_dir(mount_path);
 				if (path_fd < 0) {
 					ret = -ENOENT;
 					goto out;
@@ -334,7 +334,7 @@ static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
 	if (check_argc_exact(argc - optind, 2))
 		return 1;
 
-	fd = btrfs_open_dir_fd(argv[optind + 1]);
+	fd = btrfs_open_dir(argv[optind + 1]);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;
@@ -676,7 +676,7 @@ static int cmd_inspect_min_dev_size(const struct cmd_struct *cmd,
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	fd = btrfs_open_dir_fd(argv[optind]);
+	fd = btrfs_open_dir(argv[optind]);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;

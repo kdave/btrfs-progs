@@ -300,7 +300,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	int fd;
 	int ret;
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -613,7 +613,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -653,7 +653,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -696,7 +696,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -785,7 +785,7 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 2;
 

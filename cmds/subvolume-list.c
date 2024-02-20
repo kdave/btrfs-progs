@@ -1688,7 +1688,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 
 	subvol = argv[optind];
-	fd = btrfs_open_dir_fd(subvol);
+	fd = btrfs_open_dir(subvol);
 	if (fd < 0) {
 		ret = -1;
 		error("can't access '%s'", subvol);

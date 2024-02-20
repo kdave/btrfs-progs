@@ -393,7 +393,7 @@ static int cmd_replace_status(const struct cmd_struct *cmd,
 		return 1;
 
 	path = argv[optind];
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -558,7 +558,7 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 		return 1;
 
 	path = argv[optind];
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 

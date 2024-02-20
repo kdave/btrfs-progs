@@ -232,7 +232,8 @@ int btrfs_open_file_or_dir_fd(const char *path)
 	return btrfs_open_fd2(path, true, false);
 }
 
-int btrfs_open_dir_fd(const char *path)
+/* Open the path for write and check that it's a directory. */
+int btrfs_open_dir(const char *path)
 {
 	return btrfs_open_fd2(path, true, true);
 }
@@ -254,9 +255,9 @@ int btrfs_open_mnt_fd(const char *path)
 			error("'%s' is not a mounted btrfs device", path);
 			return -EINVAL;
 		}
-		ret = btrfs_open_dir_fd(mp);
+		ret = btrfs_open_dir(mp);
 	} else {
-		ret = btrfs_open_dir_fd(path);
+		ret = btrfs_open_dir(path);
 	}
 
 	return ret;

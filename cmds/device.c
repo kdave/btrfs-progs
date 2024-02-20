@@ -104,7 +104,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	last_dev = argc - 1;
 	mntpnt = argv[last_dev];
 
-	fdmnt = btrfs_open_dir_fd(mntpnt);
+	fdmnt = btrfs_open_dir(mntpnt);
 	if (fdmnt < 0)
 		return 1;
 
@@ -225,7 +225,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 
 	mntpnt = argv[argc - 1];
 
-	fdmnt = btrfs_open_dir_fd(mntpnt);
+	fdmnt = btrfs_open_dir(mntpnt);
 	if (fdmnt < 0)
 		return 1;
 
@@ -901,7 +901,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 		if (i > 1)
 			pr_verbose(LOG_DEFAULT, "\n");
 
-		fd = btrfs_open_dir_fd(argv[i]);
+		fd = btrfs_open_dir(argv[i]);
 		if (fd < 0) {
 			ret = 1;
 			break;

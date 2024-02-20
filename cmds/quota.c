@@ -45,7 +45,7 @@ static int quota_ctl(int cmd, char *path)
 	memset(&args, 0, sizeof(args));
 	args.cmd = cmd;
 
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
@@ -191,7 +191,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 
 	path = argv[optind];
-	fd = btrfs_open_dir_fd(path);
+	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
 
