@@ -1082,12 +1082,9 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 	path = argv[optind];
 
-	fd = btrfs_open_fd2(path, false, true, false);
-	if (fd < 0) {
-		errno = -fd;
-	        error("cannot access '%s': %m", path);
+	fd = btrfs_open_file_or_dir_fd(path);
+	if (fd < 0)
 		return 1;
-	}
 
 	memset(&args, 0, sizeof(args));
 	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;

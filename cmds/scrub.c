@@ -2059,7 +2059,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 		return 1;
 	}
 
-	fd = btrfs_open_fd2(argv[optind], false, true, false);
+	fd = btrfs_open_file_or_dir_fd(argv[optind]);
 	if (fd < 0)
 		return 1;
 
