@@ -244,7 +244,7 @@ int btrfs_open_dir(const char *path)
  *
  * Return the file descriptor or -errno.
  */
-int btrfs_open_mnt_fd(const char *path)
+int btrfs_open_mnt(const char *path)
 {
 	char mp[PATH_MAX];
 	int ret;

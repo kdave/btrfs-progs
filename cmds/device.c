@@ -752,7 +752,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 
 	dev_path = argv[optind];
 
-	fdmnt = btrfs_open_mnt_fd(dev_path);
+	fdmnt = btrfs_open_mnt(dev_path);
 	if (fdmnt < 0)
 		return 1;
 

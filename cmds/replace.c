@@ -183,7 +183,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		return 1;
 	path = argv[optind + 2];
 
-	fdmnt = btrfs_open_mnt_fd(path);
+	fdmnt = btrfs_open_mnt(path);
 	if (fdmnt < 0)
 		goto leave_with_error;
 
