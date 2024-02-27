@@ -281,13 +281,6 @@ static int cmd_subvolume_create(const struct cmd_struct *cmd, int argc, char **a
 			break;
 
 		switch (c) {
-		case 'c':
-			ret = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
-			if (ret) {
-				retval = ret;
-				goto out;
-			}
-			break;
 		case 'i':
 			ret = btrfs_qgroup_inherit_add_group(&inherit, optarg);
 			if (ret) {
@@ -685,18 +678,11 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	memset(&args, 0, sizeof(args));
 	optind = 0;
 	while (1) {
-		int c = getopt(argc, argv, "c:i:r");
+		int c = getopt(argc, argv, "i:r");
 		if (c < 0)
 			break;
 
 		switch (c) {
-		case 'c':
-			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
-			if (res) {
-				retval = res;
-				goto out;
-			}
-			break;
 		case 'i':
 			res = btrfs_qgroup_inherit_add_group(&inherit, optarg);
 			if (res) {
@@ -706,13 +692,6 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 			break;
 		case 'r':
 			readonly = true;
-			break;
-		case 'x':
-			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 1);
-			if (res) {
-				retval = res;
-				goto out;
-			}
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
