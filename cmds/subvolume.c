@@ -229,7 +229,6 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		goto out;
 	}
 
-	pr_verbose(LOG_DEFAULT, "Create subvolume '%s/%s'\n", dstdir, newname);
 	if (inherit) {
 		struct btrfs_ioctl_vol_args_v2	args;
 
@@ -253,6 +252,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		error("cannot create subvolume: %m");
 		goto out;
 	}
+	pr_verbose(LOG_DEFAULT, "Create subvolume '%s/%s'\n", dstdir, newname);
 
 out:
 	close(fddst);
@@ -754,16 +754,8 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	if (fd < 0)
 		goto out;
 
-	if (readonly) {
+	if (readonly)
 		args.flags |= BTRFS_SUBVOL_RDONLY;
-		pr_verbose(LOG_DEFAULT,
-			   "Create a readonly snapshot of '%s' in '%s/%s'\n",
-			   subvol, dstdir, newname);
-	} else {
-		pr_verbose(LOG_DEFAULT,
-			   "Create a snapshot of '%s' in '%s/%s'\n",
-			   subvol, dstdir, newname);
-	}
 
 	args.fd = fd;
 	if (inherit) {
@@ -783,6 +775,15 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	}
 
 	retval = 0;	/* success */
+
+	if (readonly)
+		pr_verbose(LOG_DEFAULT,
+			   "Create readonly snapshot of '%s' in '%s/%s'\n",
+			   subvol, dstdir, newname);
+	else
+		pr_verbose(LOG_DEFAULT,
+			   "Create snapshot of '%s' in '%s/%s'\n",
+			   subvol, dstdir, newname);
 
 out:
 	close(fddst);
