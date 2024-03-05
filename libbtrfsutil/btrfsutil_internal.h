@@ -30,6 +30,7 @@
 #include "btrfs_tree.h"
 
 #define PUBLIC __attribute__((visibility("default")))
+#define LIBBTRFSUTIL_ALIAS(orig)	__attribute__((alias(#orig)))
 
 #define le16_to_cpu __le16_to_cpu
 #define le32_to_cpu __le32_to_cpu
