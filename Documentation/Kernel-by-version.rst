@@ -805,7 +805,6 @@ Pull requests:
 `v6.14-rc5 <https://git.kernel.org/linus/cc8a0934d099b8153fc880a3588eec4791a7bccb>`__,
 `v6.14-rc6 <https://git.kernel.org/linus/6ceb6346b0436ea6591c33ab6ab22e5077ed17e7>`__,
 
-
 User visible changes, features:
 
 - rebuilding of the free space tree at mount time is done in more transactions,
@@ -862,6 +861,120 @@ Core:
    - remove unnecessary calls when extent buffer was marked dirty
    - unused parameter removal
    - code moved to new files
+
+6.15 (May 2025)
+^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.15-rc1 <https://git.kernel.org/linus/fd71def6d9abc5ae362fb9995d46049b7b0ed391>`__,
+`v6.15-rc3 <https://git.kernel.org/linus/0cb9ce06a682b251d350ded18965a3dfa5d13595>`__,
+`v6.15-rc4 <https://git.kernel.org/linus/bc3372351d0c8b2726b7d4229b878342e3e6b0e8>`__,
+`v6.15-rc5 <https://git.kernel.org/linus/7a13c14ee59d4f6c5f4277a86516cbc73a1383a8>`__,
+`v6.15-rc6 <https://git.kernel.org/linus/0d8d44db295ccad20052d6301ef49ff01fb8ae2d>`__,
+`v6.15-rc7 <https://git.kernel.org/linus/74a6325597464e940a33e56e98f6899ef77728d8>`__,
+
+User visible changes:
+
+-  fall back to buffered write if direct io is done on a file that requires checksums
+
+   -  this avoids a problem with checksum mismatch errors, observed e.g. on
+      virtual images when writes to pages under writeback cause the checksum
+      mismatch reports
+
+   -  this may lead to some performance degradation but currently the
+      recommended setup for VM images is to use the NOCOW file attribute that
+      also disables checksums
+
+-  fast/realtime zstd levels -15 to -1
+
+   - supported by mount options (compress=zstd:-5) and defrag ioctl
+   - improved speed, reduced compression ratio, check the `commit for sample
+     measurements <https://git.kernel.org/linus/da798fa519df6f995a493ca5105c72ccc4fc7b75>`__.
+
+-  defrag ioctl extended to accept negative compression levels
+
+-  subpage mode
+
+   -  remove warning when subpage mode is used, the feature is now reasonably
+      complete and tested
+   -  in debug mode allow to create 2K b-tree nodes to allow testing subpage on
+      x86_64 with 4K pages too
+
+-  fixes
+
+   -  escape subvolume path in mount option list so it cannot be wrongly parsed
+      when the path contains ","
+
+   -  reinstate message when setting a large value of mount option 'commit'
+
+Performance improvements:
+
+-  in send, better file path caching improves runtime (on sample load by -30%)
+
+-  on s390x with hardware zlib support prepare the input buffer in a better way
+   to get the best results from the acceleration
+
+-  minor speed improvement in encoded read, avoid memory allocation in
+   synchronous mode
+
+Core:
+
+- enable stable writes on inodes, replacing manually waiting for writeback and
+  allowing to skip that on inodes without checksums
+
+- add last checks and warnings for out-of-band dirty writes to pages, requiring
+  a fixup ("fixup worker"), this should not be necessary since 5.8 where
+  get_user_page() and pin_user_pages*() prevent this
+
+- more preparations for large folio support
+
+6.16 (Jul 2025)
+^^^^^^^^^^^^^^^
+
+`v6.16-rc1 <https://git.kernel.org/linus/5e82ed5ca4b510e0ff53af1e12e94e6aa1fe5a93>`__,
+`v6.16-rc1 <https://git.kernel.org/linus/a56baa225308e697163e74bae0cc623a294073d4>`__,
+`v6.16-rc4 <https://git.kernel.org/linus/5ca7fe213ba3113dde19c4cd46347c16d9e69f81>`__,
+`v6.16-rc5 <https://git.kernel.org/linus/4c06e63b92038fadb566b652ec3ec04e228931e8>`__,
+
+Performance:
+
+- extent buffer conversion to xarray gains throughput and runtime improvements
+  on metadata heavy operations doing writeback (sample test shows +50%
+  throughput, -33% runtime)
+
+- extent io tree cleanups lead to performance improvements by avoiding
+  unnecessary searches or repeated searches
+
+- more efficient extent unpinning when committing transaction (estimated run
+  time improvement 3-5%)
+
+User visible changes:
+
+- remove standalone mount option 'nologreplay', deprecated in 5.9, replacement
+  is 'rescue=nologreplay'
+
+- in scrub, update reporting, add back device stats message after detected
+  errors (accidentally removed during recent refactoring)
+
+Core:
+
+- convert extent buffer radix tree to xarray
+
+- in subpage mode, move block perfect compression out of experimental build
+
+- in zoned mode, introduce sub block groups to allow managing special block
+  groups, like the one for relocation or tree-log, to handle some corner cases
+  of ENOSPC
+
+- continued preparations for large folios: add support where missing:
+  compression, buffered write, defrag, hole punching, subpage, send
+
+- fix fsync of files with no hard links not persisting deletion
+
+- reject tree blocks which are not nodesize aligned, a precaution from 4.9
+  times
+
+- enhanced ASSERT() macro with optional format strings
 
 5.x
 ---
