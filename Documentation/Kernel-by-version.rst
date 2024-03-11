@@ -497,6 +497,63 @@ Core changes:
 - single device filesystems are scanned but not registered (except seed
   devices), this allows temp_fsid to work
 
+6.8 (Mar 2024)
+^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.8-rc1 <https://git.kernel.org/linus/affc5af36bbb62073b6aaa4f4459b38937ff5331>`__,
+`v6.8-rc2 <https://git.kernel.org/linus/5d9248eed48054bf26b3d5ad3d7073a356a17d19>`__,
+`v6.8-rc4 <https://git.kernel.org/linus/6d280f4d760e3bcb4a8df302afebf085b65ec982>`__,
+`v6.8-rc5 <https://git.kernel.org/linus/1f3a3e2aaeb4e6ba9b6df6f2e720131765b23b82>`__,
+`v6.8-rc6 <https://git.kernel.org/linus/8da8d88455ebbb4e05423cf60cff985e92d43754>`__,
+`v6.8-rc7 (1) <https://git.kernel.org/linus/b6c1f1ecb3bf2dcd8085cc7d927ade623182a26c>`__,
+`v6.8-rc7 (2) <https://git.kernel.org/linus/7505aa147adb10913c1b72e947006b6070753eb6>`__
+
+Core changes:
+
+-  convert extent buffers to folios:
+   - direct API conversion where possible
+   - performance can drop by a few percent on metadata heavy
+     workloads, the folio sizes are not constant and the calculations
+     add up in the item helpers
+   - both regular and subpage modes
+   - data cannot be converted yet, we need to port that to iomap and
+     there are some other generic changes required
+
+-  convert mount to the new API, should not be user visible:
+   - options deprecated long time ago have been removed: inode_cache,
+     recovery
+   - the new logic that splits mount to two phases slightly changes
+     timing of device scanning for multi-device filesystems
+   - LSM options will now work (like for selinux)
+
+- convert delayed nodes radix tree to xarray, preserving the
+  preload-like logic that still allows to allocate with GFP_NOFS
+
+Performance improvements:
+
+- refactor chunk map structure, reduce size and improve performance
+
+- extent map refactoring, smaller data structures, improved performance
+
+- reduce size of struct extent_io_tree, embedded in several structures
+
+- temporary pages used for compression are cached and attached to a shrinker,
+  this may slightly improve performance
+
+Fixes:
+
+- fix over-reservation of metadata chunks due to not keeping proper balance
+  between global block reserve and delayed refs reserve; in practice this
+  leaves behind empty metadata block groups, the workaround is to reclaim them
+  by using the '-musage=1' balance filter
+
+- fix corner case of send that would generate potentially large stream of zeros
+  if there's a hole at the end of the file
+
+- fix chunk validation in zoned mode on conventional zones, it was possible to
+  create chunks that would not be allowed on sequential zones
+
 5.x
 ---
 
