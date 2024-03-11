@@ -557,15 +557,136 @@ Fixes:
 6.9 (May 2024)
 ^^^^^^^^^^^^^^
 
-TBD
+Pull requests:
+`v6.9-rc1 (1)<https://git.kernel.org/linus/43a7548e28a6df12a6170421d9d016c576010baa>`__,
+`v6.9-rc1 (2)<https://git.kernel.org/linus/7b65c810a1198b91ed6bdc49ddb470978affd122>`__,
+`v6.9-rc2 <https://git.kernel.org/linus/400dd456bda8be0b566f2690c51609ea02f85766>`__,
+`v6.9-rc3 <https://git.kernel.org/linus/20cb38a7af88dc40095da7c2c9094da3873fea23>`__,
+`v6.9-rc5 <https://git.kernel.org/linus/8cd26fd90c1ad7acdcfb9f69ca99d13aa7b24561>`__,
+`v6.9-rc6 <https://git.kernel.org/linus/e88c4cfcb7b888ac374916806f86c17d8ecaeb67>`__,
+`v6.9-rc7 <https://git.kernel.org/linus/f03359bca01bf4372cf2c118cd9a987a5951b1c8>`__,
+`v6.9-rc8 <https://git.kernel.org/linus/dccb07f2914cdab2ac3a5b6c98406f765acab803>`__,
+
+Performance improvements:
+
+- minor speedup in logging when repeatedly allocated structure is preallocated
+  only once, improves latency and decreases lock contention
+
+- minor throughput increase (+6%), reduced lock contention after clearing
+  delayed allocation bits, applies to several common workload types
+
+- features under CONFIG_BTRFS_DEBUG:
+  - sysfs knob for setting the how checksums are calculated when submitting IO,
+    inline or offloaded to a thread, this affects latency and throughput on some
+    block group profiles
+
+Notable fixes:
+
+- fix device tracking in memory that broke grub-probe
+
+- zoned mode fixes:
+  - use zone-aware super block access during scrub
+  - delete zones that are 100% unusable to reclaim space
+
+Other notable changes:
+
+- additional validation of devices by major:minor numbers
 
 6.10 (Jul 2024)
 ^^^^^^^^^^^^^^^
 
-TBD
+Pull requests:
+`v6.10-rc1 (1)<https://git.kernel.org/linus/a3d1f54d7aa4c3be2c6a10768d4ffa1dcb620da9>`__,
+`v6.10-rc1 (2)<https://git.kernel.org/linus/02c438bbfffeabf8c958108f9cf88cdb1a11a323>`__,
+`v6.10-rc3 (1)<https://git.kernel.org/linus/19ca0d8a433ff37018f9429f7e7739e9f3d3d2b4>`__,
+`v6.10-rc3 (2)<https://git.kernel.org/linus/07978330e63456a75a6d5c1c5053de24bdc9d16f>`__,
+`v6.10-rc5 <https://git.kernel.org/linus/50736169ecc8387247fe6a00932852ce7b057083>`__,
+`v6.10-rc6 <https://git.kernel.org/linus/66e55ff12e7391549c4a85a7a96471dcf891cb03>`__,
+`v6.10-rc7 (1)<https://git.kernel.org/linus/cfbc0ffea88c764d23f69efe6ecb74918e0f588e>`__,
+`v6.10-rc7 (2)<https://git.kernel.org/linus/661e504db04c6b7278737ee3a9116738536b4ed4>`__,
+`v6.10-rc8 <https://git.kernel.org/linus/975f3b6da18020f1c8a7667ccb08fa542928ec03>`__,
+
+Performance improvements:
+
+- inline b-tree locking functions, improvement in metadata-heavy changes
+
+- relax locking on a range that's being reflinked, allows read operations to
+  run in parallel
+
+- speed up NOCOW write checks (throughput +9% on a sample test)
+
+- extent locking ranges have been reduced in several places, namely around
+  delayed ref processing
+
+Notable fixes or changes:
+
+- add back mount option *norecovery*, deprecated long time ago and removed in
+  6.8 but stil in use
+
+- fix potential infinite loop when doing block group reclaim
+
+- extent map shrinker, allow memory consumption reduction for direct io loads
+
 
 6.11 (Sep 2024)
 ^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.11-rc1 (1)<https://git.kernel.org/linus/a1b547f0f217cfb06af7eb4ce8488b02d83a0370>`__,
+`v6.11-rc1 (2)<https://git.kernel.org/linus/53a5182c8a6805d3096336709ba5790d16f8c369>`__,
+`v6.11-rc2 <https://git.kernel.org/linus/e4fc196f5ba36eb7b9758cf2c73df49a44199895>`__,
+`v6.11-rc3 <https://git.kernel.org/linus/6a0e38264012809afa24113ee2162dc07f4ed22b>`__,
+`v6.11-rc4 <https://git.kernel.org/linus/1fb918967b56df3262ee984175816f0acb310501>`__,
+`v6.11-rc4 <https://git.kernel.org/linus/57b14823ea68592bd67e4992a2bf0dd67abb68d6>`__,
+`v6.11-rc6 <https://git.kernel.org/linus/2840526875c7e3bcfb3364420b70efa203bad428>`__,
+`v6.11-rc7 <https://git.kernel.org/linus/1263a7bf8a0e77c6cda8f5a40509d99829216a45>`__,
+
+User visible features:
+
+- dynamic block group reclaim:
+  - tunable framework to avoid situations where eager data allocations prevent
+    creating new metadata chunks due to lack of unallocated space
+  - reuse sysfs knob bg_reclaim_threshold (otherwise used only in zoned mode)
+    for a fixed value threshold
+  - new on/off sysfs knob "dynamic_reclaim" calculating the value based on
+    heuristics, aiming to keep spare working space for relocating chunks but
+    not to needlessly relocate partially utilized block groups or reclaim newly
+    allocated ones
+  - stats are exported in sysfs per block group type, files "reclaim_*"
+  - this may increase IO load at unexpected times but the corner case of no
+    allocatable block groups is known to be worse
+
+- automatically remove qgroup of deleted subvolumes:
+  - adjust qgroup removal conditions, make sure all related subvolume data are
+    already removed, or return EBUSY, also take into account setting of sysfs
+    drop_subtree_threshold
+  - also works in squota mode
+
+-  mount option updates: new modes of 'rescue=' that allow to mount images
+   (read-only) that could have been partially converted by user space tools
+  - ignoremetacsums  - invalid metadata checksums are ignored
+  - ignoresuperflags - super block flags that track conversion in progress
+                       (like UUID or checksums)
+
+Other notable changes or fixes:
+
+- space cache v1 marked as deprecated (a warning printed in syslog), the
+  free-space tree (i.e. the v2) has been default in "mkfs.btrfs" since 5.15,
+  the kernel code will be removed in the future on a conservative schedule
+
+- tree checker improvements:
+  - validate data reference items
+  - validate directory item type
+
+- send also detects last extent suitable for cloning (and not a write)
+
+- extent map shrinker (a memory reclaim optimization) added in 6.10 now
+  available only under CONFIG_BTRFS_DEBUG due to performance problems
+
+- update target inode's ctime on unlink,
+  `mandated by POSIX <https://pubs.opengroup.org/onlinepubs/9699919799/functions/unlink.html>`__
+
+- in zoned mode, detect unexpected zone write pointer change
 
 5.x
 ---
