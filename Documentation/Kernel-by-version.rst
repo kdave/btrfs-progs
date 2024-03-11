@@ -946,6 +946,7 @@ Core:
 6.16 (Jul 2025)
 ---------------
 
+Pull requests:
 `v6.16-rc1 <https://git.kernel.org/linus/5e82ed5ca4b510e0ff53af1e12e94e6aa1fe5a93>`__,
 `v6.16-rc1 <https://git.kernel.org/linus/a56baa225308e697163e74bae0cc623a294073d4>`__,
 `v6.16-rc4 <https://git.kernel.org/linus/5ca7fe213ba3113dde19c4cd46347c16d9e69f81>`__,
@@ -990,6 +991,147 @@ Core:
   times
 
 - enhanced ASSERT() macro with optional format strings
+
+6.17 (Sep 2025)
+---------------
+
+Pull requests:
+`v6.17-rc1 <https://git.kernel.org/linus/f92b71ffca8c7e45e194aecc85e31bd11582f4d2>`__, ...
+
+User visible changes:
+
+- update defrag ioctl, add new flag to request no compression on existing extents
+
+- restrict writes to block devices after mount
+
+- in experimental config, enable large folios for data, almost complete but not widely tested
+
+- add stats tracking duration of critical section in transaction commit to :file:`/sys/fs/btrfs/FSID/commit_stats`
+
+Performance improvements:
+
+- caching of lookup results of free space bitmap (20% runtime improvement on an
+  empty file creation benchmark)
+
+- readahead on compressed data improves sequential read
+
+- the xarray for extent buffers is indexed by denser keys, leading to better
+  packing of the nodes (50-70% reduction of leaf nodes)
+
+Notable fixes:
+
+- send properly emits fallocate command for file holes when protocol v2 is used
+
+- fix overallocation of chunks with mount option 'ssd_spread', due to
+  interaction with size classes not finding the right chunk (workaround: manual
+  reclaim by 'usage' balance filter)
+
+- populate otime in tree-log during log replay
+
+Core:
+
+- large data folios enabled in experimental config
+
+- in zoned mode, allocate reloc block group on mount to make sure there's
+  always one available for zone reclaim under heavy load
+
+- rework device opening, they're always open as read-only and delayed until the
+  super block is created, allowing the restricted writes after mount
+
+6.18 (Nov 2025)
+---------------
+
+Pull requests:
+`v6.18-rc1 <https://git.kernel.org/linus/f3827213abae9291b7525b05e6fd29b1f0536ce6>`__, ...
+
+Performance improvements:
+
+- search data checksums in the commit root (previous transaction) to avoid
+  locking contention, this improves parallelism of read heavy/low write
+  workloads, and also reduces transaction commit time; on real and reproducer
+  workload the sync time went from minutes to tens of seconds (workload and
+  numbers are in the changelog)
+
+Core:
+
+- tree-log updates: add new error state 'O' (printed in status messages) when
+  log replay fails and is aborted
+
+- 'block size > page size' support
+
+   - basic implementation with limitations, under experimental build
+   - limitations: no direct io, raid56, encoded read (standalone and in send
+     ioctl), encoded write
+   - preparatory work for compression, removing implicit assumptions of page
+     and block sizes
+   - compression workspaces are now per-filesystem, we cannot assume common
+     block size for work memory among different filesystems
+
+- tree-checker now verifies INODE_EXTREF item (which is implementing hardlinks)
+
+- tree leaf pretty printer updates, there were missing data from items, keys/items
+
+- move config option CONFIG_BTRFS_REF_VERIFY to CONFIG_BTRFS_DEBUG, it's a
+  debugging feature and not needed to be enabled separately
+
+- use ref_tracker API for tracking delayed inodes, enabled by mount option
+  'ref_verify', allowing to better pinpoint leaking references
+
+6.19 (Feb 2026)
+---------------
+
+Pull requests:
+`v6.19-rc1 <https://git.kernel.org/linus/7696286034ac72cf9b46499be1715ac62fd302c3>`__,
+
+Features:
+
+- shutdown ioctl support (needs CONFIG_BTRFS_EXPERIMENTAL for now):
+
+  - set filesystem state as being shut down (also named going down in other
+    filesystems), where all active operations return EIO and this cannot be
+    changed until unmount
+  - pending operations are attempted to be finished but error messages may
+    still show up depending on where exactly the shutdown happened
+
+- scrub (and device replace) vs suspend/hibernate:
+
+  - a running scrub will prevent suspend, which can be annoying as suspend is
+    an immediate request and scrub is not critical
+  - filesystem freezing before suspend was not sufficient as the problem was in
+    process freezing
+  - behaviour change: on suspend scrub and device replace are cancelled, where
+    scrub can record the last state and continue from there; the device replace
+    has to be restarted from the beginning
+
+Performance:
+
+- improvements when processing space reservation tickets by optimizing locking
+  and shrinking critical sections, cumulative improvements in lockstat numbers
+  show +15%
+
+Notable fixes:
+
+- use vmalloc fallback when allocating bios as high order allocations can
+  happen with wide checksums (like sha256)
+
+- scrub will always track the last position of progress so it's not starting
+  from zero after an error
+
+Core:
+
+- under experimental config, checksum calculations are offloaded to process
+  context, simplifies locking and allows to remove compression write worker
+  kthread(s):
+
+  - speed improvement in direct IO throughput with buffered IO fallback is +15%
+    when not offloaded but this is more related to internal crypto subsystem
+    improvements
+  - this will be probably default in the future removing the sysfs tunable
+
+- (experimental) block size > page size updates:
+
+  - support more operations when not using large folios (encoded read/write and send)
+  - raid56
 
 5.x
 ---
