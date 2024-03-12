@@ -172,8 +172,8 @@ typedef struct xfs_flock64 {
 
 #include <math.h>
 #define XFS_ERRTAG_MAX		17
-#define XFS_IDMODULO_MAX	31	/* user/group IDs (1 << x)  */
-#define XFS_PROJIDMODULO_MAX	16	/* project IDs (1 << x)     */
+#define XFS_IDMODULO_MAX	31	/* user/group IDs (1U << x)  */
+#define XFS_PROJIDMODULO_MAX	16	/* project IDs (1U << x)     */
 #ifndef IOV_MAX
 #define IOV_MAX 1024
 #endif
@@ -222,13 +222,13 @@ roundup_64(unsigned long long x, unsigned int y)
 }
 
 #ifndef RENAME_NOREPLACE
-#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
+#define RENAME_NOREPLACE	(1U << 0)	/* Don't overwrite target */
 #endif
 #ifndef RENAME_EXCHANGE
-#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
+#define RENAME_EXCHANGE		(1U << 1)	/* Exchange source and dest */
 #endif
 #ifndef RENAME_WHITEOUT
-#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
+#define RENAME_WHITEOUT		(1U << 2)	/* Whiteout source */
 #endif
 
 #define FILELEN_MAX		(32*4096)
@@ -338,19 +338,19 @@ struct print_string {
 };
 
 #define	FT_DIR		0
-#define	FT_DIRm		(1 << FT_DIR)
+#define	FT_DIRm		(1U << FT_DIR)
 #define	FT_REG		1
-#define	FT_REGm		(1 << FT_REG)
+#define	FT_REGm		(1U << FT_REG)
 #define	FT_SYM		2
-#define	FT_SYMm		(1 << FT_SYM)
+#define	FT_SYMm		(1U << FT_SYM)
 #define	FT_DEV		3
-#define	FT_DEVm		(1 << FT_DEV)
+#define	FT_DEVm		(1U << FT_DEV)
 #define	FT_RTF		4
-#define	FT_RTFm		(1 << FT_RTF)
+#define	FT_RTFm		(1U << FT_RTF)
 #define	FT_SUBVOL	5
-#define	FT_SUBVOLm	(1 << FT_SUBVOL)
+#define	FT_SUBVOLm	(1U << FT_SUBVOL)
 #define	FT_nft		6
-#define	FT_ANYm		((1 << FT_nft) - 1)
+#define	FT_ANYm		((1U << FT_nft) - 1)
 #define	FT_REGFILE	(FT_REGm | FT_RTFm)
 #define	FT_NOTDIR	(FT_ANYm & (~FT_DIRm & ~FT_SUBVOLm))
 #define	FT_ANYDIR	(FT_DIRm | FT_SUBVOLm)
@@ -1569,7 +1569,7 @@ get_fname(int which, long r, pathname_t *name, flist_t **flpp, fent_t **fepp,
 	 * category that matches with <which>.
 	 */
 	for (i = 0, flp = flist; i < FT_nft; i++, flp++) {
-		if (which & (1 << i))
+		if (which & (1U << i))
 			totalsum += flp->nfiles;
 	}
 	if (totalsum == 0) {
@@ -1588,7 +1588,7 @@ get_fname(int which, long r, pathname_t *name, flist_t **flpp, fent_t **fepp,
 	 */ 
 	x = (int)(r % totalsum);
 	for (i = 0, flp = flist; i < FT_nft; i++, flp++) {
-		if (which & (1 << i)) {
+		if (which & (1U << i)) {
 			if (x < partialsum + flp->nfiles) {
 
 				/* found the matching file entry */
@@ -2727,8 +2727,8 @@ chown_f(opnum_t opno, long r)
 	u = (uid_t)random();
 	g = (gid_t)random();
 	nbits = (int)(random() % idmodulo);
-	u &= (1 << nbits) - 1;
-	g &= (1 << nbits) - 1;
+	u &= (1U << nbits) - 1;
+	g &= (1U << nbits) - 1;
 	e = lchown_path(&f, u, g) < 0 ? errno : 0;
 	check_cwd();
 	if (v)
@@ -3466,7 +3466,7 @@ setxattr_f(opnum_t opno, long r)
 	p = (uint)random();
 	e = MIN(idmodulo, XFS_PROJIDMODULO_MAX);
 	nbits = (int)(random() % e);
-	p &= (1 << nbits) - 1;
+	p &= (1U << nbits) - 1;
 
 	if ((e = xfsctl(f.path, fd, XFS_IOC_FSGETXATTR, &fsx)) == 0) {
 		fsx.fsx_projid = p;
@@ -4850,7 +4850,7 @@ do_renameat2(opnum_t opno, long r, int mode)
 	 * restrict exchange operation to files of the same type.
 	 */
 	if (mode == RENAME_EXCHANGE) {
-		which = 1 << (flp - flist);
+		which = 1U << (flp - flist);
 		init_pathname(&newf);
 		if (!get_fname(which, random(), &newf, NULL, &dfep, &v)) {
 			if (v)
@@ -5481,7 +5481,7 @@ unresvsp_f(opnum_t opno, long r)
 	off %= maxfsize;
 	fl.l_whence = SEEK_SET;
 	fl.l_start = off;
-	fl.l_len = (off64_t)(random() % (1 << 20));
+	fl.l_len = (off64_t)(random() % (1U << 20));
 	e = xfsctl(f.path, fd, XFS_IOC_UNRESVSP64, &fl) < 0 ? errno : 0;
 	if (v)
 		printf("%d/%lld: xfsctl(XFS_IOC_UNRESVSP64) %s%s %lld %lld %d\n",
