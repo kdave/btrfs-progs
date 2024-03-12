@@ -30,15 +30,15 @@ struct extent_buffer;
 
 enum {
 	/* Depth-first search, nodes and leaves can be interleaved */
-	BTRFS_PRINT_TREE_DFS		= (1 << 0),
+	BTRFS_PRINT_TREE_DFS		= (1U << 0),
 	/* Breadth-first search, first nodes, then leaves */
-	BTRFS_PRINT_TREE_BFS		= (1 << 1),
+	BTRFS_PRINT_TREE_BFS		= (1U << 1),
 	/* Follow to child nodes */
-	BTRFS_PRINT_TREE_FOLLOW		= (1 << 2),
+	BTRFS_PRINT_TREE_FOLLOW		= (1U << 2),
 	/* Print checksum of node/leaf */
-	BTRFS_PRINT_TREE_CSUM_HEADERS	= (1 << 3),
+	BTRFS_PRINT_TREE_CSUM_HEADERS	= (1U << 3),
 	/* Print checksums in checksum items */
-	BTRFS_PRINT_TREE_CSUM_ITEMS	= (1 << 4),
+	BTRFS_PRINT_TREE_CSUM_ITEMS	= (1U << 4),
 	BTRFS_PRINT_TREE_DEFAULT = BTRFS_PRINT_TREE_BFS,
 };
 

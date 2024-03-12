@@ -1957,7 +1957,7 @@ static int fill_chunk_up(struct chunk_record *chunk, struct list_head *devexts,
 	return ret;
 }
 
-#define EQUAL_STRIPE (1 << 0)
+#define EQUAL_STRIPE (1U << 0)
 
 static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
 					   struct btrfs_root *root,

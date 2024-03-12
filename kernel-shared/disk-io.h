@@ -128,19 +128,19 @@ enum btrfs_open_ctree_flags {
 enum btrfs_read_sb_flags {
 	SBREAD_DEFAULT		= 0,
 	/* Reading superblock during recovery */
-	SBREAD_RECOVER		= (1 << 0),
+	SBREAD_RECOVER		= (1U << 0),
 
 	/*
 	 * Read superblock with the fake signature, cannot be used with
 	 * SBREAD_RECOVER
 	 */
-	SBREAD_TEMPORARY = (1 << 1),
+	SBREAD_TEMPORARY	= (1U << 1),
 
 	/*
 	 * Equivalent of OPEN_CTREE_IGNORE_FSID_MISMATCH, allow to read
 	 * superblock that has mismatched sb::fsid and sb::dev_item.fsid
 	 */
-	SBREAD_IGNORE_FSID_MISMATCH = (1 << 2),
+	SBREAD_IGNORE_FSID_MISMATCH = (1U << 2),
 };
 
 /*

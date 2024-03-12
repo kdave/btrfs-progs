@@ -287,12 +287,12 @@ _static_assert(sizeof(struct btrfs_ioctl_dev_info_args) == 4096);
  */
 
 /* Request information about checksum type and size */
-#define BTRFS_FS_INFO_FLAG_CSUM_INFO			(1 << 0)
+#define BTRFS_FS_INFO_FLAG_CSUM_INFO			(1U << 0)
 
 /* Request information about filesystem generation */
-#define BTRFS_FS_INFO_FLAG_GENERATION			(1 << 1)
+#define BTRFS_FS_INFO_FLAG_GENERATION			(1U << 1)
 /* Request information about filesystem metadata UUID */
-#define BTRFS_FS_INFO_FLAG_METADATA_UUID		(1 << 2)
+#define BTRFS_FS_INFO_FLAG_METADATA_UUID		(1U << 2)
 
 struct btrfs_ioctl_fs_info_args {
 	__u64 max_id;				/* out */
