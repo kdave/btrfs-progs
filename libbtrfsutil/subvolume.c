@@ -784,7 +784,7 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_create_fd(int parent_fd,
 							    struct btrfs_util_qgroup_inherit *qgroup_inherit)
 LIBBTRFSUTIL_ALIAS(btrfs_util_create_subvolume_fd);
 
-#define BTRFS_UTIL_SUBVOLUME_ITERATOR_CLOSE_FD (1 << 30)
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_CLOSE_FD (1U << 30)
 
 struct search_stack_entry {
 	union {

@@ -545,12 +545,12 @@ LIBBTRFSUTIL_ALIAS(btrfs_util_create_subvolume_fd);
  * %BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY. It requires appropriate privilege
  * (CAP_SYS_ADMIN).
  */
-#define BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE (1 << 0)
+#define BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE (1U << 0)
 /**
  * BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY - Create a read-only snapshot.
  */
-#define BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY (1 << 1)
-#define BTRFS_UTIL_CREATE_SNAPSHOT_MASK ((1 << 2) - 1)
+#define BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY	(1U << 1)
+#define BTRFS_UTIL_CREATE_SNAPSHOT_MASK		((1U << 2) - 1)
 
 /**
  * btrfs_util_create_snapshot() - Alias of btrfs_util_snapshot_snapshot(), do not use in new code.
@@ -629,8 +629,8 @@ LIBBTRFSUTIL_ALIAS(btrfs_util_create_snapshot_fd2);
  * error. Note that this is currently implemented in userspace non-atomically.
  * It requires appropriate privilege (CAP_SYS_ADMIN).
  */
-#define BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE (1 << 0)
-#define BTRFS_UTIL_DELETE_SUBVOLUME_MASK ((1 << 1) - 1)
+#define BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE	(1U << 0)
+#define BTRFS_UTIL_DELETE_SUBVOLUME_MASK	((1U << 1) - 1)
 
 /**
  * btrfs_util_delete_subvolume() - Alias of btrfs_util_subvolume_delete(), do not use in new code.
@@ -698,8 +698,8 @@ struct btrfs_util_subvolume_iterator;
  * behavior is pre-order, e.g., foo will be yielded before foo/bar. If this flag
  * is specified, foo/bar will be yielded before foo.
  */
-#define BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER (1 << 0)
-#define BTRFS_UTIL_SUBVOLUME_ITERATOR_MASK ((1 << 1) - 1)
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER	(1U << 0)
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_MASK		((1U << 1) - 1)
 
 /**
  * btrfs_util_create_subvolume_iterator() - Alias of btrfs_util_subvolume_iter_create(), do not use in new code.
