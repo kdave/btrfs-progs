@@ -46,7 +46,7 @@ int rb_insert(struct rb_root *root, struct rb_node *node,
 	return 0;
 }
 
-struct rb_node *rb_search(struct rb_root *root, void *key, rb_compare_keys comp,
+struct rb_node *rb_search(struct rb_root *root, const void *key, rb_compare_keys comp,
 			  struct rb_node **next_ret)
 {
 	struct rb_node *n = root->rb_node;

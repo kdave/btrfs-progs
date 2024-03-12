@@ -114,12 +114,12 @@ struct device_record {
 	bool bad_block_dev_size;
 };
 
-static int compare_data_backref(struct rb_node *node1, struct rb_node *node2)
+static int compare_data_backref(const struct rb_node *node1, const struct rb_node *node2)
 {
-	struct extent_backref *ext1 = rb_node_to_extent_backref(node1);
-	struct extent_backref *ext2 = rb_node_to_extent_backref(node2);
-	struct data_backref *back1 = to_data_backref(ext1);
-	struct data_backref *back2 = to_data_backref(ext2);
+	const struct extent_backref *ext1 = rb_entry(node1, struct extent_backref, node);
+	const struct extent_backref *ext2 = rb_entry(node2, struct extent_backref, node);
+	const struct data_backref *back1 = container_of(ext1, struct data_backref, node);
+	const struct data_backref *back2 = container_of(ext2, struct data_backref, node);
 
 	WARN_ON(!ext1->is_data);
 	WARN_ON(!ext2->is_data);
@@ -159,12 +159,12 @@ static int compare_data_backref(struct rb_node *node1, struct rb_node *node2)
 	return 0;
 }
 
-static int compare_tree_backref(struct rb_node *node1, struct rb_node *node2)
+static int compare_tree_backref(const struct rb_node *node1, const struct rb_node *node2)
 {
-	struct extent_backref *ext1 = rb_node_to_extent_backref(node1);
-	struct extent_backref *ext2 = rb_node_to_extent_backref(node2);
-	struct tree_backref *back1 = to_tree_backref(ext1);
-	struct tree_backref *back2 = to_tree_backref(ext2);
+	const struct extent_backref *ext1 = rb_entry(node1, struct extent_backref, node);
+	const struct extent_backref *ext2 = rb_entry(node2, struct extent_backref, node);
+	const struct data_backref *back1 = container_of(ext1, struct data_backref, node);
+	const struct data_backref *back2 = container_of(ext2, struct data_backref, node);
 
 	WARN_ON(ext1->is_data);
 	WARN_ON(ext2->is_data);
@@ -178,10 +178,10 @@ static int compare_tree_backref(struct rb_node *node1, struct rb_node *node2)
 	return 0;
 }
 
-static int compare_extent_backref(struct rb_node *node1, struct rb_node *node2)
+static int compare_extent_backref(const struct rb_node *node1, const struct rb_node *node2)
 {
-	struct extent_backref *ext1 = rb_node_to_extent_backref(node1);
-	struct extent_backref *ext2 = rb_node_to_extent_backref(node2);
+	const struct extent_backref *ext1 = rb_entry(node1, struct extent_backref, node);
+	const struct extent_backref *ext2 = rb_entry(node2, struct extent_backref, node);
 
 	if (ext1->is_data > ext2->is_data)
 		return 1;
@@ -287,10 +287,10 @@ static u64 first_extent_gap(struct rb_root *holes)
 	return hole->start;
 }
 
-static int compare_hole(struct rb_node *node1, struct rb_node *node2)
+static int compare_hole(const struct rb_node *node1, const struct rb_node *node2)
 {
-	struct file_extent_hole *hole1;
-	struct file_extent_hole *hole2;
+	const struct file_extent_hole *hole1;
+	const struct file_extent_hole *hole2;
 
 	hole1 = rb_entry(node1, struct file_extent_hole, node);
 	hole2 = rb_entry(node2, struct file_extent_hole, node);
@@ -362,12 +362,12 @@ static int add_file_extent_hole(struct rb_root *holes,
 	return 0;
 }
 
-static int compare_hole_range(struct rb_node *node, void *data)
+static int compare_hole_range(const struct rb_node *node, const void *data)
 {
-	struct file_extent_hole *hole;
+	const struct file_extent_hole *hole;
 	u64 start;
 
-	hole = (struct file_extent_hole *)data;
+	hole = (const struct file_extent_hole *)data;
 	start = hole->start;
 
 	hole = rb_entry(node, struct file_extent_hole, node);
@@ -478,10 +478,10 @@ static void record_root_in_trans(struct btrfs_trans_handle *trans,
 	}
 }
 
-static int device_record_compare(struct rb_node *node1, struct rb_node *node2)
+static int device_record_compare(const struct rb_node *node1, const struct rb_node *node2)
 {
-	struct device_record *rec1;
-	struct device_record *rec2;
+	const struct device_record *rec1;
+	const struct device_record *rec2;
 
 	rec1 = rb_entry(node1, struct device_record, node);
 	rec2 = rb_entry(node2, struct device_record, node);
