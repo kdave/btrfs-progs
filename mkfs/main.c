@@ -807,8 +807,7 @@ static int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid,
 	unsigned long offset;
 	__le64 subvol_id_le;
 
-	key.type = type;
-	btrfs_uuid_to_key(uuid, &key);
+	btrfs_uuid_to_key(uuid, type, &key);
 
 	path = btrfs_alloc_path();
 	if (!path) {

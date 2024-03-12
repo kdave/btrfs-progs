@@ -26,6 +26,11 @@ struct btrfs_block_group;
 struct btrfs_fs_info;
 struct btrfs_trans_handle;
 
+/*
+ * The default size for new free space bitmap items. The last bitmap in a block
+ * group may be truncated, and none of the free space tree code assumes that
+ * existing bitmaps are this size.
+ */
 #define BTRFS_FREE_SPACE_BITMAP_SIZE 256
 #define BTRFS_FREE_SPACE_BITMAP_BITS (BTRFS_FREE_SPACE_BITMAP_SIZE * BITS_PER_BYTE)
 

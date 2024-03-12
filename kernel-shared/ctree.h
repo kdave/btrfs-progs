@@ -1219,7 +1219,7 @@ static inline int is_fstree(u64 rootid)
 	return 0;
 }
 
-void btrfs_uuid_to_key(const u8 *uuid, struct btrfs_key *key);
+void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key);
 
 /* inode.c */
 int check_dir_conflict(struct btrfs_root *root, char *name, int namelen,

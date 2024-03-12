@@ -269,12 +269,6 @@ void __cold btrfs_assertfail(const char *expr, const char *file, int line)
 }
 #endif
 
-void __cold btrfs_print_v0_err(struct btrfs_fs_info *fs_info)
-{
-	btrfs_err(fs_info,
-"Unsupported V0 extent filesystem detected. Aborting. Please re-create your filesystem with a newer kernel");
-}
-
 #if BITS_PER_LONG == 32 && defined(__KERNEL__)
 void __cold btrfs_warn_32bit_limit(struct btrfs_fs_info *fs_info)
 {

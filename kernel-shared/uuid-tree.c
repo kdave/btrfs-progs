@@ -32,12 +32,13 @@
 #include "common/messages.h"
 #include "common/utils.h"
 
-void btrfs_uuid_to_key(const u8 *uuid, struct btrfs_key *key)
+void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key)
 {
 	u64 tmp;
 
 	tmp = get_unaligned_le64(uuid);
 	put_unaligned_64(tmp, &key->objectid);
+	key->type = type;
 	tmp = get_unaligned_le64(uuid + sizeof(u64));
 	put_unaligned_64(tmp, &key->offset);
 }
@@ -57,8 +58,7 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 	__le64 lesubid;
 	struct btrfs_key key;
 
-	key.type = type;
-	btrfs_uuid_to_key(uuid, &key);
+	btrfs_uuid_to_key(uuid, type, &key);
 
 	memset(&search_arg, 0, sizeof(search_arg));
 	search_arg.key.tree_id = BTRFS_UUID_TREE_OBJECTID;
@@ -138,8 +138,7 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 		goto out;
 	}
 
-	btrfs_uuid_to_key(uuid, &key);
-	key.type = type;
+	btrfs_uuid_to_key(uuid, type, &key);
 
 	path = btrfs_alloc_path();
 	if (!path) {

@@ -178,9 +178,10 @@ out:
 	return ret;
 }
 
-static inline u32 free_space_bitmap_size(u64 size, u32 sectorsize)
+static inline u32 free_space_bitmap_size(const struct btrfs_fs_info *fs_info,
+					 u64 size)
 {
-	return DIV_ROUND_UP((u32)div_u64(size, sectorsize), BITS_PER_BYTE);
+	return DIV_ROUND_UP((u32)div_u64(size, fs_info->sectorsize), BITS_PER_BYTE);
 }
 
 static unsigned long *alloc_bitmap(u32 bitmap_size)
@@ -241,8 +242,7 @@ static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 	int done = 0, nr;
 	int ret;
 
-	bitmap_size = free_space_bitmap_size(block_group->length,
-					     fs_info->sectorsize);
+	bitmap_size = free_space_bitmap_size(fs_info, block_group->length);
 	bitmap = alloc_bitmap(bitmap_size);
 	if (!bitmap) {
 		ret = -ENOMEM;
@@ -331,8 +331,7 @@ static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 		u32 data_size;
 
 		extent_size = min(end - i, bitmap_range);
-		data_size = free_space_bitmap_size(extent_size,
-						   fs_info->sectorsize);
+		data_size = free_space_bitmap_size(fs_info, extent_size);
 
 		key.objectid = i;
 		key.type = BTRFS_FREE_SPACE_BITMAP_KEY;
@@ -379,8 +378,7 @@ static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 	int done = 0, nr;
 	int ret;
 
-	bitmap_size = free_space_bitmap_size(block_group->start,
-					     fs_info->sectorsize);
+	bitmap_size = free_space_bitmap_size(fs_info, block_group->length);
 	bitmap = alloc_bitmap(bitmap_size);
 	if (!bitmap) {
 		ret = -ENOMEM;
@@ -423,8 +421,8 @@ static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 						     fs_info->sectorsize *
 						     BITS_PER_BYTE);
 				bitmap_cursor = ((char *)bitmap) + bitmap_pos;
-				data_size = free_space_bitmap_size(found_key.offset,
-								   fs_info->sectorsize);
+				data_size = free_space_bitmap_size(fs_info,
+								found_key.offset);
 
 				ptr = btrfs_item_ptr_offset(leaf, path->slots[0] - 1);
 				read_extent_buffer(leaf, bitmap_cursor, ptr,
