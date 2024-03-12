@@ -72,7 +72,7 @@
 #define BITS_PER_BYTE 8
 #define BITS_PER_LONG (__SIZEOF_LONG__ * BITS_PER_BYTE)
 #define __GFP_BITS_SHIFT 20
-#define __GFP_BITS_MASK ((int)((1 << __GFP_BITS_SHIFT) - 1))
+#define __GFP_BITS_MASK ((int)((1U << __GFP_BITS_SHIFT) - 1))
 #define GFP_KERNEL 0
 #define GFP_NOFS 0
 #define __read_mostly

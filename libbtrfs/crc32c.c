@@ -102,7 +102,7 @@ static void crc32c_intel_probe(void)
 		eax = 1;
 
 		do_cpuid(&eax, &ebx, &ecx, &edx);
-		crc32c_intel_available = (ecx & (1 << 20)) != 0;
+		crc32c_intel_available = (ecx & (1U << 20)) != 0;
 		crc32c_probed = 1;
 	}
 }
