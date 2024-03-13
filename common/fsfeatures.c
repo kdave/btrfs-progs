@@ -31,6 +31,7 @@
 #include "common/string-utils.h"
 #include "common/sysfs-utils.h"
 #include "common/messages.h"
+#include "common/tree-search.h"
 
 /*
  * Insert a root item for temporary tree root
@@ -678,6 +679,29 @@ int btrfs_check_features(const struct btrfs_mkfs_features *features,
 	    features->runtime_flags & ~allowed->runtime_flags)
 		return -EINVAL;
 	return 0;
+}
+
+static bool tree_search_v2_supported = false;
+static bool tree_search_v2_initialized = false;
+
+/*
+ * Call the highest supported TREE_SEARCH ioctl version, autodetect support.
+ */
+int btrfs_tree_search_ioctl(int fd, struct btrfs_tree_search_args *sa)
+{
+	/* On first use check the supported status and save it. */
+	if (!tree_search_v2_initialized) {
+		if (btrfs_tree_search2_ioctl_supported(fd) == 1)
+			tree_search_v2_supported = true;
+		tree_search_v2_initialized = true;
+	}
+	sa->use_v2 = tree_search_v2_supported;
+
+	if (sa->use_v2) {
+		sa->args2.buf_size = BTRFS_TREE_SEARCH_V2_BUF_SIZE;
+		return ioctl(fd, BTRFS_IOC_TREE_SEARCH_V2, &sa->args2);
+	}
+	return ioctl(fd, BTRFS_IOC_TREE_SEARCH, &sa->args1);
 }
 
 /*
