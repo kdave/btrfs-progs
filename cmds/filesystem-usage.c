@@ -44,6 +44,7 @@
 #include "common/sysfs-utils.h"
 #include "common/messages.h"
 #include "common/path-utils.h"
+#include "common/tree-search.h"
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
 
@@ -144,13 +145,13 @@ static int cmp_chunk_info(const void *a, const void *b)
 static int load_chunk_info(int fd, struct array *chunkinfos)
 {
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
-	struct btrfs_ioctl_search_header *sh;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	unsigned long off = 0;
 	int i;
 
 	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
 
 	/*
 	 * there may be more than one ROOT_ITEM key if there are
@@ -170,7 +171,7 @@ static int load_chunk_info(int fd, struct array *chunkinfos)
 	sk->nr_items = 4096;
 
 	while (1) {
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			if (errno == EPERM)
 				return -errno;
@@ -185,11 +186,11 @@ static int load_chunk_info(int fd, struct array *chunkinfos)
 		off = 0;
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_chunk *item;
-			sh = (struct btrfs_ioctl_search_header *)(args.buf +
-								  off);
+			struct btrfs_ioctl_search_header *sh;
 
+			sh = btrfs_tree_search_data(&args, off);
 			off += sizeof(*sh);
-			item = (struct btrfs_chunk *)(args.buf + off);
+			item = btrfs_tree_search_data(&args, off);
 
 			ret = add_info_to_list(chunkinfos, item);
 			if (ret)

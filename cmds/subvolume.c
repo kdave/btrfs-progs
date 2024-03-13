@@ -46,6 +46,7 @@
 #include "common/string-utils.h"
 #include "common/units.h"
 #include "common/format-output.h"
+#include "common/tree-search.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
 
@@ -945,8 +946,8 @@ static u64 find_root_gen(int fd)
 {
 	struct btrfs_ioctl_ino_lookup_args ino_args;
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header sh;
 	unsigned long off = 0;
 	u64 max_found = 0;
@@ -963,7 +964,7 @@ static u64 find_root_gen(int fd)
 	}
 
 	memset(&args, 0, sizeof(args));
-
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 
 	/*
@@ -980,7 +981,7 @@ static u64 find_root_gen(int fd)
 	sk->nr_items = 4096;
 
 	while (1) {
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			error("can't perform the search: %m");
 			return 0;
@@ -993,9 +994,9 @@ static u64 find_root_gen(int fd)
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_root_item *item;
 
-			memcpy(&sh, args.buf + off, sizeof(sh));
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
-			item = (struct btrfs_root_item *)(args.buf + off);
+			item = btrfs_tree_search_data(&args, off);
 			off += sh.len;
 
 			sk->min_objectid = sh.objectid;
@@ -1096,14 +1097,13 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	char *name;
 	char *full;
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header *sh;
-	unsigned long off = 0;
 	int namelen;
 
 	memset(&args, 0, sizeof(args));
-
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = 0;
 
 	/*
@@ -1118,7 +1118,7 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 1;
 
-	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	ret = btrfs_tree_search_ioctl(fd, &args);
 	if (ret < 0) {
 		error("can't perform the search: %m");
 		return NULL;
@@ -1127,11 +1127,10 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	if (sk->nr_items == 0)
 		return NULL;
 
-	off = 0;
-	sh = (struct btrfs_ioctl_search_header *)(args.buf + off);
-
+	sh = btrfs_tree_search_data(&args, 0);
 	if (btrfs_search_header_type(sh) == BTRFS_INODE_REF_KEY) {
 		struct btrfs_inode_ref *ref;
+
 		dirid = btrfs_search_header_offset(sh);
 
 		ref = (struct btrfs_inode_ref *)(sh + 1);
@@ -1244,8 +1243,8 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 {
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header sh;
 	struct btrfs_file_extent_item *item;
 	unsigned long off = 0;
@@ -1260,7 +1259,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 
 	memset(&backup, 0, sizeof(backup));
 	memset(&args, 0, sizeof(args));
-
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = root_id;
 
 	/*
@@ -1277,7 +1276,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 
 	max_found = find_root_gen(fd);
 	while(1) {
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			error("can't perform the search: %m");
 			break;
@@ -1293,7 +1292,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 		 * read the root_ref item it contains
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
-			memcpy(&sh, args.buf + off, sizeof(sh));
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
 
 			/*
@@ -1303,8 +1302,8 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 			if (sh.len == 0)
 				item = &backup;
 			else
-				item = (struct btrfs_file_extent_item *)(args.buf +
-								 off);
+				item = btrfs_tree_search_data(&args, off);
+
 			found_gen = btrfs_stack_file_extent_generation(item);
 			if (sh.type == BTRFS_EXTENT_DATA_KEY &&
 			    found_gen >= oldest_gen) {

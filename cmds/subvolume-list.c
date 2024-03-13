@@ -40,6 +40,7 @@
 #include "common/string-utils.h"
 #include "common/utils.h"
 #include "common/format-output.h"
+#include "common/tree-search.h"
 #include "cmds/commands.h"
 #include "cmds/subvolume.h"
 
@@ -817,8 +818,8 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 static int list_subvol_search(int fd, struct rb_root *root_lookup)
 {
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header sh;
 	struct btrfs_root_ref *ref;
 	struct btrfs_root_item *ri;
@@ -832,8 +833,9 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 	int i;
 
 	root_lookup->rb_node = NULL;
-	memset(&args, 0, sizeof(args));
 
+	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 	/* Search both live and deleted subvolumes */
 	sk->min_type = BTRFS_ROOT_ITEM_KEY;
@@ -845,7 +847,7 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 
 	while(1) {
 		sk->nr_items = 4096;
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0)
 			return ret;
 		if (sk->nr_items == 0)
@@ -858,10 +860,10 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 		 * read the root_ref item it contains
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
-			memcpy(&sh, args.buf + off, sizeof(sh));
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
 			if (sh.type == BTRFS_ROOT_BACKREF_KEY) {
-				ref = (struct btrfs_root_ref *)(args.buf + off);
+				ref = btrfs_tree_search_data(&args, off);
 				name_len = btrfs_stack_root_ref_name_len(ref);
 				name = (char *)(ref + 1);
 				dir_id = btrfs_stack_root_ref_dirid(ref);
@@ -877,7 +879,7 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 				u8 puuid[BTRFS_UUID_SIZE];
 				u8 ruuid[BTRFS_UUID_SIZE];
 
-				ri = (struct btrfs_root_item *)(args.buf + off);
+				ri = btrfs_tree_search_data(&args, off);
 				gen = btrfs_root_generation(ri);
 				flags = btrfs_root_flags(ri);
 				if(sh.len >= sizeof(struct btrfs_root_item)) {

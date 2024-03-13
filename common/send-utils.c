@@ -32,6 +32,7 @@
 #include "common/send-utils.h"
 #include "common/messages.h"
 #include "common/utils.h"
+#include "common/tree-search.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);
@@ -62,8 +63,8 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 				    u32 *read_len, void *buf)
 {
 	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
 	int found = 0;
@@ -71,7 +72,7 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 
 	*read_len = 0;
 	memset(&args, 0, sizeof(args));
-
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 
 	/*
@@ -88,7 +89,7 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 	sk->nr_items = 4096;
 
 	while (1) {
-		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(mnt_fd, &args);
 		if (ret < 0) {
 			error("can't perform the search: %m");
 			return 0;
@@ -100,11 +101,11 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 		off = 0;
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_root_item *item;
-			sh = (struct btrfs_ioctl_search_header *)(args.buf +
-								  off);
 
+			sh = btrfs_tree_search_data(&args, off);
 			off += sizeof(*sh);
-			item = (struct btrfs_root_item *)(args.buf + off);
+
+			item = btrfs_tree_search_data(&args, off);
 			off += btrfs_search_header_len(sh);
 
 			sk->min_objectid = btrfs_search_header_objectid(sh);
@@ -192,7 +193,8 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id)
 {
 	int ret;
-	struct btrfs_ioctl_search_args search_arg;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_ino_lookup_args ino_lookup_arg;
 	struct btrfs_ioctl_search_header *search_header;
 	struct btrfs_root_ref *backref_item;
@@ -205,16 +207,17 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 		return 0;
 	}
 
-	memset(&search_arg, 0, sizeof(search_arg));
-	search_arg.key.tree_id = BTRFS_ROOT_TREE_OBJECTID;
-	search_arg.key.min_objectid = subvol_id;
-	search_arg.key.max_objectid = subvol_id;
-	search_arg.key.min_type = BTRFS_ROOT_BACKREF_KEY;
-	search_arg.key.max_type = BTRFS_ROOT_BACKREF_KEY;
-	search_arg.key.max_offset = (u64)-1;
-	search_arg.key.max_transid = (u64)-1;
-	search_arg.key.nr_items = 1;
-	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
+	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	sk->min_objectid = subvol_id;
+	sk->max_objectid = subvol_id;
+	sk->min_type = BTRFS_ROOT_BACKREF_KEY;
+	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+	ret = btrfs_tree_search_ioctl(fd, &args);
 	if (ret < 0) {
 		fprintf(stderr,
 			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %m\n",
@@ -222,11 +225,11 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 		return ret;
 	}
 
-	if (search_arg.key.nr_items < 1) {
+	if (sk->nr_items < 1) {
 		fprintf(stderr, "failed to lookup subvol_id %llu!\n", subvol_id);
 		return -ENOENT;
 	}
-	search_header = (struct btrfs_ioctl_search_header *)search_arg.buf;
+	search_header = btrfs_tree_search_data(&args, 0);
 	backref_item = (struct btrfs_root_ref *)(search_header + 1);
 	if (btrfs_search_header_offset(search_header)
 	    != BTRFS_FS_TREE_OBJECTID) {

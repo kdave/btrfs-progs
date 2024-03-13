@@ -47,6 +47,7 @@
 #include "common/string-utils.h"
 #include "common/string-table.h"
 #include "common/sort-utils.h"
+#include "common/tree-search.h"
 #include "cmds/commands.h"
 
 static const char * const inspect_cmd_group_usage[] = {
@@ -559,13 +560,14 @@ static int print_min_dev_size(int fd, u64 devid)
 	 * ignore it here.
 	 */
 	u64 min_size = SZ_1M;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	u64 last_pos = (u64)-1;
 	LIST_HEAD(extents);
 	LIST_HEAD(holes);
 
 	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_DEV_TREE_OBJECTID;
 	sk->min_objectid = devid;
 	sk->max_objectid = devid;
@@ -582,7 +584,7 @@ static int print_min_dev_size(int fd, u64 devid)
 		struct btrfs_ioctl_search_header *sh;
 		unsigned long off = 0;
 
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			error("tree search ioctl: %m");
 			ret = 1;
@@ -596,10 +598,9 @@ static int print_min_dev_size(int fd, u64 devid)
 			struct btrfs_dev_extent *extent;
 			u64 len;
 
-			sh = (struct btrfs_ioctl_search_header *)(args.buf +
-								  off);
+			sh = btrfs_tree_search_data(&args, off);
 			off += sizeof(*sh);
-			extent = (struct btrfs_dev_extent *)(args.buf + off);
+			extent = btrfs_tree_search_data(&args, off);
 			off += btrfs_search_header_len(sh);
 
 			sk->min_objectid = btrfs_search_header_objectid(sh);
@@ -973,13 +974,14 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char* sortmode,
 
 static u64 fill_usage(int fd, u64 lstart)
 {
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header sh;
 	struct btrfs_block_group_item *item;
 	int ret;
 
 	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_EXTENT_TREE_OBJECTID;
 	sk->min_objectid = lstart;
 	sk->max_objectid = lstart;
@@ -990,7 +992,7 @@ static u64 fill_usage(int fd, u64 lstart)
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 1;
 
-	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	ret = btrfs_tree_search_ioctl(fd, &args);
 	if (ret < 0) {
 		error("cannot perform the search: %m");
 		return 1;
@@ -1002,8 +1004,8 @@ static u64 fill_usage(int fd, u64 lstart)
 	if (sk->nr_items > 1)
 		warning("found more than one blockgroup %llu", lstart);
 
-	memcpy(&sh, args.buf, sizeof(sh));
-	item = (struct btrfs_block_group_item*)(args.buf + sizeof(sh));
+	memcpy(&sh, btrfs_tree_search_data(&args, 0), sizeof(sh));
+	item = btrfs_tree_search_data(&args, sizeof(sh));
 
 	return item->used;
 }
@@ -1011,8 +1013,8 @@ static u64 fill_usage(int fd, u64 lstart)
 static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 				   int argc, char **argv)
 {
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_header sh;
 	unsigned long off = 0;
 	u64 *lnumber = NULL;
@@ -1087,6 +1089,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 		return 1;
 
 	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
 	sk->min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	sk->max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
@@ -1103,7 +1106,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 	while (1) {
 		sk->nr_items = 1;
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			error("cannot perform the search: %m");
 			return 1;
@@ -1118,9 +1121,9 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 			int sidx;
 			u64 used = (u64)-1;
 
-			memcpy(&sh, args.buf + off, sizeof(sh));
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
-			item = (struct btrfs_chunk*)(args.buf + off);
+			item = btrfs_tree_search_data(&args, off);
 			off += sh.len;
 
 			stripes = &item->stripe;
@@ -1230,23 +1233,24 @@ struct chunk_tree {
 
 static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 {
-	struct btrfs_ioctl_search_args search = {
-		.key = {
-			.tree_id = BTRFS_CHUNK_TREE_OBJECTID,
-			.min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			.min_type = BTRFS_CHUNK_ITEM_KEY,
-			.min_offset = 0,
-			.max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			.max_type = BTRFS_CHUNK_ITEM_KEY,
-			.max_offset = (u64)-1,
-			.min_transid = 0,
-			.max_transid = (u64)-1,
-			.nr_items = 0,
-		},
-	};
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
 	size_t items_pos = 0, buf_off = 0;
 	size_t capacity = 0;
 	int ret;
+
+	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
+	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
+	sk->min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	sk->min_type = BTRFS_CHUNK_ITEM_KEY;
+	sk->min_offset = 0;
+	sk->max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	sk->max_type = BTRFS_CHUNK_ITEM_KEY;
+	sk->max_offset = (u64)-1;
+	sk->min_transid = 0;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 0;
 
 	*chunks = NULL;
 	*num_chunks = 0;
@@ -1256,9 +1260,9 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 		struct chunk *chunk;
 		size_t i;
 
-		if (items_pos >= search.key.nr_items) {
-			search.key.nr_items = 4096;
-			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+		if (items_pos >= sk->nr_items) {
+			sk->nr_items = 4096;
+			ret = btrfs_tree_search_ioctl(fd, &args);
 			if (ret == -1) {
 				perror("BTRFS_IOC_TREE_SEARCH");
 				return -1;
@@ -1266,11 +1270,11 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 			items_pos = 0;
 			buf_off = 0;
 
-			if (search.key.nr_items == 0)
+			if (sk->nr_items == 0)
 				break;
 		}
 
-		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		header = btrfs_tree_search_data(&args, buf_off);
 		if (header->type != BTRFS_CHUNK_ITEM_KEY)
 			goto next;
 
@@ -1319,7 +1323,7 @@ next:
 		if (header->offset == (u64)-1)
 			break;
 		else
-			search.key.min_offset = header->offset + 1;
+			sk->min_offset = header->offset + 1;
 	}
 	return 0;
 }
@@ -1349,18 +1353,9 @@ static struct chunk *find_chunk(struct chunk *chunks, size_t num_chunks, u64 log
 static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 			      u64 *physical_start)
 {
-	struct btrfs_ioctl_search_args search = {
-		.key = {
-			.min_type = BTRFS_EXTENT_DATA_KEY,
-			.max_type = BTRFS_EXTENT_DATA_KEY,
-			.min_offset = 0,
-			.max_offset = (u64)-1,
-			.min_transid = 0,
-			.max_transid = (u64)-1,
-			.nr_items = 0,
-		},
-	};
-	struct btrfs_ioctl_ino_lookup_args args = {
+	struct btrfs_tree_search_args args;
+	struct btrfs_ioctl_search_key *sk;
+	struct btrfs_ioctl_ino_lookup_args ino_args = {
 		.treeid = 0,
 		.objectid = BTRFS_FIRST_FREE_OBJECTID,
 	};
@@ -1381,14 +1376,23 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 		return -EINVAL;
 	}
 
-	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_args);
 	if (ret == -1) {
 		error("cannot lookup parent subvolume: %m");
 		return -errno;
 	}
 
-	search.key.tree_id = args.treeid;
-	search.key.min_objectid = search.key.max_objectid = st.st_ino;
+	memset(&args, 0, sizeof(args));
+	sk = btrfs_tree_search_sk(&args);
+	sk->min_type = BTRFS_EXTENT_DATA_KEY;
+	sk->max_type = BTRFS_EXTENT_DATA_KEY;
+	sk->min_offset = 0;
+	sk->max_offset = (u64)-1;
+	sk->min_transid = 0;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 0;
+	sk->tree_id = ino_args.treeid;
+	sk->min_objectid = sk->max_objectid = st.st_ino;
 	for (;;) {
 		const struct btrfs_ioctl_search_header *header;
 		const struct btrfs_file_extent_item *item;
@@ -1396,9 +1400,9 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 		u64 logical_offset = 0;
 		struct chunk *chunk = NULL;
 
-		if (items_pos >= search.key.nr_items) {
-			search.key.nr_items = 4096;
-			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+		if (items_pos >= sk->nr_items) {
+			sk->nr_items = 4096;
+			ret = btrfs_tree_search_ioctl(fd, &args);
 			if (ret == -1) {
 				error("cannot search tree: %m");
 				return -errno;
@@ -1406,11 +1410,11 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 			items_pos = 0;
 			buf_off = 0;
 
-			if (search.key.nr_items == 0)
+			if (sk->nr_items == 0)
 				break;
 		}
 
-		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		header = btrfs_tree_search_data(&args, buf_off);
 		if (header->type != BTRFS_EXTENT_DATA_KEY)
 			goto next;
 
@@ -1497,7 +1501,7 @@ next:
 		if (header->offset == (u64)-1)
 			break;
 		else
-			search.key.min_offset = header->offset + 1;
+			sk->min_offset = header->offset + 1;
 	}
 	return 0;
 
