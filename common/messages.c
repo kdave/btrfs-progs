@@ -24,6 +24,7 @@ static const char *common_error_string[] = {
 	[ERROR_MSG_MEMORY]	= "not enough memory",
 	[ERROR_MSG_START_TRANS] = "failed to start transaction",
 	[ERROR_MSG_COMMIT_TRANS] = "failed to commit transaction",
+	[ERROR_MSG_UNEXPECTED]	= "unexpected condition, probably corruption",
 };
 
 __attribute__ ((format (printf, 1, 2)))

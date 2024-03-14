@@ -88,7 +88,10 @@ static int btrfs_search_overlap_extent(struct btrfs_root *root,
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
 		return ret;
-	BUG_ON(ret == 0);
+	if (ret == 0) {
+		error_msg(ERROR_MSG_UNEXPECTED, "EXTENT_DATA found at %llu", bytenr);
+		return -EUCLEAN;
+	}
 
 	ret = btrfs_previous_extent_item(root, path, 0);
 	if (ret < 0)
@@ -168,7 +171,13 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 
 		__get_extent_size(extent_root, path, &cur_start, &cur_len);
 		/* For convert case, this extent should be a subset of existing one. */
-		BUG_ON(disk_bytenr < cur_start);
+		if (disk_bytenr < cur_start) {
+			error_msg(ERROR_MSG_UNEXPECTED,
+				  "invalid range disk_bytenr < cur_start: %llu < %llu",
+				  disk_bytenr, cur_start);
+			ret = -EUCLEAN;
+			goto fail;
+		}
 
 		extent_bytenr = cur_start;
 		extent_num_bytes = cur_len;
