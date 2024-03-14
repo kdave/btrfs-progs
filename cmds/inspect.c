@@ -581,7 +581,6 @@ static int print_min_dev_size(int fd, u64 devid)
 
 	while (1) {
 		int i;
-		struct btrfs_ioctl_search_header *sh;
 		unsigned long off = 0;
 
 		ret = btrfs_tree_search_ioctl(fd, &args);
@@ -596,31 +595,29 @@ static int print_min_dev_size(int fd, u64 devid)
 
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_dev_extent *extent;
+			struct btrfs_ioctl_search_header sh;
 			u64 len;
 
-			sh = btrfs_tree_search_data(&args, off);
-			off += sizeof(*sh);
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
+			off += sizeof(sh);
 			extent = btrfs_tree_search_data(&args, off);
-			off += btrfs_search_header_len(sh);
+			off += sh.len;
 
-			sk->min_objectid = btrfs_search_header_objectid(sh);
-			sk->min_type = btrfs_search_header_type(sh);
-			sk->min_offset = btrfs_search_header_offset(sh) + 1;
+			sk->min_objectid = sh.objectid;
+			sk->min_type = sh.type;
+			sk->min_offset = sh.offset + 1;
 
-			if (btrfs_search_header_objectid(sh) != devid ||
-			    btrfs_search_header_type(sh) != BTRFS_DEV_EXTENT_KEY)
+			if (sh.objectid != devid || sh.type != BTRFS_DEV_EXTENT_KEY)
 				continue;
 
 			len = btrfs_stack_dev_extent_length(extent);
 			min_size += len;
-			ret = add_dev_extent(&extents,
-				btrfs_search_header_offset(sh),
-				btrfs_search_header_offset(sh) + len - 1, 0);
+			ret = add_dev_extent(&extents, sh.offset,
+					     sh.offset + len - 1, 0);
 
-			if (!ret && last_pos != (u64)-1 &&
-			    last_pos != btrfs_search_header_offset(sh))
+			if (!ret && last_pos != (u64)-1 && last_pos != sh.offset)
 				ret = add_dev_extent(&holes, last_pos,
-					btrfs_search_header_offset(sh) - 1, 1);
+						     sh.offset - 1, 1);
 			if (ret) {
 				errno = -ret;
 				error("add device extent: %m");
@@ -628,7 +625,7 @@ static int print_min_dev_size(int fd, u64 devid)
 				goto out;
 			}
 
-			last_pos = btrfs_search_header_offset(sh) + len;
+			last_pos = sh.offset + len;
 		}
 
 		if (sk->min_type != BTRFS_DEV_EXTENT_KEY ||
@@ -976,7 +973,6 @@ static u64 fill_usage(int fd, u64 lstart)
 {
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header sh;
 	struct btrfs_block_group_item *item;
 	int ret;
 
@@ -1004,8 +1000,8 @@ static u64 fill_usage(int fd, u64 lstart)
 	if (sk->nr_items > 1)
 		warning("found more than one blockgroup %llu", lstart);
 
-	memcpy(&sh, btrfs_tree_search_data(&args, 0), sizeof(sh));
-	item = btrfs_tree_search_data(&args, sizeof(sh));
+	/* Only one item, we don't need search header. */
+	item = btrfs_tree_search_data(&args, sizeof(struct btrfs_ioctl_search_header));
 
 	return item->used;
 }
@@ -1015,7 +1011,6 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 {
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header sh;
 	unsigned long off = 0;
 	u64 *lnumber = NULL;
 	unsigned lnumber_size = 128;
@@ -1118,6 +1113,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_chunk *item;
 			struct btrfs_stripe *stripes;
+			struct btrfs_ioctl_search_header sh;
 			int sidx;
 			u64 used = (u64)-1;
 
@@ -1255,7 +1251,7 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 	*chunks = NULL;
 	*num_chunks = 0;
 	for (;;) {
-		const struct btrfs_ioctl_search_header *header;
+		struct btrfs_ioctl_search_header sh;
 		const struct btrfs_chunk *item;
 		struct chunk *chunk;
 		size_t i;
@@ -1274,11 +1270,13 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 				break;
 		}
 
-		header = btrfs_tree_search_data(&args, buf_off);
-		if (header->type != BTRFS_CHUNK_ITEM_KEY)
+		memcpy(&sh, btrfs_tree_search_data(&args, buf_off), sizeof(sh));
+		buf_off += sizeof(sh);
+
+		if (sh.type != BTRFS_CHUNK_ITEM_KEY)
 			goto next;
 
-		item = (void *)(header + 1);
+		item = btrfs_tree_search_data(&args, buf_off);
 		if (*num_chunks >= capacity) {
 			struct chunk *tmp;
 
@@ -1295,7 +1293,7 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 		}
 
 		chunk = &(*chunks)[*num_chunks];
-		chunk->offset = header->offset;
+		chunk->offset = sh.offset;
 		chunk->length = le64_to_cpu(item->length);
 		chunk->stripe_len = le64_to_cpu(item->stripe_len);
 		chunk->type = le64_to_cpu(item->type);
@@ -1319,11 +1317,11 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 
 next:
 		items_pos++;
-		buf_off += sizeof(*header) + header->len;
-		if (header->offset == (u64)-1)
+		buf_off += sh.len;
+		if (sh.offset == (u64)-1)
 			break;
 		else
-			sk->min_offset = header->offset + 1;
+			sk->min_offset = sh.offset + 1;
 	}
 	return 0;
 }
@@ -1394,7 +1392,7 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 	sk->tree_id = ino_args.treeid;
 	sk->min_objectid = sk->max_objectid = st.st_ino;
 	for (;;) {
-		const struct btrfs_ioctl_search_header *header;
+		struct btrfs_ioctl_search_header sh;
 		const struct btrfs_file_extent_item *item;
 		u8 type;
 		u64 logical_offset = 0;
@@ -1414,11 +1412,13 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 				break;
 		}
 
-		header = btrfs_tree_search_data(&args, buf_off);
-		if (header->type != BTRFS_EXTENT_DATA_KEY)
+		memcpy(&sh, btrfs_tree_search_data(&args, buf_off), sizeof(sh));
+		buf_off += sizeof(sh);
+
+		if (sh.type != BTRFS_EXTENT_DATA_KEY)
 			goto next;
 
-		item = (void *)(header + 1);
+		item = btrfs_tree_search_data(&args, buf_off);
 
 		type = item->type;
 		if (type == BTRFS_FILE_EXTENT_REG ||
@@ -1497,11 +1497,11 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 
 next:
 		items_pos++;
-		buf_off += sizeof(*header) + header->len;
-		if (header->offset == (u64)-1)
+		buf_off += sh.len;
+		if (sh.offset == (u64)-1)
 			break;
 		else
-			sk->min_offset = header->offset + 1;
+			sk->min_offset = sh.offset + 1;
 	}
 	return 0;
 

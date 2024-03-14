@@ -186,21 +186,21 @@ static int load_chunk_info(int fd, struct array *chunkinfos)
 		off = 0;
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_chunk *item;
-			struct btrfs_ioctl_search_header *sh;
+			struct btrfs_ioctl_search_header sh;
 
-			sh = btrfs_tree_search_data(&args, off);
-			off += sizeof(*sh);
+			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
+			off += sizeof(sh);
 			item = btrfs_tree_search_data(&args, off);
 
 			ret = add_info_to_list(chunkinfos, item);
 			if (ret)
 				return 1;
 
-			off += btrfs_search_header_len(sh);
+			off += sh.len;
 
-			sk->min_objectid = btrfs_search_header_objectid(sh);
-			sk->min_type = btrfs_search_header_type(sh);
-			sk->min_offset = btrfs_search_header_offset(sh)+1;
+			sk->min_objectid = sh.objectid;
+			sk->min_type = sh.type;
+			sk->min_offset = sh.offset + 1;
 
 		}
 		if (!sk->min_offset)	/* overflow */

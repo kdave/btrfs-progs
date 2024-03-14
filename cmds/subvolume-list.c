@@ -820,7 +820,6 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 	int ret;
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header sh;
 	struct btrfs_root_ref *ref;
 	struct btrfs_root_item *ri;
 	unsigned long off;
@@ -860,6 +859,8 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 		 * read the root_ref item it contains
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
+			struct btrfs_ioctl_search_header sh;
+
 			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
 			if (sh.type == BTRFS_ROOT_BACKREF_KEY) {

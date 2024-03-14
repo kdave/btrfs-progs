@@ -948,7 +948,6 @@ static u64 find_root_gen(int fd)
 	int ret;
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header sh;
 	unsigned long off = 0;
 	u64 max_found = 0;
 	int i;
@@ -993,6 +992,7 @@ static u64 find_root_gen(int fd)
 		off = 0;
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_root_item *item;
+			struct btrfs_ioctl_search_header sh;
 
 			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
@@ -1099,7 +1099,7 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	int ret;
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header *sh;
+	struct btrfs_ioctl_search_header sh;
 	int namelen;
 
 	memset(&args, 0, sizeof(args));
@@ -1127,13 +1127,13 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	if (sk->nr_items == 0)
 		return NULL;
 
-	sh = btrfs_tree_search_data(&args, 0);
-	if (btrfs_search_header_type(sh) == BTRFS_INODE_REF_KEY) {
+	memcpy(&sh, btrfs_tree_search_data(&args, 0), sizeof(sh));
+	if (sh.type == BTRFS_INODE_REF_KEY) {
 		struct btrfs_inode_ref *ref;
 
-		dirid = btrfs_search_header_offset(sh);
+		dirid = sh.offset;
 
-		ref = (struct btrfs_inode_ref *)(sh + 1);
+		ref = btrfs_tree_search_data(&args, sizeof(sh));
 		namelen = btrfs_stack_inode_ref_name_len(ref);
 
 		name = (char *)(ref + 1);
@@ -1245,7 +1245,6 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	int ret;
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
-	struct btrfs_ioctl_search_header sh;
 	struct btrfs_file_extent_item *item;
 	unsigned long off = 0;
 	u64 found_gen;
@@ -1292,6 +1291,8 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 		 * read the root_ref item it contains
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
+			struct btrfs_ioctl_search_header sh;
+
 			memcpy(&sh, btrfs_tree_search_data(&args, off), sizeof(sh));
 			off += sizeof(sh);
 
@@ -1318,8 +1319,8 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 			 * next search doesn't repeat this root
 			 */
 			sk->min_objectid = sh.objectid;
-			sk->min_offset = sh.offset;
 			sk->min_type = sh.type;
+			sk->min_offset = sh.offset;
 		}
 		sk->nr_items = 4096;
 		if (sk->min_offset < (u64)-1)

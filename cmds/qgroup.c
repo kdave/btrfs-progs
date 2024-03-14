@@ -1262,7 +1262,6 @@ static int __qgroups_search(int fd, struct btrfs_tree_search_args *args,
 	int ret;
 	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_ioctl_search_key filter_key;
-	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
 	unsigned int i;
 	struct btrfs_qgroup_status_item *si;
@@ -1298,13 +1297,14 @@ static int __qgroups_search(int fd, struct btrfs_tree_search_args *args,
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
 			struct btrfs_key key;
+			struct btrfs_ioctl_search_header sh;
 
-			sh = btrfs_tree_search_data(args, off);
-			off += sizeof(*sh);
+			memcpy(&sh, btrfs_tree_search_data(args, off), sizeof(sh));
+			off += sizeof(sh);
 
-			key.objectid = btrfs_search_header_objectid(sh);
-			key.type = btrfs_search_header_type(sh);
-			key.offset = btrfs_search_header_offset(sh);
+			key.objectid = sh.objectid;
+			key.type = sh.type;
+			key.offset = sh.offset;
 
 			if (!key_in_range(&key, &filter_key))
 				goto next;
@@ -1348,7 +1348,7 @@ static int __qgroups_search(int fd, struct btrfs_tree_search_args *args,
 				return ret;
 
 next:
-			off += btrfs_search_header_len(sh);
+			off += sh.len;
 
 			/*
 			 * record the mins in sk so we can make sure the
