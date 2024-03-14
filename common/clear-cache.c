@@ -542,7 +542,11 @@ int truncate_free_ino_items(struct btrfs_root *root)
 		}
 
 		ret = btrfs_del_item(trans, root, &path);
-		BUG_ON(ret);
+		if (ret < 0) {
+			btrfs_abort_transaction(trans, ret);
+			btrfs_release_path(&path);
+			goto out;
+		}
 		btrfs_release_path(&path);
 	}
 
