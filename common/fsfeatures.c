@@ -312,12 +312,21 @@ void btrfs_assert_feature_buf_size(void)
 	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++)
 		/* The extra 2 bytes are for the ", " prefix. */
 		total_size += strlen(mkfs_features[i].name) + 2;
-	BUG_ON(BTRFS_FEATURE_STRING_BUF_SIZE < total_size);
+
+	if (BTRFS_FEATURE_STRING_BUF_SIZE < total_size) {
+		internal_error("string buffer for freature list too small: want %d\n",
+			       total_size);
+		abort();
+	}
 
 	total_size = 0;
 	for (i = 0; i < ARRAY_SIZE(runtime_features); i++)
 		total_size += strlen(runtime_features[i].name) + 2;
-	BUG_ON(BTRFS_FEATURE_STRING_BUF_SIZE < total_size);
+	if (BTRFS_FEATURE_STRING_BUF_SIZE < total_size) {
+		internal_error("string buffer for freature list too small: want %d\n",
+			       total_size);
+		abort();
+	}
 }
 
 static size_t get_feature_array_size(enum feature_source source)
