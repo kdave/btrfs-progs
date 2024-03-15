@@ -144,7 +144,11 @@ again:
 	rec->offsets[0] = offset;
 	rec->nmirrors++;
 	ret = insert_cache_extent(eb_cache, &rec->cache);
-	BUG_ON(ret);
+	if (ret < 0) {
+		errno = -ret;
+		error("cannot insert extent to cache start %llu size %llu: %m",
+		      rec->cache.start, rec->cache.size);
+	}
 out:
 	return ret;
 free_out:
@@ -269,7 +273,11 @@ again:
 	}
 
 	ret = insert_block_group_record(bg_cache, rec);
-	BUG_ON(ret);
+	if (ret < 0) {
+		errno = -ret;
+		error("cannot insert qgroup record %llu: %m", rec->cache.start);
+		goto free_out;
+	}
 out:
 	return ret;
 free_out:
@@ -313,7 +321,11 @@ again:
 		goto again;
 	}
 	ret = insert_cache_extent(chunk_cache, &rec->cache);
-	BUG_ON(ret);
+	if (ret < 0) {
+		errno = -ret;
+		error("cannot insert extent to cache start %llu size %llu: %m",
+		      rec->cache.start, rec->cache.size);
+	}
 out:
 	return ret;
 free_out:
@@ -359,7 +371,11 @@ again:
 	}
 
 	ret = insert_device_extent_record(devext_cache, rec);
-	BUG_ON(ret);
+	if (ret < 0) {
+		errno = -ret;
+		error("cannot insert device extent record to cache start %llu size %llu: %m",
+		      rec->cache.start, rec->cache.size);
+	}
 out:
 	return ret;
 free_out:
@@ -2216,13 +2232,13 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 		chunk->sub_stripes = btrfs_bg_type_to_sub_stripes(bg->flags);
 
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
-		if (ret == -EEXIST) {
-			error("duplicate entry in cache start %llu size %llu",
+		if (ret < 0) {
+			errno = -ret;
+			error("cannot insert extent to cache start %llu size %llu",
 					chunk->cache.start, chunk->cache.size);
 			free(chunk);
 			return ret;
 		}
-		BUG_ON(ret);
 
 		list_del_init(&bg->list);
 		if (!nstripes) {
