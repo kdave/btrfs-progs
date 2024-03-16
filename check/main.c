@@ -776,8 +776,11 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 			rec->found_link = 1;
 
 		ret = insert_cache_extent(inode_cache, &node->cache);
-		if (ret)
+		if (ret) {
+			free(rec);
+			free(node);
 			return ERR_PTR(-EEXIST);
+		}
 	}
 	return rec;
 }
