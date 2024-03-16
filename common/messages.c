@@ -25,6 +25,8 @@ static const char *common_error_string[] = {
 	[ERROR_MSG_START_TRANS] = "failed to start transaction",
 	[ERROR_MSG_COMMIT_TRANS] = "failed to commit transaction",
 	[ERROR_MSG_UNEXPECTED]	= "unexpected condition, probably corruption",
+	[ERROR_MSG_READ]	= "write() failed",
+	[ERROR_MSG_WRITE]	= "read() failed",
 };
 
 __attribute__ ((format (printf, 1, 2)))

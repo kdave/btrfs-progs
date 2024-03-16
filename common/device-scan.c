@@ -208,7 +208,11 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	ret = sbwrite(fd, buf, BTRFS_SUPER_INFO_OFFSET);
 	/* Ensure super block was written to the device */
-	BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
+	if (ret != BTRFS_SUPER_INFO_SIZE) {
+		error_msg(ERROR_MSG_WRITE, "superblock when adding device: %m");
+		ret = -EIO;
+		goto out;
+	}
 	free(buf);
 	list_add(&device->dev_list, &fs_info->fs_devices->devices);
 	device->fs_devices = fs_info->fs_devices;
