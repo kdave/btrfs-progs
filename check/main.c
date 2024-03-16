@@ -990,9 +990,16 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 	struct inode_backref *backref;
 
 	rec = get_inode_rec(inode_cache, ino, 1);
-	BUG_ON(IS_ERR(rec));
+	if (IS_ERR(rec))
+		return PTR_ERR(rec);
 	backref = get_inode_backref(rec, name, namelen, dir);
-	BUG_ON(!backref);
+	if (!backref) {
+		/*
+		 * Can't clean 'rec' here as it's now in the tree, backref
+		 * can't be found or allocated.
+		 */
+		return -ENOENT;
+	}
 	if (errors)
 		backref->errors |= errors;
 	if (itemtype == BTRFS_DIR_INDEX_KEY) {
@@ -1027,7 +1034,8 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 		backref->ref_type = itemtype;
 		backref->found_inode_ref = 1;
 	} else {
-		BUG_ON(1);
+		error_msg(ERROR_MSG_UNEXPECTED, "backref item type %d", itemtype);
+		return -EUCLEAN;
 	}
 
 	maybe_free_inode_rec(inode_cache, rec);
@@ -1054,24 +1062,25 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 
 	list_for_each_entry(backref, &src->backrefs, list) {
 		if (backref->found_dir_index) {
-			add_inode_backref(dst_cache, dst->ino, backref->dir,
+			ret = add_inode_backref(dst_cache, dst->ino, backref->dir,
 					backref->index, backref->name,
 					backref->namelen, backref->filetype,
 					BTRFS_DIR_INDEX_KEY, backref->errors);
 		}
 		if (backref->found_dir_item) {
 			dir_count++;
-			add_inode_backref(dst_cache, dst->ino,
+			ret = add_inode_backref(dst_cache, dst->ino,
 					backref->dir, 0, backref->name,
 					backref->namelen, backref->filetype,
 					BTRFS_DIR_ITEM_KEY, backref->errors);
 		}
 		if (backref->found_inode_ref) {
-			add_inode_backref(dst_cache, dst->ino,
+			ret = add_inode_backref(dst_cache, dst->ino,
 					backref->dir, backref->index,
 					backref->name, backref->namelen, 0,
 					backref->ref_type, backref->errors);
 		}
+		BUG_ON(ret);
 	}
 skip_backrefs:
 	if (src->found_dir_item)
@@ -1467,11 +1476,11 @@ static int process_dir_item(struct extent_buffer *eb,
 		}
 
 		if (location.type == BTRFS_INODE_ITEM_KEY) {
-			add_inode_backref(inode_cache, location.objectid,
+			ret = add_inode_backref(inode_cache, location.objectid,
 					  key->objectid, key->offset, namebuf,
 					  len, filetype, key->type, error);
 		} else if (location.type == BTRFS_ROOT_ITEM_KEY) {
-			add_inode_backref(root_cache, location.objectid,
+			ret = add_inode_backref(root_cache, location.objectid,
 					  key->objectid, key->offset,
 					  namebuf, len, filetype,
 					  key->type, error);
@@ -1479,10 +1488,11 @@ static int process_dir_item(struct extent_buffer *eb,
 			fprintf(stderr,
 				"unknown location type %d in DIR_ITEM[%llu %llu]\n",
 				location.type, key->objectid, key->offset);
-			add_inode_backref(inode_cache, BTRFS_MULTIPLE_OBJECTIDS,
+			ret = add_inode_backref(inode_cache, BTRFS_MULTIPLE_OBJECTIDS,
 					  key->objectid, key->offset, namebuf,
 					  len, filetype, key->type, error);
 		}
+		BUG_ON(ret);
 
 next:
 		len = sizeof(*di) + name_len + data_len;
@@ -1558,6 +1568,8 @@ static int process_inode_ref(struct extent_buffer *eb,
 	ref = btrfs_item_ptr(eb, slot, struct btrfs_inode_ref);
 	total = btrfs_item_size(eb, slot);
 	while (cur < total) {
+		int ret;
+
 		name_len = btrfs_inode_ref_name_len(eb, ref);
 		index = btrfs_inode_ref_index(eb, ref);
 
@@ -1577,8 +1589,9 @@ static int process_inode_ref(struct extent_buffer *eb,
 		}
 
 		read_extent_buffer(eb, namebuf, (unsigned long)(ref + 1), len);
-		add_inode_backref(inode_cache, key->objectid, key->offset,
+		ret = add_inode_backref(inode_cache, key->objectid, key->offset,
 				  index, namebuf, len, 0, key->type, error);
+		BUG_ON(ret);
 
 		len = sizeof(*ref) + name_len;
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);
@@ -1607,6 +1620,8 @@ static int process_inode_extref(struct extent_buffer *eb,
 	extref = btrfs_item_ptr(eb, slot, struct btrfs_inode_extref);
 	total = btrfs_item_size(eb, slot);
 	while (cur < total) {
+		int ret;
+
 		name_len = btrfs_inode_extref_name_len(eb, extref);
 		index = btrfs_inode_extref_index(eb, extref);
 		parent = btrfs_inode_extref_parent(eb, extref);
@@ -1619,8 +1634,9 @@ static int process_inode_extref(struct extent_buffer *eb,
 		}
 		read_extent_buffer(eb, namebuf,
 				   (unsigned long)(extref + 1), len);
-		add_inode_backref(inode_cache, key->objectid, parent,
+		ret = add_inode_backref(inode_cache, key->objectid, parent,
 				  index, namebuf, len, 0, key->type, error);
+		BUG_ON(ret);
 
 		len = sizeof(*extref) + name_len;
 		extref = (struct btrfs_inode_extref *)((char *)extref + len);
