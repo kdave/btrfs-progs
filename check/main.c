@@ -1319,7 +1319,10 @@ static int leave_shared_node(struct btrfs_root *root,
 		if (wc->nodes[i])
 			break;
 	}
-	BUG_ON(i >= BTRFS_MAX_LEVEL);
+	if (i >= BTRFS_MAX_LEVEL) {
+		error_msg(ERROR_MSG_UNEXPECTED, "node found on wrong level %d", i);
+		return -EUCLEAN;
+	}
 
 	node = wc->nodes[wc->active_node];
 	wc->nodes[wc->active_node] = NULL;
@@ -1328,11 +1331,18 @@ static int leave_shared_node(struct btrfs_root *root,
 	dest = wc->nodes[wc->active_node];
 	if (wc->active_node < wc->root_level ||
 	    btrfs_root_refs(&root->root_item) > 0) {
-		BUG_ON(node->refs <= 1);
+		if (node->refs <= 1) {
+			error_msg(ERROR_MSG_UNEXPECTED, "node refs %d <= 1", node->refs);
+			return -EUCLEAN;
+		}
 		ret = splice_shared_node(node, dest);
-		BUG_ON(ret);
+		if (ret)
+			return ret;
 	} else {
-		BUG_ON(node->refs < 2);
+		if (node->refs < 2) {
+			error_msg(ERROR_MSG_UNEXPECTED, "node refs %d < 2", node->refs);
+			return -EUCLEAN;
+		}
 		node->refs--;
 	}
 	return 0;
@@ -1999,8 +2009,12 @@ static int walk_up_tree(struct btrfs_root *root, struct btrfs_path *path,
 		free_extent_buffer(path->nodes[*level]);
 		path->nodes[*level] = NULL;
 		BUG_ON(*level > wc->active_node);
-		if (*level == wc->active_node)
-			leave_shared_node(root, wc, *level);
+		if (*level == wc->active_node) {
+			int ret;
+
+			ret = leave_shared_node(root, wc, *level);
+			BUG_ON(ret);
+		}
 		*level = i + 1;
 	}
 	return 1;
