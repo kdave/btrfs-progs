@@ -1165,7 +1165,10 @@ again:
 			ins = node;
 		} else {
 			ins = malloc(sizeof(*ins));
-			BUG_ON(!ins);
+			if (!ins) {
+				error_msg(ERROR_MSG_MEMORY, NULL);
+				return -ENOMEM;
+			}
 			ins->cache.start = node->cache.start;
 			ins->cache.size = node->cache.size;
 			ins->data = rec;
@@ -1174,7 +1177,10 @@ again:
 		ret = insert_cache_extent(dst, &ins->cache);
 		if (ret == -EEXIST) {
 			conflict = get_inode_rec(dst, rec->ino, 1);
-			BUG_ON(IS_ERR(conflict));
+			if (IS_ERR(conflict)) {
+				error("cannot get inode record for %llu\n", rec->ino);
+				return PTR_ERR(conflict);
+			}
 			merge_inode_recs(rec, conflict, dst);
 			if (rec->checked) {
 				conflict->checked = 1;
@@ -1184,8 +1190,6 @@ again:
 			maybe_free_inode_rec(dst, conflict);
 			free_inode_rec(rec);
 			free(ins);
-		} else {
-			BUG_ON(ret);
 		}
 	}
 
@@ -1202,7 +1206,10 @@ again:
 			maybe_free_inode_rec(dst, dst_node->current);
 		}
 		dst_node->current = get_inode_rec(dst, current_ino, 1);
-		BUG_ON(IS_ERR(dst_node->current));
+		if (IS_ERR(dst_node->current)) {
+			error("cannot get inode record for %llu\n", current_ino);
+			return PTR_ERR(dst_node->current);
+		}
 	}
 	return 0;
 }
@@ -1286,7 +1293,8 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 	}
 
 	dest = wc->nodes[wc->active_node];
-	splice_shared_node(node, dest);
+	ret = splice_shared_node(node, dest);
+	BUG_ON(ret);
 	if (node->refs == 0) {
 		remove_cache_extent(&wc->shared, &node->cache);
 		free(node);
@@ -1299,6 +1307,7 @@ static int leave_shared_node(struct btrfs_root *root,
 {
 	struct shared_node *node;
 	struct shared_node *dest;
+	int ret;
 	int i;
 
 	if (level == wc->root_level)
@@ -1318,7 +1327,8 @@ static int leave_shared_node(struct btrfs_root *root,
 	if (wc->active_node < wc->root_level ||
 	    btrfs_root_refs(&root->root_item) > 0) {
 		BUG_ON(node->refs <= 1);
-		splice_shared_node(node, dest);
+		ret = splice_shared_node(node, dest);
+		BUG_ON(ret);
 	} else {
 		BUG_ON(node->refs < 2);
 		node->refs--;
