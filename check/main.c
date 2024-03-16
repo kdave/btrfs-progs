@@ -1241,25 +1241,9 @@ static struct shared_node *find_shared_node(struct cache_tree *shared,
 	return NULL;
 }
 
-static int add_shared_node(struct cache_tree *shared, u64 bytenr, u32 refs)
-{
-	int ret;
-	struct shared_node *node;
-
-	node = calloc(1, sizeof(*node));
-	if (!node)
-		return -ENOMEM;
-	node->cache.start = bytenr;
-	node->cache.size = 1;
-	cache_tree_init(&node->root_cache);
-	cache_tree_init(&node->inode_cache);
-	node->refs = refs;
-
-	ret = insert_cache_extent(shared, &node->cache);
-
-	return ret;
-}
-
+/*
+ * Return <0 on error, 0 if it's a new node, 1 if it's been already entered.
+ */
 static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 			     struct walk_control *wc, int level)
 {
@@ -1268,17 +1252,34 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 	int ret;
 
 	if (level == wc->active_node)
-		return false;
+		return 0;
 
-	BUG_ON(wc->active_node <= level);
+	if (wc->active_node <= level) {
+		error_msg(ERROR_MSG_UNEXPECTED, "active node level %d < level %d",
+			  wc->active_node, level);
+		return -EUCLEAN;
+	}
 	node = find_shared_node(&wc->shared, bytenr);
 	if (!node) {
-		ret = add_shared_node(&wc->shared, bytenr, refs);
-		BUG_ON(ret);
+		node = calloc(1, sizeof(*node));
+		if (!node)
+			return -ENOMEM;
+
+		node->cache.start = bytenr;
+		node->cache.size = 1;
+		cache_tree_init(&node->root_cache);
+		cache_tree_init(&node->inode_cache);
+		node->refs = refs;
+		ret = insert_cache_extent(&wc->shared, &node->cache);
+		if (ret < 0) {
+			free(node);
+			return ret;
+		}
+
 		node = find_shared_node(&wc->shared, bytenr);
 		wc->nodes[level] = node;
 		wc->active_node = level;
-		return false;
+		return 0;
 	}
 
 	if (wc->root_level == wc->active_node &&
@@ -1289,17 +1290,18 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 			remove_cache_extent(&wc->shared, &node->cache);
 			free(node);
 		}
-		return true;
+		return 1;
 	}
 
 	dest = wc->nodes[wc->active_node];
 	ret = splice_shared_node(node, dest);
-	BUG_ON(ret);
+	if (ret)
+		return ret;
 	if (node->refs == 0) {
 		remove_cache_extent(&wc->shared, &node->cache);
 		free(node);
 	}
-	return true;
+	return 1;
 }
 
 static int leave_shared_node(struct btrfs_root *root,
@@ -1875,6 +1877,10 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 	if (refs > 1) {
 		ret = enter_shared_node(root, path->nodes[*level]->start,
 					refs, wc, *level);
+		if (ret < 0) {
+			err = ret;
+			goto out;
+		}
 		if (ret > 0) {
 			err = ret;
 			goto out;
@@ -1916,6 +1922,10 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (refs > 1) {
 			ret = enter_shared_node(root, bytenr, refs,
 						wc, *level - 1);
+			if (ret < 0) {
+				err = ret;
+				goto out;
+			}
 			if (ret > 0) {
 				path->slots[*level]++;
 				continue;
