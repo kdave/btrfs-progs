@@ -2174,8 +2174,12 @@ static int add_missing_dir_index(struct btrfs_root *root,
 	int ret;
 
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	fprintf(stderr, "repairing missing dir index item for inode %llu\n", rec->ino);
 
@@ -2226,8 +2230,12 @@ static int delete_dir_index(struct btrfs_root *root,
 	int ret = 0;
 
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	fprintf(stderr, "Deleting bad dir index [%llu,%u,%llu] root %llu\n",
 		backref->dir, BTRFS_DIR_INDEX_KEY, backref->index, root->objectid);
@@ -2266,6 +2274,8 @@ static int create_inode_item(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -2369,6 +2379,8 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 			trans = btrfs_start_transaction(root, 1);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				break;
 			}
 			fprintf(stderr, "adding missing dir index/item pair "
@@ -3033,8 +3045,12 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 	 * 2 for lost+found dir's dir_index and dir_item for the file
 	 */
 	trans = btrfs_start_transaction(root, 7);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	if (!ret && rec->errors & I_ERR_MISMATCH_DIR_HASH)
 		ret = repair_mismatch_dir_hash(trans, root, rec);
@@ -3152,8 +3168,10 @@ static int check_inode_recs(struct btrfs_root *root,
 
 			trans = btrfs_start_transaction(root, 1);
 			if (IS_ERR(trans)) {
-				err = PTR_ERR(trans);
-				return err;
+				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
+				return ret;
 			}
 
 			fprintf(stderr, "root %llu missing its root dir, recreating\n",
@@ -3590,7 +3608,7 @@ static int repair_btree(struct btrfs_root *root,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		fprintf(stderr, "Error starting transaction: %m\n");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	cache = first_cache_extent(corrupt_blocks);
@@ -4573,6 +4591,8 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 		trans = btrfs_start_transaction(search_root, 0);
 		if (IS_ERR(trans)) {
 			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "%m");
 			break;
 		}
 
@@ -7087,8 +7107,12 @@ static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
 	btrfs_release_path(path);
 
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	/*
 	 * Ok we have the key of the file extent we want to fix, now we can cow
@@ -7475,6 +7499,8 @@ static int delete_duplicate_records(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 
@@ -7732,6 +7758,8 @@ static int fixup_extent_refs(struct cache_tree *extent_cache,
 	trans = btrfs_start_transaction(gfs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 
@@ -7805,8 +7833,12 @@ retry:
 	}
 
 	trans = btrfs_start_transaction(root, 0);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret < 0) {
@@ -7918,6 +7950,7 @@ static int prune_corrupt_blocks(void)
 	struct btrfs_trans_handle *trans = NULL;
 	struct cache_extent *cache;
 	struct btrfs_corrupt_block *corrupt;
+	int ret;
 
 	while (1) {
 		cache = search_cache_extent(gfs_info->corrupt_blocks, 0);
@@ -7925,8 +7958,12 @@ static int prune_corrupt_blocks(void)
 			break;
 		if (!trans) {
 			trans = btrfs_start_transaction(gfs_info->tree_root, 1);
-			if (IS_ERR(trans))
-				return PTR_ERR(trans);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
+				return ret;
+			}
 		}
 		corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
 		prune_one_block(trans, corrupt);
@@ -8294,6 +8331,8 @@ repair_abort:
 			trans = btrfs_start_transaction(root, 1);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				goto repair_abort;
 			}
 
@@ -8781,7 +8820,8 @@ static int check_block_groups(struct block_group_tree *bg_cache)
 	trans = btrfs_start_transaction(gfs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		fprintf(stderr, "Failed to start a transaction\n");
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -9598,8 +9638,12 @@ static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	ret = btrfs_search_slot(trans, root, &bad->key, &path, -1, 1);
 	if (ret) {
@@ -9896,6 +9940,8 @@ again:
 		trans = btrfs_start_transaction(gfs_info->tree_root, 1);
 		if (IS_ERR(trans)) {
 			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "%m");
 			goto out;
 		}
 	}
