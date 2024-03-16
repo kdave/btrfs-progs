@@ -112,8 +112,11 @@ int device_zero_blocks(int fd, off_t start, size_t len, bool direct)
 		return -ENOMEM;
 	memset(buf, 0, len);
 	written = btrfs_pwrite(fd, buf, len, start, direct);
-	if (written != len)
+	if (written != len) {
+		error_msg(ERROR_MSG_WRITE, "zeroing range from %llu: %m",
+			  (unsigned long long)start);
 		ret = -EIO;
+	}
 	free(buf);
 	return ret;
 }
