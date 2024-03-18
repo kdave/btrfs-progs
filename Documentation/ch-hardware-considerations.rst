@@ -184,7 +184,7 @@ to avoid unnecessary resets and performs optimizations to maximize the storage
 media lifetime. The known techniques are deduplication (blocks with same
 fingerprint/hash are mapped to same physical block), compression or internal
 remapping and garbage collection of used memory cells. Due to the additional
-processing there are measures to verity the data e.g. by ECC codes.
+processing there are measures to verify the data e.g. by ECC codes.
 
 The observations of failing SSDs show that the whole electronic fails at once
 or affects a lot of data (e.g. stored on one chip). Recovering such data
