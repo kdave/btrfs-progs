@@ -310,6 +310,34 @@ static void splice_device_list(struct list_head *seed_devices,
 	list_splice(seed_devices, all_devices);
 }
 
+static void print_filesystem_info(char *label, char uuidbuf[BTRFS_UUID_UNPARSED_SIZE],
+				u64 bytes_used, u64 num_devices,
+				unsigned unit_mode)
+{
+	if (label)
+		pr_verbose(LOG_DEFAULT, "Label: '%s' ", label);
+	else
+		pr_verbose(LOG_DEFAULT, "Label: none ");
+
+	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
+		num_devices,
+		pretty_size_mode(bytes_used,
+				 unit_mode));
+}
+
+static void print_filesystem_device(u64 devid, u64 total_bytes, u64 bytes_used,
+				char *path,
+				bool missing,
+				unsigned unit_mode)
+{
+	pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s%s\n",
+		devid,
+		pretty_size_mode(total_bytes, unit_mode),
+		pretty_size_mode(bytes_used, unit_mode),
+		path,
+		missing ? " MISSING" : "");
+}
+
 static void print_devices(struct btrfs_fs_devices *fs_devices,
 			  u64 *devs_found, unsigned unit_mode)
 {
@@ -327,12 +355,11 @@ static void print_devices(struct btrfs_fs_devices *fs_devices,
 
 	list_sort(NULL, all_devices, cmp_device_id);
 	list_for_each_entry(device, all_devices, dev_list) {
-		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s\n",
-		       device->devid,
-		       pretty_size_mode(device->total_bytes, unit_mode),
-		       pretty_size_mode(device->bytes_used, unit_mode),
-		       device->name);
-
+		print_filesystem_device(device->devid,
+					device->total_bytes, device->bytes_used,
+					device->name,
+					false,
+					unit_mode);
 		(*devs_found)++;
 	}
 }
@@ -351,14 +378,11 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices,
 	uuid_unparse(fs_devices->fsid, uuidbuf);
 	device = list_entry(fs_devices->devices.next, struct btrfs_device,
 			    dev_list);
-	if (device->label && device->label[0])
-		pr_verbose(LOG_DEFAULT, "Label: '%s' ", device->label);
-	else
-		pr_verbose(LOG_DEFAULT, "Label: none ");
-
 	total = device->total_devs;
-	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
-	       total, pretty_size_mode(device->super_bytes_used, unit_mode));
+
+	print_filesystem_info(device->label && device->label[0] ? device->label : NULL, uuidbuf,
+			      device->super_bytes_used, total,
+			      unit_mode);
 
 	print_devices(fs_devices, &devs_found, unit_mode);
 
@@ -396,15 +420,9 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		return ret;
 
 	uuid_unparse(fs_info->fsid, uuidbuf);
-	if (label && *label)
-		pr_verbose(LOG_DEFAULT, "Label: '%s' ", label);
-	else
-		pr_verbose(LOG_DEFAULT, "Label: none ");
-
-	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
-			fs_info->num_devices,
-			pretty_size_mode(calc_used_bytes(space_info),
-					 unit_mode));
+	print_filesystem_info(label && *label ? label : NULL, uuidbuf,
+				calc_used_bytes(space_info), fs_info->num_devices,
+				unit_mode);
 
 	for (i = 0; i < fs_info->num_devices; i++) {
 		char *canonical_path;
@@ -414,18 +432,20 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		/* Add check for missing devices even mounted */
 		fd = open((char *)tmp_dev_info->path, O_RDONLY);
 		if (fd < 0) {
-			pr_verbose(LOG_DEFAULT, "\tdevid %4llu size 0 used 0 path %s MISSING\n",
-					tmp_dev_info->devid, tmp_dev_info->path);
+			print_filesystem_device(tmp_dev_info->devid,
+						0, 0,
+						(char *)tmp_dev_info->path,
+						true,
+						unit_mode);
 			continue;
-
 		}
 		close(fd);
 		canonical_path = path_canonicalize((char *)tmp_dev_info->path);
-		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s\n",
-			tmp_dev_info->devid,
-			pretty_size_mode(tmp_dev_info->total_bytes, unit_mode),
-			pretty_size_mode(tmp_dev_info->bytes_used, unit_mode),
-			canonical_path);
+		print_filesystem_device(tmp_dev_info->devid,
+					tmp_dev_info->total_bytes, tmp_dev_info->bytes_used,
+					canonical_path,
+					false,
+					unit_mode);
 
 		free(canonical_path);
 	}
