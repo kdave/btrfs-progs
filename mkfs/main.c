@@ -165,6 +165,10 @@ static int create_metadata_block_groups(struct btrfs_root *root, bool mixed,
 
 	root->fs_info->system_allocs = 0;
 	ret = btrfs_commit_transaction(trans, root);
+	if (ret) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+	}
 err:
 	return ret;
 }
@@ -687,8 +691,13 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 		key.objectid = found_key.objectid + found_key.offset;
 	}
 out:
-	if (trans)
-		btrfs_commit_transaction(trans, root);
+	if (trans) {
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		}
+	}
 	btrfs_release_path(&path);
 	return ret;
 }
@@ -1111,8 +1120,12 @@ static int setup_raid_stripe_tree_root(struct btrfs_fs_info *fs_info)
 	int ret;
 
 	trans = btrfs_start_transaction(fs_info->tree_root, 0);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	stripe_root = btrfs_create_tree(trans, fs_info, &key);
 	if (IS_ERR(stripe_root))  {
@@ -1124,8 +1137,11 @@ static int setup_raid_stripe_tree_root(struct btrfs_fs_info *fs_info)
 	add_root_to_dirty_list(stripe_root);
 
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
-	if (ret)
+	if (ret) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
+	}
 
 	return 0;
 }
