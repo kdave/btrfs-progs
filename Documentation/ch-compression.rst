@@ -146,8 +146,8 @@ Compatibility
 
 Compression is done using the COW mechanism so it's incompatible with
 *nodatacow*. Direct IO works on compressed files but will fall back to buffered
-writes and leads to recompression. Currently *nodatasum* and compression don't
-work together.
+writes and leads to no compression even force compression is set.
+Currently *nodatasum* and compression don't work together.
 
 The compression algorithms have been added over time so the version
 compatibility should be also considered, together with other tools that may
