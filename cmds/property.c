@@ -109,7 +109,9 @@ static int prop_read_only(enum prop_object_type type,
 				do_clear_received_uuid = true;
 			} else {
 				error(
-"cannot flip ro->rw with received_uuid set, use force if you really want that");
+"cannot flip ro->rw with received_uuid set, use force option -f if you really want unset the read-only status."
+" The value of received_uuid is used for incremental send, consider making a snapshot instead."
+" Read more at btrfs-subvolume(8) and Subvolume flags.");
 				return -EPERM;
 			}
 		}
