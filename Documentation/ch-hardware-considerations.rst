@@ -118,9 +118,21 @@ have been demonstrated (*rowhammer*) achieving specific bits to be flipped.
 While these were targeted, this shows that a series of reads or writes can
 affect unrelated parts of memory.
 
+Block group profiles with redundancy (like RAID1) will not protect against
+memory errors as the blocks are first stored in memory before they are written
+to the devices from the same source.
+
+A filesystem mounted read-only will not affect the underlying block device in
+almost 100% (with highly unlikely exceptions). The exception is a tree-log that
+needs to be replayed during mount (and before the read-only mount takes place),
+working memory is needed for that and that can be affected by bit flips.
+There's a theoretical case where bit flip changes the filesystem status from
+read-only to read-write.
+
 Further reading:
 
 * https://en.wikipedia.org/wiki/Row_hammer
+* memory overclocking, XMP, potential risks
 
 What to do:
 
@@ -129,6 +141,9 @@ What to do:
 * memory errors may appear as filesystem going read-only due to "pre write"
   check, that verify meta data before they get written but fail some basic
   consistency checks
+* newly built systems should be tested before being put to production use,
+  ideally start a IO/CPU load that will be run on such system later; namely
+  systems that will utilize overclocking or special performance features
 
 Direct memory access (DMA)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
