@@ -29,6 +29,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/free-space-tree.h"
+#include "kernel-shared/zoned.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/device-scan.h"
@@ -194,6 +195,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	u64 super_flags = 0;
 	int quota = 0;
 	int fd = -1;
+	int oflags = O_RDWR;
 
 	btrfs_config_init();
 
@@ -337,7 +339,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		}
 	}
 
-	fd = open(device, O_RDWR);
+	if (zoned_model(device) == ZONED_HOST_MANAGED)
+		oflags |= O_DIRECT;
+	fd = open(device, oflags);
 	if (fd < 0) {
 		error("mount check: cannot open %s: %m", device);
 		ret = 1;
