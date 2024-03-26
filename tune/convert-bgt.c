@@ -270,7 +270,7 @@ iterate_bgs:
 		return ret;
 	}
 	pr_verbose(LOG_DEFAULT,
-		"Converted filesystem with block-group-tree to extent tree feature");
+		"Converted filesystem with block-group-tree to extent tree feature\n");
 	return 0;
 
 error:
