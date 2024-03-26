@@ -1,3 +1,18 @@
+btrfs-progs-6.8 (2024-03-26)
+----------------------------
+   * fix --enqueue option timeout handling
+   * subvolume: remove support for undocumented options -c and -x,
+     functionality disabled in kernel
+   * libbtrfsutil:
+      * version 0.1.3, backward compabile
+      * add aliases for all existing functions with unified naming scheme
+      * updated header defintions for recently added kernel features
+   * send: v3 supported in experimental mode
+   * other:
+      * docs: manual page references, graphs, enhancements, clarifications
+      * error handling fixes
+      * cleanups and refactoring
+
 btrfs-progs-6.7 (2024-01-22)
 ----------------------------
    * mkfs: make 4k sectorsize default, recommended minimum kernel for that is
