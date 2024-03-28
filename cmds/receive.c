@@ -221,6 +221,19 @@ out:
 	return ret;
 }
 
+static struct subvol_info *search_source_subvol(int mnt_fd,
+			const u8 *subvol_uuid, u64 transid)
+{
+	struct subvol_info *found;
+	found = subvol_uuid_search(mnt_fd, 0, subvol_uuid, transid, NULL,
+			subvol_search_by_received_uuid);
+	if (IS_ERR_OR_NULL(found)) {
+		found = subvol_uuid_search(mnt_fd, 0, subvol_uuid, transid, NULL,
+				subvol_search_by_uuid);
+	}
+	return found;
+}
+
 static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			    const u8 *parent_uuid, u64 parent_ctransid,
 			    void *user)
@@ -283,14 +296,8 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	parent_subvol = subvol_uuid_search(rctx->mnt_fd, 0, parent_uuid,
-					   parent_ctransid, NULL,
-					   subvol_search_by_received_uuid);
-	if (IS_ERR_OR_NULL(parent_subvol)) {
-		parent_subvol = subvol_uuid_search(rctx->mnt_fd, 0, parent_uuid,
-						   parent_ctransid, NULL,
-						   subvol_search_by_uuid);
-	}
+	parent_subvol = search_source_subvol(rctx->mnt_fd, parent_uuid,
+			parent_ctransid);
 	if (IS_ERR_OR_NULL(parent_subvol)) {
 		if (!parent_subvol)
 			ret = -ENOENT;
@@ -745,9 +752,8 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		   BTRFS_UUID_SIZE) == 0) {
 		subvol_path = rctx->cur_subvol_path;
 	} else {
-		si = subvol_uuid_search(rctx->mnt_fd, 0, clone_uuid, clone_ctransid,
-					NULL,
-					subvol_search_by_received_uuid);
+		si = search_source_subvol(rctx->mnt_fd, clone_uuid,
+				clone_ctransid);
 		if (IS_ERR_OR_NULL(si)) {
 			char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
