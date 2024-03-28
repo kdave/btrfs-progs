@@ -95,6 +95,8 @@ SAFE OR ADVISORY OPTIONS
 --clear-space-cache v1|v2
         completely remove the free space cache of the given version
 
+        When the filesystem is mounted afterwards, a new space cache may be generated
+        depending on mount options and/or kernel defaults.
         See also the *clear_cache* mount option.
 
 	.. warning::
