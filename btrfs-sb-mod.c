@@ -20,11 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <inttypes.h>
 #include <string.h>
 #include <limits.h>
 #include <byteswap.h>
-#include "crypto/crc32c.h"
 #include "kernel-shared/disk-io.h"
 
 #define BLOCKSIZE (4096)

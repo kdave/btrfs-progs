@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdarg.h>
 #include "kernel-lib/overflow.h"
 #include "kernel-lib/bitops.h"

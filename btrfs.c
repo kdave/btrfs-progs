@@ -28,7 +28,6 @@
 #include "common/utils.h"
 #include "common/string-utils.h"
 #include "common/help.h"
-#include "common/box.h"
 #include "common/messages.h"
 #include "cmds/commands.h"
 

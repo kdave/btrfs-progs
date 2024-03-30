@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include "kernel-shared/uapi/btrfs.h"
-#include "kernel-shared/ctree.h"
 
 #define LIST_32_COMPAT				\
 	ONE(BTRFS_IOC_SET_RECEIVED_SUBVOL_32)

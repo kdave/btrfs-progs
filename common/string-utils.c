@@ -16,8 +16,6 @@
 
 #include "kerncompat.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include <limits.h>
 #include "common/string-utils.h"
 #include "common/messages.h"
 #include "common/parse-utils.h"

@@ -22,7 +22,6 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"

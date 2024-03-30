@@ -23,8 +23,6 @@
 #include <unistd.h>
 #include "kernel-lib/list.h"
 #include "common/messages.h"
-#include "common/open-utils.h"
-#include "common/parse-utils.h"
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "cmds/commands.h"

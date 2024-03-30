@@ -19,7 +19,6 @@
 #include "kerncompat.h"
 #include <errno.h>
 #include <string.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/messages.h"
 #include "kernel-shared/extent_io.h"

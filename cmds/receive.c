@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <limits.h>
 #include <errno.h>
 #include <endian.h>
 #include <stdbool.h>

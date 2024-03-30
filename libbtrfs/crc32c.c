@@ -8,7 +8,6 @@
  *
  */
 
-#include <inttypes.h>
 #include "libbtrfs/crc32c.h"
 
 uint32_t __crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length);
@@ -53,7 +52,7 @@ static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
 }
 
 /*
- * Steps through buffer one byte at at time, calculates reflected 
+ * Steps through buffer one byte at at time, calculates reflected
  * crc using table.
  */
 static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t length)
@@ -198,7 +197,7 @@ static const uint32_t crc32c_table[256] = {
 };
 
 /*
- * Steps through buffer one byte at at time, calculates reflected 
+ * Steps through buffer one byte at at time, calculates reflected
  * crc using table.
  */
 

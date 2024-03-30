@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <getopt.h>
-#include <limits.h>
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
@@ -45,8 +44,6 @@
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/string-utils.h"
-#include "common/string-table.h"
-#include "common/sort-utils.h"
 #include "common/tree-search.h"
 #include "cmds/commands.h"
 

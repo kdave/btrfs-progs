@@ -32,7 +32,6 @@
 #include <unistd.h>
 #include <mntent.h>
 #include <ctype.h>
-#include <limits.h>
 #include <strings.h>
 #include "kernel-lib/list.h"
 #include "kernel-shared/accessors.h"

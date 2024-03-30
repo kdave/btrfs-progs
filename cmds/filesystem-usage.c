@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <limits.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"

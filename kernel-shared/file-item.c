@@ -24,7 +24,6 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/extent_io.h"
-#include "kernel-shared/uapi/btrfs.h"
 #include "common/internal.h"
 
 #define MAX_CSUM_ITEMS(r, size) ((((BTRFS_LEAF_DATA_SIZE(r->fs_info) - \

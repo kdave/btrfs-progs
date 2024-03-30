@@ -17,7 +17,6 @@
  */
 
 #include "kerncompat.h"
-#include <limits.h>
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>

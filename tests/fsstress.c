@@ -32,7 +32,6 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <getopt.h>
-#include "common/internal.h"
 
 #define AIO
 #define URING
@@ -1434,7 +1433,7 @@ fent_to_name(pathname_t *name, fent_t *fep)
 		if (pfep == NULL) {
 			fprintf(stderr, "%d: fent-id = %d: can't find parent id: %d\n",
 				procid, fep->id, fep->parent);
-		} 
+		}
 #endif
 		if (pfep == NULL)
 			return 0;
@@ -1545,7 +1544,7 @@ int generate_xattr_name(int xattr_num, char *buffer, int buflen)
 }
 
 /*
- * Get file 
+ * Get file
  * Input: "which" to choose the file-types eg. non-directory
  * Input: "r" to choose which file
  * Output: file-list, file-entry, name for the chosen file.
@@ -1585,7 +1584,7 @@ get_fname(int which, long r, pathname_t *name, flist_t **flpp, fent_t **fepp,
 	 * Now we have possible matches between 0..totalsum-1.
 	 * And we use r to help us choose which one we want,
 	 * which when bounded by totalsum becomes x.
-	 */ 
+	 */
 	x = (int)(r % totalsum);
 	for (i = 0, flp = flist; i < FT_nft; i++, flp++) {
 		if (which & (1U << i)) {
@@ -1600,7 +1599,7 @@ get_fname(int which, long r, pathname_t *name, flist_t **flpp, fent_t **fepp,
 #ifdef DEBUG
 					if (!e) {
 						fprintf(stderr, "%d: failed to get path for entry:"
-								" id=%d,parent=%d\n", 	
+								" id=%d,parent=%d\n",
 							procid, fep->id, fep->parent);
 					}
 #endif
@@ -2007,7 +2006,7 @@ show_ops(int flag, char *lead_str)
         if (flag<0) {
                 /* print in list form */
                 int             x = WIDTH;
-                
+
 	        for (p = ops; p < ops_end; p++) {
 			if (lead_str != NULL && x+strlen(p->name)>=WIDTH-5)
 				x=printf("%s%s", (p==ops)?"":"\n", lead_str);
@@ -2069,7 +2068,7 @@ symlink_path(const char *name1, pathname_t *name)
 	char		buf[NAME_MAX + 1];
 	pathname_t	newname;
 	int		rval;
-        
+
         if (!strcmp(name1, name->path)) {
             printf("yikes! %s %s\n", name1, name->path);
             return 0;
@@ -2647,7 +2646,7 @@ bulkstat_f(opnum_t opno, long r)
         bsr.icount=nent;
         bsr.ubuffer=t;
         bsr.ocount=&count;
-            
+
 	while (xfsctl(".", fd, XFS_IOC_FSBULKSTAT, &bsr) == 0 && count > 0)
 		total += count;
 	free(t);
@@ -2680,8 +2679,8 @@ bulkstat1_f(opnum_t opno, long r)
 		check_cwd();
 		free_pathname(&f);
 	} else {
-                /* 
-                 * pick a random inode 
+                /*
+                 * pick a random inode
                  *
                  * note this can generate kernel warning messages
                  * since bulkstat_one will read the disk block that
@@ -2698,7 +2697,7 @@ bulkstat1_f(opnum_t opno, long r)
 		v = verbose;
 	}
 	fd = open(".", O_RDONLY);
-        
+
         bsr.lastip=&ino;
         bsr.icount=1;
         bsr.ubuffer=&t;
@@ -3797,7 +3796,7 @@ dread_f(opnum_t opno, long r)
 	len -= (len % align);
 	if (len <= 0)
 		len = align;
-	else if (len > diob.d_maxiosz) 
+	else if (len > diob.d_maxiosz)
 		len = diob.d_maxiosz;
 	buf = memalign(diob.d_mem, len);
 	e = read(fd, buf, len) < 0 ? errno : 0;
@@ -3874,7 +3873,7 @@ dwrite_f(opnum_t opno, long r)
 	len -= (len % align);
 	if (len <= 0)
 		len = align;
-	else if (len > diob.d_maxiosz) 
+	else if (len > diob.d_maxiosz)
 		len = diob.d_maxiosz;
 	buf = memalign(diob.d_mem, len);
 	off %= maxfsize;

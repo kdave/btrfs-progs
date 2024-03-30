@@ -17,15 +17,12 @@
 
 /*
  * Btrfs-progs port, with following minor fixes:
- * 1) Use "kerncompat.h"
+ * 1) Use "kerncompat.h" header for generated tables.c
  * 2) Get rid of __KERNEL__ related macros
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
-#include <stdlib.h>
-#include <time.h>
 
 static uint8_t gfmul(uint8_t a, uint8_t b)
 {

@@ -28,7 +28,6 @@
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
-#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/utils.h"
 #include "common/device-utils.h"

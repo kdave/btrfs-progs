@@ -27,7 +27,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include "kernel-lib/rbtree.h"

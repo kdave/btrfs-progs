@@ -29,7 +29,6 @@
 #include <errno.h>
 #include <ctype.h>
 #include <libgen.h>
-#include <limits.h>
 #include "common/path-utils.h"
 
 /*

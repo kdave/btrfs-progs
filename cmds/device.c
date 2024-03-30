@@ -26,7 +26,6 @@
 #include <dirent.h>
 #include <stdbool.h>
 #include "kernel-shared/zoned.h"
-#include "kernel-shared/volumes.h"
 #include "common/string-table.h"
 #include "common/utils.h"
 #include "common/help.h"

@@ -43,7 +43,12 @@
 
 const char *pretty_size_mode(u64 size, unsigned mode);
 int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mode);
-#define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
+
+static inline const char *pretty_size(u64 size)
+{
+	return pretty_size_mode(size, UNITS_DEFAULT);
+}
+
 void units_set_mode(unsigned *units, unsigned mode);
 void units_set_base(unsigned *units, unsigned base);
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);

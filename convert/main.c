@@ -91,7 +91,6 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/sizes.h"
