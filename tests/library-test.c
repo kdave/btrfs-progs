@@ -16,31 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#if BTRFS_FLAT_INCLUDES
-#include "libbtrfs/kerncompat.h"
-#include "libbtrfs/version.h"
-#include "libbtrfs/ioctl.h"
-#include "kernel-lib/rbtree.h"
-#include "kernel-lib/list.h"
-#include "kernel-shared/ctree.h"
-#include "kernel-shared/send.h"
-#include "common/send-stream.h"
-#include "common/send-utils.h"
-#else
 /*
- * This needs to include headers the same way as an external program but must
- * not use the existing system headers, so we use "...".
+ * This program is only linked to libbtrfsutil library, and only include
+ * headers from libbtrfsutil, so we do not use the filepath inside btrfs-progs
+ * source code.
  */
 #include "btrfs/kerncompat.h"
 #include "btrfs/version.h"
-#include "btrfs/rbtree.h"
-#include "btrfs/list.h"
-#include "btrfs/ctree.h"
-#include "btrfs/ioctl.h"
-#include "btrfs/send.h"
 #include "btrfs/send-stream.h"
 #include "btrfs/send-utils.h"
-#endif
 
 /*
  * Reduced code snippet from snapper.git/snapper/Btrfs.cc
