@@ -52,9 +52,8 @@ Leaves have an array of fixed sized items, and an area where item data
 is stored. The offset and size fields in the item indicate where in the
 leaf the item data can be found. Example:
 
-   :alt: Leaf-structure.png
-
-   Leaf-structure.png
+.. image:: Leaf-structure.png
+   :alt: Leaf structure
 
 Item data is variably size, and various filesystem data structures are
 defined as different types of item data. The type field in struct
@@ -393,9 +392,8 @@ one subvolume named 'default' (created by mkfs), and one snapshot of
 example, 'default' has not changed since the snapshot was created and so
 both point tree to the same root block on disk.
 
+.. image:: Copy-Design-r.png
    :alt: Copy-Design-r.png
-
-   Copy-Design-r.png
 
 
 Copy on Write Logging
