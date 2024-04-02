@@ -14,4 +14,5 @@ jobs=`grep -c ^processor /proc/cpuinfo`
 ./configure "$@"
 echo "D=$D"
 make -j $jobs
+make -j $jobs btrfs.box
 make hash-speedtest hash-vectest ioctl-test json-formatter-test string-table-test
