@@ -42,42 +42,56 @@ jobs:
     steps:
       - name: CI Musl
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+      - name: CI Musl (experimental)
+        run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-musl-32bit:
     name: CI Musl (32bit)
     runs-on: ubuntu-latest
     steps:
       - name: CI Musl (32bit)
         run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
+      - name: CI Musl (32bit) (experimental)
+        run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-tumbleweed:
     name: CI Tumbleweed
     runs-on: ubuntu-latest
     steps:
       - name: CI Tumbleweed
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation
+      - name: CI Tumbleweed (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --enable-experimental
   check-tumbleweed-libgcrypt:
     name: CI Tumbleweed (libgcrypt)
     runs-on: ubuntu-latest
     steps:
       - name: CI Tumbleweed (libgcrypt)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libgcrypt
+      - name: CI Tumbleweed (libgcrypt) (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libgcrypt --enable-experimental
   check-tumbleweed-libsodium:
     name: CI Tumbleweed (libsodium)
     runs-on: ubuntu-latest
     steps:
       - name: CI Tumbleweed (libsodium)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libsodium
+      - name: CI Tumbleweed (libsodium) (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libsodium --enable-experimental
   check-tumbleweed-libkcapi:
     name: CI Tumbleweed (libkcapi)
     runs-on: ubuntu-latest
     steps:
       - name: CI Tumbleweed (libkcapi)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libkcapi
+      - name: CI Tumbleweed (libkcapi) (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libkcapi --enable-experimental
   check-tumbleweed-botan:
     name: CI Tumbleweed (Botan)
     runs-on: ubuntu-latest
     steps:
       - name: CI Tumbleweed (Botan)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan
+      - name: CI Tumbleweed (Botan) (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan --enable-experimental
 #   check-tumbleweed-openssl:
 #     name: CI Tumbleweed (OpenSSL)
 #     runs-on: ubuntu-latest
@@ -85,3 +99,5 @@ jobs:
 #       - uses: actions/checkout@v4
 #       - name: CI Tumbleweed (OpenSSL)
 #         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl
+#       - name: CI Tumbleweed (OpenSSL) (experimental)
+#         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl --enable-experimental
