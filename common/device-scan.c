@@ -144,10 +144,9 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device_total_bytes = (device_total_bytes / sectorsize) * sectorsize;
 
 	device = calloc(1, sizeof(*device));
-	if (!device) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	if (!device)
+		return -ENOMEM;
+
 	buf = calloc(1, sectorsize);
 	if (!buf) {
 		ret = -ENOMEM;
