@@ -1138,6 +1138,10 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 
 		name = (char *)(ref + 1);
 		name = strndup(name, namelen);
+		if (!name) {
+			error_msg(ERROR_MSG_MEMORY, NULL);
+			return NULL;
+		}
 
 		/* use our cached value */
 		if (dirid == *cache_dirid && *cache_name) {
