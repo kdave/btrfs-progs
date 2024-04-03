@@ -199,7 +199,6 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	if (ret != 0) {
 		if (ret < 0)
 			error("unable to check status of exclusive operation: %m");
-		close(fdmnt);
 		goto leave_with_error;
 	}
 
