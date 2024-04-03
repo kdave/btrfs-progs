@@ -1742,8 +1742,6 @@ void btrfs_print_tree(struct extent_buffer *eb, unsigned int mode)
 	const bool follow = (mode & BTRFS_PRINT_TREE_FOLLOW);
 	unsigned int traverse = BTRFS_PRINT_TREE_DEFAULT;
 
-	if (!eb)
-		return;
 	/* BFS is default and takes precedence if both are set */
 	if (mode & BTRFS_PRINT_TREE_DFS)
 		traverse = BTRFS_PRINT_TREE_DFS;
