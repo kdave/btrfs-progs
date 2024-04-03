@@ -57,6 +57,7 @@ char *table_vprintf(struct string_table *tab, unsigned int column, unsigned int 
 		return NULL;
 
 	if (column >= tab->ncols || row >= tab->nrows) {
+		free(msg);
 		error("attempt to write outside of table: col %u row %u fmt %s",
 			column, row, fmt);
 		return NULL;
