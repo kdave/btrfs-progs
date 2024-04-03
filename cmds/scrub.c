@@ -1261,7 +1261,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	pthread_t t_prog;
 	struct scrub_file_record **past_scrubs = NULL;
 	struct scrub_file_record *last_scrub = NULL;
-	char *datafile = strdup(SCRUB_DATA_FILE);
+	char datafile[] = SCRUB_DATA_FILE;
 	char fsid[BTRFS_UUID_UNPARSED_SIZE];
 	char sock_path[PATH_MAX] = "";
 	struct scrub_progress_cycle spc;
@@ -1318,7 +1318,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			datafile);
 		do_record = false;
 	}
-	free(datafile);
 
 	path = argv[optind];
 
