@@ -1739,6 +1739,7 @@ PUBLIC enum btrfs_util_error btrfs_util_deleted_subvolumes_fd(int fd,
 	*n = 0;
 	for (;;) {
 		const struct btrfs_ioctl_search_header *header;
+		struct btrfs_util_subvolume_info subvol;
 
 		if (items_pos >= search.key.nr_items) {
 			search.key.nr_items = 4096;
@@ -1760,7 +1761,7 @@ PUBLIC enum btrfs_util_error btrfs_util_deleted_subvolumes_fd(int fd,
 		 * The orphan item might be for a free space cache inode, so
 		 * check if there's a matching root item.
 		 */
-		err = btrfs_util_subvolume_info_fd(fd, header->offset, NULL);
+		err = btrfs_util_subvolume_info_fd(fd, header->offset, &subvol);
 		if (!err) {
 			if (*n >= capacity) {
 				size_t new_capacity;
