@@ -339,10 +339,9 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 	ASSERT(len <= BTRFS_STRIPE_LEN);
 
 	pointers = calloc(num_stripes, sizeof(void *));
-	if (!pointers) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	if (!pointers)
+		return -ENOMEM;
+
 	/* Allocate memory for the full stripe */
 	for (i = 0; i < num_stripes; i++) {
 		pointers[i] = kmalloc(BTRFS_STRIPE_LEN, GFP_KERNEL);
