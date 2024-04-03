@@ -1196,7 +1196,11 @@ out:
  */
 char *btrfs_test_for_multiple_profiles(int fd)
 {
-	char *data, *metadata, *system, *mixed, *types;
+	char *data = NULL;
+	char *metadata = NULL;
+	char *system = NULL;
+	char *mixed = NULL;
+	char *types = NULL;
 
 	btrfs_get_string_for_multiple_profiles(fd, &data, &metadata, &mixed,
 			&system, &types);
