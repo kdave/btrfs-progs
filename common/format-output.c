@@ -161,8 +161,11 @@ static bool fmt_set_unquoted(struct format_ctx *fctx, const struct rowspec *row,
 		va_copy(tmpargs, args);
 		uuid = va_arg(tmpargs, const u8 *);
 
-		if (uuid_is_null(uuid))
+		if (uuid_is_null(uuid)) {
+			va_end(tmpargs);
 			return true;
+		}
+		va_end(tmpargs);
 	}
 	return false;
 }
