@@ -394,9 +394,11 @@ int path_is_dir(const char *path)
  */
 int path_is_in_dir(const char *parent, const char *path)
 {
-	char *tmp = strdup(path);
+	char tmp[PATH_MAX];
 	char *curr_dir = tmp;
 	int ret;
+
+	strncpy_null(tmp, path);
 
 	while (strcmp(parent, curr_dir) != 0) {
 		if (strcmp(curr_dir, "/") == 0) {
@@ -408,7 +410,6 @@ int path_is_in_dir(const char *parent, const char *path)
 	ret = 1;
 
 out:
-	free(tmp);
 	return ret;
 }
 
