@@ -1074,14 +1074,16 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	if (!ctx.stats) {
 		ret = 1;
 		error_msg(ERROR_MSG_MEMORY, NULL);
-		goto out_nomem;
+		goto out;
 	}
 
 	path = argv[optind];
 
 	fd = btrfs_open_file_or_dir(path);
-	if (fd < 0)
-		return 1;
+	if (fd < 0) {
+		ret = 1;
+		goto out;
+	}
 
 	memset(&args, 0, sizeof(args));
 	sk = btrfs_tree_search_sk(&args);
@@ -1096,7 +1098,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	if (!lnumber) {
 		ret = 1;
 		error_msg(ERROR_MSG_MEMORY, NULL);
-		goto out_nomem;
+		goto out;
 	}
 
 	while (1) {
@@ -1104,7 +1106,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 		ret = btrfs_tree_search_ioctl(fd, &args);
 		if (ret < 0) {
 			error("cannot perform the search: %m");
-			return 1;
+			goto out;
 		}
 		if (sk->nr_items == 0)
 			break;
@@ -1144,7 +1146,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 					if (!tmp) {
 						ret = 1;
 						error_msg(ERROR_MSG_MEMORY, NULL);
-						goto out_nomem;
+						goto out;
 					}
 					memcpy(tmp, lnumber, sizeof(u64) * old_size);
 					lnumber = tmp;
@@ -1167,7 +1169,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 					if (!ctx.stats) {
 						ret = 1;
 						error_msg(ERROR_MSG_MEMORY, NULL);
-						goto out_nomem;
+						goto out;
 					}
 				}
 			}
@@ -1185,7 +1187,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	ret = print_list_chunks(&ctx, sortmode, unit_mode, with_usage, with_empty);
 	close(fd);
 
-out_nomem:
+out:
 	free(ctx.stats);
 	free(lnumber);
 
