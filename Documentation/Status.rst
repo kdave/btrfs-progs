@@ -4,7 +4,7 @@ Status
 Overview
 --------
 
-For a list of features by their introduction, please see `Changes (feature/version) <Feature-by-version>`__.
+For a list of features by their introduction, please see :doc:`/Feature-by-version`.
 
 The table below aims to serve as an overview for the stability status of
 the features BTRFS supports. While a feature may be functionally safe
