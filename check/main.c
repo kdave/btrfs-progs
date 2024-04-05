@@ -10055,6 +10055,31 @@ static int check_global_roots_uptodate(void)
 	return ret;
 }
 
+/*
+ * Check the bare minimum before starting anything else that could rely on it,
+ * namely the tree roots, any local consistency checks
+ */
+static bool check_early_critical_roots(void)
+{
+	const char msg[] = "critical root %s corrupted, unable to continue";
+	bool ret = false;
+
+	if (!extent_buffer_uptodate(gfs_info->tree_root->node)) {
+		error(msg, "tree_root");
+		ret = true;
+	}
+
+	if (!extent_buffer_uptodate(gfs_info->dev_root->node)) {
+		error(msg, "dev_root");
+		ret = true;
+	}
+	if (!extent_buffer_uptodate(gfs_info->chunk_root->node)) {
+		error(msg, "chunk_root");
+		ret = true;
+	}
+	return ret;
+}
+
 static const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
@@ -10332,16 +10357,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
 
-	/*
-	 * Check the bare minimum before starting anything else that could rely
-	 * on it, namely the tree roots, any local consistency checks
-	 */
-	if (!extent_buffer_uptodate(gfs_info->tree_root->node) ||
-	    !extent_buffer_uptodate(gfs_info->dev_root->node) ||
-	    !extent_buffer_uptodate(gfs_info->chunk_root->node)) {
-		error("critical roots corrupted, unable to check the filesystem");
-		err |= !!ret;
-		ret = -EIO;
+	if (check_early_critical_roots()) {
+		err |= 1;
 		goto close_out;
 	}
 
