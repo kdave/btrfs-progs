@@ -92,15 +92,6 @@ SAFE OR ADVISORY OPTIONS
         This can be used to use a different starting point if some of the primary
         superblock is damaged.
 
---clear-space-cache v1|v2
-        completely remove the free space cache of the given version
-
-        See also the *clear_cache* mount option.
-
-	.. warning::
-		This option is deprecated, please use `btrfs rescue clear-space-cache`
-		instead, this option would be removed in the future eventually.
-
 DANGEROUS OPTIONS
 -----------------
 
@@ -140,15 +131,17 @@ DANGEROUS OPTIONS
         This option also skips the delay and warning in the repair mode (see
         *--repair*).
 
-DEPRECATED OR MOVED OPTIONS
----------------------------
+DEPRECATED OR REMOVED OPTIONS
+-----------------------------
 
---clear-ino-cache
-        (removed: 6.7)
+--clear-space-cache v1|v2
+        completely remove the free space cache of the given version
 
-        remove leftover items pertaining to the deprecated *inode cache* feature,
-        please use :ref:`btrfs rescue clear-ino-cache<man-rescue-clear-ino-cache>`
-        instead
+        See also the *clear_cache* mount option.
+
+	.. warning::
+		This option is deprecated, please use `btrfs rescue clear-space-cache`
+		instead, this option would be removed in the future eventually.
 
 EXIT STATUS
 -----------
