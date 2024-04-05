@@ -10380,6 +10380,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			err |= !!ret;
 			goto close_out;
 		}
+		pr_verbose(LOG_DEFAULT, "Clearing tree-log\n");
 		ret = zero_log_tree(root);
 		err |= !!ret;
 		if (ret) {
@@ -10389,8 +10390,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (qgroup_report) {
-		printf("Print quota groups for %s\nUUID: %s\n", argv[optind],
-		       uuidbuf);
+		printf("Print quota groups report for %s\nUUID: %s\n", argv[optind], uuidbuf);
 		ret = qgroup_verify_all(gfs_info);
 		err |= !!ret;
 		if (ret >= 0)
@@ -10447,6 +10447,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				goto close_out;
 			}
 
+			pr_verbose(LOG_DEFAULT, "Fill checksum tree\n");
 			ret = fill_csum_tree(trans, init_extent_tree);
 			err |= !!ret;
 			if (ret) {
@@ -10460,8 +10461,11 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		 */
 		ret = btrfs_commit_transaction(trans, gfs_info->tree_root);
 		err |= !!ret;
-		if (ret)
+		if (ret) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 			goto close_out;
+		}
 	}
 
 	ret = check_global_roots_uptodate();
@@ -10520,8 +10524,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	task_stop(g_task_ctx.info);
 	err |= !!ret;
 	if (ret)
-		error(
-		"errors found in extent allocation tree or chunk allocation");
+		error("errors found in extent allocation tree or chunk allocation");
 
 	/* Only re-check super size after we checked and repaired the fs */
 	err |= !is_super_size_valid();

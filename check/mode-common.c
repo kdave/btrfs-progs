@@ -1070,8 +1070,12 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	path.lowest_level = btrfs_header_level(eb);
 	if (path.lowest_level)
