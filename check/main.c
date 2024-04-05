@@ -81,10 +81,10 @@ u64 data_bytes_allocated = 0;
 u64 data_bytes_referenced = 0;
 LIST_HEAD(duplicate_extents);
 LIST_HEAD(delete_items);
-int no_holes = 0;
-static int is_free_space_tree = 0;
-int init_extent_tree = 0;
-int check_data_csum = 0;
+bool no_holes = false;
+bool is_free_space_tree = false;
+bool init_extent_tree = false;
+bool check_data_csum = false;
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -6004,7 +6004,7 @@ static int check_csum_root(struct btrfs_root *root)
 	int ret;
 	u64 data_len;
 	unsigned long leaf_offset;
-	bool verify_csum = !!check_data_csum;
+	bool verify_csum = check_data_csum;
 	u16 num_entries, max_entries;
 
 	max_entries = ((BTRFS_LEAF_DATA_SIZE(gfs_info) -
@@ -10110,16 +10110,16 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int ret = 0;
 	int err = 0;
 	u64 num;
-	int init_csum_tree = 0;
-	int readonly = 0;
+	bool init_csum_tree = false;
+	bool readonly = false;
+	bool qgroup_report = false;
+	bool force = false;
 	int clear_space_cache = 0;
-	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE |
 			       OPEN_CTREE_ALLOW_TRANSID_MISMATCH |
 			       OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
-	int force = 0;
 
 	while(1) {
 		int c;
@@ -10175,7 +10175,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				printf("using SB copy %llu, bytenr %llu\n", num, bytenr);
 				break;
 			case 'Q':
-				qgroup_report = 1;
+				qgroup_report = true;
 				break;
 			case 'E':
 				subvolid = arg_strtou64(optarg);
@@ -10195,22 +10195,22 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_READONLY:
-				readonly = 1;
+				readonly = true;
 				break;
 			case GETOPT_VAL_INIT_CSUM:
 				printf("Creating a new CRC tree\n");
-				init_csum_tree = 1;
+				init_csum_tree = true;
 				opt_check_repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_INIT_EXTENT:
-				init_extent_tree = 1;
+				init_extent_tree = true;
 				ctree_flags |= (OPEN_CTREE_WRITES |
 						OPEN_CTREE_NO_BLOCK_GROUPS);
 				opt_check_repair = 1;
 				break;
 			case GETOPT_VAL_CHECK_CSUM:
-				check_data_csum = 1;
+				check_data_csum = true;
 				break;
 			case GETOPT_VAL_MODE:
 				check_mode = parse_check_mode(optarg);
@@ -10237,7 +10237,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				exit(1);
 				break;
 			case GETOPT_VAL_FORCE:
-				force = 1;
+				force = true;
 				break;
 			case '?':
 			case 'h':

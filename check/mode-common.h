@@ -80,9 +80,9 @@ extern u64 data_bytes_allocated;
 extern u64 data_bytes_referenced;
 extern struct list_head duplicate_extents;
 extern struct list_head delete_items;
-extern int no_holes;
-extern int init_extent_tree;
-extern int check_data_csum;
+extern bool no_holes;
+extern bool init_extent_tree;
+extern bool check_data_csum;
 extern struct btrfs_fs_info *gfs_info;
 extern struct cache_tree *roots_info_cache;
 
