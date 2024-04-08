@@ -250,7 +250,7 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
 
         The resize command does not manipulate the size of underlying
         partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
-        can expand the partition before enlarging the filesystem and shrink the
+        expand the partition before enlarging the filesystem and shrink the
         partition after reducing the size of the filesystem.  This can done using
         :manref:`fdisk(8)` or :manref:`parted(8)` to delete the existing partition and recreate
         it with the new desired size.  When recreating the partition make sure to use
