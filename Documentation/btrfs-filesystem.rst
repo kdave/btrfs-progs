@@ -255,6 +255,14 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         :manref:`fdisk(8)` or :manref:`parted(8)` to delete the existing partition and recreate
         it with the new desired size.  When recreating the partition make sure to use
         the same starting partition offset as before.
+        The size of the portion that the filesystem uses of an underlying device can be
+        determined via the :command:`btrfs filesystem show --raw` command on the
+        filesystem’s mount point (where it’s given for each *devid* after the string
+        `size` or via the :command:`btrfs inspect-internal dump-super` command on the
+        specific device (where it’s given as the value of `dev_item.total_bytes`, which
+        is not to be confused with `total_bytes`).
+        The value is also the address of the first byte not used by the
+        filesystem.
 
         Growing is usually instant as it only updates the size. However, shrinking could
         take a long time if there are data in the device area that's beyond the new
