@@ -588,7 +588,7 @@ static const char * const cmd_property_get_usage[] = {
 	"A filesystem object can be the filesystem itself, a subvolume,",
 	"an inode or a device. The option -t can be used to explicitly",
 	"specify what type of object you meant. This is only needed when a",
-	"property could be set for more then one object type.",
+	"property could be set for more than one object type.",
 	"",
 	"Possible values for type are: inode, subvol, filesystem, device.",
 	"They can be abbreviated to the first letter, i/s/f/d",
