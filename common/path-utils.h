@@ -39,6 +39,8 @@ int path_is_dir(const char *path);
 int is_same_loop_file(const char *a, const char *b);
 int path_is_reg_or_block_device(const char *filename);
 int path_is_in_dir(const char *parent, const char *path);
+const char *path_basename(const char *path);
+char *path_dirname(char *path);
 
 int test_issubvolname(const char *name);
 

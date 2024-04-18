@@ -24,7 +24,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <libgen.h>
 #include <getopt.h>
 #include <dirent.h>
 #include <stdbool.h>
@@ -149,7 +148,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 	int	fddst = -1;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
-	char	*newname;
+	const char *newname;
 	char	*dstdir;
 
 	ret = path_is_dir(dst);
@@ -170,7 +169,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		ret = -ENOMEM;
 		goto out;
 	}
-	newname = basename(dupname);
+	newname = path_basename(dupname);
 
 	dupdir = strdup(dst);
 	if (!dupdir) {
@@ -178,7 +177,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		ret = -ENOMEM;
 		goto out;
 	}
-	dstdir = dirname(dupdir);
+	dstdir = path_dirname(dupdir);
 
 	if (!test_issubvolname(newname)) {
 		error("invalid subvolume name: %s", newname);
@@ -364,7 +363,8 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	int res, ret = 0;
 	int cnt;
 	int fd = -1;
-	char	*dname, *vname, *cpath;
+	char	*dname, *cpath;
+	const char *vname;
 	char	*dupdname = NULL;
 	char	*dupvname = NULL;
 	char	*path = NULL;
@@ -482,9 +482,9 @@ again:
 		goto out;
 	}
 	dupdname = strdup(cpath);
-	dname = dirname(dupdname);
+	dname = path_dirname(dupdname);
 	dupvname = strdup(cpath);
-	vname = basename(dupvname);
+	vname = path_basename(dupvname);
 	free(cpath);
 
 	/* When subvolid is passed, <path> will point to the mount point */
@@ -670,7 +670,7 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	bool readonly = false;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
-	char	*newname;
+	const char *newname;
 	char	*dstdir;
 	enum btrfs_util_error err;
 	struct btrfs_ioctl_vol_args_v2	args;
@@ -727,13 +727,13 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 
 	if (res > 0) {
 		dupname = strdup(subvol);
-		newname = basename(dupname);
+		newname = path_basename(dupname);
 		dstdir = dst;
 	} else {
 		dupname = strdup(dst);
-		newname = basename(dupname);
+		newname = path_basename(dupname);
 		dupdir = strdup(dst);
-		dstdir = dirname(dupdir);
+		dstdir = path_dirname(dupdir);
 	}
 
 	if (!test_issubvolname(newname)) {
@@ -1557,7 +1557,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	struct btrfs_util_subvolume_iterator *iter;
 	struct btrfs_util_subvolume_info subvol;
 	char *subvol_path = NULL;
-	char *subvol_name = NULL;
+	const char *subvol_name = NULL;
 	enum btrfs_util_error err;
 	struct btrfs_qgroup_stats stats;
 	unsigned int unit_mode;
@@ -1669,7 +1669,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 		subvol_path = strdup("/");
 		subvol_name = "<FS_TREE>";
 	} else {
-		subvol_name = basename(subvol_path);
+		subvol_name = path_basename(subvol_path);
 	}
 
 	if (bconf.output_format == CMD_FORMAT_JSON) {

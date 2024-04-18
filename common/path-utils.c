@@ -28,6 +28,11 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+/*
+ * For dirname() and basename(), but never use basename directly, there's
+ * path_basename() with unified GNU behaviour regardless of the includes and
+ * conditional defines. See basename(3) for more.
+ */
 #include <libgen.h>
 #include <limits.h>
 #include "common/path-utils.h"
@@ -482,3 +487,26 @@ int test_issubvolname(const char *name)
 		strcmp(name, ".") && strcmp(name, "..");
 }
 
+/*
+ * Unified GNU semantics basename helper, never changing the argument. Always
+ * use this instead of basename().
+ */
+const char *path_basename(const char *path)
+{
+	const char *tmp = strrchr(path, '/');
+
+	/* Special case when the whole path is just "/". */
+	if (path[0] == '/' && path[1] == 0)
+		return path;
+
+	return tmp ? tmp + 1 : path;
+}
+
+/*
+ * Return dirname component of path, may change the argument.
+ * Own helper for parity with path_basename().
+ */
+char *path_dirname(char *path)
+{
+	return dirname(path);
+}

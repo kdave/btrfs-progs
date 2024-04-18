@@ -343,14 +343,14 @@ static u64 device_get_partition_size_sysfs(const char *dev)
 	char path[PATH_MAX] = {};
 	char sysfs[PATH_MAX] = {};
 	char sizebuf[128] = {};
-	char *name = NULL;
+	const char *name = NULL;
 	int sysfd;
 	unsigned long long size = 0;
 
 	name = realpath(dev, path);
 	if (!name)
 		return 0;
-	name = basename(path);
+	name = path_basename(path);
 
 	ret = path_cat3_out(sysfs, "/sys/class/block", name, "size");
 	if (ret < 0)
