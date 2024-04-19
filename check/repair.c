@@ -227,9 +227,9 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 	int slot;
 	int ret;
 
-	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;

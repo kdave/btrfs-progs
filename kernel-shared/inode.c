@@ -633,8 +633,8 @@ struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root,
 	}
 
 	key.objectid = dirid;
-	key.offset = 0;
 	key.type =  BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
 
 	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
 	if (ret) {
@@ -647,8 +647,8 @@ struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root,
 				    struct btrfs_inode_item);
 
 	key.objectid = root_objectid;
-	key.offset = (u64)-1;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
 
 	memcpy(buf, base, len);
 	if (convert) {
@@ -737,8 +737,8 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	search_start = max((unsigned long long)search_start,
 				BTRFS_FIRST_FREE_OBJECTID);
 	search_key.objectid = search_start;
-	search_key.offset = 0;
 	search_key.type = 0;
+	search_key.offset = 0;
 
 	start_found = 0;
 	ret = btrfs_search_slot(trans, root, &search_key, path, 0, 0);

@@ -154,8 +154,8 @@ static int search_chunk_tree_for_fs_info(int fd,
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
 	sk->min_objectid = BTRFS_DEV_ITEMS_OBJECTID;
-	sk->max_objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	sk->min_type = BTRFS_DEV_ITEM_KEY;
+	sk->max_objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	sk->max_type = BTRFS_DEV_ITEM_KEY;
 	sk->min_transid = 0;
 	sk->max_transid = (u64)-1;

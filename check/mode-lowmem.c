@@ -838,8 +838,8 @@ static int find_dir_index(struct btrfs_root *root, u64 dirid, u64 location_id,
 
 	/* search from the last index */
 	key.objectid = dirid;
-	key.offset = (u64)-1;
 	key.type = BTRFS_DIR_INDEX_KEY;
+	key.offset = (u64)-1;
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
@@ -3864,8 +3864,8 @@ static int is_tree_reloc_root(struct extent_buffer *eb)
 	int ret = 0;
 
 	key.objectid = BTRFS_TREE_RELOC_OBJECTID;
-	key.offset = owner;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = owner;
 
 	tree_reloc_root = btrfs_read_fs_root_no_cache(gfs_info, &key);
 	if (IS_ERR(tree_reloc_root))
@@ -5483,8 +5483,8 @@ int check_fs_roots_lowmem(void)
 	int err = 0;
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
-	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
 	if (ret < 0) {
@@ -5597,8 +5597,8 @@ int check_chunks_and_extents_lowmem(void)
 	err |= ret;
 
 	key.objectid = BTRFS_EXTENT_TREE_OBJECTID;
-	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, gfs_info->tree_root, &key, &path, 0, 0);
 	if (ret) {

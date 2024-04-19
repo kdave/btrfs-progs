@@ -871,8 +871,8 @@ again:
 	path->reada = READA_FORWARD;
 
 	key.objectid = device->devid;
-	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = search_start;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
@@ -1006,8 +1006,8 @@ int btrfs_insert_dev_extent(struct btrfs_trans_handle *trans,
 		return -ENOMEM;
 
 	key.objectid = device->devid;
-	key.offset = start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = start;
 	ret = btrfs_insert_empty_item(trans, root, path, &key,
 				      sizeof(*extent));
 	if (ret < 0)
@@ -1062,8 +1062,8 @@ static int find_next_chunk(struct btrfs_fs_info *fs_info, u64 *offset)
 		return -ENOMEM;
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
-	key.offset = (u64)-1;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
+	key.offset = (u64)-1;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
@@ -1302,8 +1302,8 @@ static int btrfs_device_avail_bytes(struct btrfs_trans_handle *trans,
 		return -ENOMEM;
 
 	key.objectid = device->devid;
-	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = search_start;
 
 	path->reada = READA_FORWARD;
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
@@ -2663,8 +2663,8 @@ int btrfs_read_chunk_tree(struct btrfs_fs_info *fs_info)
 	 * item - BTRFS_FIRST_CHUNK_TREE_OBJECTID).
 	 */
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
-	key.offset = 0;
 	key.type = 0;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
 		goto error;

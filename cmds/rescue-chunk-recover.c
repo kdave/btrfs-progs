@@ -592,8 +592,8 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		stripe = &chunk->stripes[i];
 
 		key.objectid = stripe->devid;
-		key.offset = stripe->offset;
 		key.type = BTRFS_DEV_EXTENT_KEY;
+		key.offset = stripe->offset;
 
 		ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
 		if (ret < 0) {
@@ -1016,8 +1016,8 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 	root = btrfs_extent_root(fs_info, start);
 
 	key.objectid = start;
-	key.offset = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
 again:
 	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0)

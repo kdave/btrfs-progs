@@ -76,8 +76,8 @@ static int add_directory_items(struct btrfs_trans_handle *trans,
 	name_len = strlen(name);
 
 	location.objectid = objectid;
-	location.offset = 0;
 	location.type = BTRFS_INODE_ITEM_KEY;
+	location.offset = 0;
 
 	if (S_ISDIR(st->st_mode))
 		filetype = BTRFS_FT_DIR;
@@ -455,8 +455,8 @@ static int copy_rootdir_inode(struct btrfs_trans_handle *trans,
 	}
 
 	key.objectid = btrfs_root_dirid(&root->root_item);
-	key.offset = 0;
 	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
 	if (ret > 0)
 		ret = -ENOENT;

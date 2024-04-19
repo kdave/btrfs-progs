@@ -580,9 +580,9 @@ again:
 		goto close_root;
 	}
 
-	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
 	if (ret < 0) {
 		errno = -ret;

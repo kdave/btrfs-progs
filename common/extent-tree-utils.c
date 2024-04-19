@@ -221,8 +221,8 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 	}
 	btrfs_release_path(path);
 	ins_key.objectid = objectid;
-	ins_key.offset = file_pos;
 	ins_key.type = BTRFS_EXTENT_DATA_KEY;
+	ins_key.offset = file_pos;
 	ret = btrfs_insert_empty_item(trans, root, path, &ins_key, sizeof(*fi));
 	if (ret)
 		goto fail;

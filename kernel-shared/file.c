@@ -211,8 +211,8 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 	}
 
 	key.objectid = ino;
-	key.offset = start;
 	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = start;
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
@@ -317,8 +317,8 @@ next:
 	if (no_holes) {
 		btrfs_release_path(&path);
 		key.objectid = ino;
-		key.offset = 0;
 		key.type = BTRFS_INODE_ITEM_KEY;
+		key.offset = 0;
 		ret = btrfs_lookup_inode(NULL, root, &path, &key, 0);
 		if (ret < 0)
 			goto out;

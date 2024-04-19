@@ -69,8 +69,8 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 	int ins_len = name_len + sizeof(*ref);
 
 	key.objectid = inode_objectid;
-	key.offset = ref_objectid;
 	key.type = BTRFS_INODE_REF_KEY;
+	key.offset = ref_objectid;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -398,8 +398,8 @@ int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 	int del_len = name_len + sizeof(*ref);
 
 	key.objectid = ino;
-	key.offset = parent_ino;
 	key.type = BTRFS_INODE_REF_KEY;
+	key.offset = parent_ino;
 
 	path = btrfs_alloc_path();
 	if (!path)

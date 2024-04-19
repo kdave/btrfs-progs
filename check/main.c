@@ -2753,8 +2753,8 @@ static int repair_inline_ram_bytes(struct btrfs_trans_handle *trans,
 	int ret;
 
 	key.objectid = rec->ino;
-	key.offset = 0;
 	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret > 0)
@@ -2986,8 +2986,8 @@ static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
 	int ret;
 
 	key.objectid = rec->ino;
-	key.offset = 0;
 	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret > 0) {
@@ -3875,12 +3875,12 @@ static int check_fs_roots(struct cache_tree *root_cache)
 	cache_tree_init(&wc.shared);
 
 again:
-	key.offset = 0;
 	if (skip_root)
 		key.objectid = skip_root + 1;
 	else
 		key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
 	if (ret < 0) {
 		err = 1;
@@ -6885,8 +6885,8 @@ static int record_extent(struct btrfs_trans_handle *trans,
 			item_size += sizeof(*bi);
 
 		ins_key.objectid = rec->start;
-		ins_key.offset = rec->max_size;
 		ins_key.type = BTRFS_EXTENT_ITEM_KEY;
+		ins_key.offset = rec->max_size;
 
 		ret = btrfs_insert_empty_item(trans, extent_root, path,
 					&ins_key, item_size);
@@ -8853,9 +8853,9 @@ static int parse_tree_roots(struct list_head *normal_trees,
 	int slot;
 	int ret = 0;
 
-	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, gfs_info->tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;

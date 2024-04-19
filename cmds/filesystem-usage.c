@@ -161,10 +161,10 @@ static int load_chunk_info(int fd, struct array *chunkinfos)
 	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
 
 	sk->min_objectid = 0;
-	sk->max_objectid = (u64)-1;
-	sk->max_type = 0;
 	sk->min_type = (u8)-1;
 	sk->min_offset = 0;
+	sk->max_objectid = (u64)-1;
+	sk->max_type = 0;
 	sk->max_offset = (u64)-1;
 	sk->min_transid = 0;
 	sk->max_transid = (u64)-1;

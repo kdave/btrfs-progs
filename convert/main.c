@@ -1274,8 +1274,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	snprintf(subvol_name, sizeof(subvol_name), "%s_saved",
 			cctx.convert_ops->name);
 	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
-	key.offset = (u64)-1;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
 	image_root = btrfs_read_fs_root(root->fs_info, &key);
 	if (!image_root) {
 		error("unable to create image subvolume");
@@ -1486,8 +1486,8 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 	int ret;
 
 	key.objectid = ino;
-	key.offset = 0;
 	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, image_root, &key, &path, 0, 0);
 	/*

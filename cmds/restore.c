@@ -1167,9 +1167,9 @@ static int do_list_roots(struct btrfs_root *root)
 
 	root = root->fs_info->tree_root;
 
-	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		error("failed search next root item: %d", ret);

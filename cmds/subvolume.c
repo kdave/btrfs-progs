@@ -972,9 +972,9 @@ static u64 find_root_gen(int fd)
 	 * them.
 	 */
 	sk->min_objectid = ino_args.treeid;
+	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 	sk->max_objectid = ino_args.treeid;
 	sk->max_type = BTRFS_ROOT_ITEM_KEY;
-	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 4096;

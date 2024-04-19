@@ -229,7 +229,6 @@ struct btrfs_dir_item *btrfs_lookup_dir_item(struct btrfs_trans_handle *trans,
 
 	key.objectid = dir;
 	key.type = BTRFS_DIR_ITEM_KEY;
-
 	key.offset = btrfs_name_hash(name, name_len);
 
 	ret = btrfs_search_slot(trans, root, &key, path, ins_len, cow);

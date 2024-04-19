@@ -960,9 +960,9 @@ loop:
 	 * items. The 2nd pass picks up relation items and glues them to their
 	 * respective count structures.
 	 */
-	key.offset = 0;
 	key.objectid = search_relations ? 0 : BTRFS_QGROUP_RELATION_KEY;
 	key.type = 0;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {

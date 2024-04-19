@@ -1354,9 +1354,9 @@ next:
 			 * record the mins in sk so we can make sure the
 			 * next search doesn't repeat this root
 			 */
+			sk->min_objectid = key.objectid;
 			sk->min_type = key.type;
 			sk->min_offset = key.offset;
-			sk->min_objectid = key.objectid;
 		}
 		sk->nr_items = 4096;
 		/*
@@ -1410,10 +1410,11 @@ int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats)
 	memset(&args, 0, sizeof(args));
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_QUOTA_TREE_OBJECTID;
+	sk->min_objectid = 0;
 	sk->min_type = BTRFS_QGROUP_INFO_KEY;
-	sk->max_type = BTRFS_QGROUP_LIMIT_KEY;
-	sk->max_objectid = 0;
 	sk->min_offset = qgroupid;
+	sk->max_objectid = 0;
+	sk->max_type = BTRFS_QGROUP_LIMIT_KEY;
 	sk->max_offset = qgroupid;
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 4096;

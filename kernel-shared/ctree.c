@@ -1250,8 +1250,8 @@ int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *found_path,
 	struct extent_buffer *eb;
 	struct btrfs_path *path;
 
-	key.type = key_type;
 	key.objectid = iobjectid;
+	key.type = key_type;
 	key.offset = ioff;
 
 	if (found_path == NULL) {

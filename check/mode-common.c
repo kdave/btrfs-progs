@@ -314,8 +314,8 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 	u16 csum_size = gfs_info->csum_size;
 
 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
-	key.offset = start;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
+	key.offset = start;
 
 	ret = btrfs_search_slot(NULL, csum_root, &key, &path, 0, 0);
 	if (ret < 0)
@@ -417,8 +417,8 @@ static int get_highest_inode(struct btrfs_trans_handle *trans,
 	int ret;
 
 	key.objectid = BTRFS_LAST_FREE_OBJECTID;
-	key.offset = -1;
 	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = -1;
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 	if (ret == 1) {
 		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
@@ -745,8 +745,8 @@ static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
 	int ret;
 
 	key.objectid = dirid;
-	key.offset = index;
 	key.type = BTRFS_DIR_INDEX_KEY;
+	key.offset = index;
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret > 0) {
@@ -798,8 +798,8 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 	int ret;
 
 	key.objectid = dirid;
-	key.offset = btrfs_name_hash(name, name_len);
 	key.type = BTRFS_DIR_INDEX_KEY;
+	key.offset = btrfs_name_hash(name, name_len);
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret > 0) {
@@ -1248,8 +1248,8 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 		return -ENOMEM;
 
 	key.objectid = 0;
-	key.offset = 0;
 	key.type = 0;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, cur_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
@@ -1347,8 +1347,8 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans)
 	int ret = 0;
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
-	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
 	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;

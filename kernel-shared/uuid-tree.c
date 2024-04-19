@@ -63,10 +63,10 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 	memset(&search_arg, 0, sizeof(search_arg));
 	search_arg.key.tree_id = BTRFS_UUID_TREE_OBJECTID;
 	search_arg.key.min_objectid = key.objectid;
-	search_arg.key.max_objectid = key.objectid;
 	search_arg.key.min_type = type;
-	search_arg.key.max_type = type;
 	search_arg.key.min_offset = key.offset;
+	search_arg.key.max_objectid = key.objectid;
+	search_arg.key.max_type = type;
 	search_arg.key.max_offset = key.offset;
 	search_arg.key.max_transid = (u64)-1;
 	search_arg.key.nr_items = 1;

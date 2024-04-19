@@ -306,8 +306,8 @@ static int __load_free_space_cache(struct btrfs_root *root,
 	INIT_LIST_HEAD(&bitmaps);
 
 	key.objectid = BTRFS_FREE_SPACE_OBJECTID;
-	key.offset = offset;
 	key.type = 0;
+	key.offset = offset;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0) {

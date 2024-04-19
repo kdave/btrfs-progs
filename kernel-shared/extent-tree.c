@@ -123,8 +123,8 @@ static int cache_block_group(struct btrfs_root *root,
 	path->reada = READA_FORWARD;
 	last = max_t(u64, block_group->start, BTRFS_SUPER_INFO_OFFSET);
 	key.objectid = last;
-	key.offset = 0;
 	key.type = 0;
+	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
@@ -1325,11 +1325,11 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 		return -ENOMEM;
 
 	key.objectid = bytenr;
-	key.offset = offset;
 	if (metadata)
 		key.type = BTRFS_METADATA_ITEM_KEY;
 	else
 		key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = offset;
 
 again:
 	ret = btrfs_search_slot(trans, extent_root, &key, path, 0, 0);
@@ -1409,11 +1409,11 @@ int btrfs_set_disk_extent_flags(struct btrfs_trans_handle *trans,
 
 	key.objectid = bytenr;
 	if (skinny_metadata) {
-		key.offset = btrfs_header_level(eb);
 		key.type = BTRFS_METADATA_ITEM_KEY;
+		key.offset = btrfs_header_level(eb);
 	} else {
-		key.offset = fs_info->nodesize;
 		key.type = BTRFS_EXTENT_ITEM_KEY;
+		key.offset = fs_info->nodesize;
 	}
 
 again:
@@ -2420,12 +2420,11 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 
 	ins.objectid = node->bytenr;
 	if (skinny_metadata) {
-		ins.offset = ref->level;
 		ins.type = BTRFS_METADATA_ITEM_KEY;
+		ins.offset = ref->level;
 	} else {
-		ins.offset = node->num_bytes;
 		ins.type = BTRFS_EXTENT_ITEM_KEY;
-
+		ins.offset = node->num_bytes;
 		size += sizeof(struct btrfs_tree_block_info);
 	}
 
@@ -3217,8 +3216,8 @@ static int remove_block_group_item(struct btrfs_trans_handle *trans,
 	int ret = 0;
 
 	key.objectid = block_group->start;
-	key.offset = block_group->length;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	key.offset = block_group->length;
 
 	/*
 	 * If we're doing convert and the bg is beyond our last converted bg,
@@ -3348,8 +3347,8 @@ static int free_system_chunk_item(struct btrfs_super_block *super,
 			    sizeof(*disk_key);
 
 		if (key->objectid == cpu_key.objectid &&
-		    key->offset == cpu_key.offset &&
-		    key->type == cpu_key.type) {
+		    key->type == cpu_key.type &&
+		    key->offset == cpu_key.offset) {
 			memmove(ptr + cur, ptr + cur + chunk_len,
 				array_size - cur - chunk_len);
 			array_size -= chunk_len;
@@ -3376,8 +3375,8 @@ static int free_chunk_item(struct btrfs_trans_handle *trans,
 	int ret;
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
-	key.offset = bytenr;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
+	key.offset = bytenr;
 
 	path = btrfs_alloc_path();
 	if (!path)

@@ -570,10 +570,10 @@ static int print_min_dev_size(int fd, u64 devid)
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_DEV_TREE_OBJECTID;
 	sk->min_objectid = devid;
-	sk->max_objectid = devid;
-	sk->max_type = BTRFS_DEV_EXTENT_KEY;
 	sk->min_type = BTRFS_DEV_EXTENT_KEY;
 	sk->min_offset = 0;
+	sk->max_objectid = devid;
+	sk->max_type = BTRFS_DEV_EXTENT_KEY;
 	sk->max_offset = (u64)-1;
 	sk->min_transid = 0;
 	sk->max_transid = (u64)-1;
@@ -980,10 +980,10 @@ static u64 fill_usage(int fd, u64 lstart)
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_EXTENT_TREE_OBJECTID;
 	sk->min_objectid = lstart;
-	sk->max_objectid = lstart;
 	sk->min_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-	sk->max_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	sk->min_offset = 0;
+	sk->max_objectid = lstart;
+	sk->max_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 1;
@@ -1089,8 +1089,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
 	sk->min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
-	sk->max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	sk->min_type = BTRFS_CHUNK_ITEM_KEY;
+	sk->max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	sk->max_type = BTRFS_CHUNK_ITEM_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;

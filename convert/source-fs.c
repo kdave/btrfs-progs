@@ -188,8 +188,8 @@ int convert_insert_dirent(struct btrfs_trans_handle *trans,
 	struct btrfs_inode_item dummy_iitem = { 0 };
 	struct btrfs_key location = {
 		.objectid = objectid,
-		.offset = 0,
 		.type = BTRFS_INODE_ITEM_KEY,
+		.offset = 0,
 	};
 
 	ret = btrfs_insert_dir_item(trans, root, name, name_len,

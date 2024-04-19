@@ -80,9 +80,9 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 	 * them.
 	 */
 	sk->min_objectid = root_id;
+	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 	sk->max_objectid = root_id;
 	sk->max_type = BTRFS_ROOT_ITEM_KEY;
-	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 4096;
@@ -210,8 +210,8 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	sk = btrfs_tree_search_sk(&args);
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 	sk->min_objectid = subvol_id;
-	sk->max_objectid = subvol_id;
 	sk->min_type = BTRFS_ROOT_BACKREF_KEY;
+	sk->max_objectid = subvol_id;
 	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
