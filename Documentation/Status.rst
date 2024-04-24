@@ -13,7 +13,7 @@ in meeting your performance expectations for your specific workload.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.7**
+**The table is based on the latest released linux kernel: 6.8**
 
 The columns for each feature reflect the status of the implementation
 in following ways:
@@ -124,8 +124,8 @@ in following ways:
      - OK
      -
    * - Temporary FSID
-     - 6.7
-     - 6.7
+     - 6.8
+     - 6.8
      - Single devices with same FSID can be mounted repeatedly, getting a temporary UUID.
    * - :doc:`Seeding<Seeding-device>`
      - :statusok:`OK`
@@ -136,8 +136,8 @@ in following ways:
      - mostly OK
      - qgroups with many snapshots slows down balance
    * - :doc:`Squota, simplified qgroups<Qgroups>`
-     - 6.7
-     - 6.7
+     - 6.8
+     - 6.8
      - simplified qgroup accounting, better performance, specific use case
    * - :doc:`Swapfile<Swapfile>`
      - :statusok:`OK`
@@ -239,9 +239,9 @@ converted later).
      - OK
      -
    * - :ref:`Raid stripe tree<mkfs-feature-raid-stripe-tree>`
-     - :statusok:`OK`
+     - :statusmok:`mostly OK`
      - OK
-     -
+     - not all profiles are supported and RST is behind CONFIG_BTRFS_DEBUG build option
    * - :doc:`Squota<Qgroups>`
      - :statusok:`OK`
      - OK

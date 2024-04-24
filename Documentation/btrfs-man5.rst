@@ -141,6 +141,11 @@ raid1c34
 
         extended RAID1 mode with copies on 3 or 4 devices respectively
 
+raid_stripe_tree
+        (since: 6.7)
+
+        a separate tree for tracking file extents on RAID profiles
+
 RAID56
         (since: 3.9)
 
@@ -161,6 +166,11 @@ send_stream_version
         (since: 5.10)
 
         number of the highest supported send stream version
+
+simple_quota
+        (since: 6.7)
+
+        simplified quota accounting
 
 supported_checksums
         (since: 5.5)

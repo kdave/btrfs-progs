@@ -346,14 +346,19 @@ block-group-tree
 .. _mkfs-feature-raid-stripe-tree:
 
 raid-stripe-tree
-        (kernel support since 6.7)
+        (kernel support since 6.7, CONFIG_BTRFS_DEBUG)
 
-        New tree for logical file extent mapping where the physical mapping
-        may not match on multiple devices. this is now used in zoned mode to
+        Separate tree for logical file extent mapping where the physical mapping
+        may not match on multiple devices. This is now used in zoned mode to
         implement RAID0/RAID1* profiles, but can be used in non-zoned mode as
         well. The support for RAID56 is in development and will eventually
         fix the problems with the current implementation. This is a backward
         incompatible feature and has to be enabled at mkfs time.
+
+        .. note::
+                Due to the status of implementation it is enabled only in
+                builds with CONFIG_BTRFS_DEBUG. Support by the kernel module
+                can be found in the sysfs feature list.
 
 squota
 	(kernel support since 6.7)
