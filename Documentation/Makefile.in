@@ -28,19 +28,16 @@ man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
 
 .PHONY: all man help
-.PHONY: contents.rst
+
+# Build manual pages by default
+all: man
 
 # Workaround for old sphinx that requires the contents.rst file
-contents.rst:
+man:
 	@if [ "$$(sphinx-build --version | cut -d' ' -f2)" \< "1.7.7" ]; then \
 		touch contents.rst; \
 	fi
 
-# Build manual pages by default
-
-all: man
-
-man:
 	$(QUIET_SPHINX)$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 help:
