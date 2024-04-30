@@ -491,8 +491,9 @@ int test_issubvolname(const char *name)
  * Unified GNU semantics basename helper, never changing the argument. Always
  * use this instead of basename().
  */
-const char *path_basename(const char *path)
+char *path_basename(char *path)
 {
+#if 0
 	const char *tmp = strrchr(path, '/');
 
 	/* Special case when the whole path is just "/". */
@@ -500,6 +501,9 @@ const char *path_basename(const char *path)
 		return path;
 
 	return tmp ? tmp + 1 : path;
+#else
+	return basename(path);
+#endif
 }
 
 /*
