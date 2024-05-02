@@ -189,6 +189,8 @@ struct unaligned_extent_rec_t {
 #define I_ERR_INVALID_GEN		(1U << 20)
 #define I_ERR_INVALID_NLINK		(1U << 21)
 #define I_ERR_INVALID_XATTR		(1U << 22)
+/* Ram_bytes mismatch for non-compressed data extents. */
+#define I_ERR_RAM_BYTES_MISMATCH	(1U << 23)
 
 struct inode_record {
 	struct list_head backrefs;
@@ -216,6 +218,7 @@ struct inode_record {
 	u64 extent_end;
 	struct rb_root holes;
 	struct list_head mismatch_dir_hash;
+	struct list_head mismatch_ram_bytes;
 
 	u32 refs;
 };
@@ -230,6 +233,11 @@ struct mismatch_dir_hash_record {
 	struct btrfs_key key;
 	int namelen;
 	/* namebuf follows here */
+};
+
+struct mismatch_ram_bytes_record {
+	struct list_head list;
+	struct btrfs_key key;
 };
 
 struct root_backref {

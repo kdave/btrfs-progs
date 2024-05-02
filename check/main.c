@@ -493,6 +493,33 @@ static int device_record_compare(const struct rb_node *node1, const struct rb_no
 		return 0;
 }
 
+static int add_mismatch_ram_bytes_record(struct inode_record *inode_rec,
+					 struct btrfs_key *key)
+{
+	struct mismatch_ram_bytes_record *record;
+
+	record = malloc(sizeof(*record));
+	if (!record) {
+		error_msg(ERROR_MSG_MEMORY, "mismatch ram bytes record");
+		return -ENOMEM;
+	}
+	memcpy(&record->key, key, sizeof(*key));
+	list_add_tail(&record->list, &inode_rec->mismatch_ram_bytes);
+	return 0;
+}
+
+static void free_mismatch_ram_bytes_records(struct inode_record *inode_rec)
+{
+	if (!list_empty(&inode_rec->mismatch_ram_bytes)) {
+		struct mismatch_ram_bytes_record *ram;
+
+		ram = list_entry(inode_rec->mismatch_ram_bytes.next,
+				 struct mismatch_ram_bytes_record, list);
+		list_del(&ram->list);
+		free(ram);
+	}
+}
+
 static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 {
 	struct inode_record *rec;
@@ -501,6 +528,7 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct inode_backref *tmp;
 	struct mismatch_dir_hash_record *hash_record;
 	struct mismatch_dir_hash_record *new_record;
+	struct mismatch_ram_bytes_record *ram_record;
 	struct unaligned_extent_rec_t *src;
 	struct unaligned_extent_rec_t *dst;
 	struct rb_node *rb;
@@ -514,6 +542,7 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	rec->refs = 1;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->mismatch_dir_hash);
+	INIT_LIST_HEAD(&rec->mismatch_ram_bytes);
 	INIT_LIST_HEAD(&rec->unaligned_extent_recs);
 	rec->holes = RB_ROOT;
 
@@ -536,6 +565,11 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 		}
 		memcpy(&new_record, hash_record, size);
 		list_add_tail(&new_record->list, &rec->mismatch_dir_hash);
+	}
+	list_for_each_entry(ram_record, &orig_rec->mismatch_ram_bytes, list) {
+		ret = add_mismatch_ram_bytes_record(rec, &ram_record->key);
+		if (ret < 0)
+			goto cleanup;
 	}
 	list_for_each_entry(src, &orig_rec->unaligned_extent_recs, list) {
 		size = sizeof(*src);
@@ -578,6 +612,7 @@ cleanup:
 			free(hash_record);
 		}
 	}
+	free_mismatch_ram_bytes_records(rec);
 	if (!list_empty(&rec->unaligned_extent_recs))
 		list_for_each_entry_safe(src, dst, &rec->unaligned_extent_recs,
 				list) {
@@ -619,6 +654,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", odd file extent");
 	if (errors & I_ERR_BAD_FILE_EXTENT)
 		fprintf(stderr, ", bad file extent");
+	if (errors & I_ERR_RAM_BYTES_MISMATCH)
+		fprintf(stderr, ", bad ram bytes for non-compressed extents");
 	if (errors & I_ERR_FILE_EXTENT_OVERLAP)
 		fprintf(stderr, ", file extent overlap");
 	if (errors & I_ERR_FILE_EXTENT_TOO_LARGE)
@@ -637,8 +674,6 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", link count wrong");
 	if (errors & I_ERR_ODD_INODE_FLAGS)
 		fprintf(stderr, ", odd inode flags");
-	if (errors & I_ERR_INLINE_RAM_BYTES_WRONG)
-		fprintf(stderr, ", invalid inline ram bytes");
 	if (errors & I_ERR_INVALID_IMODE)
 		fprintf(stderr, ", invalid inode mode bit 0%o",
 			rec->imode & ~07777);
@@ -697,6 +732,17 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 				hash_record->namelen, namebuf,
 				hash_record->namelen, crc,
 				hash_record->key.offset);
+		}
+	}
+	if (errors & I_ERR_RAM_BYTES_MISMATCH) {
+		struct mismatch_ram_bytes_record *ram_record;
+
+		fprintf(stderr,
+		"Non-compressed file extents with invalid ram_bytes (minor errors):\n");
+		list_for_each_entry(ram_record, &rec->mismatch_ram_bytes, list) {
+			fprintf(stderr, "\tino=%llu offset=%llu\n",
+				ram_record->key.objectid,
+				ram_record->key.offset);
 		}
 	}
 }
@@ -760,6 +806,7 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		rec->refs = 1;
 		INIT_LIST_HEAD(&rec->backrefs);
 		INIT_LIST_HEAD(&rec->mismatch_dir_hash);
+		INIT_LIST_HEAD(&rec->mismatch_ram_bytes);
 		INIT_LIST_HEAD(&rec->unaligned_extent_recs);
 		rec->holes = RB_ROOT;
 
@@ -811,6 +858,14 @@ static void free_inode_rec(struct inode_record *rec)
 		list_del(&backref->list);
 		free(backref);
 	}
+	while (!list_empty(&rec->mismatch_ram_bytes)) {
+		struct mismatch_ram_bytes_record *ram;
+
+		ram = list_entry(rec->mismatch_ram_bytes.next,
+				 struct mismatch_ram_bytes_record, list);
+		list_del(&ram->list);
+		free(ram);
+	}
 	list_for_each_entry_safe(hash, next, &rec->mismatch_dir_hash, list)
 		free(hash);
 	free_unaligned_extent_recs(&rec->unaligned_extent_recs);
@@ -821,7 +876,8 @@ static void free_inode_rec(struct inode_record *rec)
 static bool can_free_inode_rec(struct inode_record *rec)
 {
 	if (!rec->errors && rec->checked && rec->found_inode_item &&
-	    rec->nlink == rec->found_link && list_empty(&rec->backrefs))
+	    rec->nlink == rec->found_link && list_empty(&rec->backrefs) &&
+	    list_empty(&rec->mismatch_ram_bytes))
 		return true;
 	return false;
 }
@@ -1742,6 +1798,14 @@ static int process_file_extent(struct btrfs_root *root,
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (compression && rec->nodatasum)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
+		if (disk_bytenr && !compression &&
+		    btrfs_file_extent_ram_bytes(eb, fi) !=
+		    btrfs_file_extent_disk_num_bytes(eb, fi)) {
+			rec->errors |= I_ERR_RAM_BYTES_MISMATCH;
+			ret = add_mismatch_ram_bytes_record(rec, key);
+			if (ret < 0)
+				return ret;
+		}
 		if (disk_bytenr > 0)
 			rec->found_size += num_bytes;
 	} else {
@@ -3012,6 +3076,57 @@ static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static int repair_ram_bytes(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root,
+			    struct btrfs_path *path,
+			    struct inode_record *rec)
+{
+	struct mismatch_ram_bytes_record *record;
+	struct mismatch_ram_bytes_record *tmp;
+	int ret = 0;
+
+	btrfs_release_path(path);
+	list_for_each_entry_safe(record, tmp, &rec->mismatch_ram_bytes, list) {
+		struct btrfs_file_extent_item *fi;
+		struct extent_buffer *leaf;
+		int type;
+		int slot;
+		int search_ret;
+
+		search_ret = btrfs_search_slot(trans, root, &record->key, path, 0, 1);
+		if (search_ret > 0)
+			search_ret = -ENOENT;
+		if (search_ret < 0) {
+			ret = search_ret;
+			btrfs_release_path(path);
+			continue;
+		}
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
+		type = btrfs_file_extent_type(leaf, fi);
+		if (type != BTRFS_FILE_EXTENT_REG &&
+		    type != BTRFS_FILE_EXTENT_PREALLOC) {
+			ret = -EUCLEAN;
+			btrfs_release_path(path);
+			continue;
+		}
+		if (btrfs_file_extent_disk_bytenr(path->nodes[0], fi) == 0 ||
+		    btrfs_file_extent_compression(path->nodes[0], fi)) {
+			ret = -EUCLEAN;
+			btrfs_release_path(path);
+			continue;
+		}
+		btrfs_set_file_extent_ram_bytes(leaf, fi,
+				btrfs_file_extent_disk_num_bytes(leaf, fi));
+		btrfs_mark_buffer_dirty(leaf);
+		btrfs_release_path(path);
+	}
+	if (!ret)
+		rec->errors &= ~I_ERR_RAM_BYTES_MISMATCH;
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -3034,7 +3149,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_MISMATCH_DIR_HASH |
 			     I_ERR_UNALIGNED_EXTENT_REC |
 			     I_ERR_INVALID_IMODE |
-			     I_ERR_INVALID_GEN)))
+			     I_ERR_INVALID_GEN |
+			     I_ERR_RAM_BYTES_MISMATCH)))
 		return rec->errors;
 
 	/*
@@ -3074,6 +3190,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_unaligned_extent_recs(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_INVALID_GEN)
 		ret = repair_inode_gen_original(trans, root, &path, rec);
+	if (!ret && rec->errors & I_ERR_RAM_BYTES_MISMATCH)
+		ret = repair_ram_bytes(trans, root, &path, rec);
 	btrfs_commit_transaction(trans, root);
 	btrfs_release_path(&path);
 	return ret;
