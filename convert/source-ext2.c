@@ -727,10 +727,17 @@ static inline void ext4_decode_extra_time(__le32 * tv_sec, __le32 * tv_nsec,
         *tv_nsec = (le32_to_cpu(extra) & EXT4_NSEC_MASK) >> EXT4_EPOCH_BITS;
 }
 
+/*
+ * In e2fsprogs < 1.47.1 it's inode_includes, from >= on it's with ext2fs_ prefix.
+ */
+#ifndef ext2fs_inode_includes
+#define ext2fs_inode_includes(size, field)	inode_includes(size, field)
+#endif
+
 #define EXT4_COPY_XTIME(xtime, dst, tv_sec, tv_nsec)					\
 do {											\
 	tv_sec = src->i_ ## xtime ;							\
-	if (inode_includes(inode_size, i_ ## xtime ## _extra)) {			\
+	if (ext2fs_inode_includes(inode_size, i_ ## xtime ## _extra)) {			\
 		tv_sec = src->i_ ## xtime ;						\
 		ext4_decode_extra_time(&tv_sec, &tv_nsec, src->i_ ## xtime ## _extra);	\
 		btrfs_set_stack_timespec_sec(&dst->xtime , tv_sec);			\
@@ -771,7 +778,7 @@ static int ext4_copy_inode_timespec_extra(struct btrfs_inode_item *dst,
 	EXT4_COPY_XTIME(ctime, dst, tv_sec, tv_nsec);
 
 	tv_sec = src->i_crtime;
-	if (inode_includes(inode_size, i_crtime_extra)) {
+	if (ext2fs_inode_includes(inode_size, i_crtime_extra)) {
 		tv_sec = src->i_crtime;
 		ext4_decode_extra_time(&tv_sec, &tv_nsec, src->i_crtime_extra);
 		btrfs_set_stack_timespec_sec(&dst->otime, tv_sec);
