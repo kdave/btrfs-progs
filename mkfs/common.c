@@ -1129,6 +1129,11 @@ bool test_status_for_mkfs(const char *file, bool force_overwrite)
 	ret = check_mounted(file);
 	if (ret < 0) {
 		errno = -ret;
+		if (force_overwrite) {
+			warning("forced overwrite but cannot check mount status of %s: %m",
+				file);
+			return false;
+		}
 		error("cannot check mount status of %s: %m", file);
 		return true;
 	}
