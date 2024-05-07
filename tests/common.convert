@@ -214,47 +214,19 @@ convert_test_post_check_checksums() {
 		grep -q 'FAILED' && _fail "file validation failed"
 }
 
-# Check if convert can mount the image based on features
-# $1: name of the feature
-convert_can_mount() {
-	local features="$1"
-
-	if [ "$features" = 'block-group-tree' ]; then
-		if ! [ -f "/sys/fs/btrfs/features/block_group_tree" ]; then
-			_log "Skip mount checks due to missing support of block-group-tree"
-			return 1
-		fi
-	fi
-	if [ "$features" = 'raid-stripe-tree' ]; then
-		if ! [ -f "/sys/fs/btrfs/features/raid_stripe_tree" ]; then
-			_log "Skip mount checks due to missing support of raid-stripe-tree"
-			return 1
-		fi
-	fi
-
-	return 0
-}
-
 # post conversion checks, all three in one call, on an unmounted image
-# $1: features for mount compatibility checks
-# $2: file with checksums
-# $3: file with permissions.
-# $4: file with acl entries.
+# $1: file with checksums
+# $2: file with permissions.
+# $3: file with acl entries.
 convert_test_post_checks_all() {
-	local features="$1"
-
+	_assert_path "$1"
 	_assert_path "$2"
 	_assert_path "$3"
-	_assert_path "$4"
-
-	if ! convert_can_mount "$features"; then
-		return 0
-	fi
 
 	run_check_mount_test_dev
-	convert_test_post_check_checksums "$2"
-	convert_test_post_check_permissions "$3"
-	convert_test_post_check_acl "$4"
+	convert_test_post_check_checksums "$1"
+	convert_test_post_check_permissions "$2"
+	convert_test_post_check_acl "$3"
 
 	# Create a large file to trigger data chunk allocation
 	generate_dataset "large"
@@ -313,7 +285,7 @@ convert_test() {
 	run_check_umount_test_dev
 
 	convert_test_do_convert "$features" "$nodesize" "$fstype"
-	convert_test_post_checks_all "$features" "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
+	convert_test_post_checks_all "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
 	rm -- "$CHECKSUMTMP"
 	rm -- "$EXT_PERMTMP"
 	rm -- "$EXT_ACLTMP"
