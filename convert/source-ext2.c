@@ -303,6 +303,83 @@ static int ext2_block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 	return 0;
 }
 
+static int iterate_one_file_extent(struct blk_iterate_data *data, u64 filepos,
+				   u64 len, u64 disk_bytenr, bool prealloced)
+{
+	const int sectorsize = data->trans->fs_info->sectorsize;
+	const int sectorbits = ilog2(sectorsize);
+	int ret;
+
+	UASSERT(len > 0);
+	for (int i = 0; i < len; i += sectorsize) {
+		/*
+		 * Just treat preallocated extent as hole.
+		 *
+		 * As there is no way to utilize the preallocated space, since
+		 * any file extent would also be shared by ext2 image.
+		 */
+		if (prealloced)
+			ret = block_iterate_proc(0, (filepos + i) >> sectorbits, data);
+		else
+			ret = block_iterate_proc((disk_bytenr + i) >> sectorbits,
+						 (filepos + i) >> sectorbits, data);
+
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
+
+static int iterate_file_extents(struct blk_iterate_data *data, ext2_filsys ext2fs,
+				ext2_ino_t ext2_ino, u32 convert_flags)
+{
+	ext2_extent_handle_t handle = NULL;
+	struct ext2fs_extent extent;
+	const int sectorsize = data->trans->fs_info->sectorsize;
+	const int sectorbits = ilog2(sectorsize);
+	int op = EXT2_EXTENT_ROOT;
+	errcode_t errcode;
+	int ret = 0;
+
+	errcode = ext2fs_extent_open(ext2fs, ext2_ino, &handle);
+	if (errcode) {
+		error("failed to open ext2 inode %u: %s", ext2_ino, error_message(errcode));
+		return -EIO;
+	}
+	while (1) {
+		u64 disk_bytenr;
+		u64 filepos;
+		u64 len;
+
+		errcode = ext2fs_extent_get(handle, op, &extent);
+		if (errcode == EXT2_ET_EXTENT_NO_NEXT)
+			break;
+		if (errcode) {
+			data->errcode = errcode;
+			ret = -EIO;
+			goto out;
+		}
+		op = EXT2_EXTENT_NEXT;
+
+		if (extent.e_flags & EXT2_EXTENT_FLAGS_SECOND_VISIT)
+			continue;
+		if (!(extent.e_flags & EXT2_EXTENT_FLAGS_LEAF))
+			continue;
+
+		filepos = extent.e_lblk << sectorbits;
+		len = extent.e_len << sectorbits;
+		disk_bytenr = extent.e_pblk << sectorbits;
+
+		ret = iterate_one_file_extent(data, filepos, len, disk_bytenr,
+					      extent.e_flags & EXT2_EXTENT_FLAGS_UNINIT);
+		if (ret < 0)
+			goto out;
+	}
+out:
+	ext2fs_extent_free(handle);
+	return ret;
+}
+
 /*
  * traverse file's data blocks, record these data blocks as file extents.
  */
@@ -315,6 +392,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	int ret;
 	char *buffer = NULL;
 	errcode_t err;
+	struct ext2_inode ext2_inode = { 0 };
 	u32 last_block;
 	u32 sectorsize = root->fs_info->sectorsize;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
@@ -323,10 +401,30 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	init_blk_iterate_data(&data, trans, root, btrfs_inode, objectid,
 			convert_flags & CONVERT_FLAG_DATACSUM);
 
-	err = ext2fs_block_iterate2(ext2_fs, ext2_ino, BLOCK_FLAG_DATA_ONLY,
-				    NULL, ext2_block_iterate_proc, &data);
-	if (err)
-		goto error;
+	err = ext2fs_read_inode(ext2_fs, ext2_ino, &ext2_inode);
+	if (err) {
+		error("failed to read ext2 inode %u: %s", ext2_ino, error_message(err));
+		return -EIO;
+	}
+	/*
+	 * For inodes without extent block maps, go with the older
+	 * ext2fs_block_iterate2().
+	 * Otherwise use ext2fs_extent_*() based solution, as that can provide
+	 * UNINIT extent flags.
+	 */
+	if ((ext2_inode.i_flags & EXT4_EXTENTS_FL) == 0) {
+		err = ext2fs_block_iterate2(ext2_fs, ext2_ino,
+					    BLOCK_FLAG_DATA_ONLY, NULL,
+					    ext2_block_iterate_proc, &data);
+		if (err) {
+			error("ext2fs_block_iterate2: %s", error_message(err));
+			return -EIO;
+		}
+	} else {
+		ret = iterate_file_extents(&data, ext2_fs, ext2_ino, convert_flags);
+		if (ret < 0)
+			goto fail;
+	}
 	ret = data.errcode;
 	if (ret)
 		goto fail;
@@ -366,9 +464,6 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 fail:
 	free(buffer);
 	return ret;
-error:
-	error("ext2fs_block_iterate2: %s", error_message(err));
-	return -1;
 }
 
 static int ext2_create_symlink(struct btrfs_trans_handle *trans,
