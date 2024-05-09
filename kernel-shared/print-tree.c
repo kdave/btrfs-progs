@@ -211,19 +211,28 @@ static void bg_flags_to_str(u64 flags, char *ret)
 	}
 }
 
-/* Caller should ensure sizeof(*ret)>= 26 "OFF|SCANNING|INCONSISTENT" */
+/*
+ * Caller should ensure sizeof(*ret) >= 64
+ * "OFF|SCANNING|INCONSISTENT|UNKNOWN(0xffffffffffffffff)"
+ */
 static void qgroup_flags_to_str(u64 flags, char *ret)
 {
 	ret[0] = 0;
+
 	if (flags & BTRFS_QGROUP_STATUS_FLAG_ON)
 		strcpy(ret, "ON");
 	else
 		strcpy(ret, "OFF");
 
+	if (flags & BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE)
+		strcat(ret, "|SIMPLE_MODE");
 	if (flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN)
 		strcat(ret, "|SCANNING");
 	if (flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT)
 		strcat(ret, "|INCONSISTENT");
+	if (flags & ~BTRFS_QGROUP_STATUS_FLAGS_MASK)
+		sprintf(ret + strlen(ret), "|UNKNOWN(0x%llx)",
+			flags & ~BTRFS_QGROUP_STATUS_FLAGS_MASK);
 }
 
 void print_chunk_item(struct extent_buffer *eb, struct btrfs_chunk *chunk)
