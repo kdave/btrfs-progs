@@ -153,6 +153,30 @@ show [options] <path>
                 To retrieve information after updating the state of qgroups,
                 force sync of the filesystem identified by *path* before getting information.
 
+SPECIAL PATHS
+-------------
+For `btrfs qgroup show` subcommand, the ``path`` column may has some special
+strings:
+
+`<toplevel>`
+	The toplevel subvolume
+
+`<under deletion>`
+	The subvolume is unlinked, but not yet fully deleted.
+
+`<squota space holder>`
+	For simple quota mode only.
+	By its design, a fully deleted subvolume may still have accounting on
+	it, so even the subvolume is gone, the numbers are still here for future
+	accounting.
+
+`<stale>`
+	The qgroup has no corresponding subvolume anymore, and the qgroup
+	can be cleaned up under most cases.
+	The only exception is that, if the qgroup numbers are inconsistent and
+	the qgroup numbers are not all zeros, some older kernels may refuse to
+	delete such qgroups until a full rescan.
+
 QUOTA RESCAN
 ------------
 

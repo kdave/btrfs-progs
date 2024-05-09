@@ -71,6 +71,8 @@ struct qgroup_lookup {
 };
 
 struct btrfs_qgroup {
+	struct qgroup_lookup *lookup;
+
 	struct rb_node rb_node;
 	struct rb_node sort_node;
 	/*
@@ -321,6 +323,26 @@ static void print_qgroup_column_add_blank(enum btrfs_qgroup_column_enum column,
 		printf(" ");
 }
 
+static const char *get_qgroup_path(struct btrfs_qgroup *qgroup)
+{
+	if (qgroup->path)
+		return qgroup->path;
+
+	/* No path but not stale either, the qgroup is being deleted. */
+	if (!qgroup->stale)
+		return "<under deletion>";
+	/*
+	 * Squota mode stale qgroup, but not empty.
+	 * This is fully deleted but still necessary.
+	 */
+	if (qgroup->stale &&
+	    (qgroup->lookup->flags & BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE) &&
+	    !is_qgroup_empty(qgroup))
+		return "<squota space holder>";
+
+	return "<stale>";
+}
+
 static void print_path_column(struct btrfs_qgroup *qgroup)
 {
 	struct btrfs_qgroup_list *list = NULL;
@@ -338,11 +360,8 @@ static void print_path_column(struct btrfs_qgroup *qgroup)
 			if (count)
 				pr_verbose(LOG_DEFAULT, " ");
 			if (level == 0) {
-				const char *path = member->path;
-
-				if (!path)
-					path = "<stale>";
-				pr_verbose(LOG_DEFAULT, "%s", path);
+				pr_verbose(LOG_DEFAULT, "%s",
+					   get_qgroup_path(qgroup));
 			} else {
 				pr_verbose(LOG_DEFAULT, "%llu/%llu", level, sid);
 			}
@@ -353,7 +372,7 @@ static void print_path_column(struct btrfs_qgroup *qgroup)
 	} else if (qgroup->path) {
 		pr_verbose(LOG_DEFAULT, "%s%s", (*qgroup->path ? "" : "<toplevel>"), qgroup->path);
 	} else {
-		pr_verbose(LOG_DEFAULT, "<stale>");
+		pr_verbose(LOG_DEFAULT, "%s", get_qgroup_path(qgroup));
 	}
 }
 
@@ -805,6 +824,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 		return ERR_PTR(-ENOMEM);
 	}
 
+	bq->lookup = qgroup_lookup;
 	bq->qgroupid = qgroupid;
 	INIT_LIST_HEAD(&bq->qgroups);
 	INIT_LIST_HEAD(&bq->members);
