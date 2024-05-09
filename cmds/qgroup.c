@@ -65,6 +65,8 @@ struct btrfs_qgroup_list {
 };
 
 struct qgroup_lookup {
+	/* This matches btrfs_qgroup_status_item::flags. */
+	u64 flags;
 	struct rb_root root;
 };
 
@@ -1313,6 +1315,7 @@ static int __qgroups_search(int fd, struct btrfs_tree_search_args *args,
 			case BTRFS_QGROUP_STATUS_KEY:
 				si = btrfs_tree_search_data(args, off);
 				flags = btrfs_stack_qgroup_status_flags(si);
+				qgroup_lookup->flags = flags;
 
 				print_status_flag_warning(flags);
 				break;
