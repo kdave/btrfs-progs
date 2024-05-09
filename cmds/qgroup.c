@@ -2135,6 +2135,7 @@ static const char * const cmd_qgroup_clear_stale_usage[] = {
 
 static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char **argv)
 {
+	enum btrfs_util_error err;
 	int ret = 0;
 	int fd;
 	char *path = NULL;
@@ -2150,6 +2151,11 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
+
+	/* Sync the fs so that the qgroup numbers are uptodate. */
+	err = btrfs_util_sync_fd(fd);
+	if (err)
+		warning("sync ioctl failed on '%s': %m", path);
 
 	ret = qgroups_search_all(fd, &qgroup_lookup);
 	if (ret == -ENOTTY) {
