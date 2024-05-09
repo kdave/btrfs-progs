@@ -80,8 +80,22 @@ struct btrfs_qgroup {
 	struct rb_node all_parent_node;
 	u64 qgroupid;
 
-	/* NULL for qgroups with level > 0 */
+	/*
+	 * NULL for qgroups with level > 0 or the subvolume is unlinked.
+	 *
+	 * An unlinked subvolume doesn't mean it has been fully dropped, so
+	 * callers should not rely on this to determine if a qgroup is stale.
+	 *
+	 * This member is only to help locating the path of the corresponding
+	 * subvolume.
+	 */
 	const char *path;
+
+	/*
+	 * This is only true if the qgroup is level 0 qgroup, and there is
+	 * no subvolume tree for the qgroup at all.
+	 */
+	bool stale;
 
 	/*
 	 * info_item
@@ -228,6 +242,13 @@ static struct {
 
 static btrfs_qgroup_filter_func all_filter_funcs[];
 static btrfs_qgroup_comp_func all_comp_funcs[];
+
+static bool is_qgroup_empty(const struct btrfs_qgroup *qg)
+{
+	return !(qg->info.referenced || qg->info.exclusive ||
+		 qg->info.referenced_compressed ||
+		 qg->info.exclusive_compressed);
+}
 
 static void qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
@@ -795,13 +816,30 @@ static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 		uret = btrfs_util_subvolume_path_fd(fd, qgroupid, &path);
 		if (uret == BTRFS_UTIL_OK)
 			bq->path = path;
-		/* Ignore stale qgroup items */
 		else if (uret != BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
 			error("%s", btrfs_util_strerror(uret));
 			if (uret == BTRFS_UTIL_ERROR_NO_MEMORY)
 				return ERR_PTR(-ENOMEM);
 			else
 				return ERR_PTR(-EIO);
+		}
+		/*
+		 * Do a correct stale detection by searching for the ROOT_ITEM of
+		 * the subvolume.
+		 *
+		 * Passing @subvol as NULL will force the search to only search
+		 * for the ROOT_ITEM.
+		 */
+		uret = btrfs_util_subvolume_info_fd(fd, qgroupid, NULL);
+		if (uret == BTRFS_UTIL_OK) {
+			bq->stale = false;
+		} else if (uret == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
+			bq->stale = true;
+		} else {
+			warning("failed to search root item for qgroup %u/%llu, assuming it not stale",
+				btrfs_qgroup_level(qgroupid),
+				btrfs_qgroup_subvolid(qgroupid));
+			bq->stale = false;
 		}
 	}
 
@@ -2136,6 +2174,65 @@ static const char * const cmd_qgroup_clear_stale_usage[] = {
 	NULL
 };
 
+/*
+ * Return >0 if the qgroup should or can not be deleted.
+ * Return 0 if the qgroup is deleted.
+ * Return <0 for critical error.
+ */
+static int delete_one_stale_qgroup(struct qgroup_lookup *lookup,
+				   struct btrfs_qgroup *qg, int fd)
+{
+	u16 level = btrfs_qgroup_level(qg->qgroupid);
+	struct btrfs_ioctl_qgroup_create_args args = { .create = false };
+	const bool inconsistent = (lookup->flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
+	const bool squota = (lookup->flags & BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE);
+	const bool empty = is_qgroup_empty(qg);
+	bool attempt = false;
+	int ret;
+
+	if (level || !qg->stale)
+		return 1;
+
+	/*
+	 * By design, squota can have a subvolume fully dropped but its qgroup
+	 * numbers are not zero.  Such qgroup is still needed for future
+	 * accounting, thus can not be deleted.
+	 */
+	if (squota && !empty)
+		return 1;
+
+	/*
+	 * We can have inconsistent qgroup numbers, in that case a really stale
+	 * qgroup can exist while its numbers are not zero.
+	 *
+	 * In this case we only attempt to delete the qgroup, depending on the
+	 * kernel implementation, we may or may not be able to delete it.
+	 */
+	if (inconsistent && !empty)
+		attempt = true;
+
+	if (attempt)
+		pr_verbose(LOG_DEFAULT,
+		"Attempt to delete stale but non-empty qgroup %u/%llu\n",
+			   level, btrfs_qgroup_subvolid(qg->qgroupid));
+	else
+		pr_verbose(LOG_DEFAULT, "Delete stale qgroup %u/%llu\n",
+			   level, btrfs_qgroup_subvolid(qg->qgroupid));
+	args.qgroupid = qg->qgroupid;
+	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
+	if (ret < 0) {
+		if (attempt) {
+			warning("not possible to delete non-empty stale qgroup %u/%llu",
+				level, btrfs_qgroup_subvolid(qg->qgroupid));
+			ret = 1;
+		} else {
+			error("failed to delete qgroup %u/%llu",
+			      level, btrfs_qgroup_subvolid(qg->qgroupid));
+		}
+	}
+	return ret;
+}
+
 static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	enum btrfs_util_error err;
@@ -2172,22 +2269,12 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 
 	node = rb_first(&qgroup_lookup.root);
 	while (node) {
-		u64 level;
-		struct btrfs_ioctl_qgroup_create_args args = { .create = false };
+		int ret2;
 
 		entry = rb_entry(node, struct btrfs_qgroup, rb_node);
-		level = btrfs_qgroup_level(entry->qgroupid);
-		if (!entry->path && level == 0) {
-			pr_verbose(LOG_DEFAULT, "Delete stale qgroup %llu/%llu\n",
-					level, btrfs_qgroup_subvolid(entry->qgroupid));
-			args.qgroupid = entry->qgroupid;
-			ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
-			if (ret < 0) {
-				error("cannot delete qgroup %llu/%llu: %m",
-					level,
-					btrfs_qgroup_subvolid(entry->qgroupid));
-			}
-		}
+		ret2 = delete_one_stale_qgroup(&qgroup_lookup, entry, fd);
+		if (ret2 < 0 && !ret)
+			ret = ret2;
 		node = rb_next(node);
 	}
 
