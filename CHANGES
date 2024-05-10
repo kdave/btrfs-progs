@@ -4,9 +4,9 @@ btrfs-progs-6.8 (2024-03-26)
    * subvolume: remove support for undocumented options -c and -x,
      functionality disabled in kernel
    * libbtrfsutil:
-      * version 0.1.3, backward compabile
+      * version 0.1.3, backward compatible
       * add aliases for all existing functions with unified naming scheme
-      * updated header defintions for recently added kernel features
+      * updated header definitions for recently added kernel features
    * send: v3 supported in experimental mode
    * other:
       * docs: manual page references, graphs, enhancements, clarifications
