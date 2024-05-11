@@ -20,5 +20,6 @@ The stream is a sequence of encoded commands that change e.g. file metadata
 (owner, permissions, extended attributes), data extents (create, clone,
 truncate), whole file operations (rename, delete). The stream can be sent over
 network, piped directly to the receive command or saved to a file. Each command
-in the stream is protected by a CRC32C checksum. See :doc:`btrfs-send`
-and :doc:`btrfs-receive` for more.
+in the stream is protected by a CRC32C checksum, with 0 as the initial value
+and no inversion. See :doc:`btrfs-send` and :doc:`btrfs-receive` for more,
+for protocol description :doc:`dev-send-stream`.
