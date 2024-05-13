@@ -13,7 +13,7 @@ in meeting your performance expectations for your specific workload.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.8**
+**The table is based on the latest released linux kernel: 6.9**
 
 The columns for each feature reflect the status of the implementation
 in following ways:

@@ -103,6 +103,9 @@ features see :doc:`Status<Status>` page.
         Mount of cloned devices is now possible, the filesystem will get a new
         randomly generated UUID on mount
 
+6.8 - new mount API
+        Use new mount API (https://lwn.net/Articles/753473/)
+
 5.x
 ---
 
