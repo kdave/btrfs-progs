@@ -14,7 +14,7 @@ suitable for all use cases or workloads, for example performance.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.17**
+**The table is based on the latest released linux kernel: 6.19**
 
 Since kernel version 6.12 there's a config option *CONFIG_BTRFS_EXPERIMENTAL*
 that enables features that are in development and do not have stabilized
@@ -35,7 +35,7 @@ in following ways:
 -  **Unstable**: do not use for other then testing purposes, known
    severe problems, missing implementation of some core parts
 
-Please open a github issue if:
+Please open a `github issue <https://github.com/kdave/btrfs-progs/issues` if:
 
 -  there's a known missing entry
 -  a particular feature combination that has a different status and is
@@ -268,6 +268,11 @@ converted later).
      - :statusok:`OK`
      - OK
      - Simplified tracking needs on-disk format update, but may work in a limited way without it.
+   * - :ref:`Remap tree tree<mkfs-feature-raid-stripe-tree>`
+     - :statusmok:`mostly OK`
+     - initial support in 7.0
+     - Another logical-to-logical layer mapping of block addresses to avoid
+       unnecessary COW. CONFIG_BTRFS_EXPERIMENTAL build option
 
 Interoperability
 ^^^^^^^^^^^^^^^^
@@ -483,6 +488,7 @@ the increasing number of such features or functionality this started to conflict
 with regular debugging features. Currently the following is behind
 the experimental option *CONFIG_BTRFS_EXPERIMENTAL*. Use with caution and if
 you find problems or have feedback please report that to the mailing list.
+(`Current list in linux.git <https://elixir.bootlin.com/linux/v6.19-rc5/source/fs/btrfs/Kconfig#L87>`__)
 
 .. list-table::
    :header-rows: 1
@@ -499,7 +505,7 @@ you find problems or have feedback please report that to the mailing list.
      - The fs-verity stream command is implemented. More updates to the
        protocol specification are pending.
    * - Checksum offload mode
-     - ...
+     - removed in 7.0
      - Fast devices with a combination of block group profiles benefits from
        calculating checksums at the time of IO submission, while other
        combinations benefit from offloading that to the worker threads.
@@ -510,7 +516,14 @@ you find problems or have feedback please report that to the mailing list.
        in sysfs.
    * - Extent tree v2
      - ...
-     - Incomplete implementation.
+     - Incomplete implementation. Standalone features are carved out and added
+       separately.
    * - Large folio support
      - ...
+     -
+   * - Shutdown ioctl
+     - 6.19
+     -
+   * - Remap tree
+     - 7.0
      -
