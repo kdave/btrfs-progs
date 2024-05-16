@@ -113,8 +113,12 @@ static const char * const tune_usage[] = {
 	"UUID changes:",
 	OPTLINE("-u", "rewrite fsid, use a random one"),
 	OPTLINE("-U UUID", "rewrite fsid to UUID"),
-	OPTLINE("-m", "change fsid in metadata_uuid to a random UUID incompat change, more lightweight than -u|-U)"),
-	OPTLINE("-M UUID", "change fsid in metadata_uuid to UUID"),
+	OPTLINE("-m", "change fsid to a random UUID, copy original fsid into "
+		      "metadata_uuid if it's not NULL, this is an incompat change "
+		      "(more lightweight than -u|-U)"),
+	OPTLINE("-M UUID", "change fsid to UUID, copy original fsid into "
+		      "metadata_uuid if it's not NULL, this is an incompat change "
+		      "(more lightweight than -u|-U)"),
 	"",
 	"General:",
 	OPTLINE("-f", "allow dangerous operations, make sure that you are aware of the dangers"),
