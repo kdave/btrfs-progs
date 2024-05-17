@@ -162,7 +162,8 @@ strings:
 	The toplevel subvolume
 
 `<under deletion>`
-	The subvolume is unlinked, but not yet fully deleted.
+        The subvolume has been deleted (it's directory removed), but the
+        subvolume metadata not not yet fully cleaned.
 
 `<squota space holder>`
 	For simple quota mode only.

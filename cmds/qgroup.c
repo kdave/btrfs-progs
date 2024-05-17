@@ -83,10 +83,11 @@ struct btrfs_qgroup {
 	u64 qgroupid;
 
 	/*
-	 * NULL for qgroups with level > 0 or the subvolume is unlinked.
+	 * NULL for qgroups with level > 0 or the subvolume is deleted but not
+	 * yet fully cleaned.
 	 *
-	 * An unlinked subvolume doesn't mean it has been fully dropped, so
-	 * callers should not rely on this to determine if a qgroup is stale.
+	 * A deleted subvolume means it hasn't been fully cleaned, so callers
+	 * should not rely on this to determine if a qgroup is stale.
 	 *
 	 * This member is only to help locating the path of the corresponding
 	 * subvolume.
