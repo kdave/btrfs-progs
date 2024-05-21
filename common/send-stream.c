@@ -131,9 +131,10 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	}
 
+	/* The read_buf does not guarantee any aligmnet for any structures. */
 	cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
-	cmd_len = le32_to_cpu(cmd_hdr->len);
-	cmd = le16_to_cpu(cmd_hdr->cmd);
+	cmd_len = get_unaligned_le32(&cmd_hdr->len);
+	cmd = get_unaligned_le16(&cmd_hdr->cmd);
 	buf_len = sizeof(*cmd_hdr) + cmd_len;
 	if (sctx->read_buf_size < buf_len) {
 		void *new_read_buf;
@@ -160,9 +161,9 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	}
 
-	crc = le32_to_cpu(cmd_hdr->crc);
+	crc = get_unaligned_le32(&cmd_hdr->crc);
 	/* In send, CRC is computed with header crc = 0, replicate that */
-	cmd_hdr->crc = 0;
+	put_unaligned_le32(0, &cmd_hdr->crc);
 
 	crc2 = crc32c(0, (unsigned char*)sctx->read_buf,
 			sizeof(*cmd_hdr) + cmd_len);
@@ -183,7 +184,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 			ret = -EINVAL;
 			goto out;
 		}
-		tlv_type = le16_to_cpu(*(__le16 *)data);
+		tlv_type = get_unaligned_le16(data);
 
 		if (tlv_type == 0 || tlv_type > __BTRFS_SEND_A_MAX) {
 			error("invalid tlv in cmd tlv_type = %hu", tlv_type);
@@ -204,7 +205,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 				ret = -EINVAL;
 				goto out;
 			}
-			send_attr->tlv_len = le16_to_cpu(*(__le16 *)data);
+			send_attr->tlv_len = get_unaligned_le16(data);
 			pos += sizeof(__le16);
 			data += sizeof(__le16);
 		}
@@ -322,8 +323,8 @@ static int tlv_get_timespec(struct btrfs_send_stream *sctx,
 	TLV_GET(sctx, attr, (void**)&bts, &len);
 	TLV_CHECK_LEN(sizeof(*bts), len);
 
-	ts->tv_sec = le64_to_cpu(bts->sec);
-	ts->tv_nsec = le32_to_cpu(bts->nsec);
+	ts->tv_sec = get_unaligned_le64(&bts->sec);
+	ts->tv_nsec = get_unaligned_le32(&bts->nsec);
 	ret = 0;
 
 tlv_get_failed:
