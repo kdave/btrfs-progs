@@ -253,6 +253,8 @@ libbtrfs_objects = \
 libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h libbtrfs/send.h kernel-lib/rbtree.h \
 	       kernel-lib/list.h kernel-lib/rbtree_types.h libbtrfs/kerncompat.h \
 	       libbtrfs/ioctl.h libbtrfs/ctree.h libbtrfs/version.h
+libbtrfs_version = $(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR).$(LIBBTRFS_PATCHLEVEL)
+
 libbtrfsutil_major := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_minor := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_patch := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
@@ -428,8 +430,9 @@ static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
 static_image_objects = $(patsubst %.o, %.static.o, $(image_objects))
 static_tune_objects = $(patsubst %.o, %.static.o, $(tune_objects))
 
-libs_shared = libbtrfs.so.0.1 libbtrfsutil.so.$(libbtrfsutil_version)
-lib_links = libbtrfs.so.0 libbtrfs.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so
+libs_shared = libbtrfs.so.$(libbtrfs_version) libbtrfsutil.so.$(libbtrfsutil_version)
+lib_links = libbtrfs.so libbtrfs.so.$(LIBBTRFS_MAJOR) libbtrfs.so.$(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR) \
+	    libbtrfsutil.so libbtrfsutil.so.$(libbtrfsutil_major)
 libs_build =
 ifeq ($(BUILD_SHARED_LIBRARIES),1)
 libs_build += $(libs_shared) $(lib_links)
@@ -612,7 +615,7 @@ kernel-lib/tables.c:
 	@echo "    [TABLE]  $@"
 	$(Q)./mktables > $@ || ($(RM) -f $@ && exit 1)
 
-libbtrfs.so.0.1: $(libbtrfs_objects) libbtrfs/libbtrfs.sym
+libbtrfs.so.$(libbtrfs_version): $(libbtrfs_objects) libbtrfs/libbtrfs.sym
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) $(filter %.o,$^) $(LDFLAGS) $(LIBBTRFS_LIBS) \
 		-shared -Wl,-soname,libbtrfs.so.0 -Wl,--version-script=libbtrfs/libbtrfs.sym -o $@
@@ -621,7 +624,7 @@ libbtrfs.a: $(libbtrfs_objects)
 	@echo "    [AR]     $@"
 	$(Q)$(AR) cr $@ $^
 
-libbtrfs.so.0 libbtrfs.so: libbtrfs.so.0.1 libbtrfs/libbtrfs.sym
+libbtrfs.so libbtrfs.so.$(LIBBTRFS_MAJOR) libbtrfs.so.$(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR): libbtrfs.so.$(libbtrfs_version) libbtrfs/libbtrfs.sym
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $< $@
 
@@ -788,10 +791,10 @@ library-test: tests/library-test.c libbtrfs.so
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
-	cp libbtrfs.so.0.1 $(TMPD) && \
+	cp libbtrfs.so.$(libbtrfs_version) $(TMPD) && \
 	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) -Wl,-rpath=$(ABSTOPDIR)
 	@echo "    [TEST RUN]   $@"
-	$(Q)cd $(TMPD) && LD_PRELOAD=libbtrfs.so.0.1 ./$@
+	$(Q)cd $(TMPD) && LD_PRELOAD=libbtrfs.so.$(libbtrfs_version) ./$@
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
