@@ -432,7 +432,7 @@ static_tune_objects = $(patsubst %.o, %.static.o, $(tune_objects))
 
 libs_shared = libbtrfs.so.$(libbtrfs_version) libbtrfsutil.so.$(libbtrfsutil_version)
 lib_links = libbtrfs.so libbtrfs.so.$(LIBBTRFS_MAJOR) libbtrfs.so.$(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR) \
-	    libbtrfsutil.so libbtrfsutil.so.$(libbtrfsutil_major)
+	    libbtrfsutil.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so.$(libbtrfsutil_major).$(libbtrfsutil_minor)
 libs_build =
 ifeq ($(BUILD_SHARED_LIBRARIES),1)
 libs_build += $(libs_shared) $(lib_links)
@@ -642,7 +642,7 @@ libbtrfsutil.a: $(libbtrfsutil_objects)
 	@echo "    [AR]     $@"
 	$(Q)$(AR) cr $@ $^
 
-libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so: libbtrfsutil.so.$(libbtrfsutil_version)
+libbtrfsutil.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so.$(libbtrfsutil_major).$(libbtrfsutil_minor): libbtrfsutil.so.$(libbtrfsutil_version)
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $< $@
 
