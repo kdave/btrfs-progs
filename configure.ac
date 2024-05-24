@@ -17,7 +17,7 @@ BTRFS_VERSION_PATCHLEVEL=`echo "${BTRFS_VERSION_PLAIN#v*}" | awk -F. '{print $3}
 dnl libbtrfs .so version
 LIBBTRFS_MAJOR=0
 LIBBTRFS_MINOR=1
-LIBBTRFS_PATCHLEVEL=4
+LIBBTRFS_PATCHLEVEL=5
 
 dnl libbtrfsutil .so version
 BTRFS_UTIL_VERSION_MAJOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
