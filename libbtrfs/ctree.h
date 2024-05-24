@@ -1615,7 +1615,7 @@ void write_extent_buffer(struct extent_buffer *eb, const void *src,
 static inline u##bits btrfs_##name(const struct extent_buffer *eb)	\
 {									\
 	const struct btrfs_header *h = (struct btrfs_header *)eb->data;	\
-	return le##bits##_to_cpu(h->member);				\
+	return get_unaligned_le##bits(&h->member);			\
 }									\
 static inline void btrfs_set_##name(struct extent_buffer *eb,		\
 				    u##bits val)			\
@@ -1643,7 +1643,7 @@ static inline void btrfs_set_##name(struct extent_buffer *eb,		\
 #define BTRFS_SETGET_STACK_FUNCS(name, type, member, bits)		\
 static inline u##bits btrfs_##name(const type *s)			\
 {									\
-	return le##bits##_to_cpu(s->member);				\
+	return get_unaligned_le##bits(&s->member);			\
 }									\
 static inline void btrfs_set_##name(type *s, u##bits val)		\
 {									\

@@ -119,9 +119,10 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	}
 
+	/* No data alignment is guaranteed. */
 	sctx->cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
-	cmd = le16_to_cpu(sctx->cmd_hdr->cmd);
-	cmd_len = le32_to_cpu(sctx->cmd_hdr->len);
+	cmd = get_unaligned_le16(&sctx->cmd_hdr->cmd);
+	cmd_len = get_unaligned_le32(&sctx->cmd_hdr->len);
 
 	if (cmd_len + sizeof(*sctx->cmd_hdr) >= sizeof(sctx->read_buf)) {
 		ret = -EINVAL;
@@ -140,8 +141,8 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	}
 
-	crc = le32_to_cpu(sctx->cmd_hdr->crc);
-	sctx->cmd_hdr->crc = 0;
+	crc = get_unaligned_le32(&sctx->cmd_hdr->crc);
+	put_unaligned_le32(0, &sctx->cmd_hdr->crc);
 
 	crc2 = crc32c(0, (unsigned char*)sctx->read_buf,
 			sizeof(*sctx->cmd_hdr) + cmd_len);
@@ -159,8 +160,8 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		u16 tlv_len;
 
 		tlv_hdr = (struct btrfs_tlv_header *)data;
-		tlv_type = le16_to_cpu(tlv_hdr->tlv_type);
-		tlv_len = le16_to_cpu(tlv_hdr->tlv_len);
+		tlv_type = get_unaligned_le16(&tlv_hdr->tlv_type);
+		tlv_len = get_unaligned_le16(&tlv_hdr->tlv_len);
 
 		if (tlv_type == 0 || tlv_type > BTRFS_SEND_A_MAX) {
 			fprintf(stderr,
@@ -203,7 +204,7 @@ static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *l
 		goto out;
 	}
 
-	*len = le16_to_cpu(hdr->tlv_len);
+	*len = get_unaligned_le16(&hdr->tlv_len);
 	*data = hdr + 1;
 
 	ret = 0;
@@ -282,8 +283,8 @@ static int tlv_get_timespec(struct btrfs_send_stream *sctx,
 	TLV_GET(sctx, attr, (void**)&bts, &len);
 	TLV_CHECK_LEN(sizeof(*bts), len);
 
-	ts->tv_sec = le64_to_cpu(bts->sec);
-	ts->tv_nsec = le32_to_cpu(bts->nsec);
+	ts->tv_sec = get_unaligned_le64(&bts->sec);
+	ts->tv_nsec = get_unaligned_le32(&bts->nsec);
 	ret = 0;
 
 tlv_get_failed:
