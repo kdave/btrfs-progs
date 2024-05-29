@@ -64,41 +64,31 @@ static inline __u64 get_unaligned_le64(const void *ptr)
 
 /*
  * Accessors of search header that is commonly mapped to a byte buffer so the
- * alignment is not guraranteed
+ * alignment is not guaranteed. This is always CPU order.
  */
 static inline __u64 btrfs_search_header_transid(const struct btrfs_ioctl_search_header *sh)
 {
-	__u64 tmp;
-	memcpy(&tmp, &sh->transid, sizeof(__u64));
-	return tmp;
+	return ((const struct __unagligned_u64 *)(const void *)(&sh->transid))->x;
 }
 
 static inline __u64 btrfs_search_header_objectid(const struct btrfs_ioctl_search_header *sh)
 {
-	__u64 tmp;
-	memcpy(&tmp, &sh->objectid, sizeof(__u64));
-	return tmp;
+	return ((const struct __unagligned_u64 *)(const void *)(&sh->objectid))->x;
 }
 
 static inline __u64 btrfs_search_header_offset(const struct btrfs_ioctl_search_header *sh)
 {
-	__u64 tmp;
-	memcpy(&tmp, &sh->offset, sizeof(__u64));
-	return tmp;
+	return ((const struct __unagligned_u64 *)(const void *)(&sh->offset))->x;
 }
 
 static inline __u32 btrfs_search_header_type(const struct btrfs_ioctl_search_header *sh)
 {
-	__u32 tmp;
-	memcpy(&tmp, &sh->type, sizeof(__u32));
-	return tmp;
+	return ((const struct __unagligned_u32 *)(const void *)(&sh->type))->x;
 }
 
 static inline __u32 btrfs_search_header_len(const struct btrfs_ioctl_search_header *sh)
 {
-	__u32 tmp;
-	memcpy(&tmp, &sh->len, sizeof(__u32));
-	return tmp;
+	return ((const struct __unagligned_u32 *)(const void *)(&sh->len))->x;
 }
 
 #endif /* BTRFS_UTIL_INTERNAL_H */
