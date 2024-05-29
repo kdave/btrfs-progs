@@ -1591,6 +1591,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	min_dev_size = btrfs_min_dev_size(nodesize, mixed,
 					  opt_zoned ? zone_size(file) : 0,
 					  metadata_profile, data_profile);
+	if (byte_count) {
+		byte_count = round_down(byte_count, sectorsize);
+		if (opt_zoned)
+			byte_count = round_down(byte_count,  zone_size(file));
+	}
+
 	/*
 	 * Enlarge the destination file or create a new one, using the size
 	 * calculated from source dir.
@@ -1624,9 +1630,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		 * Or we will always use source_dir_size calculated for mkfs.
 		 */
 		if (!byte_count)
-			byte_count = device_get_partition_size_fd_stat(fd, &statbuf);
+			byte_count = round_down(device_get_partition_size_fd_stat(fd, &statbuf),
+						sectorsize);
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
+		UASSERT(IS_ALIGNED(source_dir_size, sectorsize));
 		if (byte_count < source_dir_size) {
 			if (S_ISREG(statbuf.st_mode)) {
 				byte_count = source_dir_size;
