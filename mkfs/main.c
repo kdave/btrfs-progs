@@ -1189,7 +1189,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	struct prepare_device_progress *prepare_ctx = NULL;
 	struct mkfs_allocation allocation = { 0 };
 	struct btrfs_mkfs_config mkfs_cfg;
-	u64 system_group_size;
 	/* Options */
 	bool force_overwrite = false;
 	struct btrfs_mkfs_features features = btrfs_mkfs_default_features;
@@ -1767,14 +1766,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (byte_count && byte_count > dev_byte_count) {
 		error("%s is smaller than requested size, expected %llu, found %llu",
 		      file, byte_count, dev_byte_count);
-		goto error;
-	}
-
-	/* To create the first block group and chunk 0 in make_btrfs */
-	system_group_size = (opt_zoned ? zone_size(file) : BTRFS_MKFS_SYSTEM_GROUP_SIZE);
-	if (dev_byte_count < system_group_size) {
-		error("device is too small to make filesystem, must be at least %llu",
-				system_group_size);
 		goto error;
 	}
 
