@@ -99,9 +99,7 @@ static int decompress_zlib(char *inbuf, char *outbuf, u64 compress_len,
 }
 static inline size_t read_compress_length(unsigned char *buf)
 {
-	__le32 dlen;
-	memcpy(&dlen, buf, LZO_LEN);
-	return le32_to_cpu(dlen);
+	return get_unaligned_le32(buf);
 }
 
 static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,

@@ -79,8 +79,7 @@ int detect_version(FILE *in)
 	fseek(in, 0, SEEK_SET);
 	cluster = (struct meta_cluster *)buf;
 	for (i = 0; i < ARRAY_SIZE(dump_versions); i++) {
-		if (le64_to_cpu(cluster->header.magic) ==
-		    dump_versions[i].magic_cpu) {
+		if (get_unaligned_le64(&cluster->header.magic) == dump_versions[i].magic_cpu) {
 			found = true;
 			current_version = &dump_versions[i];
 			break;

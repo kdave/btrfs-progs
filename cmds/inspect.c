@@ -1296,13 +1296,12 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 
 		chunk = &(*chunks)[*num_chunks];
 		chunk->offset = sh.offset;
-		chunk->length = le64_to_cpu(item->length);
-		chunk->stripe_len = le64_to_cpu(item->stripe_len);
-		chunk->type = le64_to_cpu(item->type);
-		chunk->num_stripes = le16_to_cpu(item->num_stripes);
-		chunk->sub_stripes = le16_to_cpu(item->sub_stripes);
-		chunk->stripes = calloc(chunk->num_stripes,
-					sizeof(*chunk->stripes));
+		chunk->length = get_unaligned_le64(&item->length);
+		chunk->stripe_len = get_unaligned_le64(&item->stripe_len);
+		chunk->type = get_unaligned_le64(&item->type);
+		chunk->num_stripes = get_unaligned_le16(&item->num_stripes);
+		chunk->sub_stripes = get_unaligned_le16(&item->sub_stripes);
+		chunk->stripes = calloc(chunk->num_stripes, sizeof(*chunk->stripes));
 		if (!chunk->stripes) {
 			perror("calloc");
 			return -1;
@@ -1313,8 +1312,8 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 			const struct btrfs_stripe *stripe;
 
 			stripe = &item->stripe + i;
-			chunk->stripes[i].devid = le64_to_cpu(stripe->devid);
-			chunk->stripes[i].offset = le64_to_cpu(stripe->offset);
+			chunk->stripes[i].devid = get_unaligned_le64(&stripe->devid);
+			chunk->stripes[i].offset = get_unaligned_le64(&stripe->offset);
 		}
 
 next:
@@ -1425,7 +1424,7 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 		type = item->type;
 		if (type == BTRFS_FILE_EXTENT_REG ||
 		    type == BTRFS_FILE_EXTENT_PREALLOC) {
-			logical_offset = le64_to_cpu(item->disk_bytenr);
+			logical_offset = get_unaligned_le64(&item->disk_bytenr);
 			if (logical_offset) {
 				/* Regular extent */
 				chunk = find_chunk(chunks, num_chunks, logical_offset);
@@ -1459,7 +1458,7 @@ static int map_physical_start(int fd, struct chunk *chunks, size_t num_chunks,
 			goto out;
 		}
 		if (item->other_encoding != 0) {
-			error("file with other_encoding: %u", le16_to_cpu(item->other_encoding));
+			error("file with other_encoding: %u", get_unaligned_le16(&item->other_encoding));
 			ret = -EINVAL;
 			goto out;
 		}

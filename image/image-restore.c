@@ -1004,8 +1004,8 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 		ret = 0;
 
 		header = &cluster->header;
-		if (le64_to_cpu(header->magic) != current_version->magic_cpu ||
-		    le64_to_cpu(header->bytenr) != current_cluster) {
+		if (get_unaligned_le64(&header->magic) != current_version->magic_cpu ||
+		    get_unaligned_le64(&header->bytenr) != current_cluster) {
 			error("bad header in metadump image");
 			ret = -EIO;
 			goto out;
@@ -1016,15 +1016,15 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 			goto out;
 
 		bytenr += IMAGE_BLOCK_SIZE;
-		nritems = le32_to_cpu(header->nritems);
+		nritems = get_unaligned_le32(&header->nritems);
 
 		/* Search items for tree blocks in sys chunks */
 		for (i = 0; i < nritems; i++) {
 			size_t size;
 
 			item = &cluster->items[i];
-			bufsize = le32_to_cpu(item->size);
-			item_bytenr = le64_to_cpu(item->bytenr);
+			bufsize = get_unaligned_le32(&item->size);
+			item_bytenr = get_unaligned_le64(&item->bytenr);
 
 			/*
 			 * Only data extent/free space cache can be that big,
@@ -1117,38 +1117,37 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	ret = 0;
 
 	header = &cluster->header;
-	if (le64_to_cpu(header->magic) != current_version->magic_cpu ||
-	    le64_to_cpu(header->bytenr) != 0) {
+	if (get_unaligned_le64(&header->magic) != current_version->magic_cpu ||
+	    get_unaligned_le64(&header->bytenr) != 0) {
 		error("bad header in metadump image");
 		return -EIO;
 	}
 
 	mdres->compress_method = header->compress;
-	nritems = le32_to_cpu(header->nritems);
+	nritems = get_unaligned_le32(&header->nritems);
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
 
-		if (le64_to_cpu(item->bytenr) == BTRFS_SUPER_INFO_OFFSET)
+		if (get_unaligned_le64(&item->bytenr) == BTRFS_SUPER_INFO_OFFSET)
 			break;
-		if (fseek(mdres->in, le32_to_cpu(item->size), SEEK_CUR)) {
+		if (fseek(mdres->in, get_unaligned_le32(&item->size), SEEK_CUR)) {
 			error("seek failed: %m");
 			return -EIO;
 		}
 	}
 
-	if (!item || le64_to_cpu(item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
-		error("did not find superblock at %llu",
-				le64_to_cpu(item->bytenr));
+	if (!item || get_unaligned_le64(&item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
+		error("did not find superblock at %llu", get_unaligned_le64(&item->bytenr));
 		return -EINVAL;
 	}
 
-	buffer = malloc(le32_to_cpu(item->size));
+	buffer = malloc(get_unaligned_le32(&item->size));
 	if (!buffer) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 
-	ret = fread(buffer, le32_to_cpu(item->size), 1, mdres->in);
+	ret = fread(buffer, get_unaligned_le32(&item->size), 1, mdres->in);
 	if (ret != 1) {
 		error("unable to read buffer: %m");
 		free(buffer);
@@ -1164,8 +1163,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 			free(buffer);
 			return -ENOMEM;
 		}
-		ret = uncompress(tmp, (unsigned long *)&size,
-				 buffer, le32_to_cpu(item->size));
+		ret = uncompress(tmp, (unsigned long *)&size, buffer, get_unaligned_le32(&item->size));
 		if (ret != Z_OK) {
 			error("decompression failed with %d", ret);
 			free(buffer);
@@ -1198,7 +1196,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
 
 	memcpy(mdres->uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
-	mdres->devid = le64_to_cpu(super->dev_item.devid);
+	mdres->devid = get_unaligned_le64(&super->dev_item.devid);
 	free(buffer);
 	pthread_mutex_unlock(&mdres->mutex);
 
@@ -1283,7 +1281,7 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 	else
 		memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
 	memcpy(mdres->uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
-	mdres->devid = le64_to_cpu(super->dev_item.devid);
+	mdres->devid = get_unaligned_le64(&super->dev_item.devid);
 	free(buffer);
 	return 0;
 }
@@ -1302,8 +1300,8 @@ static int add_cluster(struct meta_cluster *cluster,
 	mdres->compress_method = header->compress;
 	pthread_mutex_unlock(&mdres->mutex);
 
-	bytenr = le64_to_cpu(header->bytenr) + IMAGE_BLOCK_SIZE;
-	nritems = le32_to_cpu(header->nritems);
+	bytenr = get_unaligned_le64(&header->bytenr) + IMAGE_BLOCK_SIZE;
+	nritems = get_unaligned_le32(&header->nritems);
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
 		async = calloc(1, sizeof(*async));
@@ -1311,8 +1309,8 @@ static int add_cluster(struct meta_cluster *cluster,
 			error_msg(ERROR_MSG_MEMORY, "async data");
 			return -ENOMEM;
 		}
-		async->start = le64_to_cpu(item->bytenr);
-		async->bufsize = le32_to_cpu(item->size);
+		async->start = get_unaligned_le64(&item->bytenr);
+		async->bufsize = get_unaligned_le32(&item->size);
 		async->buffer = malloc(async->bufsize);
 		if (!async->buffer) {
 			error_msg(ERROR_MSG_MEMORY, "async buffer");
@@ -1836,8 +1834,8 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 			break;
 
 		header = &cluster->header;
-		if (le64_to_cpu(header->magic) != current_version->magic_cpu ||
-		    le64_to_cpu(header->bytenr) != bytenr) {
+		if (get_unaligned_le64(&header->magic) != current_version->magic_cpu ||
+		    get_unaligned_le64(&header->bytenr) != bytenr) {
 			error("bad header in metadump image");
 			ret = -EIO;
 			break;

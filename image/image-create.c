@@ -272,7 +272,7 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 	}
 
 	/* write buffers */
-	bytenr += le64_to_cpu(header->bytenr) + IMAGE_BLOCK_SIZE;
+	bytenr += get_unaligned_le64(&header->bytenr) + IMAGE_BLOCK_SIZE;
 	while (!list_empty(&md->ordered)) {
 		async = list_entry(md->ordered.next, struct async_work,
 				   ordered);
