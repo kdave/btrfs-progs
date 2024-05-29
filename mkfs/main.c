@@ -80,8 +80,8 @@ static int opt_oflags = O_RDWR;
 struct prepare_device_progress {
 	int fd;
 	char *file;
-	u64 dev_block_count;
-	u64 block_count;
+	u64 dev_byte_count;
+	u64 byte_count;
 	int ret;
 };
 
@@ -1159,8 +1159,8 @@ static void *prepare_one_device(void *ctx)
 	}
 	prepare_ctx->ret = btrfs_prepare_device(prepare_ctx->fd,
 				prepare_ctx->file,
-				&prepare_ctx->dev_block_count,
-				prepare_ctx->block_count,
+				&prepare_ctx->dev_byte_count,
+				prepare_ctx->byte_count,
 				(bconf.verbose ? PREP_DEVICE_VERBOSE : 0) |
 				(opt_zero_end ? PREP_DEVICE_ZERO_END : 0) |
 				(opt_discard ? PREP_DEVICE_DISCARD : 0) |
@@ -1204,8 +1204,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	bool metadata_profile_set = false;
 	u64 data_profile = 0;
 	bool data_profile_set = false;
-	u64 block_count = 0;
-	u64 dev_block_count = 0;
+	u64 byte_count = 0;
+	u64 dev_byte_count = 0;
 	bool mixed = false;
 	char *label = NULL;
 	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
@@ -1347,7 +1347,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				sectorsize = arg_strtou64_with_suffix(optarg);
 				break;
 			case 'b':
-				block_count = arg_strtou64_with_suffix(optarg);
+				byte_count = arg_strtou64_with_suffix(optarg);
 				opt_zero_end = false;
 				break;
 			case 'v':
@@ -1623,34 +1623,33 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		 * Block_count not specified, use file/device size first.
 		 * Or we will always use source_dir_size calculated for mkfs.
 		 */
-		if (!block_count)
-			block_count = device_get_partition_size_fd_stat(fd, &statbuf);
+		if (!byte_count)
+			byte_count = device_get_partition_size_fd_stat(fd, &statbuf);
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
-		if (block_count < source_dir_size) {
+		if (byte_count < source_dir_size) {
 			if (S_ISREG(statbuf.st_mode)) {
-				block_count = source_dir_size;
+				byte_count = source_dir_size;
 			} else {
 				warning(
 "the target device %llu (%s) is smaller than the calculated source directory size %llu (%s), mkfs may fail",
-					block_count, pretty_size(block_count),
+					byte_count, pretty_size(byte_count),
 					source_dir_size, pretty_size(source_dir_size));
 			}
 		}
-		ret = zero_output_file(fd, block_count);
+		ret = zero_output_file(fd, byte_count);
 		if (ret) {
 			error("unable to zero the output file");
 			close(fd);
 			goto error;
 		}
 		/* our "device" is the new image file */
-		dev_block_count = block_count;
+		dev_byte_count = byte_count;
 		close(fd);
 	}
-	/* Check device/block_count after the nodesize is determined */
-	if (block_count && block_count < min_dev_size) {
-		error("size %llu is too small to make a usable filesystem",
-			block_count);
+	/* Check device/byte_count after the nodesize is determined */
+	if (byte_count && byte_count < min_dev_size) {
+		error("size %llu is too small to make a usable filesystem", byte_count);
 		error("minimum size for btrfs filesystem is %llu",
 			min_dev_size);
 		goto error;
@@ -1661,9 +1660,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	 * 1 zone for a metadata block group
 	 * 1 zone for a data block group
 	 */
-	if (opt_zoned && block_count && block_count < 5 * zone_size(file)) {
-		error("size %llu is too small to make a usable filesystem",
-			block_count);
+	if (opt_zoned && byte_count && byte_count < 5 * zone_size(file)) {
+		error("size %llu is too small to make a usable filesystem", byte_count);
 		error("minimum size for a zoned btrfs filesystem is %llu",
 			min_dev_size);
 		goto error;
@@ -1741,8 +1739,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	/* Start threads */
 	for (i = 0; i < device_count; i++) {
 		prepare_ctx[i].file = argv[optind + i - 1];
-		prepare_ctx[i].block_count = block_count;
-		prepare_ctx[i].dev_block_count = block_count;
+		prepare_ctx[i].byte_count = byte_count;
+		prepare_ctx[i].dev_byte_count = byte_count;
 		ret = pthread_create(&t_prepare[i], NULL, prepare_one_device,
 				     &prepare_ctx[i]);
 		if (ret) {
@@ -1763,16 +1761,16 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	dev_block_count = prepare_ctx[0].dev_block_count;
-	if (block_count && block_count > dev_block_count) {
+	dev_byte_count = prepare_ctx[0].dev_byte_count;
+	if (byte_count && byte_count > dev_byte_count) {
 		error("%s is smaller than requested size, expected %llu, found %llu",
-		      file, block_count, dev_block_count);
+		      file, byte_count, dev_byte_count);
 		goto error;
 	}
 
 	/* To create the first block group and chunk 0 in make_btrfs */
 	system_group_size = (opt_zoned ? zone_size(file) : BTRFS_MKFS_SYSTEM_GROUP_SIZE);
-	if (dev_block_count < system_group_size) {
+	if (dev_byte_count < system_group_size) {
 		error("device is too small to make filesystem, must be at least %llu",
 				system_group_size);
 		goto error;
@@ -1794,7 +1792,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
 	memcpy(mkfs_cfg.dev_uuid, dev_uuid, sizeof(mkfs_cfg.dev_uuid));
-	mkfs_cfg.num_bytes = dev_block_count;
+	mkfs_cfg.num_bytes = dev_byte_count;
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = sectorsize;
 	mkfs_cfg.stripesize = stripesize;
@@ -1889,7 +1887,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				file);
 			continue;
 		}
-		dev_block_count = prepare_ctx[i].dev_block_count;
+		dev_byte_count = prepare_ctx[i].dev_byte_count;
 
 		if (prepare_ctx[i].ret) {
 			errno = -prepare_ctx[i].ret;
@@ -1898,7 +1896,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 
 		ret = btrfs_add_to_fsid(trans, root, prepare_ctx[i].fd,
-					prepare_ctx[i].file, dev_block_count,
+					prepare_ctx[i].file, dev_byte_count,
 					sectorsize, sectorsize, sectorsize);
 		if (ret) {
 			error("unable to add %s to filesystem: %d",
