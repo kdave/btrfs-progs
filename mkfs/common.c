@@ -811,12 +811,21 @@ static u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
 	return (u64)nodesize << 10;
 }
 
-u64 btrfs_min_dev_size(u32 nodesize, int mixed, u64 meta_profile,
+u64 btrfs_min_dev_size(u32 nodesize, bool mixed, u64 zone_size, u64 meta_profile,
 		       u64 data_profile)
 {
 	u64 reserved = 0;
 	u64 meta_size;
 	u64 data_size;
+
+	/*
+	 * 2 zones for the primary superblock
+	 * 1 zone for the system block group
+	 * 1 zone for a metadata block group
+	 * 1 zone for a data block group
+	 */
+	if (zone_size)
+		return 5 * zone_size;
 
 	if (mixed)
 		return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
