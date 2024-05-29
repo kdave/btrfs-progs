@@ -882,6 +882,71 @@ cond_wait_for_loopdevs() {
 	fi
 }
 
+# Prepare environment for nullb devices, set up the following variables
+# - nullb_count -- number of desired devices
+# - nullb_size -- size of the devices
+# - nullb_zone_size -- zone size of the devices
+# - nullb_devs  -- array containing paths to all devices (after prepare is called)
+#
+# $1: number of nullb devices to be set up
+# $2: size of the devices
+# $3: zone size of the devices
+setup_nullbdevs()
+{
+	if [ "$#" -lt 3 ]; then
+		_fail "setup_nullbdevs <number of device> <size> <zone size>"
+	fi
+
+	setup_root_helper
+	local nullb="$TEST_TOP/nullb"
+
+	run_mayfail $SUDO_HELPER "$nullb" setup
+	if [ $? != 0 ]; then
+		_not_run "cannot setup nullb environment for zoned devices"
+	fi
+
+	nullb_count="$1"
+	nullb_size="$2"
+	nullb_zone_size="$3"
+	declare -a nullb_devs
+}
+
+# Create all nullb devices from a given nullb environment
+prepare_nullbdevs()
+{
+	setup_root_helper
+	local nullb="$TEST_TOP/nullb"
+	local out
+
+	# Record any other pre-existing devices in case creation fails
+	run_check $SUDO_HELPER "$nullb" ls
+
+	for i in `seq ${nullb_count}`; do
+		# Last line has the name of the device node path
+		out=$(run_check_stdout $SUDO_HELPER "$nullb" create -s "${nullb_size}" -z "${nullb_zone_size}")
+		if [ $? != 0 ]; then
+			_fail "cannot create nullb zoned device $i"
+		fi
+		dev=$(echo "$out" | tail -n 1)
+		nullb_devs[$i]=${dev}
+	done
+
+	run_check $SUDO_HELPER "$nullb" ls
+}
+
+# Remove nullb devices
+cleanup_nullbdevs()
+{
+	setup_root_helper
+	local nullb="$TEST_TOP/nullb"
+	local name
+
+	for dev in ${nullb_devs[@]}; do
+		name=$(basename "$dev")
+		run_check $SUDO_HELPER "$nullb" rm "$name"
+	done
+}
+
 init_env()
 {
 	TEST_MNT="${TEST_MNT:-$TEST_TOP/mnt}"
