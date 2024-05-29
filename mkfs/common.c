@@ -817,15 +817,50 @@ u64 btrfs_min_dev_size(u32 nodesize, bool mixed, u64 zone_size, u64 meta_profile
 	u64 reserved = 0;
 	u64 meta_size;
 	u64 data_size;
+	u64 dev_stripes;
 
-	/*
-	 * 2 zones for the primary superblock
-	 * 1 zone for the system block group
-	 * 1 zone for a metadata block group
-	 * 1 zone for a data block group
-	 */
-	if (zone_size)
-		return 5 * zone_size;
+	if (zone_size) {
+		/* 2 zones for the primary superblock. */
+		reserved += 2 * zone_size;
+
+		/*
+		 * 1 zone each for the initial SINGLE system, SINGLE
+		 * metadata, and SINGLE data block group
+		 */
+		reserved += 3 * zone_size;
+
+		/*
+		 * On non-SINGLE profile, we need to add real system and
+		 * metadata block group. And, we also need to add a space
+		 * for a tree-log block group.
+		 *
+		 * SINGLE profile can reuse the initial block groups and
+		 * only need to add a tree-log block group
+		 */
+		dev_stripes = (meta_profile & BTRFS_BLOCK_GROUP_DUP) ? 2 : 1;
+		if (meta_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK)
+			meta_size = 3 * dev_stripes * zone_size;
+		else
+			meta_size = dev_stripes * zone_size;
+		reserved += meta_size;
+
+		/*
+		 * On non-SINGLE profile, we need to add real data block
+		 * group. And, we also need to add a space for a data
+		 * relocation block group.
+		 *
+		 * SINGLE profile can reuse the initial block groups and
+		 * only need to add a data relocation block group.
+		 */
+		dev_stripes = (data_profile & BTRFS_BLOCK_GROUP_DUP) ? 2 : 1;
+		if (data_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK)
+			data_size = 2 * dev_stripes * zone_size;
+		else
+			data_size = dev_stripes * zone_size;
+		reserved += data_size;
+
+		return reserved;
+	}
 
 	if (mixed)
 		return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
@@ -863,22 +898,18 @@ u64 btrfs_min_dev_size(u32 nodesize, bool mixed, u64 zone_size, u64 meta_profile
 	 *
 	 * And use the stripe size to calculate its physical used space.
 	 */
+	dev_stripes = (meta_profile & BTRFS_BLOCK_GROUP_DUP) ? 2 : 1;
 	if (meta_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK)
-		meta_size = SZ_8M + SZ_32M;
+		meta_size = dev_stripes * (SZ_8M + SZ_32M);
 	else
-		meta_size = SZ_8M + SZ_8M;
-	/* For DUP/metadata,  2 stripes on one disk */
-	if (meta_profile & BTRFS_BLOCK_GROUP_DUP)
-		meta_size *= 2;
+		meta_size = dev_stripes * (SZ_8M + SZ_8M);
 	reserved += meta_size;
 
+	dev_stripes = (data_profile & BTRFS_BLOCK_GROUP_DUP) ? 2 : 1;
 	if (data_profile & BTRFS_BLOCK_GROUP_PROFILE_MASK)
-		data_size = SZ_64M;
+		data_size = dev_stripes * SZ_64M;
 	else
-		data_size = SZ_8M;
-	/* For DUP/data,  2 stripes on one disk */
-	if (data_profile & BTRFS_BLOCK_GROUP_DUP)
-		data_size *= 2;
+		data_size = dev_stripes * SZ_8M;
 	reserved += data_size;
 
 	return reserved;
