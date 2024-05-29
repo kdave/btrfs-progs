@@ -222,11 +222,11 @@ out:
  * - reset zones
  * - delete end of the device
  */
-int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
-		u64 max_block_count, unsigned opflags)
+int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
+		u64 max_byte_count, unsigned opflags)
 {
 	struct btrfs_zoned_device_info *zinfo = NULL;
-	u64 block_count;
+	u64 byte_count;
 	struct stat st;
 	int i, ret;
 
@@ -236,13 +236,13 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		return 1;
 	}
 
-	block_count = device_get_partition_size_fd_stat(fd, &st);
-	if (block_count == 0) {
+	byte_count = device_get_partition_size_fd_stat(fd, &st);
+	if (byte_count == 0) {
 		error("unable to determine size of %s", file);
 		return 1;
 	}
-	if (max_block_count)
-		block_count = min(block_count, max_block_count);
+	if (max_byte_count)
+		byte_count = min(byte_count, max_byte_count);
 
 	if (opflags & PREP_DEVICE_ZONED) {
 		ret = btrfs_get_zone_info(fd, file, &zinfo);
@@ -276,18 +276,18 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		if (discard_supported(file)) {
 			if (opflags & PREP_DEVICE_VERBOSE)
 				printf("Performing full device TRIM %s (%s) ...\n",
-						file, pretty_size(block_count));
-			device_discard_blocks(fd, 0, block_count);
+						file, pretty_size(byte_count));
+			device_discard_blocks(fd, 0, byte_count);
 		}
 	}
 
-	ret = zero_dev_clamped(fd, zinfo, 0, ZERO_DEV_BYTES, block_count);
+	ret = zero_dev_clamped(fd, zinfo, 0, ZERO_DEV_BYTES, byte_count);
 	for (i = 0 ; !ret && i < BTRFS_SUPER_MIRROR_MAX; i++)
 		ret = zero_dev_clamped(fd, zinfo, btrfs_sb_offset(i),
-				       BTRFS_SUPER_INFO_SIZE, block_count);
+				       BTRFS_SUPER_INFO_SIZE, byte_count);
 	if (!ret && (opflags & PREP_DEVICE_ZERO_END))
-		ret = zero_dev_clamped(fd, zinfo, block_count - ZERO_DEV_BYTES,
-				       ZERO_DEV_BYTES, block_count);
+		ret = zero_dev_clamped(fd, zinfo, byte_count - ZERO_DEV_BYTES,
+				       ZERO_DEV_BYTES, byte_count);
 
 	if (ret < 0) {
 		errno = -ret;
@@ -302,7 +302,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 	}
 
 	free(zinfo);
-	*block_count_ret = block_count;
+	*byte_count_ret = byte_count;
 	return 0;
 
 err:
