@@ -395,16 +395,24 @@ static int report_zones(int fd, const char *file,
  * Discard blocks in the zones of a zoned block device. Process this with zone
  * size granularity so that blocks in conventional zones are discarded using
  * discard_range and blocks in sequential zones are reset though a zone reset.
+ *
+ * We need to ensure that zones outside of the FS is not active, so that
+ * the FS can use all the active zones. Return EBUSY if there is an active
+ * zone.
  */
-int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo)
+int btrfs_reset_zones(int fd, struct btrfs_zoned_device_info *zinfo, u64 byte_count)
 {
 	unsigned int i;
 	int ret = 0;
 
 	ASSERT(zinfo);
+	ASSERT(IS_ALIGNED(byte_count, zinfo->zone_size));
 
 	/* Zone size granularity */
 	for (i = 0; i < zinfo->nr_zones; i++) {
+		if (byte_count == 0)
+			break;
+
 		if (zinfo->zones[i].type == BLK_ZONE_TYPE_CONVENTIONAL) {
 			ret = device_discard_blocks(fd,
 					     zinfo->zones[i].start << SECTOR_SHIFT,
@@ -419,7 +427,20 @@ int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo)
 
 		if (ret)
 			return ret;
+
+		byte_count -= zinfo->zone_size;
 	}
+	for (; i < zinfo->nr_zones; i++) {
+		const enum blk_zone_cond cond = zinfo->zones[i].cond;
+
+		if (zinfo->zones[i].type == BLK_ZONE_TYPE_CONVENTIONAL)
+			continue;
+		if (cond == BLK_ZONE_COND_IMP_OPEN ||
+		    cond == BLK_ZONE_COND_EXP_OPEN ||
+		    cond == BLK_ZONE_COND_CLOSED)
+			return EBUSY;
+	}
+
 	return fsync(fd);
 }
 

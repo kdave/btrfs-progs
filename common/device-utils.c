@@ -254,16 +254,23 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 
 		if (!zinfo->emulated) {
 			if (opflags & PREP_DEVICE_VERBOSE)
-				printf("Resetting device zones %s (%u zones) ...\n",
-				       file, zinfo->nr_zones);
+				printf("Resetting device zones %s (%llu zones) ...\n",
+				       file, byte_count / zinfo->zone_size);
 			/*
 			 * We cannot ignore zone reset errors for a zoned block
 			 * device as this could result in the inability to write
 			 * to non-empty sequential zones of the device.
 			 */
-			if (btrfs_reset_all_zones(fd, zinfo)) {
-				error("zoned: failed to reset device '%s' zones: %m",
-				      file);
+			ret = btrfs_reset_zones(fd, zinfo, byte_count);
+			if (ret) {
+				if (ret == EBUSY) {
+					error("zoned: device '%s' contains an active zone outside of the FS range",
+					      file);
+					error("zoned: btrfs needs full control of active zones");
+				} else {
+					error("zoned: failed to reset device '%s' zones: %m",
+					      file);
+				}
 				goto err;
 			}
 		}
