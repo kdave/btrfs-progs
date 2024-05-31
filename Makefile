@@ -49,6 +49,8 @@
 #   CHECKER        static checker binary to be called (default: sparse)
 #   CHECKER_FLAGS  flags to pass to CHECKER, can override CFLAGS
 #
+# Other:
+#   DEP=1          verbose generation of dependency files (.o.d)
 
 # Export all variables to sub-makes by default
 export
@@ -61,6 +63,22 @@ endif
 TAGS_CMD := ctags
 ETAGS_CMD := etags
 CSCOPE_CMD := cscope -u -b -c -q
+
+# Print dependency creation
+DEP :=
+DEPMSG = @if [ "$(DEP)" = 1 ]; then echo "    [DEP]   $(DEPNAME)"; fi
+
+# Reduce any .o file to the base name, taking box and static targets into account
+# and produce unified file name for dependencies
+DEPNAME = $(patsubst %.o, %.o.d,		\
+	  $(patsubst %.box.o, %.o,		\
+	  $(patsubst %.static.o, %.o, $@)))
+
+# Generate make rule dependencies for all target types
+DEPCOMMAND = $(CC) -MM -MG -MF $(dir $@).deps/$(notdir $(DEPNAME)) -MT $*.o -MT $*.static.o -MT $*.box.o -MT $*.box.static.o $(CFLAGS) $<
+
+# Dependencies are relative to source file directory in .deps/
+DEPMKDIR = mkdir -p $(dir $@).deps/
 
 include Makefile.extrawarn
 
@@ -457,14 +475,6 @@ else
 	check_echo = true
 endif
 
-# Insert .deps/ to the output path
-%.o.d: %.c
-	$(Q)mkdir -p $(dir $@).deps/
-	$(Q)$(CC) -MM -MG -MF $(dir $@).deps/$(notdir $@) \
-		-MT $($(dir $@).deps/$(notdir $@):.o.d=.o) \
-		-MT $($(dir $@).deps/$(notdir $@):.o.d=.static.o) \
-		-MT $(dir $@).deps/$(notdir $@) $(CFLAGS) $<
-
 .S.o:
 	@echo "    [AS]     $@"
 	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
@@ -476,6 +486,9 @@ endif
 # Pick from per-file variables, btrfs_*_cflags
 #
 .c.o:
+	$(DEPMSG)
+	$(Q)$(DEPMKDIR)
+	$(Q)$(DEPCOMMAND)
 	@$(check_echo) "    [SP]     $<"
 	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
 	@echo "    [CC]     $@"
@@ -483,15 +496,24 @@ endif
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
 %.static.o: %.c
+	$(DEPMSG)
+	$(Q)$(DEPMKDIR)
+	$(Q)$(DEPCOMMAND)
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst /,_,$(subst -,_,$(@:%.static.o=%)-cflags))) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
 %.box.o: %.c
+	$(DEPMSG)
+	$(Q)$(DEPMKDIR)
+	$(Q)$(DEPCOMMAND)
 	@echo "    [CC]     $@"
 	$(Q)$(CC) -DENABLE_BOX=1 $(CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
 
 %.box.static.o: %.c
+	$(DEPMSG)
+	$(Q)$(DEPMKDIR)
+	$(Q)$(DEPCOMMAND)
 	@echo "    [CC]     $@"
 	$(Q)$(CC) -DENABLE_BOX=1 $(STATIC_CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
 
@@ -891,7 +913,6 @@ clean: $(CLEANDIRS)
 		image/*.o image/.deps/*.o.d \
 		kernel-lib/*.o kernel-lib/.deps/*.o.d \
 		kernel-shared/*.o kernel-shared/.deps/*.o.d \
-		kernel-shared/*.o kernel-shared/.deps/*.o.d \
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
 		libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d \
 		mkfs/*.o mkfs/.deps/*.o.d \
@@ -989,6 +1010,7 @@ uninstall:
 	cd $(DESTDIR)$(libdir); $(RM) -f -- $(lib_links) libbtrfs.a libbtrfsutil.a $(libs_shared)
 	cd $(DESTDIR)$(bindir); $(RM) -f -- btrfsck fsck.btrfs $(progs_install)
 
+# If dependencies don't exist don't fail, first build will create them and keep them up to date
 ifneq ($(MAKECMDGOALS),clean)
--include $(all_objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
+-include $(foreach file, $(all_objects), $(dir $(file)).deps/$(notdir $(file).d))
 endif
