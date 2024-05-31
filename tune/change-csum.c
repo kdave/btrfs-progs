@@ -79,10 +79,10 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 		error("failed to check the dev-reaplce status: %m");
 		return ret;
 	}
-	if (ret == 0) {
-		error("running dev-replace detected, please finish or cancel it.");
-		return -EINVAL;
-	}
+//	if (ret == 0) {
+//		error("running dev-replace detected, please finish or cancel it.");
+//		return -EINVAL;
+//	}
 
 	if (fs_info->csum_type == new_csum_type) {
 		error("the fs is already using csum type %s (%u)",
