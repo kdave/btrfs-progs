@@ -76,7 +76,7 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 	btrfs_release_path(&path);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to check the dev-reaplce status: %m");
+		error("failed to check the dev-replace status: %m");
 		return ret;
 	}
 	if (ret == 0) {
