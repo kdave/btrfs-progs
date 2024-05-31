@@ -39,6 +39,11 @@ Generating documentation:
 
 Please note that the package names may differ according to the distribution.
 
+Optionally, for testsuite utility fsstress:
+
+- libaio
+- liburing
+
 
 Building from sources
 ---------------------
