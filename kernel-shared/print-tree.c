@@ -36,6 +36,7 @@
 #include "common/defs.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "uapi/btrfs.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)
@@ -1389,6 +1390,81 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	fflush(stdout);
 }
 
+#define DEV_REPLACE_STRING_LEN		64
+#define DEV_REPLACE_MODE_ENTRY(dest, name)				\
+	case BTRFS_DEV_REPLACE_ITEM_CONT_READING_FROM_SRCDEV_MODE_##name: \
+		strncpy((dest), #name, DEV_REPLACE_STRING_LEN);		\
+		break;
+
+static void replace_mode_to_str(u64 flags, char *ret)
+{
+	ret[0] = '\0';
+	switch(flags) {
+	DEV_REPLACE_MODE_ENTRY(ret, ALWAYS);
+	DEV_REPLACE_MODE_ENTRY(ret, AVOID);
+	default:
+		snprintf(ret, DEV_REPLACE_STRING_LEN, "unknown value(%llu)",
+			 flags);
+	}
+}
+#undef DEV_REPLACE_MODE_ENTRY
+
+#define DEV_REPLACE_STATE_ENTRY(dest, name)				\
+	case BTRFS_IOCTL_DEV_REPLACE_STATE_##name:			\
+		strncpy((dest), #name, DEV_REPLACE_STRING_LEN);		\
+		break;
+
+static void replace_state_to_str(u64 flags, char *ret)
+{
+	ret[0] = '\0';
+	switch(flags) {
+	DEV_REPLACE_STATE_ENTRY(ret, NEVER_STARTED);
+	DEV_REPLACE_STATE_ENTRY(ret, FINISHED);
+	DEV_REPLACE_STATE_ENTRY(ret, CANCELED);
+	DEV_REPLACE_STATE_ENTRY(ret, STARTED);
+	DEV_REPLACE_STATE_ENTRY(ret, SUSPENDED);
+	default:
+		snprintf(ret, DEV_REPLACE_STRING_LEN, "unknown value(%llu)",
+			 flags);
+	}
+}
+#undef DEV_REPLACE_STATE_ENTRY
+
+static void print_u64_timespec(u64 timespec, const char *prefix)
+{
+	char time_str[256];
+	struct tm tm;
+	time_t time = timespec;
+
+	localtime_r(&time, &tm);
+	strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &tm);
+	printf("%s%llu (%s)\n", prefix, timespec, time_str);
+}
+
+static void print_dev_replace_item(struct extent_buffer *eb,
+				   struct btrfs_dev_replace_item *ptr)
+{
+	char mode_str[DEV_REPLACE_STRING_LEN] = { 0 };
+	char state_str[DEV_REPLACE_STRING_LEN] = { 0 };
+
+	replace_mode_to_str(
+			btrfs_dev_replace_cont_reading_from_srcdev_mode(eb, ptr),
+			mode_str);
+	replace_state_to_str(
+			btrfs_dev_replace_replace_state(eb, ptr),
+			state_str);
+	printf("\t\tsrc devid %lld cursor left %llu cursor right %llu mode %s\n",
+		btrfs_dev_replace_src_devid(eb, ptr),
+		btrfs_dev_replace_cursor_left(eb, ptr),
+		btrfs_dev_replace_cursor_right(eb, ptr),
+		mode_str);
+	printf("\t\tstate %s write errors %llu uncorrectable read errors %llu\n",
+		state_str, btrfs_dev_replace_num_write_errors(eb, ptr),
+		btrfs_dev_replace_num_uncorrectable_read_errors(eb, ptr));
+	print_u64_timespec(btrfs_dev_replace_time_started(eb, ptr), "\t\tstart time ");
+	print_u64_timespec(btrfs_dev_replace_time_started(eb, ptr), "\t\tstop time ");
+}
+
 void __btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_disk_key disk_key;
@@ -1562,6 +1638,9 @@ void __btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			break;
 		case BTRFS_RAID_STRIPE_KEY:
 			print_raid_stripe_key(eb, item_size, ptr);
+			break;
+		case BTRFS_DEV_REPLACE_KEY:
+			print_dev_replace_item(eb, ptr);
 			break;
 		};
 		fflush(stdout);
