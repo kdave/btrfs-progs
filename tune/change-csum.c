@@ -73,16 +73,28 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 	key.type = BTRFS_DEV_REPLACE_KEY;
 	key.offset = 0;
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
-	btrfs_release_path(&path);
 	if (ret < 0) {
+		btrfs_release_path(&path);
 		errno = -ret;
 		error("failed to check the dev-reaplce status: %m");
 		return ret;
 	}
 	if (ret == 0) {
-		error("running dev-replace detected, please finish or cancel it.");
-		return -EINVAL;
+		struct btrfs_dev_replace_item *ptr;
+		u64 state;
+
+		ptr = btrfs_item_ptr(path.nodes[0], path.slots[0],
+				     struct btrfs_dev_replace_item);
+		state = btrfs_dev_replace_replace_state(path.nodes[0], ptr);
+		if (state == BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED ||
+		    state == BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED) {
+			btrfs_release_path(&path);
+			error(
+	"running/suspended dev-replace detected, please finish or cancel it");
+			return -EINVAL;
+		}
 	}
+	btrfs_release_path(&path);
 
 	if (fs_info->csum_type == new_csum_type) {
 		error("the fs is already using csum type %s (%u)",
