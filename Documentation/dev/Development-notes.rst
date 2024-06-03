@@ -500,7 +500,6 @@ User space utilities and development library dependencies
 -  dbench
 -  dmsetup (device-mapper)
 -  duperemove
--  psmisc (killall)
 -  e2fsprogs
 -  fio
 -  fsverity-utils
@@ -511,6 +510,8 @@ User space utilities and development library dependencies
 -  libuuid
 -  lvm2
 -  openssl
+-  parted
+-  psmisc (killall)
 -  xfsprogs >= 4.3.1 (``xfs_io -c reflink`` is required)
 
 Note: This list may be incomplete.
