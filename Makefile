@@ -922,11 +922,11 @@ clean: $(CLEANDIRS)
 	$(Q)$(RM) -f -- \
 		array-test fsstress fsstum hash-speedtest hash-vectest ioctl-test \
 		json-formatter-test library-test library-test-static btree-test
-	@echo "Cleanin other generated files"
+	@echo "Cleaning other generated files"
 	$(Q)$(RM) -f -- $(check_defs) \
 		*.gcno *.gcda *.gcov */*.gcno */*.gcda */*/.gcov
 ifeq ($(PYTHON_BINDINGS),1)
-	@echo "Cleanin libbtrfs python generated files"
+	@echo "Cleaning libbtrfs python generated files"
 	$(Q)cd libbtrfsutil/python; \
 		$(PYTHON) setup.py $(SETUP_PY_Q) clean -a
 endif
