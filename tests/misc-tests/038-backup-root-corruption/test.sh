@@ -41,6 +41,9 @@ slot_num=$(echo $found | cut -f1 -d:)
 # To follow the dump-super output, where backup slot starts at 0.
 slot_num=$(($slot_num - 1))
 
+_log "Original superblock:"
+_log "$(dump_super)"
+
 # Save the backup slot info into the log
 _log "Backup slot $slot_num will be utilized"
 dump_super | run_check grep -A9 "backup $slot_num:"
@@ -56,9 +59,14 @@ run_check_mount_test_dev -o usebackuproot
 run_check_umount_test_dev
 
 main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
-
-# The next slot should be overwritten
-slot_num=$(( ($slot_num + 1) % 4 ))
+cur_gen=$(dump_super | grep ^generation | awk '{print $2}')
+# The slot to be used is based on how many transaction committed.
+slot_num=$(( ($slot_num + $cur_gen - $backup_gen) % 4 ))
 backup_new_root_ptr=$(dump_super | grep -A1 "backup $slot_num" | grep backup_tree_root | awk '{print $2}')
 
-[ "$main_root_ptr" -ne "$backup_new_root_ptr" ] || _fail "Backup 2 not overwritten"
+_log "After the backup usage:"
+_log "$(dump_super)"
+
+if [ "$main_root_ptr" -ne "$backup_new_root_ptr" ]; then
+	_fail "Backup ${slot_num} not overwritten"
+fi
