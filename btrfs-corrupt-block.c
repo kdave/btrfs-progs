@@ -70,7 +70,7 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot read bytenr %llu: %m", logical);
-				return ret;
+				goto out;
 			}
 			printf("corrupting %llu copy %d\n", logical, mirror_num);
 			memset(buf, 0, sectorsize);
@@ -78,7 +78,7 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot write bytenr %llu: %m", logical);
-				return ret;
+				goto out;
 			}
 		}
 
@@ -90,7 +90,8 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 		if (mirror_num > num_copies)
 			break;
 	}
-
+out:
+	free(buf);
 	return 0;
 }
 
