@@ -78,6 +78,11 @@ static void print_dir_item(struct extent_buffer *eb, u32 size,
 		printf("\n");
 		name_len = btrfs_dir_name_len(eb, di);
 		data_len = btrfs_dir_data_len(eb, di);
+		if (data_len + name_len + cur > size) {
+			error("invalid length, cur=%u name_len=%u data_len=%u size=%u\n",
+				cur, name_len, data_len, size);
+			break;
+		}
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
 		printf("\t\ttransid %llu data_len %u name_len %u\n",
 				btrfs_dir_transid(eb, di),
