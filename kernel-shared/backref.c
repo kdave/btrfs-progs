@@ -650,7 +650,8 @@ static int __add_inline_refs(struct btrfs_fs_info *fs_info,
 			break;
 		}
 		default:
-			WARN_ON(1);
+			error("invalid backref type: %u", type);
+			ret = -EUCLEAN;
 		}
 		if (ret)
 			return ret;
