@@ -78,10 +78,11 @@ jobs:
         run: sudo make D=asan TEST_LOG=dump test-convert
       - name: Test internal APIs
         run: make D=asan test-api
-      - name: Libbtrfsutil test
-        run: make D=asan test-libbtrfsutil
-      - name: Libbtrfs build test
-        run: make D=asan library-test
+# Temporary: the library or python bindings are not linked with ASAN and test cannot be run
+#      - name: Libbtrfsutil test
+#        run: make D=asan test-libbtrfsutil
+#      - name: Libbtrfs build test
+#        run: make D=asan library-test
       - name: Tests hash (correctness)
         run: make D=asan hash-vectest && ./hash-vectest
       - name: Save logs on failure
