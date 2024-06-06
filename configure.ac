@@ -24,7 +24,7 @@ BTRFS_UTIL_VERSION_MAJOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+
 BTRFS_UTIL_VERSION_MINOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
 BTRFS_UTIL_VERSION_PATCH=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
 
-CFLAGS=${CFLAGS:-"-g -O1 -Wall -D_FORTIFY_SOURCE=2"}
+CFLAGS=${CFLAGS:-"-g -O2 -Wall -D_FORTIFY_SOURCE=2"}
 AC_SUBST([CFLAGS])
 
 AC_PREREQ([2.60])
