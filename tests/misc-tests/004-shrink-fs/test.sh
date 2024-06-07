@@ -32,7 +32,9 @@ shrink_test()
 
 run_check truncate -s 20G "$IMAGE"
 run_check "$TOP/mkfs.btrfs" -f "$IMAGE"
-run_check $SUDO_HELPER mount "$IMAGE" "$TEST_MNT"
+# Disable the new default async discard, which makes empty block group cleanup
+# async.
+run_check $SUDO_HELPER mount -o nodiscard "$IMAGE" "$TEST_MNT"
 run_check $SUDO_HELPER chmod a+rw "$TEST_MNT"
 
 # Create 7 data block groups, each with a size of 1Gb.
