@@ -1,3 +1,41 @@
+btrfs-progs-6.9 (2024-06-07)
+----------------------------
+   * mkfs:
+      * if --force used, don't continue if the mount status cannot be
+        determined (e.g. due to permissions)
+      * fix minimum size calculation on zoned devices, make it work with option -b
+   * check:
+      * option --clear-ino-cache removed (functionality still provided in
+        'rescue' command group)
+      * detect and repair wrong file extent item ram_bytes value
+   * qgroup clear-stale:
+      * sync the filesystem before search to read the up to date state
+      * handle cases where qgroup cannot be deleted due to uncleaned subvolume
+        or when squota is enabled
+   * qgroup show: display status of qgroup regarding the cleaning of the
+     subvolume or if it's squota
+   * receive: fix stream parsing on strict alignment hosts (e.g. ARM v5 or v6)
+   * tune change-csum: fix check of dev-replace status item, continue if no
+     dev-replace in progress
+   * dump-tree: print contents of dev-replace status item
+   * convert: fix extent iteration to handle prealloc/unwritten extents
+   * libbtrfsutil:
+      * patchlevel version update 1.3.1
+      * fix potentially unaligned access to send stream
+      * create library links to all version levels
+   * libbtrfs:
+      * patchlevel version update 0.1.3
+      * fix potentially unaligned access to send stream
+      * create library links to all version levels
+   * build:
+      * fix compatibility with e2fsprogs 1.47.1
+      * fix header file dependency tracking
+      * -O2 by default
+   * other:
+      * new and updated tests
+      * ASAN and UBSAN test coverage in CI
+      * documentation updates
+
 btrfs-progs-6.8 (2024-03-26)
 ----------------------------
    * fix --enqueue option timeout handling
