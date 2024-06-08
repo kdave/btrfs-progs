@@ -59,16 +59,6 @@ static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 		sizeof(struct btrfs_stripe) * (num_stripes - 1);
 }
 
-#define BTRFS_SUPER_FLAG_CHANGING_DATA_CSUM	(1ULL << 36)
-#define BTRFS_SUPER_FLAG_CHANGING_META_CSUM	(1ULL << 37)
-
-/*
- * The fs is undergoing block group tree feature change.
- * If no BLOCK_GROUP_TREE compat ro flag, it's changing from regular
- * bg item in extent tree to new bg tree.
- */
-#define BTRFS_SUPER_FLAG_CHANGING_BG_TREE	(1ULL << 38)
-
 static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
 {
 	return nodesize - sizeof(struct btrfs_header);
