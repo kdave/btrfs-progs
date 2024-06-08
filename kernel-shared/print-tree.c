@@ -1950,17 +1950,12 @@ static struct readable_flag_entry super_flags_array[] = {
 	DEF_SUPER_FLAG_ENTRY(CHANGING_FSID_V2),
 	DEF_SUPER_FLAG_ENTRY(SEEDING),
 	DEF_SUPER_FLAG_ENTRY(METADUMP),
-	DEF_SUPER_FLAG_ENTRY(METADUMP_V2)
+	DEF_SUPER_FLAG_ENTRY(METADUMP_V2),
+	DEF_SUPER_FLAG_ENTRY(CHANGING_BG_TREE),
+	DEF_SUPER_FLAG_ENTRY(CHANGING_DATA_CSUM),
+	DEF_SUPER_FLAG_ENTRY(CHANGING_META_CSUM),
 };
 static const int super_flags_num = ARRAY_SIZE(super_flags_array);
-
-#define BTRFS_SUPER_FLAG_SUPP	(BTRFS_HEADER_FLAG_WRITTEN |\
-				 BTRFS_HEADER_FLAG_RELOC |\
-				 BTRFS_SUPER_FLAG_CHANGING_FSID |\
-				 BTRFS_SUPER_FLAG_CHANGING_FSID_V2 |\
-				 BTRFS_SUPER_FLAG_SEEDING |\
-				 BTRFS_SUPER_FLAG_METADUMP |\
-				 BTRFS_SUPER_FLAG_METADUMP_V2)
 
 static void __print_readable_flag(u64 flag, struct readable_flag_entry *array,
 				  int array_size, u64 supported_flags)
@@ -1995,26 +1990,34 @@ static void __print_readable_flag(u64 flag, struct readable_flag_entry *array,
 
 static void print_readable_compat_ro_flag(u64 flag)
 {
-	/*
-	 * We know about the FREE_SPACE_TREE{,_VALID} bits, but we don't
-	 * actually support them yet.
-	 */
+	u64 print_flags = 0;
+
+	for (int i = 0; i < compat_ro_flags_num; i++)
+		print_flags |= compat_ro_flags_array[i].bit;
 	return __print_readable_flag(flag, compat_ro_flags_array,
 				     compat_ro_flags_num,
-				     BTRFS_FEATURE_COMPAT_RO_SUPP);
+				     print_flags);
 }
 
 static void print_readable_incompat_flag(u64 flag)
 {
+	u64 print_flags = 0;
+
+	for (int i = 0; i < incompat_flags_num; i++)
+		print_flags |= incompat_flags_array[i].bit;
 	return __print_readable_flag(flag, incompat_flags_array,
 				     incompat_flags_num,
-				     BTRFS_FEATURE_INCOMPAT_SUPP);
+				     print_flags);
 }
 
 static void print_readable_super_flag(u64 flag)
 {
+	u64 print_flags = 0;
+
+	for (int i = 0; i < super_flags_num; i++)
+		print_flags |= super_flags_array[i].bit;
 	return __print_readable_flag(flag, super_flags_array,
-				     super_flags_num, BTRFS_SUPER_FLAG_SUPP);
+				     super_flags_num, print_flags);
 }
 
 static void print_sys_chunk_array(struct btrfs_super_block *sb)
