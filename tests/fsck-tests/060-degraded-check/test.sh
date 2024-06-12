@@ -20,17 +20,17 @@ dev3=${loopdevs[3]}
 
 # Run 1: victim is dev1
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m raid5 -d raid5 "${loopdevs[@]}"
-run_check $SUDO_HELPER wipefs -fa $dev1
-run_check $SUDO_HELPER "$TOP/btrfs" check $dev2
+run_check $SUDO_HELPER wipefs -fa "$dev1"
+run_check $SUDO_HELPER "$TOP/btrfs" check "$dev2"
 
 # Run 2: victim is dev2
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m raid5 -d raid5 "${loopdevs[@]}"
-run_check $SUDO_HELPER wipefs -fa $dev2
-run_check $SUDO_HELPER "$TOP/btrfs" check $dev3
+run_check $SUDO_HELPER wipefs -fa "$dev2"
+run_check $SUDO_HELPER "$TOP/btrfs" check "$dev3"
 
 # Run 3: victim is dev3
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m raid5 -d raid5 "${loopdevs[@]}"
-run_check $SUDO_HELPER wipefs -fa $dev3
-run_check $SUDO_HELPER "$TOP/btrfs" check $dev1
+run_check $SUDO_HELPER wipefs -fa "$dev3"
+run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
 
 cleanup_loopdevs

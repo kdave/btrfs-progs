@@ -17,8 +17,10 @@ features="^mixed-bg"
 # caller need to check whether the combination is valid
 do_test()
 {
-	sectorsize=$1
-	nodesize=$2
+	local sectorsize=$1
+	local nodesize=$2
+	local ret
+
 	run_mayfail "$TOP/mkfs.btrfs" -f -O "$features" -n "$nodesize" -s "$sectorsize" \
 		"$TEST_DEV"
 	ret=$?

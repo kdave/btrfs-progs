@@ -18,11 +18,11 @@ run_check $SUDO_HELPER chmod a+rw "$TEST_MNT"
 cd "$TEST_MNT"
 
 for i in `seq 5`; do
-	run_check dd if=/dev/zero of=file$i bs=1M count=10
+	run_check dd if=/dev/zero of="file$i" bs=1M count=10
 done
 
 for sn in `seq 4`;do
-	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot . snap$sn
+	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot . "snap$sn"
 	for i in `seq 10`; do
 		run_check dd if=/dev/zero of="snap$sn/file$i" bs=1M count=10
 	done

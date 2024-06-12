@@ -52,7 +52,7 @@ test_full_simple_stream() {
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv1
 	for i in 1 2 3; do
-		run_check $SUDO_HELPER dd if=/dev/zero of=subv1/file1_$i bs=1M count=1
+		run_check $SUDO_HELPER dd if=/dev/zero of="subv1/file1_$i" bs=1M count=1
 	done
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv1-snap
@@ -104,7 +104,8 @@ test_incr_empty_stream() {
 }
 
 test_incr_simple_stream() {
-	local str
+	local fstr
+	local istr
 
 	fstr="$here/stream-full-simple.stream"
 	istr="$here/stream-incr-simple.stream"
@@ -115,13 +116,13 @@ test_incr_simple_stream() {
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv1
 	for i in 1 2 3; do
-		run_check $SUDO_HELPER dd if=/dev/zero of=subv1/file1_$i bs=1M count=1
+		run_check $SUDO_HELPER dd if=/dev/zero of="subv1/file1_$i" bs=1M count=1
 	done
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv1-snap
 
 	for i in 1 2 3; do
-		run_check $SUDO_HELPER dd if=/dev/urandom of=subv1/file1_$i bs=1M count=1
+		run_check $SUDO_HELPER dd if=/dev/urandom of="subv1/file1_$i" bs=1M count=1
 	done
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv2-snap

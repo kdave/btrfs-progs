@@ -13,7 +13,7 @@ setup_root_helper
 check_image() {
 	local image
 
-	image=$1
+	image="$1"
 	run_mayfail $TOP/btrfs check -s 1 "$image"
 	run_mayfail $TOP/btrfs check --force --init-csum-tree "$image"
 	run_mayfail $TOP/btrfs check --repair --force --init-extent-tree "$image"

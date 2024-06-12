@@ -15,6 +15,8 @@ prepare_test_dev
 
 do_one_test ()
 {
+	local first_dev_extent
+
 	run_check_mkfs_test_dev "$@"
 
 	# Use dev-extent tree to find first device extent

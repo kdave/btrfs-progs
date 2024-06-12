@@ -17,6 +17,7 @@ get_fs_uuid() {
 test_uuid_random()
 {
 	local origuuid
+	local currentfsid
 
 	origuuid=11111111-a101-4031-b29a-379d4f8b7a2d
 
@@ -37,6 +38,7 @@ test_uuid_user()
 {
 	local origuuid
 	local newuuid
+	local fsid
 
 	origuuid=22222222-d324-4f92-80e9-7658bf3b845f
 	newuuid=33333333-bfc9-4045-9399-a396dc6893b3

@@ -10,7 +10,7 @@ setup_root_helper
 check_image() {
 	local image
 
-	image=$1
+	image="$1"
 	run_mayfail "$TOP/btrfs" inspect-internal dump-super "$image"
 	run_mayfail "$TOP/btrfs" inspect-internal dump-super -Ffa "$image"
 }

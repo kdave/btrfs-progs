@@ -43,13 +43,11 @@ read_metadata_uuid() {
 		echo $(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
 			dump-super "$dev" | awk '/metadata_uuid/ {print $2}')
 	else
-		read_fsid $dev
+		read_fsid "$dev"
 	fi
 }
 
 check_btrfstune() {
-	local fsid
-
 	_log "Checking btrfstune logic"
 	# test with random uuid
 	run_check $SUDO_HELPER "$TOP/btrfstune" -m "$TEST_DEV"
@@ -89,17 +87,16 @@ check_dump_super_output() {
 	# assert that metadata/fsid match on non-changed fs
 	fsid=$(read_fsid "$TEST_DEV")
 	metadata_uuid=$(read_metadata_uuid "$TEST_DEV")
-	[ "$fsid" = "$metadata_uuid" ] || _fail "fsid ("$fsid") doesn't match metadata_uuid ("$metadata_uuid")"
+	[ "$fsid" = "$metadata_uuid" ] || _fail "fsid ($fsid) doesn't match metadata_uuid ($metadata_uuid)"
 
 	dev_item_match=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$TEST_DEV" | awk '/dev_item.fsid/ {print $3}')
 
-	[ $dev_item_match = "[match]" ] || _fail "dev_item.fsid doesn't match on non-metadata uuid fs"
-
+	[ "$dev_item_match" = "[match]" ] || _fail "dev_item.fsid doesn't match on non-metadata uuid fs"
 
 	_log "Checking output after fsid change"
 	# change metadatauuid and ensure everything in the output is still correct
-	old_metadata_uuid=$metadata_uuid
+	old_metadata_uuid="$metadata_uuid"
 	run_check $SUDO_HELPER "$TOP/btrfstune" -M d88c8333-a652-4476-b225-2e9284eb59f1 "$TEST_DEV"
 	fsid=$(read_fsid "$TEST_DEV")
 	metadata_uuid=$(read_metadata_uuid "$TEST_DEV")

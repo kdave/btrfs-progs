@@ -22,7 +22,8 @@ here=`pwd`
 # assumes the filesystem exists, and does mount, write, snapshot, send, unmount
 # for the specified encoding option
 send_one() {
-	local str
+	local algorithm
+	local file
 	local subv
 	local snap
 

@@ -48,11 +48,14 @@ generate_leaf_corrupt_no_data_ext()
 
 check_inode()
 {
-	path=$1
-	ino=$2
-	size=$3
-	mode=$4
-	name=$5
+	local path=$1
+	local ino=$2
+	local size=$3
+	local mode=$4
+	local name=$5
+	local exists
+	local found_mode
+	local found_size
 
 	# Check whether the inode exists
 	exists=$($SUDO_HELPER find "$path" -inum "$ino")
@@ -84,11 +87,13 @@ check_inode()
 # Check salvaged data in the recovered image
 check_leaf_corrupt_no_data_ext()
 {
-	image=$1
+	local image=$1
+	local i
+
 	$SUDO_HELPER mount -o loop -t btrfs "$image" -o ro "$TEST_MNT"
 
 	i=0
-	while [ $i -lt ${#leaf_no_data_ext_list[@]} ]; do
+	while [ "$i" -lt ${#leaf_no_data_ext_list[@]} ]; do
 		check_inode "$TEST_MNT/lost+found" \
 			    ${leaf_no_data_ext_list[i]} \
 			    ${leaf_no_data_ext_list[i + 1]} \

@@ -16,6 +16,6 @@ check_image() {
 	rm -- "$image".scratch
 }
 
-check_all_images $TEST_TOP/fuzz-tests/images
+check_all_images "$TEST_TOP/fuzz-tests/images"
 
 exit 0

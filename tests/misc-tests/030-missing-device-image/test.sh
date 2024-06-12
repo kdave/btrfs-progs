@@ -24,7 +24,7 @@ test_missing()
 	local good_num
 	local good_dev
 
-	bad_num=$1
+	bad_num="$1"
 	bad_dev=${loopdevs[$bad_num]}
 	good_num=$((3 - $bad_num))
 	good_dev=${loopdevs[$good_num]}

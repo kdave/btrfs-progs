@@ -63,7 +63,7 @@ do_test() {
 	convert_test_post_check_checksums "$CHECKSUMTMP"
 	run_check_umount_test_dev
 
-	rm "$CHECKSUMTMP"
+	rm -- "$CHECKSUMTMP"
 }
 
 # Iterate over defaults and options that are not tied to hardware capabilities

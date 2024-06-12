@@ -68,5 +68,5 @@ _log "After the backup usage:"
 _log "$(dump_super)"
 
 if [ "$main_root_ptr" -ne "$backup_new_root_ptr" ]; then
-	_fail "Backup ${slot_num} not overwritten"
+	_fail "Backup $slot_num not overwritten"
 fi

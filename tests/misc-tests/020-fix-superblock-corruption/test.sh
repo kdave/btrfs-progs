@@ -14,6 +14,8 @@ FIRST_SUPERBLOCK_OFFSET=65536
 
 test_superblock_restore()
 {
+	local seek
+
 	run_check_mkfs_test_dev
 
 	# Corrupt superblock checksum

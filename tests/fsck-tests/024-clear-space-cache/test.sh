@@ -23,7 +23,7 @@ sync
 
 # Remove file 1 3 5 to create holes
 for i in 1 3 5; do
-	run_check $SUDO_HELPER rm "$TEST_MNT/file_${i}"
+	run_check $SUDO_HELPER rm "$TEST_MNT/file_$i"
 done
 
 sync

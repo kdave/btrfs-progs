@@ -26,6 +26,8 @@ test_wipefs()
 }
 test_delete_missing()
 {
+	local out
+
 	run_check_mount_test_dev -o degraded
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem show "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" device delete missing "$TEST_MNT"
@@ -33,7 +35,6 @@ test_delete_missing()
 	run_check_umount_test_dev
 
 	run_check_mount_test_dev
-	local out
 	out=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" filesystem show "$TEST_MNT")
 	if echo "$out" | grep -q -- "$devtodel"; then
 		_fail "device $devtodel not deleted"
