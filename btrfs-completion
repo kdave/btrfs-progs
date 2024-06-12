@@ -103,7 +103,7 @@ _btrfs()
 		case $cmd in
 			filesystem)
 				case $prev in
-					du|defragment)
+					du|defragment|mkswapfile)
 						_filedir
 						return 0
 						;;
@@ -128,7 +128,7 @@ _btrfs()
 						_btrfs_mnts
 						return 0
 						;;
-					dump-tree|dump-super|rootid|inode-resolve)
+					dump-tree|dump-super|rootid|inode-resolve|tree-stats|map-swapfile)
 						_filedir
 						return 0
 						;;
