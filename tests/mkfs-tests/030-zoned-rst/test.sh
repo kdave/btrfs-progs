@@ -3,6 +3,7 @@
 
 source "$TEST_TOP/common" || exit
 
+check_experimental_build
 setup_root_helper
 setup_nullbdevs 4 128 4
 prepare_nullbdevs

@@ -6,6 +6,22 @@
 # Temporary array for building the final command, injecting arguments as needed
 declare -a cmd_array
 
+# Check if a given option in config.h is set to 1
+# $1: config option name
+_test_config()
+{
+	local feature="$1"
+
+	if [ ! -f "$TOP/include/config.h" ]; then
+		echo "include/config.h not exists"
+		exit 1
+	fi
+	if grep -q "$feature.*1" "${TOP}/include/config.h"; then
+		return 0
+	fi
+	return 1
+}
+
 # assert that argument is not empty and is an existing path (file or directory)
 _assert_path()
 {
@@ -373,6 +389,13 @@ run_mustfail_stdout()
 		echo "succeeded (unexpected!): $@" >> "$RESULTS"
 		_fail "unexpected success: $msg"
 		return 1
+	fi
+}
+
+check_experimental_build()
+{
+	if ! _test_config "EXPERIMENTAL"; then
+		_not_run "This test requires experimental build"
 	fi
 }
 

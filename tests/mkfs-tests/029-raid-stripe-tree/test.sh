@@ -3,6 +3,7 @@
 
 source "$TEST_TOP/common" || exit
 
+check_experimental_build
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
