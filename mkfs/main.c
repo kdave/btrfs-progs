@@ -1693,7 +1693,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		case BTRFS_BLOCK_GROUP_RAID1C4:
 		case BTRFS_BLOCK_GROUP_RAID0:
 		case BTRFS_BLOCK_GROUP_RAID10:
+#if EXPERIMENTAL
 			features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE;
+#endif
 			break;
 		default:
 			break;
