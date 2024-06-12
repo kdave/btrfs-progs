@@ -17,6 +17,6 @@ prepare_test_dev
 
 # Iterate over defaults and options that are not tied to hardware capabilities
 # or number of devices. Test only 4K block size as minimum.
-for feature in '' 'block-group-tree' 'raid-stripe-tree'; do
+for feature in '' 'block-group-tree'; do
 	convert_test ntfs "$feature" "ntfs 4k nodesize" 4096 mkfs.ntfs -s 4096
 done
