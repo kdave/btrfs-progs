@@ -222,6 +222,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(default),
 		.desc		= "block group tree, more efficient block group tracking to reduce mount time"
 	},
+#if EXPERIMENTAL
 	{
 		.name		= "rst",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE,
@@ -238,6 +239,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		VERSION_NULL(default),
 		.desc		= "raid stripe tree, enhanced file extent tracking"
 	},
+#endif
 	{
 		.name		= "squota",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA,
