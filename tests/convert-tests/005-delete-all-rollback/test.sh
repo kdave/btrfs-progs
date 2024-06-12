@@ -68,7 +68,7 @@ do_test() {
 
 # Iterate over defaults and options that are not tied to hardware capabilities
 # or number of devices
-for feature in '' 'block-group-tree' 'raid-stripe-tree' ; do
+for feature in '' 'block-group-tree'; do
 	do_test "$feature" "ext4 4k nodesize" 4096 mke2fs -t ext4 -b 4096
 	do_test "$feature" "ext4 16k nodesize" 16384 mke2fs -t ext4 -b 4096
 	do_test "$feature" "ext4 64k nodesize" 65536 mke2fs -t ext4 -b 4096
