@@ -25,31 +25,31 @@ if [ $? != 0 ]; then
 	_fail "cannot create nullb zoned device $i"
 fi
 dev=$(echo "$out" | tail -n 1)
-name=$(basename "${dev}")
+name=$(basename "$dev")
 
 run_check $SUDO_HELPER "$nullb" ls
 
-TEST_DEV="${dev}"
+TEST_DEV="$dev"
 
 # Create the fs without bgt
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m single -d single -O ^block-group-tree "${dev}"
+run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -m single -d single -O ^block-group-tree "$dev"
 run_check_mount_test_dev
 run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file1 bs=1M count=1
 run_check $SUDO_HELPER "$TOP/btrfs" filesystem usage -T "$TEST_MNT"
 run_check_umount_test_dev
 
 # Convert to bgt
-run_check $SUDO_HELPER "$TOP/btrfstune" --convert-to-block-group-tree "${dev}"
+run_check $SUDO_HELPER "$TOP/btrfstune" --convert-to-block-group-tree "$dev"
 run_check_mount_test_dev
 run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file2 bs=1M count=1
 run_check $SUDO_HELPER "$TOP/btrfs" filesystem usage -T "$TEST_MNT"
 run_check_umount_test_dev
 
 # And convert back to old extent tree
-run_check $SUDO_HELPER "$TOP/btrfstune" --convert-from-block-group-tree "${dev}"
+run_check $SUDO_HELPER "$TOP/btrfstune" --convert-from-block-group-tree "$dev"
 run_check_mount_test_dev
 run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file3 bs=1M count=1
 run_check $SUDO_HELPER "$TOP/btrfs" filesystem usage -T "$TEST_MNT"
 run_check_umount_test_dev
 
-run_check $SUDO_HELPER "$nullb" rm "${name}"
+run_check $SUDO_HELPER "$nullb" rm "$name"

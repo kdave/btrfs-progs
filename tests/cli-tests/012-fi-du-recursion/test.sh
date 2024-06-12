@@ -20,7 +20,7 @@ _mktemp_local img2 1G
 run_check $SUDO_HELPER mkdir -p "$TEST_MNT"/mnt2
 run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=10 of="$TEST_MNT"/mnt2/hiddenfile
 
-run_check $SUDO_HELPER "$TOP"/mkfs.btrfs -f img2
+run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f img2
 run_check $SUDO_HELPER mount -o loop img2 "$TEST_MNT"/mnt2
 run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=10 of="$TEST_MNT"/mnt2/file21
 run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=10 of="$TEST_MNT"/mnt2/file22

@@ -19,14 +19,14 @@ cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
 
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv-parent1
 for i in 1 2 3; do
-	run_check $SUDO_HELPER dd if=/dev/zero of=subv-parent1/file1_$i bs=1M count=1
-	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent1 subv-snap1_$i
+	run_check $SUDO_HELPER dd if=/dev/zero of="subv-parent1/file1_$i" bs=1M count=1
+	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent1 "subv-snap1_$i"
 done
 
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv-parent2
 for i in 1 2 3; do
-	run_check $SUDO_HELPER dd if=/dev/zero of=subv-parent2/file2_$i bs=1M count=1
-	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent2 subv-snap2_$i
+	run_check $SUDO_HELPER dd if=/dev/zero of="subv-parent2/file2_$i" bs=1M count=1
+	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent2 "subv-snap2_$i"
 done
 
 _mktemp_local "$here/send-stream.img"

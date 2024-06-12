@@ -36,6 +36,7 @@ test_get_info()
 	run_check $SUDO_HELPER "$TOP/btrfs" device usage "$TEST_MNT"
 	run_check $SUDO_HELPER umount "$TEST_MNT"
 }
+
 test_do_mkfs()
 {
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@"

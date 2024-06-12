@@ -27,7 +27,7 @@ corrupt_fst_item()
 	local offset
 	type="$1"
 
-	if [[ $type == "bitmap" ]]; then
+	if [[ "$type" == "bitmap" ]]; then
 		type=200
 		objectid=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_BITMAP [[:digit:]]*" | \
@@ -40,7 +40,7 @@ corrupt_fst_item()
 			return 1
 		fi
 		_log "Corrupting $objectid,FREE_SPACE_BITMAP,$offset"
-	elif [[ $type == "extent" ]]; then
+	elif [[ "$type" == "extent" ]]; then
 		type=199
 		objectid=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_EXTENT [[:digit:]]*" | \

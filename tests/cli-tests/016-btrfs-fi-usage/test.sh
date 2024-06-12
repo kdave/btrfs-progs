@@ -63,14 +63,14 @@ test_raid1()
 		set -- $i
 		IFS=$OLDIFS
 
-		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d$1 ${loopdevs[@]}
+		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" ${loopdevs[@]}
 		run_check_mount_test_dev
 		vars=($(report_numbers))
 		data_chunk_size=${vars[1]}
 		used_on_dev=${vars[2]}
 		data_ratio=${vars[0]}
 
-		[[ $used_on_dev -eq $data_chunk_size ]] ||
+		[[ "$used_on_dev" -eq "$data_chunk_size" ]] ||
 			_fail "$1 inconsistent chunk/device usage. Chunk: $data_chunk_size Device: $used_on_dev"
 
 		[[ "$data_ratio" = "$2" ]] ||
@@ -95,10 +95,10 @@ test_raid0()
 	data_ratio=${vars[0]}
 
 	# Divide by 4 since 4 loopp devices are setup
-	[[ $used_on_dev -eq $(($data_chunk_size / 4)) ]] ||
+	[[ "$used_on_dev" -eq $(($data_chunk_size / 4)) ]] ||
 		_fail "raid0 inconsistent chunk/device usage. Chunk: $data_chunk_size Device: $used_on_dev"
 
-	[[ $data_ratio = "1.00" ]] ||
+	[[ "$data_ratio" = "1.00" ]] ||
 		_fail "raid0: Unexpected data ratio: $data_ratio (must be 1.5)"
 	run_check_umount_test_dev
 }
@@ -118,17 +118,17 @@ test_raid56()
 		set -- $i
 		IFS=$OLDIFS
 
-		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d$1 ${loopdevs[@]}
+		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" ${loopdevs[@]}
 		run_check_mount_test_dev
 		vars=($(report_numbers))
 		data_chunk_size=${vars[1]}
 		used_on_dev=${vars[2]}
 		data_ratio=${vars[0]}
 
-		[[ $used_on_dev -eq $(($data_chunk_size / $3)) ]] ||
+		[[ "$used_on_dev" -eq $(($data_chunk_size / $3)) ]] ||
 			_fail "$i inconsistent chunk/device usage. Chunk: $data_chunk_size Device: $used_on_dev"
 
-		[[ $data_ratio = "$2" ]] ||
+		[[ "$data_ratio" = "$2" ]] ||
 			_fail "$1: Unexpected data ratio: $data_ratio (must be $2)"
 
 		run_check_umount_test_dev

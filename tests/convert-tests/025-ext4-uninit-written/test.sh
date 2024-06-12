@@ -29,7 +29,7 @@ fi
 
 # Now fill the underlying range with non-zeros.
 # For properly converted fs, we should not read the contents anyway
-run_check $SUDO_HELPER dd if=/dev/urandom of=$TEST_DEV bs=4096 seek="$physical" conv=notrunc count=8
+run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_DEV" bs=4096 seek="$physical" conv=notrunc count=8
 
 # Write some thing into the file range.
 run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/file" bs=4096 count=1 conv=notrunc

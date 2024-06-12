@@ -13,9 +13,9 @@ count=24
 run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file bs=1M count=1
 run_check $SUDO_HELPER "$TOP/btrfs" quota enable "$TEST_MNT"
 for i in `seq $count`; do
-	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/subv${i}"
+	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/subv$i"
 	if [ "$(($i % 2))" = "0" ]; then
-		run_check $SUDO_HELPER "$TOP/btrfs" subvolume delete "$TEST_MNT/subv${i}"
+		run_check $SUDO_HELPER "$TOP/btrfs" subvolume delete "$TEST_MNT/subv$i"
 	fi
 done
 run_check $SUDO_HELPER "$TOP/btrfs" qgroup show --sort path "$TEST_MNT"
