@@ -399,6 +399,13 @@ check_experimental_build()
 	fi
 }
 
+check_regular_build()
+{
+	if _test_config "EXPERIMENTAL"; then
+		_not_run "This test requires non-experimental build"
+	fi
+}
+
 check_prereq()
 {
 	# Internal tools for testing, not shipped with the package
