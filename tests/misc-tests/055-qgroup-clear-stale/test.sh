@@ -18,14 +18,15 @@ run_check $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT"
 rootid=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid "$TEST_MNT/subv1")
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume delete "$TEST_MNT/subv1"
 run_check $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT"
-# Subvolume deletion could be slow and won't let the qgroup to be cleaned,
-# shown as '<under deletion>'.
-if ! run_mayfail $SUDO_HELPER "$TOP/btrfs" qgroup clear-stale "$TEST_MNT"; then
-	run_check $SUDO_HELPER "$TOP/btrfs" subvolume sync "$TEST_MNT" "$rootid"
-	run_check $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT"
-	# After cleaning the subvolume it must pass
-	run_check $SUDO_HELPER "$TOP/btrfs" qgroup clear-stale "$TEST_MNT"
-fi
+
+# Subvolume under deletion won't be deleted and "btrfs qgroup clear-stale"
+# would detect it and not report an error.
+# So here we have to wait for the subvolume deletion.
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume sync "$TEST_MNT" "$rootid"
+run_check $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT"
+# After cleaning the subvolume it must pass
+run_check $SUDO_HELPER "$TOP/btrfs" qgroup clear-stale "$TEST_MNT"
+
 list=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT")
 if echo "$list" | grep -q "0/$rootid"; then
 	_fail "stale qgroups not deleted"
