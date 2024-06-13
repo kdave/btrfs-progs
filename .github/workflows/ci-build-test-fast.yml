@@ -24,6 +24,12 @@ jobs:
     steps:
       - name: CI Centos8
         run: sudo docker run kdave/ci-centos-8-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned --disable-libudev
+  check-rockylinux9:
+    name: CI RockyLinux 9
+    runs-on: ubuntu-24.04
+    steps:
+      - name: CI RockyLinux 9
+        run: sudo docker run kdave/ci-rockylinux-9-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation
   check-leap153:
     name: CI Leap 15.3
     runs-on: ubuntu-24.04
