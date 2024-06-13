@@ -220,7 +220,13 @@ run_check()
 	echo "====== RUN CHECK ${cmd_array[@]}" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: ${cmd_array[@]}" > /dev/tty; fi
 
-	"${cmd_array[@]}" >> "$RESULTS" 2>&1 || _fail "failed: ${cmd_array[@]}"
+	"${cmd_array[@]}" >> "$RESULTS" 2>&1
+	if [ "$?" -ne 0 ]; then
+		if echo "${cmd_array[@]}" | grep -q mount; then
+			dmesg | tail -n 15 >> "$RESULTS"
+		fi
+		_fail "failed: ${cmd_array[@]}"
+	fi
 }
 
 # same as run_check but the stderr+stdout output is duplicated on stdout and
