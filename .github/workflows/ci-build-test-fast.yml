@@ -14,31 +14,31 @@ on:
 jobs:
   check-centos7:
     name: CI Centos 7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Centos7
         run: sudo docker run kdave/ci-centos-7-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-libudev
   check-centos8:
     name: CI Centos 8
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Centos8
         run: sudo docker run kdave/ci-centos-8-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned --disable-libudev
   check-leap153:
     name: CI Leap 15.3
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Leap 15.3
         run: sudo docker run kdave/ci-opensuse-leap-15.3-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
   check-leap154:
     name: CI Leap 15.4
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Leap 15.4
         run: sudo docker run kdave/ci-opensuse-leap-15.4-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
   check-musl:
     name: CI Musl
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Musl
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
@@ -46,7 +46,10 @@ jobs:
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-musl-32bit:
     name: CI Musl (32bit)
-    runs-on: ubuntu-latest
+    # Pin the version, on 24.04 it fails:
+    #  make: *** pselect jobs pipe: Function not implemented.  Stop.
+    #  make: *** Waiting for unfinished jobs....
+    runs-on: ubuntu-22.04
     steps:
       - name: CI Musl (32bit)
         run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
@@ -54,7 +57,7 @@ jobs:
         run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-tumbleweed:
     name: CI Tumbleweed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Tumbleweed
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation
@@ -62,7 +65,7 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --enable-experimental
   check-tumbleweed-libgcrypt:
     name: CI Tumbleweed (libgcrypt)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Tumbleweed (libgcrypt)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libgcrypt
@@ -70,7 +73,7 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libgcrypt --enable-experimental
   check-tumbleweed-libsodium:
     name: CI Tumbleweed (libsodium)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Tumbleweed (libsodium)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libsodium
@@ -78,7 +81,7 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libsodium --enable-experimental
   check-tumbleweed-libkcapi:
     name: CI Tumbleweed (libkcapi)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Tumbleweed (libkcapi)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libkcapi
@@ -86,7 +89,7 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=libkcapi --enable-experimental
   check-tumbleweed-botan:
     name: CI Tumbleweed (Botan)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: CI Tumbleweed (Botan)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan
@@ -94,7 +97,7 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan --enable-experimental
 #   check-tumbleweed-openssl:
 #     name: CI Tumbleweed (OpenSSL)
-#     runs-on: ubuntu-latest
+#     runs-on: ubuntu-24.04
 #     steps:
 #       - uses: actions/checkout@v4
 #       - name: CI Tumbleweed (OpenSSL)
