@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <uuid/uuid.h>
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-lib/list.h"
@@ -53,6 +54,7 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/string-utils.h"
 #include "common/filesystem-utils.h"
 #include "common/format-output.h"
@@ -81,6 +83,41 @@ static const char * const cmd_filesystem_df_usage[] = {
 	NULL
 };
 
+static void print_df_by_type(int fd, unsigned int unit_mode) {
+	static const char *files[] = {
+		"bg_reclaim_threshold",
+		"bytes_may_use",
+		"bytes_pinned",
+		"bytes_readonly",
+		"bytes_reserved",
+		"bytes_used",
+		"bytes_zone_unusable",
+		"chunk_size",
+		"disk_total",
+		"disk_used",
+		"total_bytes",
+	};
+	char path[PATH_MAX] = { 0 };
+	const char *types[] = { "data", "metadata", "mixed", "system" };
+	u64 tmp;
+	int ret;
+
+	for (int ti = 0; ti < ARRAY_SIZE(types); ti++) {
+		for (int i = 0; i < ARRAY_SIZE(files); i++) {
+			path_cat3_out(path, "allocation", types[ti], files[i]);
+			ret = sysfs_read_fsid_file_u64(fd, path, &tmp);
+			if (ret < 0)
+				continue;
+			if (i == 0)
+				pr_verbose(LOG_INFO, "%c%s:\n", toupper(types[ti][0]), types[ti] + 1);
+			if (strcmp(files[i], "bg_reclaim_threshold") == 0)
+				pr_verbose(LOG_INFO, "  %-24s  %14llu%%\n", files[i], tmp);
+			else
+				pr_verbose(LOG_INFO, "  %-24s %16s\n", files[i], pretty_size_mode(tmp, unit_mode));
+		}
+	}
+}
+
 static void print_df_text(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
@@ -100,6 +137,7 @@ static void print_df_text(int fd, struct btrfs_ioctl_space_args *sargs, unsigned
 			(ok ? ", zone_unusable=" : ""),
 			(ok ? pretty_size_mode(unusable, unit_mode) : ""));
 	}
+	print_df_by_type(fd, unit_mode);
 }
 
 static const struct rowspec filesystem_df_rowspec[] = {
