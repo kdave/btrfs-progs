@@ -87,7 +87,7 @@ fi
 # change the freespace such that we now have at least one free_space_extent
 # object
 run_check_mount_test_dev
-rm -rf "$TEST_MNT/file.*"
+run_check $SUDO_HELPER rm -rf "$TEST_MNT/"file.*
 run_check $SUDO_HELPER fallocate -l 50m "$TEST_MNT/file"
 run_check_umount_test_dev
 
