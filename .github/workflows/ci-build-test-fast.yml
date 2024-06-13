@@ -30,12 +30,12 @@ jobs:
     steps:
       - name: CI Leap 15.3
         run: sudo docker run kdave/ci-opensuse-leap-15.3-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
-  check-leap154:
-    name: CI Leap 15.4
+  check-leap156:
+    name: CI Leap 15.6
     runs-on: ubuntu-24.04
     steps:
-      - name: CI Leap 15.4
-        run: sudo docker run kdave/ci-opensuse-leap-15.4-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
+      - name: CI Leap 15.6
+        run: sudo docker run kdave/ci-opensuse-leap-15.6-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
   check-musl:
     name: CI Musl
     runs-on: ubuntu-24.04

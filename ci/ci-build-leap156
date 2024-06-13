@@ -1,6 +1,6 @@
 #!/bin/sh
 # Usage: $0 [branch] [configure options]
-# Create source tarball from HEAD or given branch and build it in openSUSE Leap 15.4 CI
+# Create source tarball from HEAD or given branch and build it in openSUSE Leap 15.6 CI
 # environment. Configure options follow branch name that can be empty.
 
 HERE=`pwd`
@@ -14,7 +14,7 @@ else
 	exit 1
 fi
 
-CIIMAGEDIR=ci/images/ci-openSUSE-Leap-15.4-x86_64
+CIIMAGEDIR=ci/images/ci-openSUSE-Leap-15.6-x86_64
 BRANCH=${1:-HEAD}
 if [ "$#" -ge 1 ]; then
 	shift
