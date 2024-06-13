@@ -31,13 +31,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: CI Leap 15.3
         run: ci/ci-build-leap153
-  check-leap154:
-    name: CI Leap 15.4
+  check-leap156:
+    name: CI Leap 15.6
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: CI Leap 15.4
-        run: ci/ci-build-leap154
+      - name: CI Leap 15.6
+        run: ci/ci-build-leap156
   check-musl:
     name: CI Musl
     runs-on: ubuntu-24.04
