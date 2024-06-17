@@ -32,6 +32,7 @@
 #include "common/messages.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
+#include "common/string-utils.h"
 #include "common/open-utils.h"
 
 /*
@@ -103,10 +104,9 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 	}
 
 	/* Did we find an entry in mnt table? */
-	if (mnt && size && where) {
-		strncpy(where, mnt->mnt_dir, size);
-		where[size-1] = 0;
-	}
+	if (mnt && size && where)
+		strncpy_null(where, mnt->mnt_dir, size);
+
 	if (fs_dev_ret)
 		*fs_dev_ret = fs_devices_mnt;
 	else if (noscan)

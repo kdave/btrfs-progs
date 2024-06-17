@@ -1398,7 +1398,7 @@ int main(int argc, char **argv)
 				inode = arg_strtou64(optarg);
 				break;
 			case 'f':
-				strncpy(field, optarg, FIELD_BUF_LEN);
+				strncpy_null(field, optarg, FIELD_BUF_LEN);
 				break;
 			case 'x':
 				file_extent = arg_strtou64(optarg);
