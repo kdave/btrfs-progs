@@ -36,11 +36,11 @@ fi
 
 # Set the limits by command
 here=`pwd`
-cd "$sysfs/devinfo"
+cd "$sysfs/devinfo" || _fail "Cannot cd to $sysfs/devinfo"
 for i in *; do
 	run_check $SUDO_HELPER "$TOP/btrfs" scrub limit -d "$i" -l 20m "$TEST_MNT"
 done
-cd "$here"
+cd "$here" || _fail "Cannot cd to $here"
 run_check "$TOP/btrfs" scrub limit "$TEST_MNT"
 
 # Set limits for all devices
