@@ -38,6 +38,7 @@
 #include "common/path-utils.h"
 #include "common/device-utils.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "mkfs/common.h"
 
 static u64 reference_root_table[] = {
@@ -476,7 +477,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		btrfs_set_super_nr_global_roots(&super, 1);
 
 	if (cfg->label)
-		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE);
+		strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE);
 
 	/* create the tree of root objects */
 	memset(buf->data, 0, cfg->nodesize);
