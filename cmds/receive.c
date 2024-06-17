@@ -179,7 +179,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	if (*rctx->dest_dir_path == 0) {
-		strncpy_null(rctx->cur_subvol_path, path);
+		__strncpy_null(rctx->cur_subvol_path, path, sizeof(rctx->cur_subvol_path));
 	} else {
 		ret = path_cat_out(rctx->cur_subvol_path, rctx->dest_dir_path,
 				   path);
@@ -209,7 +209,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	memset(&args_v1, 0, sizeof(args_v1));
-	strncpy_null(args_v1.name, path);
+	__strncpy_null(args_v1.name, path, sizeof(args_v1.name));
 	ret = ioctl(rctx->dest_dir_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
 	if (ret < 0) {
 		ret = -errno;
@@ -249,7 +249,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	if (*rctx->dest_dir_path == 0) {
-		strncpy_null(rctx->cur_subvol_path, path);
+		__strncpy_null(rctx->cur_subvol_path, path, sizeof(rctx->cur_subvol_path));
 	} else {
 		ret = path_cat_out(rctx->cur_subvol_path, rctx->dest_dir_path,
 				   path);
@@ -281,7 +281,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	memset(&args_v2, 0, sizeof(args_v2));
-	strncpy_null(args_v2.name, path);
+	__strncpy_null(args_v2.name, path, sizeof(args_v2.name));
 
 	parent_subvol = subvol_uuid_search(rctx->mnt_fd, 0, parent_uuid,
 					   parent_ctransid, NULL,
@@ -663,7 +663,7 @@ static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 		error("cannot open %s: %m", path);
 		goto out;
 	}
-	strncpy_null(rctx->write_path, path);
+	__strncpy_null(rctx->write_path, path, sizeof(rctx->write_path));
 
 out:
 	return ret;

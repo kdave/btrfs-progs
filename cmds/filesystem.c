@@ -1441,7 +1441,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	memset(&args, 0, sizeof(args));
 	if (devid == (u64)-1) {
 		/* Ok to copy the string verbatim. */
-		strncpy_null(args.name, amount);
+		__strncpy_null(args.name, amount, sizeof(args.name));
 	} else {
 		/* The implicit devid 1 needs to be adjusted. */
 		snprintf(args.name, sizeof(args.name) - 1, "%llu:%s", devid, amount);
