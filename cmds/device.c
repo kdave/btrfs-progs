@@ -169,7 +169,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 		}
 
 		memset(&ioctl_args, 0, sizeof(ioctl_args));
-		strncpy_null(ioctl_args.name, path);
+		__strncpy_null(ioctl_args.name, path, sizeof(ioctl_args.name));
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
 		if (res < 0) {
 			error("error adding device '%s': %m", path);
@@ -287,7 +287,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		} else if (strcmp(argv[i], "missing") == 0 ||
 			   cancel ||
 			   path_is_block_device(argv[i]) == 1) {
-			strncpy_null(argv2.name, argv[i]);
+			__strncpy_null(argv2.name, argv[i], sizeof(argv2.name));
 		} else {
 			error("not a block device: %s", argv[i]);
 			ret++;
@@ -312,7 +312,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 				continue;
 			}
 			memset(&arg, 0, sizeof(arg));
-			strncpy_null(arg.name, argv[i]);
+			__strncpy_null(arg.name, argv[i], sizeof(arg.name));
 			res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		}
 
@@ -396,7 +396,7 @@ static int btrfs_forget_devices(const char *path)
 
 	memset(&args, 0, sizeof(args));
 	if (path)
-		strncpy_null(args.name, path);
+		__strncpy_null(args.name, path, sizeof(args.name));
 	ret = ioctl(fd, BTRFS_IOC_FORGET_DEV, &args);
 	if (ret)
 		ret = -errno;
@@ -557,7 +557,7 @@ static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	memset(&args, 0, sizeof(args));
-	strncpy_null(args.name, path);
+	__strncpy_null(args.name, path, sizeof(args.name));
 	ret = ioctl(fd, BTRFS_IOC_DEVICES_READY, &args);
 	if (ret < 0) {
 		error("unable to determine if device '%s' is ready for mount: %m",

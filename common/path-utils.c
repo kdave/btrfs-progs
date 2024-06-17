@@ -193,10 +193,10 @@ static int is_same_blk_file(const char* a, const char* b)
 	char real_b[PATH_MAX];
 
 	if (!realpath(a, real_a))
-		strncpy_null(real_a, a);
+		__strncpy_null(real_a, a, sizeof(real_a));
 
 	if (!realpath(b, real_b))
-		strncpy_null(real_b, b);
+		__strncpy_null(real_b, b, sizeof(real_b));
 
 	/* Identical path? */
 	if (strcmp(real_a, real_b) == 0)
@@ -403,7 +403,7 @@ int path_is_in_dir(const char *parent, const char *path)
 	char *curr_dir = tmp;
 	int ret;
 
-	strncpy_null(tmp, path);
+	__strncpy_null(tmp, path, sizeof(tmp));
 
 	while (strcmp(parent, curr_dir) != 0) {
 		if (strcmp(curr_dir, "/") == 0) {
