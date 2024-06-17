@@ -74,6 +74,8 @@ void test() {
 typedef int (*sort_cmp_t)(const void *a, const void *b);
 typedef int (*sort_r_cmp_t)(const void *a, const void *b, void *data);
 
+#define SORTDEF_END { .name = NULL,   .comp = NULL }
+
 struct sortdef {
 	const char *name;
 	const char *desc;
