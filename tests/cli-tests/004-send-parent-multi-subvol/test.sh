@@ -13,7 +13,7 @@ prepare_test_dev
 run_check_mkfs_test_dev
 run_check_mount_test_dev
 
-here=`pwd`
+here=$(pwd)
 cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
 
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv-parent

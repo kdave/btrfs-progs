@@ -6,7 +6,7 @@ source "$TEST_TOP/common" || exit
 check_prereq btrfs
 
 # returns 1
-run_mayfail $TOP/btrfs || true
+run_mayfail "$TOP/btrfs" || true
 run_check "$TOP/btrfs" version
 run_check "$TOP/btrfs" version --
 run_check "$TOP/btrfs" help
