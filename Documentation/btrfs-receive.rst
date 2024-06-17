@@ -66,6 +66,11 @@ A subvolume is made read-only after the receiving process finishes successfully 
         dump the stream metadata, one line per operation
 
         Does not require the *path* parameter. The filesystem remains unchanged.
+        Each stream command is on one line in the form of *key=value* and separated
+        by one or more spaces.  Values that contain special characters (like
+        paths or extended attributes) are encoded in C-like way, e.g. *'\\n'* or
+        octal escape sequence like *'\\NNN'* where N is the char value. Same encoding
+        as is used in */proc* files.
 
 -q|--quiet
         (deprecated) alias for global *-q* option
