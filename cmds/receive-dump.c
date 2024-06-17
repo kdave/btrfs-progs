@@ -353,9 +353,7 @@ static int print_encoded_write(const char *path, const void *data, u64 offset,
 			       u32 compression, u32 encryption, void *user)
 {
 	return PRINT_DUMP(user, path, "encoded_write",
-			  "offset=%llu len=%llu, unencoded_file_len=%llu, "
-			  "unencoded_len=%llu, unencoded_offset=%llu, "
-			  "compression=%u, encryption=%u",
+"offset=%llu len=%llu unencoded_file_len=%llu unencoded_len=%llu unencoded_offset=%llu compression=%u encryption=%u",
 			  offset, len, unencoded_file_len, unencoded_len,
 			  unencoded_offset, compression, encryption);
 }
