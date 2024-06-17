@@ -63,7 +63,7 @@ test_raid1()
 		set -- $i
 		IFS=$OLDIFS
 
-		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" ${loopdevs[@]}
+		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" "${loopdevs[@]}"
 		run_check_mount_test_dev
 		vars=($(report_numbers))
 		data_chunk_size=${vars[1]}
@@ -87,7 +87,7 @@ test_raid0()
 	local used_on_dev
 	local data_ratio
 
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -draid0 ${loopdevs[@]}
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -draid0 "${loopdevs[@]}"
 	run_check_mount_test_dev
 	vars=($(report_numbers))
 	data_chunk_size=${vars[1]}
@@ -118,7 +118,7 @@ test_raid56()
 		set -- $i
 		IFS=$OLDIFS
 
-		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" ${loopdevs[@]}
+		run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d"$1" "${loopdevs[@]}"
 		run_check_mount_test_dev
 		vars=($(report_numbers))
 		data_chunk_size=${vars[1]}
