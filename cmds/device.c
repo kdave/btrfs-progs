@@ -799,9 +799,8 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
 		int err2;
 
-		strncpy(path, (char *)di_args[i].path,
-			BTRFS_DEVICE_PATH_NAME_MAX);
-		path[BTRFS_DEVICE_PATH_NAME_MAX] = 0;
+		strncpy_null(path, (char *)di_args[i].path,
+			     BTRFS_DEVICE_PATH_NAME_MAX + 1);
 
 		args.devid = di_args[i].devid;
 		args.nr_items = BTRFS_DEV_STAT_VALUES_MAX;

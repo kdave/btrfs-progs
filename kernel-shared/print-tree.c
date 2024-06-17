@@ -36,6 +36,7 @@
 #include "common/defs.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "common/string-utils.h"
 #include "uapi/btrfs.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
@@ -186,7 +187,7 @@ static void bg_flags_to_str(u64 flags, char *ret)
 	ret[0] = '\0';
 	if (flags & BTRFS_BLOCK_GROUP_DATA) {
 		empty = 0;
-		strncpy(ret, "DATA", BG_FLAG_STRING_LEN);
+		strncpy_null(ret, "DATA", BG_FLAG_STRING_LEN);
 	}
 	if (flags & BTRFS_BLOCK_GROUP_METADATA) {
 		if (!empty)
@@ -209,7 +210,7 @@ static void bg_flags_to_str(u64 flags, char *ret)
 		 * Thus here we only fill @profile if it's not single.
 		 */
 		if (strncmp(name, "SINGLE", strlen("SINGLE")) != 0)
-			strncpy(profile, name, BG_FLAG_STRING_LEN);
+			strncpy_null(profile, name, BG_FLAG_STRING_LEN);
 	}
 	if (profile[0]) {
 		strncat(ret, "|", BG_FLAG_STRING_LEN);
@@ -1398,7 +1399,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 #define DEV_REPLACE_STRING_LEN				64
 #define CASE_DEV_REPLACE_MODE_ENTRY(dest, name)				\
 	case BTRFS_DEV_REPLACE_ITEM_CONT_READING_FROM_SRCDEV_MODE_##name: \
-		strncpy((dest), #name, DEV_REPLACE_STRING_LEN);		\
+		strncpy_null((dest), #name, DEV_REPLACE_STRING_LEN);	\
 		break;
 
 static void replace_mode_to_str(u64 flags, char *ret)
@@ -1415,7 +1416,7 @@ static void replace_mode_to_str(u64 flags, char *ret)
 
 #define CASE_DEV_REPLACE_STATE_ENTRY(dest, name)			\
 	case BTRFS_IOCTL_DEV_REPLACE_STATE_##name:			\
-		strncpy((dest), #name, DEV_REPLACE_STRING_LEN);		\
+		strncpy_null((dest), #name, DEV_REPLACE_STRING_LEN);	\
 		break;
 
 static void replace_state_to_str(u64 flags, char *ret)

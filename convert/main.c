@@ -1996,7 +1996,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 						error("invalid UUID: %s\n", optarg);
 						return 1;
 					}
-					strncpy(fsid, optarg, sizeof(fsid));
+					strncpy_null(fsid, optarg, sizeof(fsid));
 				}
 				break;
 			case GETOPT_VAL_HELP:

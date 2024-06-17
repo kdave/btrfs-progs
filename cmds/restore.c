@@ -1535,8 +1535,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		ret = 1;
 		goto out;
 	}
-	strncpy(dir_name, argv[optind + 1], sizeof dir_name);
-	dir_name[sizeof dir_name - 1] = 0;
+	strncpy_null(dir_name, argv[optind + 1], sizeof(dir_name));
 
 	/* Strip the trailing / on the dir name */
 	len = strlen(dir_name);
