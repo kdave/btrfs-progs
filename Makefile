@@ -878,6 +878,7 @@ tags: FORCE
 	@echo "    [TAGS]   $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
+		kernel-shared/*/*.[ch] \
 		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
 		libbtrfsutil/*.[ch]
 
