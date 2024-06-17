@@ -45,10 +45,9 @@
  * Returns the length of the escaped characters. Unprintable characters are
  * escaped as octals.
  */
-static int print_path_escaped(const char *path)
+static int print_path_escaped_len(const char *path, size_t path_len)
 {
 	size_t i;
-	size_t path_len = strlen(path);
 	int len = 0;
 
 	for (i = 0; i < path_len; i++) {
@@ -79,6 +78,11 @@ static int print_path_escaped(const char *path)
 		}
 	}
 	return len;
+}
+
+static int print_path_escaped(const char *path)
+{
+	return print_path_escaped_len(path, strlen(path));
 }
 
 enum print_mode {
@@ -251,24 +255,37 @@ static int print_clone(const char *path, u64 offset, u64 len,
 	char full_path[PATH_MAX];
 	int ret;
 
-	PATH_CAT_OR_RET("clone", full_path, r->full_subvol_path, clone_path,
-			ret);
-	return PRINT_DUMP(user, path, "clone",
-			  "offset=%llu len=%llu from=%s clone_offset=%llu",
-			  offset, len, full_path, clone_offset);
+	PATH_CAT_OR_RET("clone", full_path, r->full_subvol_path, clone_path, ret);
+	PRINT_DUMP_NO_NEWLINE(user, path, "clone", "offset=%llu len=%llu from=", offset, len);
+	print_path_escaped(full_path);
+	putchar(' ');
+	printf("clone_offset=%llu\n", clone_offset);
+	return 0;
 }
 
+/*
+ * Xattr names are like paths and can potentially contain special characters,
+ * xattr values can be arbitrary.
+ */
 static int print_set_xattr(const char *path, const char *name,
 			   const void *data, int len, void *user)
 {
-	return PRINT_DUMP(user, path, "set_xattr", "name=%s data=%.*s len=%d",
-			  name, len, (char *)data, len);
+	PRINT_DUMP_NO_NEWLINE(user, path, "set_xattr", "name=");
+	print_path_escaped(name);
+	putchar(' ');
+	print_path_escaped_len((char *)data, len);
+	putchar(' ');
+	printf("len=%d\n", len);
+	return 0;
 }
 
 static int print_remove_xattr(const char *path, const char *name, void *user)
 {
 
-	return PRINT_DUMP(user, path, "remove_xattr", "name=%s", name);
+	PRINT_DUMP_NO_NEWLINE(user, path, "remove_xattr", "name=");
+	print_path_escaped(name);
+	putchar('\n');
+	return 0;
 }
 
 static int print_truncate(const char *path, u64 size, void *user)
