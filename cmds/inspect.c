@@ -718,7 +718,7 @@ struct list_chunks_entry {
 	u64 flags;
 	u64 lnumber;
 	u64 used;
-	u32 number;
+	u64 pnumber;
 };
 
 struct list_chunks_ctx {
@@ -727,7 +727,19 @@ struct list_chunks_ctx {
 	struct list_chunks_entry *stats;
 };
 
-static int cmp_cse_devid_start(const void *va, const void *vb)
+static int cmp_cse_devid(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+
+	if (a->devid < b->devid)
+		return -1;
+	if (a->devid > b->devid)
+		return 1;
+	return 0;
+}
+
+static int cmp_cse_devid_pstart(const void *va, const void *vb)
 {
 	const struct list_chunks_entry *a = va;
 	const struct list_chunks_entry *b = vb;
@@ -739,38 +751,37 @@ static int cmp_cse_devid_start(const void *va, const void *vb)
 
 	if (a->start < b->start)
 		return -1;
-	if (a->start == b->start) {
-		error(
-	"chunks start on same offset in the same device: devid %llu start %llu",
-		    a->devid, a->start);
+	if (a->start == b->start)
 		return 0;
-	}
 	return 1;
 }
 
-static int cmp_cse_devid_lstart(const void *va, const void *vb)
+static int cmp_cse_pstart(const void *va, const void *vb)
 {
 	const struct list_chunks_entry *a = va;
 	const struct list_chunks_entry *b = vb;
 
-	if (a->devid < b->devid)
+	if (a->start < b->start)
 		return -1;
-	if (a->devid > b->devid)
-		return 1;
+	if (a->start == b->start)
+		return 0;
+	return 1;
+}
+
+static int cmp_cse_lstart(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
 
 	if (a->lstart < b->lstart)
 		return -1;
-	if (a->lstart == b->lstart) {
-		error(
-"chunks logically start on same offset in the same device: devid %llu start %llu",
-		    a->devid, a->lstart);
+	if (a->lstart == b->lstart)
 		return 0;
-	}
 	return 1;
 }
 
 /* Compare entries by usage percent, descending. */
-static int cmp_cse_devid_usage(const void *va, const void *vb)
+static int cmp_cse_usage(const void *va, const void *vb)
 {
 	const struct list_chunks_entry *a = va;
 	const struct list_chunks_entry *b = vb;
@@ -785,7 +796,7 @@ static int cmp_cse_devid_usage(const void *va, const void *vb)
 	return 0;
 }
 
-static int cmp_cse_length_physical(const void *va, const void *vb)
+static int cmp_cse_length(const void *va, const void *vb)
 {
 	const struct list_chunks_entry *a = va;
 	const struct list_chunks_entry *b = vb;
@@ -794,173 +805,126 @@ static int cmp_cse_length_physical(const void *va, const void *vb)
 		return -1;
 	if (a->length > b->length)
 		return 1;
-
-	if (a->start < b->start)
-		return -1;
-	if (a->start > b->start)
-		return 1;
 	return 0;
 }
 
-static int cmp_cse_length_logical(const void *va, const void *vb)
-{
-	const struct list_chunks_entry *a = va;
-	const struct list_chunks_entry *b = vb;
-
-	if (a->length < b->length)
-		return -1;
-	if (a->length > b->length)
-		return 1;
-
-	if (a->lstart < b->lstart)
-		return -1;
-	if (a->lstart > b->lstart)
-		return 1;
-	return 0;
-}
-
-static int print_list_chunks(struct list_chunks_ctx *ctx, const char* sortmode,
-			     unsigned unit_mode, bool with_usage, bool with_empty)
+static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
+			     unsigned unit_mode)
 {
 	u64 devid;
 	struct list_chunks_entry e;
 	struct string_table *table;
+	int col_count, col;
 	int i;
-	int chidx;
-	u64 lastend;
 	u64 number;
-	u32 gaps;
 	u32 tabidx;
-	static const struct sortdef sortit[] = {
-		{ .name = "pstart", .comp = (sort_cmp_t)cmp_cse_devid_start,
-		  .desc = "sort by physical srart offset, group by device" },
-		{ .name = "lstart", .comp = (sort_cmp_t)cmp_cse_devid_lstart,
-		  .desc = "sort by logical offset" },
-		{ .name = "usage", .comp = (sort_cmp_t)cmp_cse_devid_usage,
-		  .desc = "sort by chunk usage" },
-		{ .name = "length_p", .comp = (sort_cmp_t)cmp_cse_length_physical,
-		  .desc = "sort by lentgh, secondary by physical offset" },
-		{ .name = "length_l", .comp = (sort_cmp_t)cmp_cse_length_logical,
-		  .desc = "sort by lentgh, secondary by logical offset" },
-	};
 	enum {
 		CHUNK_SORT_PSTART,
 		CHUNK_SORT_LSTART,
 		CHUNK_SORT_USAGE,
-		CHUNK_SORT_LENGTH_P,
-		CHUNK_SORT_LENGTH_L,
+		CHUNK_SORT_LENGTH,
 		CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
 	};
-	unsigned int sort_mode;
+	static const struct sortdef sortit[] = {
+		{ .name = "devid", .comp = (sort_cmp_t)cmp_cse_devid,
+		  .desc = "sort by device id (default, with pstart)",
+		  .id = CHUNK_SORT_PSTART
+		},
+		{ .name = "pstart", .comp = (sort_cmp_t)cmp_cse_pstart,
+		  .desc = "sort by physical start offset",
+		  .id = CHUNK_SORT_PSTART
+		},
+		{ .name = "lstart", .comp = (sort_cmp_t)cmp_cse_lstart,
+		  .desc = "sort by logical offset",
+		  .id = CHUNK_SORT_LSTART
+		},
+		{ .name = "usage", .comp = (sort_cmp_t)cmp_cse_usage,
+		  .desc = "sort by chunk usage",
+		  .id = CHUNK_SORT_USAGE
+		},
+		{ .name = "length", .comp = (sort_cmp_t)cmp_cse_length,
+		  .desc = "sort by lentgh",
+		  .id = CHUNK_SORT_LENGTH
+		},
+		SORTDEF_END
+	};
+	const char *tmp;
 	struct compare comp;
+	int id;
 
-	if (!sortmode) {
-		sort_mode = CHUNK_SORT_DEFAULT;
-		sortmode = "pstart";
-	} else if (strcmp(sortmode, "pstart") == 0) {
-		sort_mode = CHUNK_SORT_PSTART;
-	} else if (strcmp(sortmode, "lstart") == 0) {
-		sort_mode = CHUNK_SORT_LSTART;
-	} else if (strcmp(sortmode, "usage") == 0) {
-		sort_mode = CHUNK_SORT_USAGE;
-		with_usage = true;
-	} else if (strcmp(sortmode, "length_p") == 0) {
-		sort_mode = CHUNK_SORT_LENGTH_P;
-	} else if (strcmp(sortmode, "length_l") == 0) {
-		sort_mode = CHUNK_SORT_LENGTH_L;
-	} else {
-		error("unknown sort mode: %s", sortmode);
-		exit(1);
-	}
+	compare_init(&comp, sortit);
+
+	tmp = sortmode;
+	do {
+		id = compare_parse_key_to_id(&comp, &tmp);
+		if (id == -1) {
+			error("unknown sort key: %s", tmp);
+			return 1;
+		}
+		compare_add_sort_id(&comp, id);
+	} while (id >= 0);
 
 	/*
 	 * Chunks are sorted logically as found by the ioctl, we need to sort
 	 * them once to find the physical ordering. This is the default mode.
 	 */
-	qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), cmp_cse_devid_start);
+	qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), cmp_cse_devid_pstart);
 	devid = 0;
 	number = 0;
-	gaps = 0;
-	lastend = 0;
 	for (i = 0; i < ctx->length; i++) {
 		e = ctx->stats[i];
 		if (e.devid != devid) {
 			devid = e.devid;
 			number = 0;
 		}
-		ctx->stats[i].number = number;
-		number++;
-		if (with_empty && sort_mode == CHUNK_SORT_PSTART && e.start != lastend)
-			gaps++;
-		lastend = e.start + e.length;
+		ctx->stats[i].pnumber = number++;
 	}
 
-	compare_init(&comp, sortit);
-	compare_add_sort_key(&comp, sortmode);
-	qsort_r(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_r_cmp_t)compare_cmp_multi,
-		&comp);
+	/* Skip additonal sort if nothing defined by user. */
+	if (comp.count > 0)
+		qsort_r(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
+			(sort_r_cmp_t)compare_cmp_multi, &comp);
 
-	/* Optional usage, two rows for header and separator, gaps */
-	table = table_create(7 + (int)with_usage, 2 + ctx->length + gaps);
+	col_count = 9;
+	/* Two rows for header and separator. */
+	table = table_create(col_count, 2 + ctx->length);
 	if (!table) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		return 1;
 	}
-	devid = 0;
+	/* Print header */
+	col = 0;
 	tabidx = 0;
-	chidx = 1;
+	table_printf(table, col++, tabidx, ">Devid");
+	table_printf(table, col++, tabidx, ">PNumber");
+	table_printf(table, col++, tabidx, ">Type/profile");
+	table_printf(table, col++, tabidx, ">PStart");
+	table_printf(table, col++, tabidx, ">Length");
+	table_printf(table, col++, tabidx, ">PEnd");
+	table_printf(table, col++, tabidx, ">LNumber");
+	table_printf(table, col++, tabidx, ">LStart");
+	table_printf(table, col++, tabidx, ">Usage%%");
+	for (int j = 0; j < col_count; j++)
+		table_printf(table, j, tabidx + 1, "*-");
+
+	tabidx = 2;
+	devid = 0;
 	for (i = 0; i < ctx->length; i++) {
 		e = ctx->stats[i];
-		/* TODO: print header and devid */
-		if (e.devid != devid) {
-			int j;
-
+		if (e.devid != devid)
 			devid = e.devid;
-			table_printf(table, 0, tabidx, ">Number");
-			table_printf(table, 1, tabidx, ">Type/profile");
-			table_printf(table, 2, tabidx, ">PStart");
-			table_printf(table, 3, tabidx, ">Length");
-			table_printf(table, 4, tabidx, ">PEnd");
-			table_printf(table, 5, tabidx, ">LNumber");
-			table_printf(table, 6, tabidx, ">LStart");
-			if (with_usage) {
-				table_printf(table, 7, tabidx, ">Usage%%");
-				table_printf(table, 7, tabidx + 1, "*-");
-			}
-			for (j = 0; j < 7; j++)
-				table_printf(table, j, tabidx + 1, "*-");
-
-			chidx = 1;
-			lastend = 0;
-			tabidx += 2;
-		}
-		if (with_empty && sort_mode == CHUNK_SORT_PSTART && e.start != lastend) {
-			table_printf(table, 0, tabidx, ">-");
-			table_printf(table, 1, tabidx, ">%s", "empty");
-			table_printf(table, 2, tabidx, ">-");
-			table_printf(table, 3, tabidx, ">%s",
-				pretty_size_mode(e.start - lastend, unit_mode));
-			table_printf(table, 4, tabidx, ">-");
-			table_printf(table, 5, tabidx, ">-");
-			table_printf(table, 6, tabidx, ">-");
-			if (with_usage)
-				table_printf(table, 7, tabidx, ">-");
-			tabidx++;
-		}
-
-		table_printf(table, 0, tabidx, ">%llu", chidx++);
-		table_printf(table, 1, tabidx, ">%10s/%-6s",
+		col = 0;
+		table_printf(table, col++, tabidx, ">%llu", e.devid);
+		table_printf(table, col++, tabidx, ">%llu", e.pnumber + 1);
+		table_printf(table, col++, tabidx, ">%10s/%-6s",
 				btrfs_group_type_str(e.flags),
 				btrfs_group_profile_str(e.flags));
-		table_printf(table, 2, tabidx, ">%s", pretty_size_mode(e.start, unit_mode));
-		table_printf(table, 3, tabidx, ">%s", pretty_size_mode(e.length, unit_mode));
-		table_printf(table, 4, tabidx, ">%s", pretty_size_mode(e.start + e.length, unit_mode));
-		table_printf(table, 5, tabidx, ">%llu", e.lnumber + 1);
-		table_printf(table, 6, tabidx, ">%s", pretty_size_mode(e.lstart, unit_mode));
-		if (with_usage)
-			table_printf(table, 7, tabidx, ">%6.2f",
-					(float)e.used / e.length * 100);
-		lastend = e.start + e.length;
+		table_printf(table, col++, tabidx, ">%s", pretty_size_mode(e.start, unit_mode));
+		table_printf(table, col++, tabidx, ">%s", pretty_size_mode(e.length, unit_mode));
+		table_printf(table, col++, tabidx, ">%s", pretty_size_mode(e.start + e.length, unit_mode));
+		table_printf(table, col++, tabidx, ">%llu", e.lnumber + 1);
+		table_printf(table, col++, tabidx, ">%s", pretty_size_mode(e.lstart, unit_mode));
+		table_printf(table, col++, tabidx, ">%6.2f", (float)e.used / e.length * 100);
 		tabidx++;
 	}
 	table_dump(table);
@@ -1019,8 +983,6 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	int i;
 	unsigned unit_mode;
 	char *sortmode = NULL;
-	bool with_usage = true;
-	bool with_empty = true;
 	const char *path;
 	struct list_chunks_ctx ctx = {
 		.length = 0,
@@ -1033,15 +995,10 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_SORT = GETOPT_VAL_FIRST,
-		       GETOPT_VAL_USAGE, GETOPT_VAL_NO_USAGE,
 		       GETOPT_VAL_EMPTY, GETOPT_VAL_NO_EMPTY
 		};
 		static const struct option long_options[] = {
 			{"sort", required_argument, NULL, GETOPT_VAL_SORT },
-			{"usage", no_argument, NULL, GETOPT_VAL_USAGE },
-			{"no-usage", no_argument, NULL, GETOPT_VAL_NO_USAGE },
-			{"empty", no_argument, NULL, GETOPT_VAL_EMPTY },
-			{"no-empty", no_argument, NULL, GETOPT_VAL_NO_EMPTY },
 			{NULL, 0, NULL, 0}
 		};
 
@@ -1053,14 +1010,6 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 		case GETOPT_VAL_SORT:
 			free(sortmode);
 			sortmode = strdup(optarg);
-			break;
-		case GETOPT_VAL_USAGE:
-		case GETOPT_VAL_NO_USAGE:
-			with_usage = (c == GETOPT_VAL_USAGE);
-			break;
-		case GETOPT_VAL_EMPTY:
-		case GETOPT_VAL_NO_EMPTY:
-			with_empty = (c == GETOPT_VAL_EMPTY);
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1136,7 +1085,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 				e->lstart = sh.offset;
 				e->length = item->length;
 				e->flags = item->type;
-				e->number = -1;
+				e->pnumber = -1;
 				while (devid > lnumber_size) {
 					u64 *tmp;
 					unsigned old_size = lnumber_size;
@@ -1152,13 +1101,9 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 					lnumber = tmp;
 				}
 				e->lnumber = lnumber[devid]++;
-				if (with_usage) {
-					if (used == (u64)-1)
-						used = fill_usage(fd, sh.offset);
-					e->used = used;
-				} else {
-					e->used = 0;
-				}
+				if (used == (u64)-1)
+					used = fill_usage(fd, sh.offset);
+				e->used = used;
 
 				ctx.length++;
 
@@ -1184,7 +1129,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 			break;
 	}
 
-	ret = print_list_chunks(&ctx, sortmode, unit_mode, with_usage, with_empty);
+	ret = print_list_chunks(&ctx, sortmode, unit_mode);
 	close(fd);
 
 out:
