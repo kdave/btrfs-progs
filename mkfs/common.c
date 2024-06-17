@@ -476,7 +476,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		btrfs_set_super_nr_global_roots(&super, 1);
 
 	if (cfg->label)
-		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
+		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE);
 
 	/* create the tree of root objects */
 	memset(buf->data, 0, cfg->nodesize);
