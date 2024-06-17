@@ -22,6 +22,8 @@
 int string_is_numerical(const char *str);
 int string_has_prefix(const char *str, const char *prefix);
 
+char *strncpy_null(char *dest, const char *src, size_t n);
+
 /*
  * Helpers prefixed by arg_* can exit if the argument is invalid and are supposed
  * to be used when parsing command line options where the immediate exit is valid

@@ -26,11 +26,6 @@ char *path_canonicalize(const char *path);
 int arg_copy_path(char *dest, const char *src, int destlen);
 int path_cat_out(char *out, const char *p1, const char *p2);
 int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3);
-
-char *__strncpy_null(char *dest, const char *src, size_t n);
-/* Helper to always get proper size of the destination string */
-#define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
-
 int path_is_block_device(const char *file);
 int path_is_a_mount_point(const char *file);
 int path_exists(const char *file);

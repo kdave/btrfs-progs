@@ -197,7 +197,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		char dstdir_dup[PATH_MAX];
 		char *token;
 
-		__strncpy_null(dstdir_dup, dstdir, sizeof(dstdir_dup));
+		strncpy_null(dstdir_dup, dstdir, sizeof(dstdir_dup));
 		if (dstdir_dup[0] == '/')
 			strcat(p, "/");
 
@@ -233,7 +233,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		struct btrfs_ioctl_vol_args_v2	args;
 
 		memset(&args, 0, sizeof(args));
-		__strncpy_null(args.name, newname, sizeof(args.name));
+		strncpy_null(args.name, newname, sizeof(args.name));
 		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
 		args.size = btrfs_qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
@@ -243,7 +243,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_qgroup_inherit *in
 		struct btrfs_ioctl_vol_args	args;
 
 		memset(&args, 0, sizeof(args));
-		__strncpy_null(args.name, newname, sizeof(args.name));
+		strncpy_null(args.name, newname, sizeof(args.name));
 		ret = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	}
 
@@ -737,7 +737,7 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		args.size = btrfs_qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
 	}
-	__strncpy_null(args.name, newname, sizeof(args.name));
+	strncpy_null(args.name, newname, sizeof(args.name));
 
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	if (res < 0) {

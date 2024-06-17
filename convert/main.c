@@ -1322,8 +1322,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (convert_flags & CONVERT_FLAG_COPY_LABEL) {
-		__strncpy_null(root->fs_info->super_copy->label,
-				cctx.label, BTRFS_LABEL_SIZE);
+		strncpy_null(root->fs_info->super_copy->label, cctx.label, BTRFS_LABEL_SIZE);
 		printf("Copy label '%s'\n", root->fs_info->super_copy->label);
 	} else if (convert_flags & CONVERT_FLAG_SET_LABEL) {
 		strcpy(root->fs_info->super_copy->label, fslabel);
@@ -1938,7 +1937,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 					"label too long, trimmed to %d bytes",
 						BTRFS_LABEL_SIZE - 1);
 				}
-				__strncpy_null(fslabel, optarg, BTRFS_LABEL_SIZE);
+				strncpy_null(fslabel, optarg, BTRFS_LABEL_SIZE);
 				break;
 			case 'L':
 				copylabel = CONVERT_FLAG_COPY_LABEL;

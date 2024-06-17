@@ -51,6 +51,7 @@
 #include "common/utils.h"
 #include "common/defs.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "common/units.h"
 
 static int btrfs_scan_done = 0;
@@ -237,7 +238,7 @@ int btrfs_register_one_device(const char *fname)
 		return -errno;
 	}
 	memset(&args, 0, sizeof(args));
-	__strncpy_null(args.name, fname, sizeof(args.name));
+	strncpy_null(args.name, fname, sizeof(args.name));
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	if (ret < 0) {
 		error("device scan failed on '%s': %m", fname);
@@ -468,7 +469,7 @@ int btrfs_scan_devices(int verbose)
 		if (!dev)
 			continue;
 		/* if we are here its definitely a btrfs disk*/
-		__strncpy_null(path, blkid_dev_devname(dev), sizeof(path));
+		strncpy_null(path, blkid_dev_devname(dev), sizeof(path));
 
 		if (stat(path, &dev_stat) < 0)
 			continue;
