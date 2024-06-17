@@ -266,8 +266,8 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			goto leave_with_error;
 		}
 	} else if (path_is_block_device(srcdev) > 0) {
-		strncpy((char *)start_args.start.srcdev_name, srcdev,
-			BTRFS_DEVICE_PATH_NAME_MAX);
+		strncpy_null((char *)start_args.start.srcdev_name, srcdev,
+			     BTRFS_DEVICE_PATH_NAME_MAX + 1);
 		start_args.start.srcdevid = 0;
 		srcdev_size = device_get_partition_size(srcdev);
 	} else {
@@ -292,8 +292,8 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		goto leave_with_error;
 	}
 
-	strncpy((char *)start_args.start.tgtdev_name, dstdev,
-		BTRFS_DEVICE_PATH_NAME_MAX);
+	strncpy_null((char *)start_args.start.tgtdev_name, dstdev,
+		     BTRFS_DEVICE_PATH_NAME_MAX + 1);
 	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
 			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
 			(discard ? PREP_DEVICE_DISCARD : 0) |

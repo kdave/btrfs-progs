@@ -30,6 +30,7 @@
 #include "kernel-shared/file-item.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
+#include "common/string-utils.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
 #include "convert/source-ext2.h"
@@ -638,7 +639,7 @@ static int ext2_copy_single_xattr(struct btrfs_trans_handle *trans,
 		data = databuf;
 		datalen = bufsize;
 	}
-	strncpy(namebuf, xattr_prefix_table[name_index], XATTR_NAME_MAX);
+	strncpy_null(namebuf, xattr_prefix_table[name_index], XATTR_NAME_MAX);
 	strncat(namebuf, EXT2_EXT_ATTR_NAME(entry), entry->e_name_len);
 	if (name_len + datalen > BTRFS_LEAF_DATA_SIZE(root->fs_info) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {

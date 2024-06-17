@@ -1361,8 +1361,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				source_dir = strdup(optarg);
 				break;
 			case 'U':
-				strncpy(fs_uuid, optarg,
-					BTRFS_UUID_UNPARSED_SIZE - 1);
+				strncpy_null(fs_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
 			case 'K':
 				opt_discard = false;
@@ -1371,7 +1370,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				bconf_be_quiet();
 				break;
 			case GETOPT_VAL_DEVICE_UUID:
-				strncpy(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE - 1);
+				strncpy_null(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;

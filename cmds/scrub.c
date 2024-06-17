@@ -1437,7 +1437,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 					sock_path, sizeof(sock_path));
 		/* ignore EOVERFLOW, try using a shorter path for the socket */
 		addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
-		strncpy(addr.sun_path, sock_path, sizeof(addr.sun_path) - 1);
+		strncpy_null(addr.sun_path, sock_path, sizeof(addr.sun_path));
 		ret = bind(prg_fd, (struct sockaddr *)&addr, sizeof(addr));
 		if (ret != -1 || errno != EADDRINUSE)
 			break;
