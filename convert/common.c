@@ -148,7 +148,7 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 	btrfs_set_super_cache_generation(&super, -1);
 	btrfs_set_super_incompat_flags(&super, cfg->features.incompat_flags);
 	if (cfg->label)
-		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
+		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE);
 
 	/* Sys chunk array will be re-initialized at chunk tree init time */
 	super.sys_chunk_array_size = 0;
