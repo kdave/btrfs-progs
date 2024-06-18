@@ -224,14 +224,25 @@ out:
  * item.
  */
 #define CSUM_CHANGE_BYTES_THRESHOLD	(SZ_2M)
+
+static unsigned int calc_csum_change_nr_items(struct btrfs_fs_info *fs_info,
+					      u16 new_csum_type)
+{
+	const u32 new_csum_size = btrfs_csum_type_size(new_csum_type);
+	const u32 csum_item_size = CSUM_CHANGE_BYTES_THRESHOLD /
+				   fs_info->sectorsize * new_csum_size;
+
+	return round_up(csum_item_size, fs_info->nodesize) / fs_info->nodesize * 2;
+}
+
 static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 start,
 					 u16 new_csum_type)
 {
+	const unsigned int nr_items = calc_csum_change_nr_items(fs_info, new_csum_type);
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
 	struct btrfs_trans_handle *trans;
 	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
-	const u32 new_csum_size = btrfs_csum_type_size(new_csum_type);
 	void *csum_buffer;
 	u64 converted_bytes = 0;
 	u64 last_csum;
@@ -248,9 +259,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 	if (!csum_buffer)
 		return -ENOMEM;
 
-	trans = btrfs_start_transaction(csum_root,
-			CSUM_CHANGE_BYTES_THRESHOLD / fs_info->sectorsize *
-			new_csum_size);
+	trans = btrfs_start_transaction(csum_root, nr_items);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
@@ -306,9 +315,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 				return -EUCLEAN;
 			if (ret < 0)
 				goto out;
-			trans = btrfs_start_transaction(csum_root,
-					CSUM_CHANGE_BYTES_THRESHOLD /
-					fs_info->sectorsize * new_csum_size);
+			trans = btrfs_start_transaction(csum_root, nr_items);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
 				goto out;
