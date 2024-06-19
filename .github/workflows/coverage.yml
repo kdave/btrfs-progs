@@ -44,7 +44,7 @@ jobs:
       - name: Generate lcov results
         run: |
           lcov -c -d . -o lcov-info
-          genhtml -o lcov-out lcov-info
+          genhtml --rc geninfo_unexecuted_blocks=1 -o lcov-out lcov-info
       - name: Save lcov results
         uses: actions/upload-artifact@v4
         with:
