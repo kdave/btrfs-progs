@@ -406,6 +406,13 @@ check_regular_build()
 	fi
 }
 
+check_injection()
+{
+	if ! _test_config "INJECT"; then
+		_not_run "This test requires error injection support (make D=1)"
+	fi
+}
+
 check_prereq()
 {
 	# Internal tools for testing, not shipped with the package
