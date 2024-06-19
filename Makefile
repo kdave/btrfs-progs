@@ -556,7 +556,7 @@ test-mkfs: btrfs mkfs.btrfs
 	@echo "  TEST     mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
-test-fuzz: btrfs btrfs-image
+test-fuzz: btrfs btrfs-image btrfs-sb-mod
 	@echo "  TEST     fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 

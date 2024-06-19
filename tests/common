@@ -413,7 +413,7 @@ check_prereq()
 {
 	# Internal tools for testing, not shipped with the package
 	case "$1" in
-	btrfs-corrupt-block|btrfs-find-root|btrfs-select-super|fssum)
+	btrfs-corrupt-block|btrfs-find-root|btrfs-select-super|fssum|btrfs-sb-mod)
 		if ! [ -f "$INTERNAL_BIN/$1" ]; then
 			_fail "Failed prerequisites: $INTERNAL_BIN/$1";
 		fi
