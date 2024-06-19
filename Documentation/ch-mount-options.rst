@@ -335,13 +335,34 @@ rescan_uuid_tree
 rescue
         (since: 5.9)
 
-        Modes allowing mount with damaged filesystem structures.
+        Modes allowing mount with damaged filesystem structures, all requires
+	the filesystem to be mounted read-only and doesn't allow remount to read-write.
 
-        * *usebackuproot* (since: 5.9, replaces standalone option *usebackuproot*)
-        * *nologreplay* (since: 5.9, replaces standalone option *nologreplay*)
+        * *usebackuproot* (since 5.9)
+
+	  Try to use backup root slots inside super block.
+	  Replaces standalone option *usebackuproot*
+
+        * *nologreplay* (since 5.9)
+
+	  Do not replay any dirty logs.
+	  Replaces standalone option *nologreplay*
+
         * *ignorebadroots*, *ibadroots* (since: 5.11)
+
+	  Ignore bad tree roots, greatly improve the chance for data salvage.
+
         * *ignoredatacsums*, *idatacsums* (since: 5.11)
+
+	  Ignore data checksum verification.
+
+	* *ignoremetacsums*, *imetacsums* (since 6.12)
+
+	  Ignore metadata checksum verification, useful for interrupted checksum conversion.
+
         * *all* (since: 5.9)
+
+	  Enable all supported rescue options.
 
 skip_balance
         (since: 3.3, default: off)
