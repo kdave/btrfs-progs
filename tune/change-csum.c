@@ -371,29 +371,48 @@ static int generate_new_data_csums(struct btrfs_fs_info *fs_info, u16 new_csum_t
 	return generate_new_data_csums_range(fs_info, 0, new_csum_type);
 }
 
+/* After deleting/modifying this many leaves, commit a transaction. */
+#define CSUM_CHANGE_LEAVES_THRESHOLD	32
+
 static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
-	struct btrfs_trans_handle *trans;
+	struct btrfs_trans_handle *trans = 0;
 	struct btrfs_path path = { 0 };
 	struct btrfs_key last_key;
+	unsigned int deleted_leaves = 0;
 	int ret;
 
 	last_key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 	last_key.type = BTRFS_EXTENT_CSUM_KEY;
 	last_key.offset = (u64)-1;
 
-	trans = btrfs_start_transaction(csum_root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error("failed to start transaction to delete old data csums: %m");
-		return ret;
-	}
 	while (true) {
 		int start_slot;
 		int nr;
 
+		if (deleted_leaves >= CSUM_CHANGE_LEAVES_THRESHOLD) {
+			UASSERT(trans);
+			ret = btrfs_commit_transaction(trans, csum_root);
+			if (ret < 0) {
+				errno = -ret;
+				error_msg(ERROR_MSG_COMMIT_TRANS,
+					  "deleting old data csums: %m");
+				return ret;
+			}
+			trans = NULL;
+			deleted_leaves = 0;
+		}
+		if (!trans) {
+			trans = btrfs_start_transaction(csum_root, 1);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS,
+					  "deleting old data csums: %m");
+				return ret;
+			}
+		}
 		ret = btrfs_search_slot(trans, csum_root, &last_key, &path, -1, 1);
 		if (ret < 0) {
 			errno = -ret;
@@ -428,6 +447,7 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 			break;
 		}
 		btrfs_release_path(&path);
+		deleted_leaves++;
 	}
 	btrfs_release_path(&path);
 	if (ret < 0)
@@ -445,9 +465,10 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
-	struct btrfs_trans_handle *trans;
+	struct btrfs_trans_handle *trans = NULL;
 	struct btrfs_path path = { 0 };
 	struct btrfs_key last_key;
+	unsigned int changed_leaves = 0;
 	u64 super_flags;
 	int ret = 0;
 
@@ -455,17 +476,32 @@ static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 	last_key.type = BTRFS_EXTENT_CSUM_KEY;
 	last_key.offset = (u64)-1;
 
-	trans = btrfs_start_transaction(csum_root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error("failed to start transaction to change csum objectids: %m");
-		return ret;
-	}
 	while (true) {
 		struct btrfs_key found_key;
 		int nr;
 
+		if (changed_leaves >= CSUM_CHANGE_LEAVES_THRESHOLD) {
+			UASSERT(trans);
+			ret = btrfs_commit_transaction(trans, csum_root);
+			if (ret < 0) {
+				errno = -ret;
+				error_msg(ERROR_MSG_COMMIT_TRANS,
+					  "changing data csum objectid: %m");
+				return ret;
+			}
+			trans = NULL;
+			changed_leaves = 0;
+		}
+		if (!trans) {
+			trans = btrfs_start_transaction(csum_root, 1);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS,
+					  "changing data csum objectid: %m");
+				return ret;
+			}
+		}
 		ret = btrfs_search_slot(trans, csum_root, &last_key, &path, 0, 1);
 		if (ret < 0)
 			goto out;
