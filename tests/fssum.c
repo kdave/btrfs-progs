@@ -524,6 +524,7 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 	int ret;
 	int fd;
 	int excl;
+	int error = 0;
 	sum_file_data_t sum_file_data = flags[FLAG_STRUCTURE] ?
 			sum_file_data_strict : sum_file_data_permissive;
 	struct stat dir_st;
@@ -542,18 +543,22 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
 			continue;
 		if (entries == alloclen) {
+			void *tmp;
+
 			alloclen += CHUNKS;
-			namelist = realloc(namelist,
-					   alloclen * sizeof(*namelist));
-			if (!namelist) {
-				fprintf(stderr, "malloc failed\n");
-				exit(-1);
+			tmp = realloc(namelist, alloclen * sizeof(*namelist));
+			if (!tmp) {
+				fprintf(stderr, "realloc failed\n");
+				error = 1;
+				goto free_namelist;
 			}
+			namelist = tmp;
 		}
 		namelist[entries] = strdup(de->d_name);
 		if (!namelist[entries]) {
-			fprintf(stderr, "malloc failed\n");
-			exit(-1);
+			fprintf(stderr, "stdup failed\n");
+			error = 1;
+			goto free_namelist;
 		}
 		++entries;
 	}
@@ -577,13 +582,15 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		ret = fchdir(dirfd);
 		if (ret == -1) {
 			perror("fchdir");
-			exit(-1);
+			error = 1;
+			goto free_namelist;
 		}
 		ret = lstat(namelist[i], &st);
 		if (ret) {
 			fprintf(stderr, "stat failed for %s/%s: %m\n",
 				path_prefix, path);
-			exit(-1);
+			error = 1;
+			goto free_namelist;
 		}
 
 		/* We are crossing into a different subvol, skip this subtree. */
@@ -704,6 +711,14 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 next:
 		free(path);
 	}
+
+free_namelist:
+	closedir(d);
+	for (i = 0; i < entries; i++)
+		free(namelist[i]);
+	free(namelist);
+	if (error)
+		exit(-1);
 }
 
 int
