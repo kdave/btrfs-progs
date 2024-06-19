@@ -314,8 +314,8 @@ ifeq ("$(origin D)", "command line")
 endif
 
 ifneq (,$(findstring gcov,$(D)))
-  DEBUG_CFLAGS_INTERNAL += -fprofile-arcs -ftest-coverage --coverage
-  DEBUG_LDFLAGS_INTERNAL += -fprofile-generate --coverage
+  DEBUG_CFLAGS_INTERNAL += -fprofile-arcs -fprofile-update=atomic -ftest-coverage --coverage
+  DEBUG_LDFLAGS_INTERNAL += -fprofile-generate -fprofile-update=atomic --coverage
 endif
 
 ifneq (,$(findstring verbose,$(D)))
