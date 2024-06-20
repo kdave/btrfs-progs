@@ -669,42 +669,11 @@ static void print_free_space_header(struct extent_buffer *leaf, int slot)
 	       (unsigned long long)btrfs_free_space_bitmaps(leaf, header));
 }
 
-struct raid_encoding_map {
-	u8 encoding;
-	char name[16];
-};
-
-static const struct raid_encoding_map raid_map[] = {
-	{ BTRFS_STRIPE_DUP,	"DUP" },
-	{ BTRFS_STRIPE_RAID0,	"RAID0" },
-	{ BTRFS_STRIPE_RAID1,	"RAID1" },
-	{ BTRFS_STRIPE_RAID1C3,	"RAID1C3" },
-	{ BTRFS_STRIPE_RAID1C4, "RAID1C4" },
-	{ BTRFS_STRIPE_RAID5,	"RAID5" },
-	{ BTRFS_STRIPE_RAID6,	"RAID6" },
-	{ BTRFS_STRIPE_RAID10,	"RAID10" }
-};
-
-static const char *stripe_encoding_name(u8 encoding)
-{
-	for (int i = 0; i < ARRAY_SIZE(raid_map); i++) {
-		if (raid_map[i].encoding == encoding)
-			return raid_map[i].name;
-	}
-
-	return "UNKNOWN";
-}
-
 static void print_raid_stripe_key(struct extent_buffer *eb,
 				  u32 item_size, struct btrfs_stripe_extent *stripe)
 {
-	int num_stripes;
-	u8 encoding = btrfs_stripe_extent_encoding(eb, stripe);
+	int num_stripes = item_size / sizeof(struct btrfs_raid_stride);
 
-	num_stripes = (item_size - offsetof(struct btrfs_stripe_extent, strides)) /
-		      sizeof(struct btrfs_raid_stride);
-
-	printf("\t\t\tencoding: %s\n", stripe_encoding_name(encoding));
 	for (int i = 0; i < num_stripes; i++)
 		printf("\t\t\tstripe %d devid %llu physical %llu\n", i,
 		       (unsigned long long)btrfs_raid_stride_devid_nr(eb, stripe, i),
