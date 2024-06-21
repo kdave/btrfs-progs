@@ -57,9 +57,16 @@ static const char * const cmd_subvolume_list_usage[] = {
 	"List subvolumes and snapshots in the filesystem.",
 	"",
 	"Path filtering:",
-	OPTLINE("-o", "print only subvolumes below specified path"),
-	OPTLINE("-a", "print all the subvolumes in the filesystem and "
-		"distinguish absolute and relative path with respect to the given <path>"),
+	OPTLINE("-o", "print only the immediate children subvolumes of the "
+		"subvolume containing <path>"),
+	OPTLINE("-a", "print all subvolumes in the filesystem other than the "
+		"root subvolume, and prefix subvolumes that are not an "
+		"immediate child of the subvolume containing <path> with "
+		"\"<FS_TREE>/\""),
+	"",
+	"If none of these are given, print all subvolumes other than the root",
+	"subvolume relative to the subvolume containing <path> if below it,",
+	"otherwise relative to the root of the filesystem.",
 	"",
 	"Field selection:",
 	OPTLINE("-p", "print parent ID"),
