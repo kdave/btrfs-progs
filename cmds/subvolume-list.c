@@ -59,6 +59,13 @@ static const char * const cmd_subvolume_list_usage[] = {
 	"List subvolumes and snapshots in the filesystem.",
 	"",
 	"Path filtering:",
+	OPTLINE("-O", "print all subvolumes below <path> relative to <path>"),
+	OPTLINE("-A", "print all subvolumes in the filesystem relative to the "
+		"root of the filesystem"),
+	"",
+	"You likely always want either -O or -A. The -o and -a options and the",
+	"default are confusing and only kept for backwards compatibility.",
+	"",
 	OPTLINE("-o", "print only the immediate children subvolumes of the "
 		"subvolume containing <path>"),
 	OPTLINE("-a", "print all subvolumes in the filesystem other than the "
@@ -866,9 +873,11 @@ out:
 	return subvols;
 }
 
-static struct subvol_list *btrfs_list_subvols(int fd,
+static struct subvol_list *btrfs_list_subvols(int fd, bool include_top,
+				bool below,
 				struct btrfs_list_filter_set *filter_set)
 {
+	u64 top_id = below ? 0 : BTRFS_FS_TREE_OBJECTID;
 	struct subvol_list *subvols;
 	size_t capacity = 4;
 	struct btrfs_util_subvolume_iterator *iter;
@@ -883,13 +892,26 @@ static struct subvol_list *btrfs_list_subvols(int fd,
 	}
 	subvols->num = 0;
 
-	err = btrfs_util_create_subvolume_iterator_fd(fd,
-						      BTRFS_FS_TREE_OBJECTID, 0,
-						      &iter);
+	err = btrfs_util_create_subvolume_iterator_fd(fd, top_id, 0, &iter);
 	if (err) {
 		iter = NULL;
 		error_btrfs_util(err);
 		goto out;
+	}
+
+	if (include_top) {
+		err = btrfs_util_subvolume_info_fd(fd, top_id,
+						   &subvols->subvols[0].info);
+		if (err) {
+			error_btrfs_util(err);
+			goto out;
+		}
+		subvols->subvols[0].path = strdup("");
+		if (!subvols->subvols[0].path) {
+			error("out of memory");
+			goto out;
+		}
+		subvols->num++;
 	}
 
 	for (;;) {
@@ -945,14 +967,15 @@ out:
 
 static int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       enum btrfs_list_layout layout)
+		       enum btrfs_list_layout layout, bool include_top,
+		       bool below)
 {
 	struct subvol_list *subvols;
 
 	if (filter_set->only_deleted)
 		subvols = btrfs_list_deleted_subvols(fd, filter_set);
 	else
-		subvols = btrfs_list_subvols(fd, filter_set);
+		subvols = btrfs_list_subvols(fd, include_top, below, filter_set);
 	if (!subvols)
 		return -1;
 
@@ -1097,8 +1120,10 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 	char *top_path = NULL;
 	int ret = -1, uerr = 0;
 	char *subvol;
+	bool is_list_below = false;
 	bool is_list_all = false;
-	bool is_only_in_path = false;
+	bool is_old_a_option = false;
+	bool is_old_o_option = false;
 	enum btrfs_list_layout layout = BTRFS_LIST_LAYOUT_DEFAULT;
 
 	filter_set = btrfs_list_alloc_filter_set();
@@ -1113,7 +1138,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		};
 
 		c = getopt_long(argc, argv,
-				    "acdgopqsurRG:C:t", long_options, NULL);
+				    "acdgopqsurRG:C:tOA", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -1122,7 +1147,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 			btrfs_list_setup_print_column(BTRFS_LIST_PARENT);
 			break;
 		case 'a':
-			is_list_all = true;
+			is_old_a_option = true;
 			break;
 		case 'c':
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
@@ -1134,7 +1159,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
 			break;
 		case 'o':
-			is_only_in_path = true;
+			is_old_o_option = true;
 			break;
 		case 't':
 			layout = BTRFS_LIST_LAYOUT_TABLE;
@@ -1187,6 +1212,12 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 				goto out;
 			}
 			break;
+		case 'O':
+			is_list_below = true;
+			break;
+		case 'A':
+			is_list_all = true;
+			break;
 
 		default:
 			uerr = 1;
@@ -1196,6 +1227,19 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 
 	if (check_argc_exact(argc - optind, 1))
 		goto out;
+
+	/*
+	 * The path filtering options and -d don't make sense together. For -O
+	 * and -A, we're strict about not combining them with each other or with
+	 * -o, -a, or -d. The -o, -a, and -d options are older and have never
+	 * been restricted, so although they produce dubious results when
+	 * combined, we allow it for backwards compatibility.
+	 */
+	if (is_list_below + is_list_all +
+	    (is_old_a_option || is_old_o_option || filter_set->only_deleted) > 1) {
+		error("-O, -A, -o, -a, and -d are mutually exclusive");
+		goto out;
+	}
 
 	subvol = argv[optind];
 	fd = btrfs_open_dir(subvol);
@@ -1216,15 +1260,15 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		goto out;
 	}
 
-	if (is_list_all)
+	if (is_old_a_option)
 		btrfs_list_setup_filter(&filter_set,
 					BTRFS_LIST_FILTER_FULL_PATH,
 					top_id);
-	else if (is_only_in_path)
+	else if (is_old_o_option)
 		btrfs_list_setup_filter(&filter_set,
 					BTRFS_LIST_FILTER_TOPID_EQUAL,
 					top_id);
-	else if (!filter_set->only_deleted) {
+	else if (!is_list_below && !is_list_all && !filter_set->only_deleted) {
 		enum btrfs_util_error err;
 
 		err = btrfs_util_subvolume_get_path_fd(fd, top_id, &top_path);
@@ -1241,13 +1285,16 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 	/* by default we shall print the following columns*/
 	btrfs_list_setup_print_column(BTRFS_LIST_OBJECTID);
 	btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
-	btrfs_list_setup_print_column(BTRFS_LIST_TOP_LEVEL);
+	btrfs_list_setup_print_column(is_list_below || is_list_all ?
+				      BTRFS_LIST_PARENT : BTRFS_LIST_TOP_LEVEL);
 	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 
 	if (bconf.output_format == CMD_FORMAT_JSON)
 		layout = BTRFS_LIST_LAYOUT_JSON;
 
-	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set, layout);
+	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set, layout,
+				       is_list_below || is_list_all,
+				       is_list_below);
 
 out:
 	free(top_path);

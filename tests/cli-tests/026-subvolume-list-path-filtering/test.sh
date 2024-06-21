@@ -114,5 +114,43 @@ EOF
 expect_subvol_list_paths -o a/b/c/d << EOF
 EOF
 
+### -A ###
+
+# Paths are always relative to the root of the filesystem.
+for path in . a/b a/b/c; do
+	expect_subvol_list_paths -A "$path" << EOF
+
+a
+a/b/c
+a/b/c/d
+a/e
+EOF
+done
+
+### -O ###
+
+# Paths are relative to the given path.
+expect_subvol_list_paths -O . << EOF
+
+a
+a/b/c
+a/b/c/d
+a/e
+EOF
+
+expect_subvol_list_paths -O a << EOF
+
+b/c
+b/c/d
+e
+EOF
+
+expect_subvol_list_paths -O a/e << EOF
+
+EOF
+
+run_mustfail "btrfs subvol list -O allowed non-subvolume" \
+	$SUDO_HELPER "$TOP/btrfs" subvolume list -O a/b
+
 cd ..
 run_check_umount_test_dev
