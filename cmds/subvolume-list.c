@@ -193,7 +193,6 @@ enum btrfs_list_column_enum {
 };
 
 enum btrfs_list_filter_enum {
-	BTRFS_LIST_FILTER_ROOTID,
 	BTRFS_LIST_FILTER_SNAPSHOT_ONLY,
 	BTRFS_LIST_FILTER_FLAGS,
 	BTRFS_LIST_FILTER_GEN,
@@ -206,7 +205,6 @@ enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_CGEN_MORE,
 	BTRFS_LIST_FILTER_TOPID_EQUAL,
 	BTRFS_LIST_FILTER_FULL_PATH,
-	BTRFS_LIST_FILTER_BY_PARENT,
 	BTRFS_LIST_FILTER_DELETED,
 	BTRFS_LIST_FILTER_MAX,
 };
@@ -932,11 +930,6 @@ static int list_subvol_search(int fd, struct rb_root *root_lookup)
 	return 0;
 }
 
-static int filter_by_rootid(struct root_info *ri, u64 data)
-{
-	return ri->root_id == data;
-}
-
 static int filter_snapshot(struct root_info *ri, u64 data)
 {
 	return !!ri->root_offset;
@@ -1005,18 +998,12 @@ static int filter_full_path(struct root_info *ri, u64 data)
 	return 1;
 }
 
-static int filter_by_parent(struct root_info *ri, u64 data)
-{
-	return !uuid_compare(ri->puuid, (u8 *)(unsigned long)data);
-}
-
 static int filter_deleted(struct root_info *ri, u64 data)
 {
 	return ri->deleted;
 }
 
 static btrfs_list_filter_func all_filter_funcs[] = {
-	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
 	[BTRFS_LIST_FILTER_FLAGS]		= filter_flags,
 	[BTRFS_LIST_FILTER_GEN_MORE]		= filter_gen_more,
@@ -1027,7 +1014,6 @@ static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_CGEN_EQUAL]          = filter_cgen_equal,
 	[BTRFS_LIST_FILTER_TOPID_EQUAL]		= filter_topid_equal,
 	[BTRFS_LIST_FILTER_FULL_PATH]		= filter_full_path,
-	[BTRFS_LIST_FILTER_BY_PARENT]		= filter_by_parent,
 	[BTRFS_LIST_FILTER_DELETED]		= filter_deleted,
 };
 
