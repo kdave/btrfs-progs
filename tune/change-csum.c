@@ -395,6 +395,13 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 		int nr;
 
 		ret = btrfs_search_slot(trans, csum_root, &last_key, &path, -1, 1);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to search the last old csum item: %m");
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		assert(ret > 0);
 
 		nr = btrfs_header_nritems(path.nodes[0]);
 		/* No item left (empty csum tree), exit. */
