@@ -47,7 +47,6 @@
 #define INODE_MODE_ERROR	(1U << 25)	/* Bad inode mode */
 #define INVALID_GENERATION	(1U << 26)	/* Generation is too new */
 #define SUPER_BYTES_USED_ERROR	(1U << 27)	/* Super bytes_used is invalid */
-#define RAM_BYTES_MISMATCH	(1U << 27)	/* Non-compressed extent has wrong ram_bytes */
 
 /*
  * Error bit for low memory mode check.

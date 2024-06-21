@@ -2018,61 +2018,6 @@ static int check_file_extent_inline(struct btrfs_root *root,
 	return err;
 }
 
-static int repair_ram_bytes_mismatch(struct btrfs_root *root,
-				     struct btrfs_path *path)
-{
-	struct btrfs_trans_handle *trans;
-	struct btrfs_key key;
-	struct btrfs_file_extent_item *fi;
-	u64 disk_num_bytes;
-	int recover_ret;
-	int ret;
-
-	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	btrfs_release_path(path);
-	UASSERT(key.type == BTRFS_EXTENT_DATA_KEY);
-
-	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error_msg(ERROR_MSG_START_TRANS, "%m");
-		return ret;
-	}
-
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	/* Not really possible. */
-	if (ret > 0) {
-		ret = -ENOENT;
-		btrfs_release_path(path);
-		goto recover;
-	}
-
-	if (ret < 0)
-		goto recover;
-
-	fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			    struct btrfs_file_extent_item);
-	disk_num_bytes = btrfs_file_extent_disk_num_bytes(path->nodes[0], fi);
-	btrfs_set_file_extent_ram_bytes(path->nodes[0], fi, disk_num_bytes);
-	btrfs_mark_buffer_dirty(path->nodes[0]);
-
-	ret = btrfs_commit_transaction(trans, root);
-	if (ret < 0) {
-		errno = -ret;
-		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
-	} else {
-		printf(
-	"Successfully repaired ram_bytes for non-compressed extent at root %llu ino %llu file_pos %llu\n",
-			root->objectid, key.objectid, key.offset);
-	}
-	return ret;
-recover:
-	recover_ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	UASSERT(recover_ret == 0);
-	return ret;
-}
-
 /*
  * Check file extent datasum/hole, update the size of the file extents,
  * check and update the last offset of the file extent.
@@ -2098,7 +2043,6 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	u64 csum_found;		/* In byte size, sectorsize aligned */
 	u64 search_start;	/* Logical range start we search for csum */
 	u64 search_len;		/* Logical range len we search for csum */
-	u64 ram_bytes;
 	u64 gen;
 	u64 super_gen;
 	unsigned int extent_type;
@@ -2133,7 +2077,6 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	extent_num_bytes = btrfs_file_extent_num_bytes(node, fi);
 	extent_offset = btrfs_file_extent_offset(node, fi);
 	compressed = btrfs_file_extent_compression(node, fi);
-	ram_bytes = btrfs_file_extent_ram_bytes(node, fi);
 	is_hole = (disk_bytenr == 0) && (disk_num_bytes == 0);
 	super_gen = btrfs_super_generation(gfs_info->super_copy);
 
@@ -2144,18 +2087,6 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		err |= INVALID_GENERATION;
 	}
 
-	if (!compressed && disk_bytenr && disk_num_bytes != ram_bytes) {
-		error(
-		"minor ram_bytes mismatch for non-compressed data extents, have %llu expect %llu",
-		      ram_bytes, disk_num_bytes);
-		if (opt_check_repair) {
-			ret = repair_ram_bytes_mismatch(root, path);
-			if (ret < 0)
-				err |= RAM_BYTES_MISMATCH;
-		} else {
-			err |= RAM_BYTES_MISMATCH;
-		}
-	}
 	/*
 	 * Check EXTENT_DATA csum
 	 *
