@@ -98,7 +98,6 @@ static const char * const cmd_subvolume_list_usage[] = {
 enum btrfs_list_layout {
 	BTRFS_LIST_LAYOUT_DEFAULT = 0,
 	BTRFS_LIST_LAYOUT_TABLE,
-	BTRFS_LIST_LAYOUT_RAW,
 	BTRFS_LIST_LAYOUT_JSON
 };
 
@@ -1202,23 +1201,6 @@ static void print_subvolume_column(struct root_info *subv,
 	}
 }
 
-static void print_one_subvol_info_raw(struct root_info *subv,
-		const char *raw_prefix)
-{
-	int i;
-
-	for (i = 0; i < BTRFS_LIST_ALL; i++) {
-		if (!btrfs_list_columns[i].need_print)
-			continue;
-
-		if (raw_prefix)
-			pr_verbose(LOG_DEFAULT, "%s",raw_prefix);
-
-		print_subvolume_column(subv, i);
-	}
-	pr_verbose(LOG_DEFAULT, "\n");
-}
-
 static void print_one_subvol_info_table(struct root_info *subv)
 {
 	int i;
@@ -1349,7 +1331,7 @@ static void print_one_subvol_info_json(struct format_ctx *fctx,
 
 
 static void print_all_subvol_info(struct rb_root *sorted_tree,
-		  enum btrfs_list_layout layout, const char *raw_prefix)
+		  enum btrfs_list_layout layout)
 {
 	struct rb_node *n;
 	struct root_info *entry;
@@ -1376,9 +1358,6 @@ static void print_all_subvol_info(struct rb_root *sorted_tree,
 			break;
 		case BTRFS_LIST_LAYOUT_TABLE:
 			print_one_subvol_info_table(entry);
-			break;
-		case BTRFS_LIST_LAYOUT_RAW:
-			print_one_subvol_info_raw(entry, raw_prefix);
 			break;
 		case BTRFS_LIST_LAYOUT_JSON:
 			print_one_subvol_info_json(&fctx, entry);
@@ -1425,8 +1404,7 @@ static int btrfs_list_subvols(int fd, struct rb_root *root_lookup)
 
 static int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       enum btrfs_list_layout layout, int full_path,
-		       const char *raw_prefix)
+		       enum btrfs_list_layout layout, int full_path)
 {
 	struct rb_root root_lookup;
 	struct rb_root root_sort;
@@ -1448,7 +1426,7 @@ static int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter
 	filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
-	print_all_subvol_info(&root_sort, layout, raw_prefix);
+	print_all_subvol_info(&root_sort, layout);
 	rb_free_nodes(&root_lookup, free_root_info);
 
 	return 0;
@@ -1726,7 +1704,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		layout = BTRFS_LIST_LAYOUT_JSON;
 
 	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
-			layout, !is_list_all && !is_only_in_path, NULL);
+			layout, !is_list_all && !is_only_in_path);
 
 out:
 	close(fd);
