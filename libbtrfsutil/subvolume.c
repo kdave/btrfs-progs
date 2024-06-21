@@ -451,8 +451,10 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 		if (err)
 			return err;
 
-		if (!is_root())
-			return get_subvolume_info_unprivileged(fd, subvol);
+		err = get_subvolume_info_unprivileged(fd, subvol);
+		if (err != BTRFS_UTIL_ERROR_GET_SUBVOL_INFO_FAILED ||
+		    errno != ENOTTY)
+			return err;
 
 		err = btrfs_util_subvolume_id_fd(fd, &id);
 		if (err)
