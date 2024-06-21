@@ -561,3 +561,21 @@ class TestSubvolume(BtrfsTestCase):
                 self._test_subvolume_iterator_race()
         finally:
             os.chdir(pwd)
+
+    def test_subvolume_iterator_fd_unprivileged(self):
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            btrfsutil.create_subvolume('subvol')
+            with drop_privs():
+                fd = os.open('.', os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    with btrfsutil.SubvolumeIterator(fd) as it:
+                        for _ in it:
+                            break
+                finally:
+                    # A bug in SubvolumeIterator previously made it close the
+                    # passed in fd, so this would fail with EBADF.
+                    os.close(fd)
+        finally:
+            os.chdir(pwd)

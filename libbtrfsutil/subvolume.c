@@ -930,7 +930,8 @@ static enum btrfs_util_error append_to_search_stack(struct btrfs_util_subvolume_
 				return err;
 			}
 
-			close(iter->cur_fd);
+			if (iter->cur_fd != iter->fd)
+				close(iter->cur_fd);
 			iter->cur_fd = fd;
 		}
 	}
