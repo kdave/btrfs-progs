@@ -36,15 +36,30 @@ btrfs-progs-6.9 (2024-06-07)
       * ASAN and UBSAN test coverage in CI
       * documentation updates
 
+btrfs-progs-6.9.1 (2024-06-24)
+""""""""""""""""""""""""""""""
+   * fix detection of intermediate super block flags (e.g. csum change and
+     other conversions)
+   * raid-stripe-tree support (still experimental):
+      * moved under experimental build flags (mkfs, convert)
+      * format change, removed encoding type; backward incompatible
+   * receive dump: escape special chars in xattr names and values, and clone
+     source path
+   * tune change csum: fix reservation size when starting a transaction
+   * other:
+      * new and updated tests
+      * updated CI images, new reference build targets
+      * cleanups and refactoring
+
 btrfs-progs-6.8 (2024-03-26)
 ----------------------------
    * fix --enqueue option timeout handling
    * subvolume: remove support for undocumented options -c and -x,
      functionality disabled in kernel
    * libbtrfsutil:
-      * version 0.1.3, backward compabile
+      * version 0.1.3, backward compatible
       * add aliases for all existing functions with unified naming scheme
-      * updated header defintions for recently added kernel features
+      * updated header definitions for recently added kernel features
    * send: v3 supported in experimental mode
    * other:
       * docs: manual page references, graphs, enhancements, clarifications
@@ -267,8 +282,8 @@ btrfs-progs-6.3.1 (2023-05-29)
 """"""""""""""""""""""""""""""
    * convert: fix checksum of a block relocated from 0-1M range
    * qgroup show: fix formatting of limit values in json output
-   * receive: report paret subovl UUID on errors
-   * btrfsune: new option --convert-to-free-space-tree to convert from
+   * receive: report parent subvol UUID on errors
+   * btrfstune: new option --convert-to-free-space-tree to convert from
      block-group-tree back to extent tree for block group tracking
    * mkfs: make option --rootdir more verbose and report start when filling
      from the given directory starts
@@ -442,7 +457,7 @@ btrfs-progs-5.19.1 (2022-09-12)
    * fix memory leaks (extent buffer, path)
    * check: verify block device size vs item
    * rescue fix-device-size: allow to shrink device item
-   * receive: fix crash on wrong pinter free()
+   * receive: fix crash on wrong pointer free()
    * other:
       * experimental: support for block-group-tree
       * documentation updates
@@ -451,7 +466,7 @@ btrfs-progs-5.19.1 (2022-09-12)
 btrfs-progs-5.18 (2022-05-25)
 -----------------------------
    * fixes:
-      * dump-tree: don't print traling zeros in checksums
+      * dump-tree: don't print trailing zeros in checksums
       * recognize paused balance as exclusive operation state, allow to start
         device add
       * convert: properly initialize target filesystem label
@@ -497,7 +512,7 @@ btrfs-progs-5.17 (2022-04-26)
        * btrfstune: option --csum to switch checksum algorithm
    * other:
        * cleanups, refactoring
-       * update documentation build, remove asciidocs leftovers
+       * update documentation build, remove asciidoc leftovers
        * update fssum to consider xattrs
        * add fsstress
 
@@ -874,7 +889,7 @@ btrfs-progs-5.6 (2020-04-05)
 btrfs-progs-5.6.1 (2020-05-07)
 """"""""""""""""""""""""""""""
    * print warning when multiple block group profiles exist, update 'fi usage'
-     summary, add docs to maual page explaining the situation
+     summary, add docs to manual page explaining the situation
    * build: optional support for libgcrypt or libsodium, providing hash
      implementations
    * other:
@@ -941,7 +956,7 @@ btrfs-progs-5.2 (2019-07-05)
       * fix reading/writing of last position on resume/cancel, potentially
         skipping part of the filesystem on next resume
    * dump-tree: add new option --noscan to use only devices given on the
-     commandline
+     command line
    * all-in-one binary (busybox style) with mkfs.btrfs, btrfs-image,
      btrfs-convert, btrfstune
    * image: fix hang when there are more than 32 cpus online and compression is
@@ -1335,7 +1350,7 @@ btrfs-progs-4.11.1 (2017-06-30)
 
 btrfs-progs-4.10 (2017-03-08)
 """""""""""""""""""""""""""""
-   * send: dump output fixes: missing newlies
+   * send: dump output fixes: missing newlines
    * check: several fixes for the lowmem mode, improved error reporting
    * build
       * removed some library deps for binaries that not use them
@@ -1615,7 +1630,7 @@ btrfs-progs-4.5.2 (2016-05-02)
 
 btrfs-progs-4.5.3 (2016-05-11)
    * ioctl: fix unaligned access in buffer from TREE_SEARCH; might cause SIGBUS
-     on architectures that do not support unaligned access and do not performa
+     on architectures that do not support unaligned access and do not perform
      any fixups
    * improved validation checks of superblock and chunk-related structures
    * subvolume sync: fix handling of -s option
@@ -1777,7 +1792,7 @@ btrfs-progs-4.2.1 (2015-09-20)
 
 btrfs-progs-4.2.2 (2015-10-05)
    * filesystem label: use fallback if the label ioctl is not available
-   * convert: check nodesize constraints against commandline features (-O)
+   * convert: check nodesize constraints against command line features (-O)
    * scrub: report status 'running' until all devices are finished
    * device scanning might crash in some scenarios
    * filesystem usage: print summary for non-root users
@@ -1830,7 +1845,7 @@ btrfs-progs-4.1 (2015-06-22)
 
   New:
      * rescue zero-log
-     * btrfsune:
+     * btrfstune:
         * rewrite uuid on a filesystem image
         * new option to turn on NO_HOLES incompat feature
 
@@ -1847,7 +1862,7 @@ btrfs-progs-4.1 (2015-06-22)
      * ioctl.h synced with current kernel uapi version
      * convert: preparatory works for more filesystems (reiserfs pending)
      * use static buffers for path handling where possible
-     * add new helpers for send uilts that check memory allocations,
+     * add new helpers for send utils that check memory allocations,
        switch all users, deprecate old helpers
      * Makefile: fix build dependency generation
      * map-logical: make it work again
