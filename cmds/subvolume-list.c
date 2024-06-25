@@ -547,7 +547,7 @@ static int update_root(struct rb_root *root_lookup,
 			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
-		strncpy_null(ri->name, name, name_len);
+		strncpy_null(ri->name, name, name_len + 1);
 	}
 	if (ref_tree)
 		ri->ref_tree = ref_tree;
@@ -618,7 +618,7 @@ static int add_root(struct rb_root *root_lookup,
 			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
-		strncpy_null(ri->name, name, name_len);
+		strncpy_null(ri->name, name, name_len + 1);
 	}
 	if (ref_tree)
 		ri->ref_tree = ref_tree;
