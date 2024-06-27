@@ -1,16 +1,18 @@
 # Backward compatibility build tests on various distros
 #
 # - all compatibility docker image build tests (no local build)
-# - same as ci-build-test.yml but does not rebuild the docker images here but
-#   pulls them from docker hub, which is faster overall but may get out of sync
+# - images are not rebuilt when the workflow runs but are pulled from docker hub
+#   and can be slightly out of date
 
-name: CI image tests fast
-run-name: CI image tests fast
+name: CI image tests
+run-name: CI image tests
 on:
   push:
     branches:
       - "ci/**"
       - devel
+      - release-test
+      - master
 jobs:
   check-centos7:
     name: CI Centos 7
