@@ -112,6 +112,15 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         -i|--subvolid <subvolid>
                 subvolume id to be removed instead of the <path> that should point to the
                 filesystem with the subvolume
+
+        -R|--recursive
+                delete subvolumes beneath each subvolume recursively
+
+                This requires either `CAP_SYS_ADMIN` or the filesystem must be
+                mounted with `user_subvol_rm_allowed` mount option.
+                In the unprivileged case, subvolumes which cannot be accessed
+                are skipped.  The deletion is not atomic.
+
         -v|--verbose
                 (deprecated) alias for global *-v* option
 
