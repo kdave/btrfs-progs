@@ -166,7 +166,7 @@ enum btrfstune_group_enum {
 
 static bool btrfstune_cmd_groups[BTRFSTUNE_NR_GROUPS] = { 0 };
 
-static unsigned int btrfstune_count_set_groups()
+static unsigned int btrfstune_count_set_groups(void)
 {
 	int ret = 0;
 
