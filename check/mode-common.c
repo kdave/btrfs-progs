@@ -587,7 +587,7 @@ int check_child_node(struct extent_buffer *parent, int slot,
 	return ret;
 }
 
-void reset_cached_block_groups()
+void reset_cached_block_groups(void)
 {
 	struct btrfs_block_group *cache;
 	u64 start, end;
