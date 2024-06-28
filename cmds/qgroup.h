@@ -36,8 +36,6 @@ struct btrfs_qgroup_stats {
 	struct btrfs_qgroup_limit limit;
 };
 
-int btrfs_qgroup_inherit_size(struct btrfs_qgroup_inherit *p);
-int btrfs_qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg);
 int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats);
 
 #endif
