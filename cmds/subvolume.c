@@ -635,18 +635,11 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 {
 	char	*subvol, *dst;
 	int	res, retval;
-	int	fd = -1, fddst = -1;
-	int	len;
-	bool readonly = false;
-	char	*dupname = NULL;
-	char	*dupdir = NULL;
-	const char *newname;
-	char	*dstdir;
+	char	*dstdir = NULL;
 	enum btrfs_util_error err;
-	struct btrfs_ioctl_vol_args_v2	args;
-	struct btrfs_qgroup_inherit *inherit = NULL;
+	struct btrfs_util_qgroup_inherit *inherit = NULL;
+	int flags = 0;
 
-	memset(&args, 0, sizeof(args));
 	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "i:r");
@@ -655,14 +648,14 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 
 		switch (c) {
 		case 'i':
-			res = btrfs_qgroup_inherit_add_group(&inherit, optarg);
+			res = qgroup_inherit_add_group(&inherit, optarg);
 			if (res) {
 				retval = res;
 				goto out;
 			}
 			break;
 		case 'r':
-			readonly = true;
+			flags |= BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -696,72 +689,49 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	}
 
 	if (res > 0) {
+		char *dupname;
+		const char *newname;
+
 		dupname = strdup(subvol);
 		newname = path_basename(dupname);
-		dstdir = dst;
+
+		dstdir = malloc(strlen(dst) + 1 + strlen(newname) + 1);
+		if (!dstdir) {
+			error_msg(ERROR_MSG_MEMORY, NULL);
+			free(dupname);
+			goto out;
+		}
+
+		dstdir[0] = 0;
+		strcpy(dstdir, dst);
+		strcat(dstdir, "/");
+		strcat(dstdir, newname);
+
+		free(dupname);
 	} else {
-		dupname = strdup(dst);
-		newname = path_basename(dupname);
-		dupdir = strdup(dst);
-		dstdir = path_dirname(dupdir);
+		dstdir = strdup(dst);
 	}
 
-	if (!test_issubvolname(newname)) {
-		error("invalid snapshot name '%s'", newname);
-		goto out;
-	}
-
-	len = strlen(newname);
-	if (len > BTRFS_VOL_NAME_MAX) {
-		error("snapshot name too long '%s'", newname);
-		goto out;
-	}
-
-	fddst = btrfs_open_dir(dstdir);
-	if (fddst < 0)
-		goto out;
-
-	fd = btrfs_open_dir(subvol);
-	if (fd < 0)
-		goto out;
-
-	if (readonly)
-		args.flags |= BTRFS_SUBVOL_RDONLY;
-
-	args.fd = fd;
-	if (inherit) {
-		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
-		args.size = btrfs_qgroup_inherit_size(inherit);
-		args.qgroup_inherit = inherit;
-	}
-	strncpy_null(args.name, newname, sizeof(args.name));
-
-	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
-	if (res < 0) {
-		if (errno == ETXTBSY)
-			error("cannot snapshot '%s': source subvolume contains an active swapfile (%m)", subvol);
-		else
-			error("cannot snapshot '%s': %m", subvol);
+	err = btrfs_util_subvolume_snapshot(subvol, dstdir, flags, NULL, inherit);
+	if (err) {
+		error_btrfs_util(err);
 		goto out;
 	}
 
 	retval = 0;	/* success */
 
-	if (readonly)
+	if (flags & BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY)
 		pr_verbose(LOG_DEFAULT,
-			   "Create readonly snapshot of '%s' in '%s/%s'\n",
-			   subvol, dstdir, newname);
+			   "Create readonly snapshot of '%s' in '%s'\n",
+			   subvol, dstdir);
 	else
 		pr_verbose(LOG_DEFAULT,
-			   "Create snapshot of '%s' in '%s/%s'\n",
-			   subvol, dstdir, newname);
+			   "Create snapshot of '%s' in '%s'\n",
+			   subvol, dstdir);
 
 out:
-	close(fddst);
-	close(fd);
-	free(inherit);
-	free(dupname);
-	free(dupdir);
+	free(dstdir);
+	btrfs_util_qgroup_inherit_destroy(inherit);
 
 	return retval;
 }
