@@ -220,10 +220,10 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		pr_verbose(LOG_DEFAULT, "\n");
 	} else {
 		pr_verbose(LOG_DEFAULT, "Rate:             %s/s",
-			pretty_size(bytes_per_sec));
+			pretty_size_mode(bytes_per_sec, unit_mode));
 		if (limit > 1)
 			pr_verbose(LOG_DEFAULT, " (limit %s/s)",
-				   pretty_size(limit));
+				   pretty_size_mode(limit, unit_mode));
 		else if (limit == 1)
 			pr_verbose(LOG_DEFAULT, " (some device limits set)");
 		pr_verbose(LOG_DEFAULT, "\n");
