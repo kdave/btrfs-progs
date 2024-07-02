@@ -59,6 +59,7 @@
 #include "common/open-utils.h"
 #include "common/string-utils.h"
 #include "common/clear-cache.h"
+#include "common/root-tree-utils.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "check/common.h"
