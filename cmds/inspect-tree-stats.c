@@ -35,6 +35,7 @@
 #include "common/help.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "common/units.h"
 #include "cmds/commands.h"
 
@@ -441,6 +442,7 @@ static const char * const cmd_inspect_tree_stats_usage[] = {
 	"Print various stats for trees",
 	"",
 	OPTLINE("-b", "raw numbers in bytes"),
+	OPTLINE("-t <rootid>", "print only tree with the given rootid"),
 	NULL
 };
 
@@ -451,15 +453,23 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 	struct btrfs_root *root;
 	int opt;
 	int ret = 0;
+	u64 tree_id = 0;
 
 	optind = 0;
-	while ((opt = getopt(argc, argv, "vb")) != -1) {
+	while ((opt = getopt(argc, argv, "vbt:")) != -1) {
 		switch (opt) {
 		case 'v':
 			verbose++;
 			break;
 		case 'b':
 			no_pretty = true;
+			break;
+		case 't':
+			tree_id = arg_strtou64(optarg);
+			if (!tree_id) {
+				error("unrecognized tree id: %s", optarg);
+				exit(1);
+			}
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -483,6 +493,14 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 	if (!root) {
 		error("cannot open ctree");
 		exit(1);
+	}
+
+	if (tree_id) {
+		pr_verbose(LOG_DEFAULT, "Calculating size of tree (%llu)\n", tree_id);
+		key.objectid = tree_id;
+		key.offset = (u64)-1;
+		ret = calc_root_size(root, &key, 1);
+		goto out;
 	}
 
 	pr_verbose(LOG_DEFAULT, "Calculating size of root tree\n");

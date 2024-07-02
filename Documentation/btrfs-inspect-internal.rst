@@ -228,6 +228,9 @@ tree-stats [options] <device>
         -b
                 Print raw numbers in bytes.
 
+        -t <treeid>
+                Print stats only for the given treeid.
+
 EXIT STATUS
 -----------
 
