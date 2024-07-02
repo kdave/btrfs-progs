@@ -221,6 +221,7 @@ objects = \
 	common/device-utils.o	\
 	common/extent-cache.o	\
 	common/extent-tree-utils.o	\
+	common/root-tree-utils.o	\
 	common/filesystem-utils.o	\
 	common/format-output.o	\
 	common/fsfeatures.o	\

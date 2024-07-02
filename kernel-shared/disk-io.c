@@ -2369,12 +2369,12 @@ int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 }
 
 struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
-				     struct btrfs_fs_info *fs_info,
 				     struct btrfs_key *key)
 {
-	struct extent_buffer *leaf;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *root;
+	struct extent_buffer *leaf;
 	int ret = 0;
 
 	root = kzalloc(sizeof(*root), GFP_KERNEL);
