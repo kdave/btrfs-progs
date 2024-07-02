@@ -748,7 +748,7 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans)
 	char *name = "..";
 	int ret;
 
-	root = btrfs_create_tree(trans, fs_info, &key);
+	root = btrfs_create_tree(trans, &key);
 	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);
 		goto out;
@@ -870,7 +870,7 @@ static int create_uuid_tree(struct btrfs_trans_handle *trans)
 	int ret = 0;
 
 	UASSERT(fs_info->uuid_root == NULL);
-	root = btrfs_create_tree(trans, fs_info, &key);
+	root = btrfs_create_tree(trans, &key);
 	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);
 		goto out;
@@ -900,7 +900,7 @@ static int create_global_root(struct btrfs_trans_handle *trans, u64 objectid,
 	};
 	int ret = 0;
 
-	root = btrfs_create_tree(trans, fs_info, &key);
+	root = btrfs_create_tree(trans, &key);
 	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);
 		goto out;
@@ -1127,7 +1127,7 @@ static int setup_raid_stripe_tree_root(struct btrfs_fs_info *fs_info)
 		return ret;
 	}
 
-	stripe_root = btrfs_create_tree(trans, fs_info, &key);
+	stripe_root = btrfs_create_tree(trans, &key);
 	if (IS_ERR(stripe_root))  {
 		ret = PTR_ERR(stripe_root);
 		btrfs_abort_transaction(trans, ret);
