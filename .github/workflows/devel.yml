@@ -12,19 +12,31 @@ on:
       - 'CI/**'
 jobs:
   build-simple:
-    name: Simple build tests
+    name: Simple build tests, manual page build test
     strategy:
       matrix:
         compiler: [ gcc, clang ]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
       - run: sudo modprobe btrfs
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx sphinx-rtd-theme-common python3-sphinx-rtd-theme
       - name: Configure
-        run: ./autogen.sh && CC=${{ matrix.compiler}} ./configure
+        run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure
       - name: Documentation
         run: make V=1 -C Documentation
+      - name: Generate manual pages preview
+        if: ${{ matrix.compiler == 'gcc' }}
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed, generate preview to summary"
+            Documentation/man-preview.sh "$file" >> $GITHUB_STEP_SUMMARY
+          done
       - name: Make static
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
