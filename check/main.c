@@ -9670,6 +9670,264 @@ static int zero_log_tree(struct btrfs_root *root)
 	return ret;
 }
 
+static int check_log_csum(struct btrfs_root *root, u64 addr, u64 length)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = {
+		.objectid = BTRFS_EXTENT_CSUM_OBJECTID,
+		.type = BTRFS_EXTENT_CSUM_KEY,
+		.offset = addr
+	};
+	struct extent_buffer *leaf;
+	u32 num_entries;
+	u64 data_len;
+	int ret;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+
+	if (ret > 0 && path.slots[0])
+		path.slots[0]--;
+
+	ret = 0;
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret) {
+				if (ret > 0)
+					ret = 0;
+
+				break;
+			}
+			leaf = path.nodes[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.objectid > BTRFS_EXTENT_CSUM_OBJECTID)
+			break;
+
+		if (key.objectid != BTRFS_EXTENT_CSUM_OBJECTID ||
+		    key.type != BTRFS_EXTENT_CSUM_KEY)
+			goto next;
+
+		if (key.offset >= addr + length)
+			break;
+
+		num_entries = btrfs_item_size(leaf, path.slots[0]) / gfs_info->csum_size;
+		data_len = num_entries * gfs_info->sectorsize;
+
+		if (addr >= key.offset && addr <= key.offset + data_len) {
+			u64 end = min(addr + length, key.offset + data_len);
+
+			length = addr + length - end;
+			addr = end;
+
+			if (length == 0)
+				break;
+		}
+
+next:
+		path.slots[0]++;
+	}
+
+	btrfs_release_path(&path);
+
+	if (ret >= 0)
+		ret = (length != 0);
+
+	return ret;
+}
+
+static int check_log_root(struct btrfs_root *root, struct cache_tree *root_cache)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = {
+		.objectid = BTRFS_FIRST_FREE_OBJECTID,
+		.type = BTRFS_INODE_ITEM_KEY,
+		.offset = 0
+	};
+	struct extent_buffer *leaf;
+	int ret, err = 0;
+	u64 last_csum_inode = 0;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret < 0)
+		return 1;
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret) {
+				if (ret < 0)
+					err = 1;
+
+				break;
+			}
+			leaf = path.nodes[0];
+		}
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.objectid == BTRFS_EXTENT_CSUM_OBJECTID)
+			break;
+
+		if (key.type == BTRFS_INODE_ITEM_KEY) {
+			struct btrfs_inode_item *item;
+
+			item = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_inode_item);
+
+			if (!(btrfs_inode_flags(leaf, item) & BTRFS_INODE_NODATASUM))
+				last_csum_inode = key.objectid;
+		} else if (key.type == BTRFS_EXTENT_DATA_KEY &&
+			   key.objectid == last_csum_inode) {
+			struct btrfs_file_extent_item *fi;
+			u64 addr, length;
+
+			fi = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_file_extent_item);
+
+			if (btrfs_file_extent_type(leaf, fi) != BTRFS_FILE_EXTENT_REG)
+				goto next;
+
+			addr = btrfs_file_extent_disk_bytenr(leaf, fi) +
+			       btrfs_file_extent_offset(leaf, fi);
+			length = btrfs_file_extent_num_bytes(leaf, fi);
+
+			ret = check_log_csum(root, addr, length);
+			if (ret < 0) {
+				err = 1;
+				break;
+			}
+
+			if (ret) {
+				error(
+"csum missing in log (root %llu inode %llu offset %llu address 0x%llx length %llu)",
+				      root->objectid, last_csum_inode, key.offset,
+				      addr, length);
+				err = 1;
+			}
+		}
+
+next:
+		path.slots[0]++;
+	}
+
+	btrfs_release_path(&path);
+
+	return err;
+}
+
+static int load_log_root(u64 root_id, struct btrfs_path *path, struct btrfs_root *tmp_root)
+{
+	struct extent_buffer *leaf;
+	struct btrfs_tree_parent_check check = { 0 };
+	int ret;
+
+	btrfs_setup_root(tmp_root, gfs_info, root_id);
+
+	leaf = path->nodes[0];
+	read_extent_buffer(leaf, &tmp_root->root_item,
+			   btrfs_item_ptr_offset(leaf, path->slots[0]),
+			   sizeof(tmp_root->root_item));
+
+	tmp_root->root_key.objectid = root_id;
+	tmp_root->root_key.type = BTRFS_ROOT_ITEM_KEY;
+	tmp_root->root_key.offset = 0;
+
+	check.owner_root = btrfs_root_id(tmp_root);
+	check.transid = btrfs_root_generation(&tmp_root->root_item);
+	check.level = btrfs_root_level(&tmp_root->root_item);
+
+	tmp_root->node = read_tree_block(gfs_info,
+					 btrfs_root_bytenr(&tmp_root->root_item),
+					 &check);
+	if (IS_ERR(tmp_root->node)) {
+		ret = PTR_ERR(tmp_root->node);
+		tmp_root->node = NULL;
+		return ret;
+	}
+
+	if (btrfs_header_level(tmp_root->node) != btrfs_root_level(&tmp_root->root_item)) {
+		error("root [%llu %llu] level %d does not match %d",
+			tmp_root->root_key.objectid,
+			tmp_root->root_key.offset,
+			btrfs_header_level(tmp_root->node),
+			btrfs_root_level(&tmp_root->root_item));
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static int check_log(struct cache_tree *root_cache)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = {
+		.objectid = BTRFS_TREE_LOG_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+		.offset = 0
+	};
+	struct extent_buffer *leaf;
+	struct btrfs_root *log_root = gfs_info->log_root_tree;
+	int ret;
+	int err = 0;
+
+	ret = btrfs_search_slot(NULL, log_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		err = 1;
+		goto out;
+	}
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(log_root, &path);
+			if (ret) {
+				if (ret < 0)
+					err = 1;
+				break;
+			}
+			leaf = path.nodes[0];
+		}
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.objectid > BTRFS_TREE_LOG_OBJECTID ||
+		    key.type > BTRFS_ROOT_ITEM_KEY)
+			break;
+
+		if (key.objectid == BTRFS_TREE_LOG_OBJECTID &&
+		    key.type == BTRFS_ROOT_ITEM_KEY &&
+		    fs_root_objectid(key.offset)) {
+			struct btrfs_root tmp_root;
+
+			memset(&tmp_root, 0, sizeof(tmp_root));
+
+			ret = load_log_root(key.offset, &path, &tmp_root);
+			if (ret) {
+				err = 1;
+				goto next;
+			}
+
+			ret = check_log_root(&tmp_root, root_cache);
+			if (ret)
+				err = 1;
+
+next:
+			if (tmp_root.node)
+				free_extent_buffer(tmp_root.node);
+		}
+
+		path.slots[0]++;
+	}
+out:
+	btrfs_release_path(&path);
+
+	return err;
+}
+
 static void free_roots_info_cache(void)
 {
 	if (!roots_info_cache)
@@ -10468,9 +10726,21 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		goto close_out;
 	}
 
+	if (gfs_info->log_root_tree) {
+		fprintf(stderr, "[1/8] checking log\n");
+		ret = check_log(&root_cache);
+
+		if (ret)
+			error("errors found in log");
+		err |= !!ret;
+	} else {
+		fprintf(stderr,
+		"[1/8] checking log skipped (none written)\n");
+	}
+
 	if (!init_extent_tree) {
 		if (!g_task_ctx.progress_enabled) {
-			fprintf(stderr, "[1/7] checking root items\n");
+			fprintf(stderr, "[2/8] checking root items\n");
 		} else {
 			g_task_ctx.tp = TASK_ROOT_ITEMS;
 			task_start(g_task_ctx.info, &g_task_ctx.start_time,
@@ -10505,11 +10775,11 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 		}
 	} else {
-		fprintf(stderr, "[1/7] checking root items... skipped\n");
+		fprintf(stderr, "[2/8] checking root items... skipped\n");
 	}
 
 	if (!g_task_ctx.progress_enabled) {
-		fprintf(stderr, "[2/7] checking extents\n");
+		fprintf(stderr, "[3/8] checking extents\n");
 	} else {
 		g_task_ctx.tp = TASK_EXTENTS;
 		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10527,9 +10797,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (!g_task_ctx.progress_enabled) {
 		if (is_free_space_tree)
-			fprintf(stderr, "[3/7] checking free space tree\n");
+			fprintf(stderr, "[4/8] checking free space tree\n");
 		else
-			fprintf(stderr, "[3/7] checking free space cache\n");
+			fprintf(stderr, "[4/8] checking free space cache\n");
 	} else {
 		g_task_ctx.tp = TASK_FREE_SPACE;
 		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10547,7 +10817,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	 */
 	no_holes = btrfs_fs_incompat(gfs_info, NO_HOLES);
 	if (!g_task_ctx.progress_enabled) {
-		fprintf(stderr, "[4/7] checking fs roots\n");
+		fprintf(stderr, "[5/8] checking fs roots\n");
 	} else {
 		g_task_ctx.tp = TASK_FS_ROOTS;
 		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10563,10 +10833,10 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (!g_task_ctx.progress_enabled) {
 		if (check_data_csum)
-			fprintf(stderr, "[5/7] checking csums against data\n");
+			fprintf(stderr, "[6/8] checking csums against data\n");
 		else
 			fprintf(stderr,
-		"[5/7] checking only csums items (without verifying data)\n");
+		"[6/8] checking only csums items (without verifying data)\n");
 	} else {
 		g_task_ctx.tp = TASK_CSUMS;
 		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10585,7 +10855,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	/* For low memory mode, check_fs_roots_v2 handles root refs */
         if (check_mode != CHECK_MODE_LOWMEM) {
 		if (!g_task_ctx.progress_enabled) {
-			fprintf(stderr, "[6/7] checking root refs\n");
+			fprintf(stderr, "[7/8] checking root refs\n");
 		} else {
 			g_task_ctx.tp = TASK_ROOT_REFS;
 			task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10600,7 +10870,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 	} else {
 		fprintf(stderr,
-	"[6/7] checking root refs done with fs roots in lowmem mode, skipping\n");
+	"[7/8] checking root refs done with fs roots in lowmem mode, skipping\n");
 	}
 
 	while (opt_check_repair && !list_empty(&gfs_info->recow_ebs)) {
@@ -10632,7 +10902,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (gfs_info->quota_enabled) {
 		if (!g_task_ctx.progress_enabled) {
-			fprintf(stderr, "[7/7] checking quota groups\n");
+			fprintf(stderr, "[8/8] checking quota groups\n");
 		} else {
 			g_task_ctx.tp = TASK_QGROUPS;
 			task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
@@ -10655,7 +10925,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		ret = 0;
 	} else {
 		fprintf(stderr,
-		"[7/7] checking quota groups skipped (not enabled on this FS)\n");
+		"[8/8] checking quota groups skipped (not enabled on this FS)\n");
 	}
 
 	if (!list_empty(&gfs_info->recow_ebs)) {
