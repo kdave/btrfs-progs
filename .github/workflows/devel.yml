@@ -28,7 +28,17 @@ jobs:
         run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure
       - name: Documentation
         run: make V=1 -C Documentation
-      - name: Generate manual pages preview
+      - name: Generate manual pages preview (html)
+        if: ${{ matrix.compiler == 'gcc' }}
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed, generate preview to summary"
+            Documentation/html-preview.sh "$file" >> $GITHUB_STEP_SUMMARY
+          done
+      - run: echo '<hr>' >> $GITHUB_STEP_SUMMARY
+      - name: Generate manual pages preview (man)
         if: ${{ matrix.compiler == 'gcc' }}
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
