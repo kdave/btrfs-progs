@@ -37,13 +37,17 @@ OPTIONS
         file system will not be able to be mounted.
 
 -s
-        Sanitize the file names when generating the image. One -s means just
-        generate random garbage, which means that the directory indexes won't match up
-        since the hashes won't match with the garbage filenames. Using *-s* will
-        calculate a collision for the filename so that the hashes match, and if it
-        can't calculate a collision then it will just generate garbage.  The collision
-        calculator is very time and CPU intensive so only use it if you are having
-        problems with your file system tree and need to have it mostly working.
+        Sanitize the file names when generating the image.  Not recommended as
+        this would introduce new file name hash mismatches, thus if your
+        problem involves subvolume tress, it can even mask existing problems.
+        Furthermore kernels can not do proper path resolution due to the
+        introduced hash mismatches.
+
+        One *-s* means just generate random garbage, which means that the
+        directory hash won't match its file names.  Using two *-s* will
+        calculate a collision for the file name so that the hashes match, and
+        if it can't calculate a collision then it will just generate garbage.
+        The collision calculator is very time and CPU intensive.
 
 -w
         Walk all the trees manually and copy any blocks that are referenced. Use this
