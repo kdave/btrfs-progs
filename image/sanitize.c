@@ -449,6 +449,8 @@ void sanitize_name(enum sanitize_mode sanitize, struct rb_root *name_tree,
 		int slot)
 {
 	struct extent_buffer *eb;
+	u32 item_ptr_off = btrfs_item_ptr_offset(src, slot);
+	u32 item_ptr_size = btrfs_item_size(src, slot);
 
 	eb = alloc_dummy_eb(src->start, src->len);
 	if (!eb) {
@@ -476,7 +478,11 @@ void sanitize_name(enum sanitize_mode sanitize, struct rb_root *name_tree,
 		break;
 	}
 
-	memcpy(dst, eb->data, eb->len);
+	/*
+	 * Only overwrite the sanitized part, or we can overwrite previous
+	 * sanitized value with the old values from @src.
+	 */
+	memcpy(dst + item_ptr_off, eb->data + item_ptr_off, item_ptr_size);
 	free(eb);
 }
 
