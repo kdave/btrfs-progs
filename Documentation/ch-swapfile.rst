@@ -6,7 +6,8 @@ restrictions for active swapfiles don't apply.
 There are some limitations of the implementation in BTRFS and Linux swap
 subsystem:
 
-* filesystem - must be only single device
+* filesystem - should be only single device (depending on setup might not work
+  on multiple)
 * filesystem - must have only *single* data profile
 * subvolume - cannot be snapshotted if it contains any active swapfiles
 * swapfile - must be preallocated (i.e. no holes)
