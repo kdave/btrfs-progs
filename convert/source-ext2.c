@@ -62,7 +62,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	/*
 	 * We need to know exactly the used space, some RO compat flags like
 	 * BIGALLOC will affect how used space is present.
-	 * So we need manuall check any unsupported RO compat flags
+	 * So we need manually check any unsupported RO compat flags
 	 */
 	ro_feature = ext2_fs->super->s_feature_ro_compat;
 	if (ro_feature & ~EXT2_LIB_FEATURE_RO_COMPAT_SUPP) {

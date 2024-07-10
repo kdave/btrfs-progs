@@ -336,7 +336,7 @@ def print_block_groups(mountpoint):
         p_left = args_buffer_size
 
         for _ in range(0, s.args.nr_items):
-            # for each itme, copy the header from the buffer into
+            # for each item, copy the header from the buffer into
             # our header struct
             ctypes.memmove(h, p, header_size)
             p += header_size

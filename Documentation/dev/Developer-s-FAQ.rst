@@ -56,7 +56,7 @@ as a reply to the mailinglist after you've reviewed a patch. See below.
 Reviewed-by:
 ^^^^^^^^^^^^
 
-The patch has been reviewed and the singed person is putting his hand into
+The patch has been reviewed and the signed person is putting his hand into
 fire. If there's a bug found in this patch, the person is usually a good
 candidate for a CC: of the bugreport.
 
@@ -157,7 +157,7 @@ Controversial changes
 This happens, not every patch gets merged. In the worst case there are not even
 any comments under the patch and it's silently ignored. This depends on many
 factors, most notably \*cough*time*cough*. Examining potential drawbacks or
-forseeing disasters is not an easy job.
+foreseeing disasters is not an easy job.
 
 Let's be more positive, you manage to attract the attention of some developer
 and he says, he does not like the approach of the patch(es).  Better than
