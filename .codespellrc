@@ -1,6 +1,8 @@
 [codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = .git*,*.svg,*.css,.codespellrc
+skip = .git*,*.svg,*.css,.codespellrc,fsck-tests
 check-hidden = true
-# ignore-regex = 
-# ignore-words-list =
+ignore-regex = \b(Yann Collet|TOI)\b
+# annote - used as a noun
+# iput - function name
+ignore-words-list = annote,annotes,iput,uptodate
