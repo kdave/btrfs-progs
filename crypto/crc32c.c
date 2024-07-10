@@ -194,7 +194,7 @@ static const uint32_t crc32c_table[256] = {
 };
 
 /*
- * Fallback implementatin. Step through buffer one byte at at time, calculates
+ * Fallback implementation. Step through buffer one byte at at time, calculates
  * reflected crc using table, can accept an unaligned buffer.
  */
 static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length)
