@@ -239,7 +239,7 @@ Patches
 
 -  additional information
 
-    -  if there's a stack trace relevant for the patch, add it ther (lockdep,
+    -  if there's a stack trace relevant for the patch, add it there (lockdep,
        crash, warning)
     -  steps to reproduce a bug (that will also get turned to a proper fstests
        case)
