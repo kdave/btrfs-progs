@@ -42,6 +42,13 @@ OPTIONS
 
         Convert to free-space-tree feature (v2 of space cache).
 
+--enable-simple-quota
+	(since kernel 6.7)
+
+	Enable simple quota accounting (*squota* mkfs feature). This is an
+	alternative to qgroups with a smaller performance impact but no notion
+	of shared vs. exclusive usage.
+
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
         Make sure that you are aware of the dangers.
