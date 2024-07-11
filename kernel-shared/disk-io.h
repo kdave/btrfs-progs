@@ -240,6 +240,8 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 int btrfs_fs_roots_compare_roots(const struct rb_node *node1, const struct rb_node *node2);
 struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 				     struct btrfs_key *key);
+int btrfs_clear_tree(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root);
 int btrfs_delete_and_free_root(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root);
 struct btrfs_root *btrfs_csum_root(struct btrfs_fs_info *fs_info, u64 bytenr);

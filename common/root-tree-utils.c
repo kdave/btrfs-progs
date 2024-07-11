@@ -226,8 +226,6 @@ abort:
 static int remove_all_tree_items(struct btrfs_root *root)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
-	struct btrfs_key key = { 0 };
 	int ret;
 
 	trans = btrfs_start_transaction(root, 1);
@@ -239,40 +237,13 @@ static int remove_all_tree_items(struct btrfs_root *root)
 			  root->root_key.objectid);
 		return ret;
 	}
-	while (true) {
-		int nr_items;
-
-		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
-		if (ret < 0) {
-			errno = -ret;
-			error("failed to locate the first key of root %lld: %m",
-				root->root_key.objectid);
-			btrfs_abort_transaction(trans, ret);
-			return ret;
-		}
-		if (ret == 0) {
-			ret = -EUCLEAN;
-			errno = -ret;
-			error("unexpected all zero key found in root %lld",
-				root->root_key.objectid);
-			btrfs_abort_transaction(trans, ret);
-			return ret;
-		}
-		nr_items = btrfs_header_nritems(path.nodes[0]);
-		/* The tree is empty. */
-		if (nr_items == 0) {
-			btrfs_release_path(&path);
-			break;
-		}
-		ret = btrfs_del_items(trans, root, &path, 0, nr_items);
-		btrfs_release_path(&path);
-		if (ret < 0) {
-			errno = -ret;
-			error("failed to empty the first leaf of root %lld: %m",
-				root->root_key.objectid);
-			btrfs_abort_transaction(trans, ret);
-			return ret;
-		}
+	ret = btrfs_clear_tree(trans, root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to empty root %lld: %m",
+			root->root_key.objectid);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
 	}
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret < 0) {
