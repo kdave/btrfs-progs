@@ -49,6 +49,9 @@ OPTIONS
 	alternative to qgroups with a smaller performance impact but no notion
 	of shared vs. exclusive usage.
 
+--remove-simple-quota
+	Remove simple quota accounting related structures.
+
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
         Make sure that you are aware of the dangers.
