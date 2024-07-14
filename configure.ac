@@ -95,6 +95,10 @@ AC_CHECK_HEADERS([linux/hw_breakpoint.h])
 AC_CHECK_HEADERS([linux/fsverity.h])
 AC_CHECK_HEADERS([printf.h])
 
+dnl Check for printf.h functions.
+AC_CHECK_FUNCS([register_printf_specifier])
+AC_CHECK_FUNCS([register_printf_modifier])
+
 if grep -q 'HAVE_LINUX_FSVERITY_H.*1' confdefs.h; then
 	have_fsverity='yes'
 else
