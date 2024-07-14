@@ -25,7 +25,9 @@
 /*
  * Workaround for custom format %pV that may not be supported on all libcs.
  */
-#ifdef HAVE_PRINTF_H
+#if defined(HAVE_PRINTF_H) \
+	&& defined(HAVE_REGISTER_PRINTF_SPECIFIER) \
+	&& defined(HAVE_REGISTER_PRINTF_MODIFIER)
 #define DECLARE_PV(name)		struct va_format name
 #define PV_FMT				"%pV"
 #define PV_VAL(va)			&va
