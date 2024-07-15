@@ -554,6 +554,17 @@ Fixes:
 - fix chunk validation in zoned mode on conventional zones, it was possible to
   create chunks that would not be allowed on sequential zones
 
+6.9 (May 2024)
+^^^^^^^^^^^^^^
+
+TBD
+
+6.10 (Jul 2024)
+^^^^^^^^^^^^^^^
+
+TBD
+
+
 5.x
 ---
 
