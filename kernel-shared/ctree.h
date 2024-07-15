@@ -1212,8 +1212,10 @@ static inline int is_fstree(u64 rootid)
 void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key);
 
 /* inode.c */
-int check_dir_conflict(struct btrfs_root *root, char *name, int namelen,
-		u64 dir, u64 index);
+int btrfs_find_free_dir_index(struct btrfs_root *root, u64 dir_ino,
+			      u64 *ret_ino);
+int btrfs_check_dir_conflict(struct btrfs_root *root, const char *name,
+			     int namelen, u64 dir, u64 index);
 int btrfs_new_inode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		u64 ino, u32 mode);
 int btrfs_change_inode_flags(struct btrfs_trans_handle *trans,
@@ -1229,8 +1231,6 @@ int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
 			  u64 ino);
 int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		char *name, int namelen, u64 parent_ino, u64 *ino, int mode);
-struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root, const char *base,
-				  u64 root_objectid, bool convert);
 int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *fs_root,
 			     u64 dirid, u64 *objectid);

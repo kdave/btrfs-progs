@@ -2361,10 +2361,10 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 			struct btrfs_trans_handle *trans;
 			struct btrfs_key location;
 
-			ret = check_dir_conflict(root, backref->name,
-						 backref->namelen,
-						 backref->dir,
-						 backref->index);
+			ret = btrfs_check_dir_conflict(root, backref->name,
+						       backref->namelen,
+						       backref->dir,
+						       backref->index);
 			if (ret) {
 				/*
 				 * let nlink fixing routine to handle it,
