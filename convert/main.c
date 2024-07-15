@@ -1739,7 +1739,7 @@ static int do_rollback(const char *devname)
 	if (name_len > sizeof(dir_name))
 		name_len = sizeof(dir_name) - 1;
 	read_extent_buffer(path.nodes[0], dir_name, (unsigned long)(root_ref_item + 1), name_len);
-	dir_name[sizeof(dir_name) - 1] = 0;
+	dir_name[name_len] = 0;
 
 	printf("  Restoring from:  %s/%s\n", dir_name, image_name);
 
