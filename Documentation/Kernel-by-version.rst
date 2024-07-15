@@ -3,6 +3,85 @@ Changes (kernel/version)
 
 Summary of kernel changes for each version.
 
+7.2 (Aug 2026)
+--------------
+Pull requests:
+`v7.2-rc1 <https://git.kernel.org/linus/31b706da2cfd8ee3352391181ccf9696bed3d25d>`__,
+`v7.2-rc4 <https://git.kernel.org/linus/7059bdf4f04a3e14f4fafb3ac35fdca913e3e21a>`__,
+`v7.2-rc5 <https://git.kernel.org/linus/51f247c4b293b470723e69a321e2cc5ecf9080db>`__,
+`v7.2-rc6 <https://git.kernel.org/linus/3b5f4b83c4abc0c9b0a7b9e2b44e816611b7f2ec>`__,
+`v7.2-rc7 <https://git.kernel.org/linus/63354634885c8d41675c5af54f757db2d14326e6>`__,
+`v7.2-rc7 <https://git.kernel.org/linus/6c68fa601b49683ecb04eded993a71dfa8b2ba0b>`__
+
+User visible changes:
+
+- enable large folios by default, added in 6.17 (under experimental build), no
+  feature limitations, a big change internally
+
+- new ioctl to return raw checksums to userspace (a bit tricky given
+  compression and tail extents), can be used for mkfs and deduplication
+  optimizations
+
+- provide stable UUID for e.g. overlayfs and temp_fsid, also reflected in
+  statvfs() field f_fsid, internal dev_t is hashed in to allow cloning
+
+- add 32bit compat version of GET_SUBVOL_INFO ioctl
+
+- fix type of SEARCH_TREE ioctl buffer in UAPI header
+
+- in experimental build, support huge folios (up to 2M)
+
+- notably, the fixup worker infrastructure was removed but reverted back, it
+  has to stay
+
+Performance related improvements/changes:
+
+- limit bio size to the estimated optimum derived from the queue, this prevents
+  build up of too much data for writeback, which could cause latency spikes
+  (reported improvement 15% on sequential writes)
+
+- don't force direct IO to be serialized, forgotten change during mount API
+  port, brings back +60% of throughput
+
+- lockless calculation of number of shrinkable extent maps, improve performance
+  with many memcg allocated objects
+
+Notable fixes:
+
+- in zoned mode, fix a deadlock due to zone reclaim and relocation when space
+  needs to be flushed
+
+- don't trim device which is internally not tracked as writeable (e.g.  when
+  missing device is being rescanned)
+
+- fix deadlock when cloning inline extent and mounted with flushoncommit
+
+- fix false IO failures after direct IO falls back to buffered write in some
+  cases
+
+Core:
+
+- remove 2K block size support, experimental to test subpage code on
+  x86_64 but now it would block folio changes
+
+- tree-checker improvements of:
+  - free-space cache and tree items
+  - root reference and backref items
+  - extent state exceptions in reloc tree
+  - validate length of inode reference in items
+
+- subpage mode updates:
+  - code optimizations, simplify tracking bitmaps
+  - re-enable readahead of compressed extent
+  - extend bitmap size to cover huge folios
+
+- add tracepoints related to sync, tree-log and transactions
+
+- device stats item tracking unification, remove item if there are no stats
+  recorded, also don't leave stale stats on replaced device
+
+- allow extent buffer pages to be allocated as movable, to help page migration
+
 7.1 (Jun 2026)
 --------------
 Pull requests:
