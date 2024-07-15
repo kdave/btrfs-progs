@@ -1110,6 +1110,62 @@ static int convert_open_fs(const char *devname,
 	return -1;
 }
 
+static int link_image_subvolume(struct btrfs_root *image_root, char *name)
+{
+	struct btrfs_fs_info *fs_info = image_root->fs_info;
+	struct btrfs_root *fs_root = fs_info->fs_root;
+	struct btrfs_trans_handle *trans;
+	char buf[BTRFS_NAME_LEN + 1]; /* for snprintf, null terminated. */
+	int ret;
+
+	/*
+	 * 1 root backref 1 root forward ref, 1 dir item 1 dir index,
+	 * and finally one root item.
+	 */
+	trans = btrfs_start_transaction(fs_root, 5);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction to link subvolume: %m");
+		return PTR_ERR(trans);
+	}
+	ret = btrfs_link_subvolume(trans, fs_root, btrfs_root_dirid(&fs_root->root_item),
+			name, strlen(name), image_root);
+	/* No filename conflicts, all done. */
+	if (!ret)
+		goto commit;
+	/* Other unexpected errors. */
+	if (ret != -EEXIST) {
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+
+	/* Filename conflicts detected, try different names. */
+	for (int i = 0; i < 1024; i++) {
+		int len;
+
+		len = snprintf(buf, ARRAY_SIZE(buf), "%s%d", name, i);
+		if (len == 0 || len > BTRFS_NAME_LEN) {
+			error("failed to find an alternative name for image_root");
+			ret = -EINVAL;
+			goto abort;
+		}
+		ret = btrfs_link_subvolume(trans, fs_root,
+					   btrfs_root_dirid(&fs_root->root_item),
+					   buf, len, image_root);
+		if (!ret)
+			break;
+		if (ret != -EEXIST)
+			goto abort;
+	}
+commit:
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	return ret;
+abort:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		const char *fslabel, int progress,
 		struct btrfs_mkfs_features *features, u16 csum_type,
@@ -1276,10 +1332,10 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		task_deinit(ctx.info);
 	}
 
-	image_root = btrfs_mksubvol(root, subvol_name,
-				    CONV_IMAGE_SUBVOL_OBJECTID, true);
-	if (!image_root) {
-		error("unable to link subvolume %s", subvol_name);
+	ret = link_image_subvolume(image_root, subvol_name);
+	if (ret < 0) {
+		errno = -ret;
+		error("unable to link subvolume %s: %m", subvol_name);
 		goto fail;
 	}
 
