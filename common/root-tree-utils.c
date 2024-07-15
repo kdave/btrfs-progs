@@ -105,3 +105,110 @@ error:
 	btrfs_abort_transaction(trans, ret);
 	return ret;
 }
+
+/*
+ * Link subvoume @subvol as @name under directory inode @parent_dir of
+ * subvolume @parent_root.
+ */
+int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *parent_root,
+			 u64 parent_dir, const char *name,
+			 int namelen, struct btrfs_root *subvol)
+{
+	struct btrfs_root *tree_root = trans->fs_info->tree_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	struct btrfs_inode_item *ii;
+	u64 index;
+	u64 isize;
+	u32 imode;
+	int ret;
+
+	UASSERT(namelen && namelen <= BTRFS_NAME_LEN);
+
+	/* Make sure @parent_dir is a directory. */
+	key.objectid = parent_dir;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(NULL, parent_root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		btrfs_release_path(&path);
+		return ret;
+	}
+	ii = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
+	imode = btrfs_inode_mode(path.nodes[0], ii);
+	btrfs_release_path(&path);
+
+	if (!S_ISDIR(imode)) {
+		ret = -EUCLEAN;
+		error("%s: inode %llu of subvolume %llu is not a directory",
+		      __func__, parent_dir, parent_root->root_key.objectid);
+		return ret;
+	}
+
+	ret = btrfs_find_free_dir_index(parent_root, parent_dir, &index);
+	if (ret < 0)
+		return ret;
+
+	/* Filename conflicts check. */
+	ret = btrfs_check_dir_conflict(parent_root, name, namelen, parent_dir,
+				       index);
+	if (ret < 0)
+		return ret;
+
+	/*
+	 * Now everything is fine, add the link.
+	 * From now on, every error would lead to transaction abort.
+	 *
+	 * Add the dir_item/index first.
+	 */
+	ret = btrfs_insert_dir_item(trans, parent_root, name, namelen,
+				    parent_dir, &subvol->root_key,
+				    BTRFS_FT_DIR, index);
+	if (ret < 0)
+		goto abort;
+
+	/* Update inode size of the parent inode */
+	key.objectid = parent_dir;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(trans, parent_root, &key, &path, 1, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		btrfs_release_path(&path);
+		goto abort;
+	}
+	ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_inode_item);
+	isize = btrfs_inode_size(path.nodes[0], ii);
+	isize += namelen * 2;
+	btrfs_set_inode_size(path.nodes[0], ii, isize);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
+	btrfs_release_path(&path);
+
+	/* Add the root backref. */
+	ret = btrfs_add_root_ref(trans, tree_root, subvol->root_key.objectid,
+				 BTRFS_ROOT_BACKREF_KEY,
+				 parent_root->root_key.objectid, parent_dir,
+				 index, name, namelen);
+	if (ret < 0)
+		goto abort;
+
+	/* Then forward ref*/
+	ret = btrfs_add_root_ref(trans, tree_root,
+				 parent_root->root_key.objectid,
+				 BTRFS_ROOT_REF_KEY, subvol->root_key.objectid,
+				 parent_dir, index, name, namelen);
+	if (ret < 0)
+		goto abort;
+	/* For now, all root should have its refs == 1 already.
+	 * So no need to update the root refs. */
+	UASSERT(btrfs_root_refs(&subvol->root_item) == 1);
+	return 0;
+abort:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
