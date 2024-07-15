@@ -3,6 +3,12 @@ Changes (kernel/version)
 
 Summary of kernel changes for each version.
 
+7.2 (Aug 2026)
+--------------
+Pull requests:
+
+TBD
+
 7.1 (Jun 2026)
 --------------
 Pull requests:
