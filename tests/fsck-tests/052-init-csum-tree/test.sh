@@ -43,7 +43,7 @@ run_check $SUDO_HELPER fallocate -p -o 4096 -l 4096 "$TEST_MNT/regular_with_hole
 
 # And the most complex one, preallocated, written, then hole
 run_check $SUDO_HELPER fallocate  -l 8192 "$TEST_MNT/complex"
-run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_MNT/compex" \
+run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_MNT/complex" \
 	bs=4k count=1 conv=notrunc status=noxfer > /dev/null 2>&1
 sync
 run_check $SUDO_HELPER fallocate -p -l 4096 "$TEST_MNT/regular_with_holes"
