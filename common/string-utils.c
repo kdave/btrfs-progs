@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <ctype.h>
 #include "common/string-utils.h"
 #include "common/messages.h"
 #include "common/parse-utils.h"
@@ -62,6 +63,46 @@ char *strncpy_null(char *dest, const char *src, size_t n)
 	if (n > 0)
 		dest[n - 1] = '\0';
 	return dest;
+}
+
+/*
+ * Print a string and escape characters (in a C way) that could break the line.
+ * Returns the length of the escaped characters. Unprintable characters are
+ * escaped as octals. Usable for paths or text-like data like xattrs.
+ */
+int string_print_escape_special_len(const char *str, size_t str_len)
+{
+	size_t i;
+	int len = 0;
+
+	for (i = 0; i < str_len; i++) {
+		char c = str[i];
+
+		len++;
+		switch (c) {
+		case '\a': putchar('\\'); putchar('a'); len++; break;
+		case '\b': putchar('\\'); putchar('b'); len++; break;
+		case '\e': putchar('\\'); putchar('e'); len++; break;
+		case '\f': putchar('\\'); putchar('f'); len++; break;
+		case '\n': putchar('\\'); putchar('n'); len++; break;
+		case '\r': putchar('\\'); putchar('r'); len++; break;
+		case '\t': putchar('\\'); putchar('t'); len++; break;
+		case '\v': putchar('\\'); putchar('v'); len++; break;
+		case ' ':  putchar('\\'); putchar(' '); len++; break;
+		case '\\': putchar('\\'); putchar('\\'); len++; break;
+		default:
+			  if (!isprint(c)) {
+				  printf("\\%c%c%c",
+						  '0' + ((c & 0300) >> 6),
+						  '0' + ((c & 070) >> 3),
+						  '0' + (c & 07));
+				  len += 3;
+			  } else {
+				  putchar(c);
+			  }
+		}
+	}
+	return len;
 }
 
 /*

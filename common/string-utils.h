@@ -24,6 +24,12 @@ int string_has_prefix(const char *str, const char *prefix);
 
 char *strncpy_null(char *dest, const char *src, size_t n);
 
+int string_print_escape_special_len(const char *str, size_t len);
+static inline int string_print_escape_special(const char *str)
+{
+	return string_print_escape_special_len(str, strlen(str));
+}
+
 /*
  * Helpers prefixed by arg_* can exit if the argument is invalid and are supposed
  * to be used when parsing command line options where the immediate exit is valid
