@@ -23,7 +23,7 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v44
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx sphinx-rtd-theme-common python3-sphinx-rtd-theme
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx sphinx-rtd-theme-common python3-sphinx-rtd-theme
       - name: Configure
         run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure
       - name: Documentation
@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure --disable-documentation
       - name: Make
@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
@@ -111,7 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
@@ -153,7 +153,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
@@ -173,7 +173,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
+      - run: sudo apt-get update -qqq && sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make
