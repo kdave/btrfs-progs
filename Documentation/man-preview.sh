@@ -1,6 +1,6 @@
 #!/bin/sh
 # Generate manual page preview as rendered to a terminal, without colors or
-# text attributes, encapsualted html, usable for CI summary
+# text attributes, encapsulated html, usable for CI summary
 
 if ! [ -f "$1" ]; then
 	exit 0

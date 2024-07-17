@@ -93,7 +93,7 @@ int compare_add_sort_id(struct compare *comp, int id)
  *
  * Key lookup is case insensitive.
  *
- * Retrun: id from sortdef if a matching
+ * Return: id from sortdef if a matching
  *         -1 on error
  *         -2 end of buffer
  */

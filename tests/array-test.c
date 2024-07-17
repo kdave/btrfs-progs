@@ -25,7 +25,7 @@ static void test_simple_create()
 	int i;
 
 	array_init(&arr, 0);
-	printf("Create array with default intial capacity=%u\n", arr.capacity);
+	printf("Create array with default initial capacity=%u\n", arr.capacity);
 	array_append(&arr, (void *)0x1);
 	array_append(&arr, (void *)0x2);
 	array_append(&arr, (void *)0x3);
@@ -41,7 +41,7 @@ static void test_simple_alloc_elems()
 	const int count = 1000000;
 
 	array_init(&arr, 0);
-	printf("Create array with default intial capacity=%u\n", arr.capacity);
+	printf("Create array with default initial capacity=%u\n", arr.capacity);
 	for (i = 0; i < count; i++) {
 		char *tmp;
 		int ret;

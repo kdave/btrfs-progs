@@ -331,7 +331,7 @@ features see :doc:`Status<Status>` page.
         Improved implementation of free space cache (aka v2), using b-trees.
 
         .. note::
-           Default since btrfs-progs 5.15, Kernel 4.9 fixes endianity bugs on
+           Default since btrfs-progs 5.15, Kernel 4.9 fixes endianness bugs on
            big-endian machines, x86* is ok
 
 4.5 - balance filter updates

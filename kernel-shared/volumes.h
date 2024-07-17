@@ -111,7 +111,7 @@ struct btrfs_fs_devices {
 
 	bool changing_fsid;
 	bool active_metadata_uuid;
-	/* Super block data may be temporarily inconsistent (e.g. a differnt fsid). */
+	/* Super block data may be temporarily inconsistent (e.g. a different fsid). */
 	bool inconsistent_super;
 };
 
