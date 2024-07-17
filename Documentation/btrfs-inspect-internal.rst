@@ -229,11 +229,27 @@ tree-stats [options] <device>
 
         ``Options``
 
-        -b
-                Print raw numbers in bytes.
+        -b|--raw
+                raw numbers in bytes, without the *B* suffix
 
         -t <treeid>
                 Print stats only for the given treeid.
+        --human-readable
+                print human friendly numbers, base 1024, this is the default
+
+        --iec
+                select the 1024 base for the following options, according to the IEC standard
+        --si
+                select the 1000 base for the following options, according to the SI standard
+
+        --kbytes
+                show sizes in KiB, or kB with --si
+        --mbytes
+                show sizes in MiB, or MB with --si
+        --gbytes
+                show sizes in GiB, or GB with --si
+        --tbytes
+                show sizes in TiB, or TB with --si
 
 EXIT STATUS
 -----------
