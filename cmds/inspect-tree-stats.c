@@ -40,7 +40,6 @@
 #include "cmds/commands.h"
 
 static int verbose = 0;
-static bool no_pretty = false;
 
 struct seek {
 	u64 distance;
@@ -366,7 +365,7 @@ out_print:
 		stat.total_clusters = 1;
 	}
 
-	if (no_pretty || size_fail) {
+	if (unit_mode == UNITS_RAW || size_fail) {
 		pr_verbose(LOG_DEFAULT, "\tTotal size: %llu\n", stat.total_bytes);
 		pr_verbose(LOG_DEFAULT, "\t\tInline data: %llu\n", stat.total_inline);
 		pr_verbose(LOG_DEFAULT, "\tTotal seeks: %llu\n", stat.total_seeks);
@@ -451,7 +450,7 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 {
 	struct btrfs_key key = { .type = BTRFS_ROOT_ITEM_KEY };
 	struct btrfs_root *root;
-	unsigned int unit_mode;
+	unsigned int unit_mode = UNITS_DEFAULT;
 	int opt;
 	int ret = 0;
 	u64 tree_id = 0;
@@ -465,7 +464,7 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			verbose++;
 			break;
 		case 'b':
-			no_pretty = true;
+			unit_mode = UNITS_RAW;
 			break;
 		case 't':
 			tree_id = arg_strtou64(optarg);
