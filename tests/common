@@ -431,7 +431,7 @@ check_global_prereq()
 {
 	type -p "$1" &> /dev/null
 	if [ $? -ne 0 ]; then
-		_fail "Failed system wide prerequisities: $1";
+		_fail "Failed system wide prerequisites: $1";
 	fi
 }
 

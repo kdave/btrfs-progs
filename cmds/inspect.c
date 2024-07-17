@@ -839,7 +839,7 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 		  .id = CHUNK_SORT_USAGE
 		},
 		{ .name = "length", .comp = (sort_cmp_t)cmp_cse_length,
-		  .desc = "sort by lentgh",
+		  .desc = "sort by length",
 		  .id = CHUNK_SORT_LENGTH
 		},
 		SORTDEF_END
@@ -876,7 +876,7 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 		ctx->stats[i].pnumber = number++;
 	}
 
-	/* Skip additonal sort if nothing defined by user. */
+	/* Skip additional sort if nothing defined by user. */
 	if (comp.count > 0)
 		qsort_r(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
 			(sort_r_cmp_t)compare_cmp_multi, &comp);

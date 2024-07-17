@@ -80,7 +80,7 @@ void array_use_capacity(struct array *arr)
 	arr->length = arr->capacity;
 }
 
-/* Append a new element (increas length), extend the array if needed. */
+/* Append a new element (increase length), extend the array if needed. */
 int array_append(struct array *arr, void *element)
 {
 	if (arr->length == arr->capacity) {

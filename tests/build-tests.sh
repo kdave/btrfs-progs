@@ -7,7 +7,7 @@
 # - various configure options
 #
 # Arguments:
-# - (first arugment) --ccache - enable ccache for build which can speed up
+# - (first argument) --ccache - enable ccache for build which can speed up
 #    rebuilding same files if the options do not affect them, the ccache will
 #    be created in the toplevel git directory
 # - anything else will be passed to 'make', eg. define CC, D, V

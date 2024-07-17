@@ -131,7 +131,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	}
 
-	/* The read_buf does not guarantee any aligmnet for any structures. */
+	/* The read_buf does not guarantee any alignment for any structures. */
 	cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
 	cmd_len = get_unaligned_le32(&cmd_hdr->len);
 	cmd = get_unaligned_le16(&cmd_hdr->cmd);

@@ -443,7 +443,7 @@ static int copy_rootdir_inode(struct btrfs_trans_handle *trans,
 	ret = stat(dir_name, &st);
 	if (ret < 0) {
 		ret = -errno;
-		error("stat failed for direcotry %s: %m", dir_name);
+		error("stat failed for directory %s: %m", dir_name);
 		return ret;
 	}
 

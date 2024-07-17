@@ -44,7 +44,7 @@ void test() {
 	struct entry entries[SIZE];
 	// Comparator structure
 	struct compare comp = { 0 };
-	// Keys, item comparators, help text defitions
+	// Keys, item comparators, help text definitions
 	struct sortdef sortit[] = {
 		{ .name = "id",   .comp = (sort_cmp_t)cmp_entry_id,
 		  .desc = "sort by id" },

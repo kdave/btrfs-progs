@@ -1689,7 +1689,7 @@ btrfs-progs-4.4 (2016-01-18)
 
   Bugfixes:
      * chunk recovery: fix floating point exception
-     * chunk recovery: endianity bugfix during rebuild
+     * chunk recovery: endianness bugfix during rebuild
      * mkfs with 64K pages and nodesize reported superblock checksum mismatch
      * check: properly reset nlink of multi-linked file
 

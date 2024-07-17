@@ -1331,7 +1331,7 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		goto out;
 	} else if (!devstr && devid == 1 && dev_idx < 0) {
 		/*
-		 * No device specified, assuming implicit 1 but it doess not
+		 * No device specified, assuming implicit 1 but it does not
 		 * exist. Use minimum device as fallback.
 		 */
 		warning("no devid specified means devid 1 which does not exist, using\n"
