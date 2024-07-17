@@ -32,7 +32,7 @@ for l in ch_lines:
         if not c in found:
             found[c] = fn + ":" + line
         else:
-            print(f"ERROR: cookie {c} in {fn}:{line} not uniqe, please fix it first")
+            print(f"ERROR: cookie {c} in {fn}:{line} not unique, please fix it first")
 
 if len(sys.argv) == 1:
     cookie = do_new_cookie()

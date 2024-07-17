@@ -18,7 +18,7 @@ Manual pages structure:
 -  subcommands are in alphabetical order
 
 -  long command output or shell examples: verbatim output
-   -  use ``..code-block::`` directive with ``bash`` or ``plain`` syntax hilighting
+   -  use ``..code-block::`` directive with ``bash`` or ``plain`` syntax highlighting
 
 Quotes, reference, element formatting:
 

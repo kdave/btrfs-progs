@@ -728,7 +728,7 @@ BTRFS_IOC_SUBVOL_CREATE_V2
      - ignored
    * - args.flags
      - flags to set on the subvolume, ``BTRFS_SUBVOL_RDONLY`` for readonly,
-       ``BTRFS_SUBVOL_QGROUP_INHERIT`` if the qgroup related fileds should be
+       ``BTRFS_SUBVOL_QGROUP_INHERIT`` if the qgroup related fields should be
        processed
    * - args.size
      - number of entries in ``args.qgroup_inherit``

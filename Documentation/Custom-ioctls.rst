@@ -20,5 +20,5 @@ a command if available:
 
 - query/set a subset of features on a mounted filesystem
 
-Programming documentaion of the ioctls is in the manual page
+Programming documentation of the ioctls is in the manual page
 :doc:`btrfs-ioctl`.

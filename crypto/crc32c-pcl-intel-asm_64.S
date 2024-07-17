@@ -191,7 +191,7 @@ crc_pcl:
 	xor     crc1,crc1
 	xor     crc2,crc2
 
-	# Fall thruogh into top of crc array (crc_128)
+	# Fall through into top of crc array (crc_128)
 
 	################################################################
 	## 3) CRC Array:

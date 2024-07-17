@@ -164,7 +164,7 @@ some architectures.  Optionally it's possible to use
 [Botan](https://botan.randombit.net) or
 [OpenSSL](https://www.openssl.org) implementations.
 
-The builtin implemtations uses the following sources:
+The builtin implementations uses the following sources:
 [CRC32C](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git),
 [XXHASH](https://github.com/Cyan4973/xxHash),
 [SHA256](https://tools.ietf.org/html/rfc4634),

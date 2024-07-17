@@ -577,7 +577,7 @@ Pull requests:
 `v5.0-rc3 <https://git.kernel.org/linus/1be969f4682b0aa1995e46fba51502de55f15ce8>`__,
 `v5.0-rc5 <https://git.kernel.org/linus/312b3a93dda6db9354b0c6b0f1868c1434e8c787>`__
 
-Features, hilights:
+Features, highlights:
 
 - swapfile support (with some limitations)
 - metadata uuid - new feature that allows fast uuid change without rewriting all metadata blocks (backward incompatible)
@@ -609,7 +609,7 @@ Pull requests:
 `v5.1-rc5 <https://git.kernel.org/linus/2d06b235815e6bd20395f3db9ada786a6f7a876e>`__,
 `v5.1-rc7 <https://git.kernel.org/linus/d0473f978e61557464daa8547008fa2cd0c63a17>`__
 
-New features, hilights:
+New features, highlights:
 
 - zstd compression levels can be set as mount options
 - new ioctl to unregister scanned devices
@@ -634,7 +634,7 @@ Pull requests:
 `v5.2-rc5 <https://git.kernel.org/linus/6fa425a2651515f8d262f2c1d972c6632e7c941d>`__,
 `v5.2-rc6 <https://git.kernel.org/linus/bed3c0d84e7e25c8e0964d297794f4c215b01f33>`__
 
-User visible changes, hilights:
+User visible changes, highlights:
 
 - better read time and write checks to catch errors early and before writing data to disk
 - qgroups + metadata relocation: last speed up patch in the series there should
@@ -672,7 +672,7 @@ Pull requests:
 `v5.3-rc5 <https://git.kernel.org/linus/3039fadf2bfdc104dc963820c305778c7c1a6229>`__,
 `v5.3 <https://git.kernel.org/linus/1b304a1ae45de4df7d773f0a39d1100aabca615b>`__
 
-New features, hilights:
+New features, highlights:
 
 - chunks that have been trimmed and unchanged since last mount are tracked and skipped on repeated trims
 - use hw assisted crc32c on more arches
@@ -762,7 +762,7 @@ Highlights:
 - async discard
 
   - "mount -o discard=async" to enable it
-  - freed extents are not discarded immediatelly, but grouped together and
+  - freed extents are not discarded immediately, but grouped together and
     trimmed later, with IO rate limiting
   - the actual discard IO requests have been moved out of transaction commit
     to a worker thread, improving commit latency
@@ -780,7 +780,7 @@ Core changes:
   that was confusing
 - device closing does not need to allocate memory anymore
 - snapshot aware code got removed, disabled for years due to performance
-  problems, reimplmentation will allow to select wheter defrag breaks or does
+  problems, reimplementation will allow to select whether defrag breaks or does
   not break COW on shared extents
 - tree-checker:
 
@@ -805,14 +805,14 @@ Pull requests:
 `v5.7-rc4 <https://git.kernel.org/linus/51184ae37e0518fd90cb437a2fbc953ae558cd0d>`__,
 `v5.7-rc4 <https://git.kernel.org/linus/262f7a6b8317a06e7d51befb690f0bca06a473ea>`__
 
-Hilights:
+Highlights:
 
 - v2 of ioctl to delete subvolumes, allowing to delete by id and more future extensions
 - removal of obsolete ioctl flag BTRFS_SUBVOL_CREATE_ASYNC
 - more responsive balance cancel
 - speedup of extent back reference resolution
 - reflink/clone_range works on inline extents
-- lots of othe core changes, see the [https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed pull request]
+- lots of other core changes, see the [https://git.kernel.org/linus/15c981d16d70e8a5be297fa4af07a64ab7e080ed pull request]
 
 5.8 (Aug 2020)
 ^^^^^^^^^^^^^^
@@ -825,7 +825,7 @@ Pull requests:
 `v5.8-rc5 <https://git.kernel.org/linus/72c34e8d7099c329c2934c2ac9c886f638b6edaf>`__,
 `v5.8-rc7 <https://git.kernel.org/linus/0669704270e142483d80cfda5c526426c1a89711>`__
 
-Hilights:
+Highlights:
 
 - speedup dead root detection during orphan cleanup
 - send will emit file capabilities after chown
@@ -850,7 +850,7 @@ Pull requests:
 `v5.9-rc7 <https://git.kernel.org/linus/bffac4b5435a07bf26604385ae533adff3cccf23>`__,
 `v5.9-rc8 <https://git.kernel.org/linus/4e3b9ce271b4b54d2293a3916d22e4ddc0c89aab>`__
 
-Hilights:
+Highlights:
 
 - add mount option ''rescue'' to unify options for various recovery tasks on a mounted filesystems
 - mount option ''inode_cache'' is deprecated and will be removed in 5.11
@@ -870,7 +870,7 @@ Pull requests:
 `v5.10-rc4 <https://git.kernel.org/linus/e2f0c565ec70eb9e4d3b98deb5892af62de8b98d>`__,
 `v5.10-rc6 <https://git.kernel.org/linus/a17a3ca55e96d20e25e8b1a7cd08192ce2bac3cc>`__
 
-Hilights:
+Highlights:
 
 - performance improvements in fsync (dbench workload: higher throughput, lower latency)
 - sysfs exports current exclusive operataion (balance, resize, device add/del/...)
@@ -999,7 +999,7 @@ Pull requests:
 `v5.14-rc7 <https://git.kernel.org/linus/d6d09a6942050f21b065a134169002b4d6b701ef>`__,
 `v5.14 <https://git.kernel.org/linus/9b49ceb8545b8eca68c03388a07ecca7caa5d9c1>`__
 
-Hilights:
+Highlights:
 
 - new sysfs knob to limit scrub IO bandwidth per device
 - device stats are also available in /sys/fs/btrfs/FSID/devinfo/DEVID/error_stats
@@ -1195,7 +1195,7 @@ Core, fixes:
 
 - prevent deleting subvolume with active swapfile
 - remove device count in superblock and its item in one transaction so
-  they cant't get out of sync
+  they can't get out of sync
 - for subpage, force the free space v2 mount to avoid a warning and
   make it easy to switch a filesystem on different page size systems
 - export sysfs status of exclusive operation 'balance paused', so the
@@ -1390,7 +1390,7 @@ Fixes:
 Fixes:
 
 - device delete hang at the end of the operation
-- free space tree bitmap endianity fixed on big-endian machines
+- free space tree bitmap endianness fixed on big-endian machines
 - parallel incremental send and balance issue fixed
 - cloning ioctl can be interrupted by a fatal signal
 - other stability fixes or cleanups
@@ -1398,7 +1398,7 @@ Fixes:
 4.10 (Feb 2017)
 ^^^^^^^^^^^^^^^
 
-- balance: human readable block group descripion in the log
+- balance: human readable block group description in the log
 - balance: fix storing of stripes_min, stripes_max filters to the on-disk item
 - qgroup: fix accounting bug during concurrent balance run
 - better worker thread resource limit checks
@@ -1555,7 +1555,7 @@ Internal changes:
 4.19 (Oct 2018)
 ^^^^^^^^^^^^^^^
 
-Hilights, no big changes in this releaase:
+Highlights, no big changes in this release:
 
 - allow defrag on opened read-only files that have rw permissions
 - tree checker improvements, reported by fuzzing

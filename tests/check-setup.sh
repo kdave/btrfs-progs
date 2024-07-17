@@ -4,7 +4,7 @@
 
 for dir in *-tests; do
 	missing=
-	echo "Checking prerequisities for: $dir"
+	echo "Checking prerequisites for: $dir"
 	for prog in $(find "$dir" -name 'test.sh' -exec grep check_global_prereq '{}' \; | sort -u); do
 		if [ "$prog" = check_global_prereq ]; then
 			continue

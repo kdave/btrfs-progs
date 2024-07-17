@@ -1,5 +1,5 @@
 #!/bin/sh
-# Update all base images from Dockefile
+# Update all base images from Dockerfile
 # Run before: images-build-all
 
 for dir in ci-*; do
