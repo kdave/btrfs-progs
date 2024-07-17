@@ -93,7 +93,9 @@ static void print_dir_item(struct extent_buffer *eb, u32 size,
 		} else {
 			read_extent_buffer(eb, namebuf,
 					(unsigned long)(di + 1), len);
-			printf("\t\tname: %.*s\n", len, namebuf);
+			printf("\t\tname: ");
+			string_print_escape_special_len(namebuf, len);
+			printf("\n");
 		}
 
 		if (data_len) {
@@ -104,7 +106,9 @@ static void print_dir_item(struct extent_buffer *eb, u32 size,
 			} else {
 				read_extent_buffer(eb, namebuf,
 					(unsigned long)(di + 1) + name_len, len);
-				printf("\t\tdata %.*s\n", len, namebuf);
+				printf("\t\tdata ");
+				string_print_escape_special_len(namebuf, len);
+				printf("\n");
 			}
 		}
 		len = sizeof(*di) + name_len + data_len;
@@ -137,7 +141,9 @@ static void print_inode_extref_item(struct extent_buffer *eb, u32 size,
 		} else {
 			read_extent_buffer(eb, namebuf,
 					(unsigned long)extref->name, len);
-			printf("name: %.*s\n", len, namebuf);
+			printf("name: ");
+			string_print_escape_special_len(namebuf, len);
+			printf("\n");
 		}
 
 		len = sizeof(*extref) + name_len;
@@ -167,7 +173,9 @@ static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 		} else {
 			read_extent_buffer(eb, namebuf,
 					(unsigned long)(ref + 1), len);
-			printf("name: %.*s\n", len, namebuf);
+			printf("name: ");
+			string_print_escape_special_len(namebuf, len);
+			printf("\n");
 		}
 		len = sizeof(*ref) + name_len;
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);

@@ -66,8 +66,12 @@ dump-tree [options] <device> [device...]
         a positive educational effect on understanding the internal filesystem structure.
 
         .. note::
-                Contains file names, consider that if you're asked to send the dump for
-                analysis. Does not contain file data.
+                By default contains file names, consider that if you're asked
+                to send the dump for analysis and use *--hide-names* eventually.
+                Does not contain file data.
+
+        Special characters in file names, xattr names and values are escaped,
+        in the C style like ``\n`` and octal encoding ``\NNN``.
 
         ``Options``
 
