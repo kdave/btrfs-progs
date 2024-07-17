@@ -169,6 +169,91 @@ logical-resolve [-Pvo] [-s <bufsize>] <logical> <path>
         -v
                 (deprecated) alias for global *-v* option
 
+list-chunks [options] <path>
+        (needs root privileges)
+
+        Enumerate chunks on all devices. The chunks represent the physical
+        range on devices (not to be confused with block groups that represent
+        the logical ranges, but the terms are often used interchangeably).
+
+        Example output:
+
+        .. code-block:: none
+
+            Devid PNumber      Type/profile    PStart    Length      PEnd LNumber    LStart Usage%
+            ----- ------- ----------------- --------- --------- --------- ------- --------- ------
+                1       1       Data/single   1.00MiB  84.00MiB  85.00MiB      68 191.60GiB  62.77
+                1       2     System/DUP     85.00MiB  32.00MiB 117.00MiB      39 140.17GiB   0.05
+                1       3     System/DUP    117.00MiB  32.00MiB 149.00MiB      40 140.17GiB   0.05
+                1       4   Metadata/DUP    149.00MiB 192.00MiB 341.00MiB      59 188.41GiB  45.00
+                1       5   Metadata/DUP    341.00MiB 192.00MiB 533.00MiB      60 188.41GiB  45.00
+                1       6       Data/single 533.00MiB   1.00GiB   1.52GiB      49 169.91GiB  72.23
+                1       7       Data/single   1.52GiB  16.00MiB   1.54GiB      69 191.68GiB  79.83
+                1       8       Data/single   1.54GiB   1.00GiB   2.54GiB      17 100.90GiB  46.39
+                1       9       Data/single   2.54GiB   1.00GiB   3.54GiB      16  99.90GiB  40.68
+                1      10       Data/single   3.54GiB   1.00GiB   4.54GiB       1  71.40GiB  62.97
+                1      11       Data/single   4.54GiB   1.00GiB   5.54GiB      33 125.04GiB  26.00
+                1      12       Data/single   5.54GiB   1.00GiB   6.54GiB      50 170.91GiB  60.44
+                1      13       Data/single   6.54GiB 512.00MiB   7.04GiB      63 189.16GiB  67.34
+                1      14       Data/single   7.04GiB   1.00GiB   8.04GiB      51 171.91GiB  70.94
+
+        * *Devid* -- the device id
+        * *PNumber* -- the number of the chunk on the device (in order)
+        * *Type/profile* -- the chunk type and profile
+        * *PStart* -- the chunk start on the device
+        * *Length* -- the chunk length (same for physical and logical address space)
+        * *PEnd* -- the chunk end, effectively *PStart + Length*
+        * *LNumber* -- the number of the chunk, in the logical address space of the whole filesystem
+        * *LStart* -- the chunk start in the logical address space of the whole
+          filesystem, as it's a single space it's also called *offset*
+        * *Usage* -- chunk usage, percentage of used data/metadata of the chunk length
+
+        The chunks in the output can be sorted by one or more sorting criteria, evaluated
+        as specified, in the ascending order.  By default the chunks are sorted
+        by *devid* and *pstart*, this is most convenient for single device filesystems.
+
+        On multi-device filesystems it's up to the user what is preferred as the layout
+        of chunks on e.g. striped profiles (RAID0 etc) cannot be easily represented.
+        A logical view with corresponding underlying structure would be better, but
+        sorting by *lstart,devid* at least groups devices of the given logical
+        range. Can be also combined with *usage*.
+
+        This output can provide information for balance filters.
+
+        ``Options``
+
+        --sort MODE
+                sort by a column (ascending):
+
+                MODE is a coma separated list of:
+
+                        *devid* - by device id (default, with pstart)
+
+                        *pstart* - physical start (relative to the beginning of the device)
+
+                        *lstart* - logical offset (in the logical address space)
+
+                        *usage* - by chunk usage (percentage)
+
+                        *length* - by chunk length
+
+        --raw
+                raw numbers in bytes, without the *B* suffix
+        --human-readable
+                print human friendly numbers, base 1024, this is the default
+        --iec
+                select the 1024 base for the following options, according to the IEC standard
+        --si
+                select the 1000 base for the following options, according to the SI standard
+        --kbytes
+                show sizes in KiB, or kB with --si
+        --mbytes
+                show sizes in MiB, or MB with --si
+        --gbytes
+                show sizes in GiB, or GB with --si
+        --tbytes
+                show sizes in TiB, or TB with --si
+
 .. _man-inspect-map-swapfile:
 
 map-swapfile [options] <file>

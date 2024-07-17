@@ -691,22 +691,20 @@ static DEFINE_SIMPLE_COMMAND(inspect_min_dev_size, "min-dev-size");
 
 static const char * const cmd_inspect_list_chunks_usage[] = {
 	"btrfs inspect-internal list-chunks [options] <path>",
-	"Show chunks (block groups) layout",
-	"Show chunks (block groups) layout for all devices",
+	"Enumerate chunks on all devices",
+	"Enumerate chunks on all devices. Chunks are the physical storage tied to a device,",
+	"striped profiles they appear multiple times for a ginve logical offset, on other",
+	"profiles the correspondence is 1:1 or 1:N.",
 	"",
 	HELPINFO_UNITS_LONG,
-	OPTLINE("--sort MODE", "sort by a column ascending (default: pstart),\n"
-			"MODE can be one of:\n"
-			"pstart - physical offset, grouped by device\n"
+	OPTLINE("--sort MODE", "sort by a column (ascending):\n"
+			"MODE is a coma separated list of:\n"
+			"devid - by device id (default, with pstart)\n"
+			"pstart - physical start\n"
 			"lstart - logical offset\n"
-			"usage - by chunk usage (implies --usage)\n"
-			"length_p - by chunk length, secondary by physical offset\n"
-			"length_l - by chunk length, secondary by logical offset"
+			"usage  - by chunk usage\n"
+			"length - by chunk length"
 	       ),
-	OPTLINE("--usage", "show usage per block group (note: this can be slow)"),
-	OPTLINE("--no-usage", "don't show usage per block group"),
-	OPTLINE("--empty", "show empty space between block groups"),
-	OPTLINE("--no-empty", "do not show empty space between block groups"),
 	NULL
 };
 
