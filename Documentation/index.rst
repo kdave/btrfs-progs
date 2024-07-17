@@ -82,6 +82,7 @@ is in the :doc:`manual pages<man-index>`.
    dev/dev-json
    dev/dev-internal-apis
    dev/ReleaseChecklist
+   dev/GithubReviewWorkflow
    btrfs-ioctl
 
 
