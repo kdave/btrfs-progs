@@ -687,8 +687,6 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_min_dev_size, "min-dev-size");
 
-#if EXPERIMENTAL
-
 static const char * const cmd_inspect_list_chunks_usage[] = {
 	"btrfs inspect-internal list-chunks [options] <path>",
 	"Enumerate chunks on all devices",
@@ -1138,8 +1136,6 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_list_chunks, "list-chunks");
 
-#endif
-
 static const char * const cmd_inspect_map_swapfile_usage[] = {
 	"btrfs inspect-internal map-swapfile <file>",
 	"Print physical offset of first block and resume offset if file is suitable as swapfile",
@@ -1565,9 +1561,7 @@ static const struct cmd_group inspect_cmd_group = {
 		&cmd_struct_inspect_dump_tree,
 		&cmd_struct_inspect_dump_super,
 		&cmd_struct_inspect_tree_stats,
-#if EXPERIMENTAL
 		&cmd_struct_inspect_list_chunks,
-#endif
 		NULL
 	}
 };
