@@ -12,11 +12,7 @@ _test_config()
 {
 	local feature="$1"
 
-	if [ ! -f "$TOP/include/config.h" ]; then
-		echo "include/config.h not exists"
-		exit 1
-	fi
-	if grep -q "$feature.*1" "${TOP}/include/config.h"; then
+	if "$TOP/btrfs" --version | grep -q "+${feature}"; then
 		return 0
 	fi
 	return 1
