@@ -1,6 +1,8 @@
-# Codespell configuration is within .codespellrc
----
+# Check for typos on devel and pull rquests
+# - codespell configuration is within .codespellrc
+
 name: Codespell
+run-name: Codespell
 
 on:
   push:
