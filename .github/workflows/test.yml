@@ -28,3 +28,9 @@ jobs:
       - run: echo "::error::Test failed"
       - run: echo "It works :rocket:" >> $GITHUB_STEP_SUMMARY
       - run: tests/annotate.sh >> $GITHUB_STEP_SUMMARY
+  build-tw-gcc-next:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI Tumbleweed
+        run: ci/ci-build-tumbleweed
