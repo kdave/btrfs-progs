@@ -31,6 +31,10 @@ RUN zypper install -y --no-recommends libgcrypt-devel libsodium-devel libkcapi-d
 # Force the version, sync with script test-build to create the symlinks
 RUN zypper install -y --no-recommends gcc16
 
+RUN zypper -n --gpg-auto-import-keys ar --no-gpgcheck --refresh https://download.opensuse.org/repositories/devel:/gcc:/next/openSUSE_Tumbleweed/ tw-oss
+RUN zypper install -y --allow-vendor-change gcc16
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 16
+
 COPY ./test-build .
 COPY ./run-tests .
 COPY ./devel.tar.gz .
