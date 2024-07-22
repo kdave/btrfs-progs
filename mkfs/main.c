@@ -1159,6 +1159,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					error("unrecognized filesystem feature '%s'",
 							tmp);
 					free(orig);
+					ret = 1;
 					goto error;
 				}
 				free(orig);
@@ -1180,6 +1181,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					error("unrecognized runtime feature '%s'",
 					      tmp);
 					free(orig);
+					ret = 1;
 					goto error;
 				}
 				free(orig);
@@ -1246,8 +1248,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	if (!sectorsize)
 		sectorsize = (u32)SZ_4K;
-	if (btrfs_check_sectorsize(sectorsize))
+	if (btrfs_check_sectorsize(sectorsize)) {
+		ret = 1;
 		goto error;
+	}
 
 	if (!nodesize)
 		nodesize = max_t(u32, sectorsize, BTRFS_MKFS_DEFAULT_NODE_SIZE);
@@ -1262,10 +1266,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	if (source_dir && device_count > 1) {
 		error("the option -r is limited to a single device");
+		ret = 1;
 		goto error;
 	}
 	if (shrink_rootdir && source_dir == NULL) {
 		error("the option --shrink must be used with --rootdir");
+		ret = 1;
 		goto error;
 	}
 
@@ -1274,11 +1280,13 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 		if (uuid_parse(fs_uuid, dummy_uuid) != 0) {
 			error("could not parse UUID: %s", fs_uuid);
+			ret = 1;
 			goto error;
 		}
 		/* We allow non-unique fsid for single device btrfs filesystem. */
 		if (device_count != 1 && !test_uuid_unique(fs_uuid)) {
 			error("non-unique UUID: %s", fs_uuid);
+			ret = 1;
 			goto error;
 		}
 	}
@@ -1288,12 +1296,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 		if (uuid_parse(dev_uuid, dummy_uuid) != 0) {
 			error("could not parse device UUID: %s", dev_uuid);
+			ret = 1;
 			goto error;
 		}
 		/* We allow non-unique device uuid for single device filesystem. */
 		if (device_count != 1 && !test_uuid_unique(dev_uuid)) {
 			error("the option --device-uuid %s can be used only for a single device filesystem",
 			      dev_uuid);
+			ret = 1;
 			goto error;
 		}
 	}
@@ -1357,6 +1367,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			if (metadata_profile != data_profile) {
 				error(
 	"with mixed block groups data and metadata profiles must be the same");
+				ret = 1;
 				goto error;
 			}
 		}
@@ -1426,12 +1437,15 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			warning("libblkid < 2.38 does not support zoned mode's superblock location, update recommended");
 	}
 
-	if (btrfs_check_nodesize(nodesize, sectorsize, &features))
+	if (btrfs_check_nodesize(nodesize, sectorsize, &features)) {
+		ret = 1;
 		goto error;
+	}
 
 	if (sectorsize < sizeof(struct btrfs_super_block)) {
 		error("sectorsize smaller than superblock: %u < %zu",
 				sectorsize, sizeof(struct btrfs_super_block));
+		ret = 1;
 		goto error;
 	}
 
@@ -1462,6 +1476,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					 S_IROTH);
 		if (fd < 0) {
 			error("unable to open %s: %m", file);
+			ret = 1;
 			goto error;
 		}
 
@@ -1507,6 +1522,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		error("size %llu is too small to make a usable filesystem", byte_count);
 		error("minimum size for a %sbtrfs filesystem is %llu",
 		      opt_zoned ? "zoned mode " : "", min_dev_size);
+		ret = 1;
 		goto error;
 	}
 
@@ -1560,6 +1576,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		if (!zoned_profile_supported(metadata, rst) ||
 		    !zoned_profile_supported(data, rst)) {
 			error("zoned mode does not yet support the selected RAID profiles");
+			ret = 1;
 			goto error;
 		}
 	}
@@ -1569,6 +1586,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	if (!t_prepare || !prepare_ctx) {
 		error_msg(ERROR_MSG_MEMORY, "thread for preparing devices");
+		ret = 1;
 		goto error;
 	}
 
@@ -1610,6 +1628,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (byte_count && byte_count > dev_byte_count) {
 		error("%s is smaller than requested size, expected %llu, found %llu",
 		      file, byte_count, dev_byte_count);
+		ret = 1;
 		goto error;
 	}
 
@@ -1653,6 +1672,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("open ctree failed");
+		ret = 1;
 		goto error;
 	}
 
@@ -1676,6 +1696,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (IS_ERR(trans)) {
 		errno = -PTR_ERR(trans);
 		error_msg(ERROR_MSG_START_TRANS, "%m");
+		ret = 1;
 		goto error;
 	}
 
@@ -1710,6 +1731,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (IS_ERR(trans)) {
 		errno = -PTR_ERR(trans);
 		error_msg(ERROR_MSG_START_TRANS, "%m");
+		ret = 1;
 		goto error;
 	}
 
@@ -1729,6 +1751,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		if (prepare_ctx[i].ret) {
 			errno = -prepare_ctx[i].ret;
 			error("unable to prepare device %s: %m", prepare_ctx[i].file);
+			ret = 1;
 			goto error;
 		}
 
@@ -1777,6 +1800,7 @@ raid_groups:
 	if (IS_ERR(trans)) {
 		errno = -PTR_ERR(trans);
 		error_msg(ERROR_MSG_START_TRANS, "%m");
+		ret = 1;
 		goto error;
 	}
 	/* COW all tree blocks to newly created chunks */
@@ -1913,6 +1937,8 @@ out:
 	}
 
 	btrfs_close_all_devices();
+
+error:
 	if (prepare_ctx) {
 		for (i = 0; i < device_count; i++)
 			close(prepare_ctx[i].fd);
@@ -1924,16 +1950,6 @@ out:
 
 	return !!ret;
 
-error:
-	if (prepare_ctx) {
-		for (i = 0; i < device_count; i++)
-			close(prepare_ctx[i].fd);
-	}
-	free(t_prepare);
-	free(prepare_ctx);
-	free(label);
-	free(source_dir);
-	exit(1);
 success:
 	exit(0);
 }
