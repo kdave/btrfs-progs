@@ -27,6 +27,7 @@
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
+#include "kernel-shared/transaction.h"
 
 struct btrfs_trans_handle;
 
@@ -173,6 +174,7 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_dir_flags(leaf, dir_item, type);
 	btrfs_set_dir_data_len(leaf, dir_item, 0);
 	btrfs_set_dir_name_len(leaf, dir_item, name_len);
+	btrfs_set_dir_transid(leaf, dir_item, trans->transid);
 	name_ptr = (unsigned long)(dir_item + 1);
 
 	write_extent_buffer(leaf, name, name_ptr, name_len);
@@ -202,6 +204,7 @@ insert:
 	btrfs_set_dir_flags(leaf, dir_item, type);
 	btrfs_set_dir_data_len(leaf, dir_item, 0);
 	btrfs_set_dir_name_len(leaf, dir_item, name_len);
+	btrfs_set_dir_transid(leaf, dir_item, trans->transid);
 	name_ptr = (unsigned long)(dir_item + 1);
 	write_extent_buffer(leaf, name, name_ptr, name_len);
 	btrfs_mark_buffer_dirty(leaf);
