@@ -44,85 +44,48 @@ static int fd_converter(PyObject *o, void *p)
 int path_converter(PyObject *o, void *p)
 {
 	struct path_arg *path = p;
-	int is_index, is_bytes, is_unicode;
-	PyObject *bytes = NULL;
-	Py_ssize_t length = 0;
-	char *tmp;
 
 	if (o == NULL) {
 		path_cleanup(p);
 		return 1;
 	}
 
-	path->object = path->cleanup = NULL;
-	Py_INCREF(o);
-
 	path->fd = -1;
+	path->path = NULL;
+	path->length = 0;
+	path->bytes = NULL;
+	if (path->allow_fd && PyIndex_Check(o)) {
+		PyObject *fd_obj;
+		int overflow;
+		long fd;
 
-	is_index = path->allow_fd && PyIndex_Check(o);
-	is_bytes = PyBytes_Check(o);
-	is_unicode = PyUnicode_Check(o);
-
-	if (!is_index && !is_bytes && !is_unicode) {
-		_Py_IDENTIFIER(__fspath__);
-		PyObject *func;
-
-		func = _PyObject_LookupSpecial(o, &PyId___fspath__);
-		if (func == NULL)
-			goto err_format;
-		Py_DECREF(o);
-		o = PyObject_CallFunctionObjArgs(func, NULL);
-		Py_DECREF(func);
-		if (o == NULL)
+		fd_obj = PyNumber_Index(o);
+		if (!fd_obj)
 			return 0;
-		is_bytes = PyBytes_Check(o);
-		is_unicode = PyUnicode_Check(o);
-	}
-
-	if (is_unicode) {
-		if (!PyUnicode_FSConverter(o, &bytes))
-			goto err;
-	} else if (is_bytes) {
-		bytes = o;
-		Py_INCREF(bytes);
-	} else if (is_index) {
-		if (!fd_converter(o, &path->fd))
-			goto err;
-		path->path = NULL;
-		goto out;
+		fd = PyLong_AsLongAndOverflow(fd_obj, &overflow);
+		Py_DECREF(fd_obj);
+		if (fd == -1 && PyErr_Occurred())
+			return 0;
+		if (overflow > 0 || fd > INT_MAX) {
+			PyErr_SetString(PyExc_OverflowError, "fd is greater than maximum");
+			return 0;
+		}
+		if (fd < 0) {
+			PyErr_SetString(PyExc_ValueError, "fd is negative");
+			return 0;
+		}
+		path->fd = fd;
 	} else {
-err_format:
-		PyErr_Format(PyExc_TypeError, "expected %s, not %s",
-			     path->allow_fd ? "string, bytes, os.PathLike, or integer" :
-			     "string, bytes, or os.PathLike",
-			     Py_TYPE(o)->tp_name);
-		goto err;
+		if (!PyUnicode_FSConverter(o, &path->bytes)) {
+			path->object = path->bytes = NULL;
+			return 0;
+		}
+		path->path = PyBytes_AS_STRING(path->bytes);
+		path->length = PyBytes_GET_SIZE(path->bytes);
 	}
-
-	length = PyBytes_GET_SIZE(bytes);
-	tmp = PyBytes_AS_STRING(bytes);
-	if ((size_t)length != strlen(tmp)) {
-		PyErr_SetString(PyExc_TypeError,
-				"path has embedded nul character");
-		goto err;
-	}
-
-	path->path = tmp;
-	if (bytes == o)
-		Py_DECREF(bytes);
-	else
-		path->cleanup = bytes;
-	path->fd = -1;
-
-out:
-	path->length = length;
+	Py_INCREF(o);
 	path->object = o;
 	return Py_CLEANUP_SUPPORTED;
-
-err:
-	Py_XDECREF(o);
-	Py_XDECREF(bytes);
-	return 0;
 }
 
 PyObject *list_from_uint64_array(const uint64_t *arr, size_t n)
@@ -150,8 +113,8 @@ PyObject *list_from_uint64_array(const uint64_t *arr, size_t n)
 
 void path_cleanup(struct path_arg *path)
 {
+	Py_CLEAR(path->bytes);
 	Py_CLEAR(path->object);
-	Py_CLEAR(path->cleanup);
 }
 
 static PyMethodDef btrfsutil_methods[] = {
