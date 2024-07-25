@@ -40,16 +40,13 @@ extern PyTypeObject SubvolumeInfo_type;
 extern PyTypeObject SubvolumeIterator_type;
 extern PyTypeObject QgroupInherit_type;
 
-/*
- * Helpers for path arguments based on posixmodule.c in CPython.
- */
 struct path_arg {
 	bool allow_fd;
-	char *path;
 	int fd;
+	char *path;
 	Py_ssize_t length;
 	PyObject *object;
-	PyObject *cleanup;
+	PyObject *bytes;
 };
 int path_converter(PyObject *o, void *p);
 void path_cleanup(struct path_arg *path);
