@@ -30,6 +30,7 @@
 #include "kernel-shared/messages.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/uuid-tree.h"
+#include "kernel-shared/disk-io.h"
 #include "common/messages.h"
 #include "common/utils.h"
 
@@ -194,6 +195,124 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 	move_len = item_size - (move_src - btrfs_item_ptr_offset(eb, slot));
 	memmove_extent_buffer(eb, move_dst, move_src, move_len);
 	btrfs_truncate_item(path, item_size - sizeof(subid), 1);
+
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+/* return -ENOENT for !found, < 0 for errors, or 0 if an item was found */
+static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, const u8 *uuid,
+				  u8 type, u64 subid)
+{
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct extent_buffer *eb;
+	int slot;
+	u32 item_size;
+	unsigned long offset;
+	struct btrfs_key key;
+
+	UASSERT(uuid_root);
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	btrfs_uuid_to_key(uuid, type, &key);
+	ret = btrfs_search_slot(NULL, uuid_root, &key, path, 0, 0);
+	if (ret < 0) {
+		goto out;
+	} else if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	eb = path->nodes[0];
+	slot = path->slots[0];
+	item_size = btrfs_item_size(eb, slot);
+	offset = btrfs_item_ptr_offset(eb, slot);
+	ret = -ENOENT;
+
+	if (!IS_ALIGNED(item_size, sizeof(u64))) {
+		btrfs_warn(uuid_root->fs_info,
+			   "uuid item with illegal size %lu!",
+			   (unsigned long)item_size);
+		goto out;
+	}
+	while (item_size) {
+		__le64 data;
+
+		read_extent_buffer(eb, &data, offset, sizeof(data));
+		if (le64_to_cpu(data) == subid) {
+			ret = 0;
+			break;
+		}
+		offset += sizeof(data);
+		item_size -= sizeof(data);
+	}
+
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, const u8 *uuid, u8 type,
+			u64 subid_cpu)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int slot;
+	unsigned long offset;
+	__le64 subid_le;
+
+	ret = btrfs_uuid_tree_lookup(uuid_root, uuid, type, subid_cpu);
+	if (ret != -ENOENT)
+		return ret;
+
+	UASSERT(uuid_root);
+	btrfs_uuid_to_key(uuid, type, &key);
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = btrfs_insert_empty_item(trans, uuid_root, path, &key,
+				      sizeof(subid_le));
+	if (ret == 0) {
+		/* Add an item for the type for the first time */
+		eb = path->nodes[0];
+		slot = path->slots[0];
+		offset = btrfs_item_ptr_offset(eb, slot);
+	} else if (ret == -EEXIST) {
+		/*
+		 * An item with that type already exists.
+		 * Extend the item and store the new subid at the end.
+		 */
+		btrfs_extend_item(path, sizeof(subid_le));
+		eb = path->nodes[0];
+		slot = path->slots[0];
+		offset = btrfs_item_ptr_offset(eb, slot);
+		offset += btrfs_item_size(eb, slot) - sizeof(subid_le);
+	} else {
+		btrfs_warn(fs_info,
+			   "insert uuid item failed %d (0x%016llx, 0x%016llx) type %u!",
+			   ret, key.objectid, key.offset, type);
+		goto out;
+	}
+
+	ret = 0;
+	subid_le = cpu_to_le64(subid_cpu);
+	write_extent_buffer(eb, &subid_le, offset, sizeof(subid_le));
+	btrfs_mark_buffer_dirty(eb);
 
 out:
 	btrfs_free_path(path);
