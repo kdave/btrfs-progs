@@ -736,62 +736,6 @@ static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
 	}
 }
 
-static int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid,
-			       u8 type, u64 subvol_id_cpu)
-{
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_root *uuid_root = fs_info->uuid_root;
-	int ret;
-	struct btrfs_path *path = NULL;
-	struct btrfs_key key;
-	struct extent_buffer *eb;
-	int slot;
-	unsigned long offset;
-	__le64 subvol_id_le;
-
-	btrfs_uuid_to_key(uuid, type, &key);
-
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	ret = btrfs_insert_empty_item(trans, uuid_root, path, &key, sizeof(subvol_id_le));
-	if (ret < 0 && ret != -EEXIST) {
-		warning(
-		"inserting uuid item failed (0x%016llx, 0x%016llx) type %u: %d",
-			key.objectid, key.offset, type, ret);
-		goto out;
-	}
-
-	if (ret >= 0) {
-		/* Add an item for the type for the first time. */
-		eb = path->nodes[0];
-		slot = path->slots[0];
-		offset = btrfs_item_ptr_offset(eb, slot);
-	} else {
-		/*
-		 * ret == -EEXIST case, an item with that type already exists.
-		 * Extend the item and store the new subvol_id at the end.
-		 */
-		btrfs_extend_item(path, sizeof(subvol_id_le));
-		eb = path->nodes[0];
-		slot = path->slots[0];
-		offset = btrfs_item_ptr_offset(eb, slot);
-		offset += btrfs_item_size(eb, slot) - sizeof(subvol_id_le);
-	}
-
-	ret = 0;
-	subvol_id_le = cpu_to_le64(subvol_id_cpu);
-	write_extent_buffer(eb, &subvol_id_le, offset, sizeof(subvol_id_le));
-	btrfs_mark_buffer_dirty(eb);
-
-out:
-	btrfs_free_path(path);
-	return ret;
-}
-
 static int create_uuid_tree(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
