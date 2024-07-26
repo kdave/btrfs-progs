@@ -29,6 +29,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/messages.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/uuid-tree.h"
 #include "common/messages.h"
 #include "common/utils.h"
 

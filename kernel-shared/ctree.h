@@ -1192,15 +1192,6 @@ int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, const char *name, int name_len,
 			u64 ino, u64 parent_ino, u64 *index);
 
-/* uuid-tree.c, interface for mounted mounted filesystem */
-int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);
-int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
-					   u64 *subvol_id);
-
-/* uuid-tree.c, interface for unmounte filesystem */
-int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
-			   u64 subid);
-
 static inline int is_fstree(u64 rootid)
 {
 	if (rootid == BTRFS_FS_TREE_OBJECTID ||
@@ -1208,8 +1199,6 @@ static inline int is_fstree(u64 rootid)
 		return 1;
 	return 0;
 }
-
-void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key);
 
 /* inode.c */
 int btrfs_find_free_dir_index(struct btrfs_root *root, u64 dir_ino,
