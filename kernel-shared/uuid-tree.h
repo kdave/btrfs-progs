@@ -29,5 +29,7 @@ int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
 int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 			   u64 subid);
 void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key);
+int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, const u8 *uuid, u8 type,
+			u64 subid_cpu);
 
 #endif
