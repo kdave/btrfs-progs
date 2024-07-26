@@ -49,6 +49,7 @@ Status and progress of kernel/userspace synchronization.
 - ulist.c - done
 - ulist.h - done
 - uuid-tree.c - partial
+- uuid-tree.h - partial, local changes
 - volumes.c - todo, local changes
 - volumes.h - todo, local changes
 - zoned.c - todo
