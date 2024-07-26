@@ -29,6 +29,7 @@
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/uuid-tree.h"
 #include "common/send-utils.h"
 #include "common/messages.h"
 #include "common/utils.h"
