@@ -736,35 +736,6 @@ static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
 	}
 }
 
-static int create_uuid_tree(struct btrfs_trans_handle *trans)
-{
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_root *root;
-	struct btrfs_key key = {
-		.objectid = BTRFS_UUID_TREE_OBJECTID,
-		.type = BTRFS_ROOT_ITEM_KEY,
-	};
-	int ret = 0;
-
-	UASSERT(fs_info->uuid_root == NULL);
-	root = btrfs_create_tree(trans, &key);
-	if (IS_ERR(root)) {
-		ret = PTR_ERR(root);
-		goto out;
-	}
-
-	add_root_to_dirty_list(root);
-	fs_info->uuid_root = root;
-	ret = btrfs_uuid_tree_add(trans, fs_info->fs_root->root_item.uuid,
-				  BTRFS_UUID_KEY_SUBVOL,
-				  fs_info->fs_root->root_key.objectid);
-	if (ret < 0)
-		btrfs_abort_transaction(trans, ret);
-
-out:
-	return ret;
-}
-
 static int create_global_root(struct btrfs_trans_handle *trans, u64 objectid,
 			      int root_id)
 {
@@ -1822,17 +1793,15 @@ raid_groups:
 		goto out;
 	}
 
-	ret = create_uuid_tree(trans);
-	if (ret)
-		warning(
-	"unable to create uuid tree, will be created after mount: %d", ret);
-
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
 		errno = -ret;
 		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
+	ret = btrfs_rebuild_uuid_tree(fs_info);
+	if (ret < 0)
+		goto out;
 
 	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
 				  metadata_profile, metadata_profile);

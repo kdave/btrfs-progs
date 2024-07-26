@@ -15,9 +15,11 @@
  */
 
 #include <time.h>
+#include <uuid/uuid.h>
 #include "common/root-tree-utils.h"
 #include "common/messages.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/uuid-tree.h"
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid)
@@ -211,4 +213,280 @@ int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 abort:
 	btrfs_abort_transaction(trans, ret);
 	return ret;
+}
+
+static int remove_all_tree_items(struct btrfs_root *root)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = { 0 };
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS,
+			  "remove all items for tree %lld: %m",
+			  root->root_key.objectid);
+		return ret;
+	}
+	while (true) {
+		int nr_items;
+
+		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to locate the first key of root %lld: %m",
+				root->root_key.objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		if (ret == 0) {
+			ret = -EUCLEAN;
+			errno = -ret;
+			error("unexpected all zero key found in root %lld",
+				root->root_key.objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		nr_items = btrfs_header_nritems(path.nodes[0]);
+		/* The tree is empty. */
+		if (nr_items == 0) {
+			btrfs_release_path(&path);
+			break;
+		}
+		ret = btrfs_del_items(trans, root, &path, 0, nr_items);
+		btrfs_release_path(&path);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to empty the first leaf of root %lld: %m",
+				root->root_key.objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+	}
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS,
+			  "removal all items for tree %lld: %m",
+			  root->root_key.objectid);
+	}
+	return ret;
+}
+
+static int rescan_subvol_uuid(struct btrfs_trans_handle *trans,
+			      struct btrfs_key *subvol_key)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *subvol;
+	int ret;
+
+	UASSERT(is_fstree(subvol_key->objectid));
+
+	/*
+	 * Read out the subvolume root and updates root::root_item.
+	 * This is to avoid de-sync between in-memory and on-disk root_items.
+	 */
+	subvol = btrfs_read_fs_root(fs_info, subvol_key);
+	if (IS_ERR(subvol)) {
+		ret = PTR_ERR(subvol);
+		error("failed to read subvolume %llu: %m",
+			subvol_key->objectid);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	/* The uuid is not set, regenerate one. */
+	if (uuid_is_null(subvol->root_item.uuid)) {
+		uuid_generate(subvol->root_item.uuid);
+		ret = btrfs_update_root(trans, fs_info->tree_root, &subvol->root_key,
+					&subvol->root_item);
+		if (ret < 0) {
+			error("failed to update subvolume %llu: %m",
+			      subvol_key->objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+	}
+	ret = btrfs_uuid_tree_add(trans, subvol->root_item.uuid,
+				  BTRFS_UUID_KEY_SUBVOL,
+				  subvol->root_key.objectid);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to add uuid for subvolume %llu: %m",
+		      subvol_key->objectid);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	if (!uuid_is_null(subvol->root_item.received_uuid)) {
+		ret = btrfs_uuid_tree_add(trans, subvol->root_item.uuid,
+					  BTRFS_UUID_KEY_RECEIVED_SUBVOL,
+					  subvol->root_key.objectid);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to add received_uuid for subvol %llu: %m",
+			      subvol->root_key.objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+	}
+	return 0;
+}
+
+static int rescan_uuid_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = { 0 };
+	int ret;
+
+	UASSERT(uuid_root);
+	trans = btrfs_start_transaction(uuid_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "rescan uuid tree: %m");
+		return ret;
+	}
+	key.objectid = BTRFS_LAST_FREE_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+	/* Iterate through all subvolumes except fs tree. */
+	while (true) {
+		struct btrfs_key found_key;
+		struct extent_buffer *leaf;
+		int slot;
+
+		/* No more subvolume. */
+		if (key.objectid < BTRFS_FIRST_FREE_OBJECTID) {
+			ret = 0;
+			break;
+		}
+		ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_READ, "iterate subvolumes: %m");
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		if (ret > 0) {
+			ret = btrfs_previous_item(tree_root, &path,
+						  BTRFS_FIRST_FREE_OBJECTID,
+						  BTRFS_ROOT_ITEM_KEY);
+			if (ret < 0) {
+				errno = -ret;
+				btrfs_release_path(&path);
+				error_msg(ERROR_MSG_READ, "iterate subvolumes: %m");
+				btrfs_abort_transaction(trans, ret);
+				return ret;
+			}
+			/* No more subvolume. */
+			if (ret > 0) {
+				ret = 0;
+				btrfs_release_path(&path);
+				break;
+			}
+		}
+		leaf = path.nodes[0];
+		slot = path.slots[0];
+		btrfs_item_key_to_cpu(leaf, &found_key, slot);
+		btrfs_release_path(&path);
+		key.objectid = found_key.objectid - 1;
+
+		ret = rescan_subvol_uuid(trans, &found_key);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to rescan the uuid of subvolume %llu: %m",
+			      found_key.objectid);
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+	}
+
+	/* Update fs tree uuid. */
+	key.objectid = BTRFS_FS_TREE_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
+	ret = rescan_subvol_uuid(trans, &key);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to rescan the uuid of subvolume %llu: %m",
+		      key.objectid);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	ret = btrfs_commit_transaction(trans, uuid_root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "rescan uuid tree: %m");
+	}
+	return ret;
+}
+
+/*
+ * Rebuild the whole uuid tree.
+ *
+ * If no uuid tree is present, create a new one.
+ * If there is an existing uuid tree, all items will be deleted first.
+ *
+ * For all existing subvolumes (except fs tree), any uninitialized uuid
+ * (all zero) will be generated using a random uuid, and inserted into the new
+ * tree.
+ * And if a subvolume has its UUID initialized, it will not be touched and
+ * added to the new uuid tree.
+ */
+int btrfs_rebuild_uuid_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *uuid_root;
+	struct btrfs_key key;
+	int ret;
+
+	if (!fs_info->uuid_root) {
+		struct btrfs_trans_handle *trans;
+
+		trans = btrfs_start_transaction(fs_info->tree_root, 1);
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "create uuid tree: %m");
+			return ret;
+		}
+		key.objectid = BTRFS_UUID_TREE_OBJECTID;
+		key.type = BTRFS_ROOT_ITEM_KEY;
+		key.offset = 0;
+		uuid_root = btrfs_create_tree(trans, &key);
+		if (IS_ERR(uuid_root)) {
+			ret = PTR_ERR(uuid_root);
+			errno = -ret;
+			error("failed to create uuid root: %m");
+			btrfs_abort_transaction(trans, ret);
+			return ret;
+		}
+		add_root_to_dirty_list(uuid_root);
+		fs_info->uuid_root = uuid_root;
+		ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "create uuid tree: %m");
+			return ret;
+		}
+	} else {
+		ret = remove_all_tree_items(fs_info->uuid_root);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to clear the existing uuid tree: %m");
+			return ret;
+		}
+	}
+	UASSERT(fs_info->uuid_root);
+	ret = rescan_uuid_tree(fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to rescan the uuid tree: %m");
+		return ret;
+	}
+	return 0;
 }

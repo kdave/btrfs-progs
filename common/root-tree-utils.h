@@ -26,5 +26,6 @@ int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *parent_root,
 			 u64 parent_dir, const char *name,
 			 int namelen, struct btrfs_root *subvol);
+int btrfs_rebuild_uuid_tree(struct btrfs_fs_info *fs_info);
 
 #endif
