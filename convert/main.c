@@ -1339,6 +1339,11 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		goto fail;
 	}
 
+	ret = btrfs_rebuild_uuid_tree(image_root->fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		goto fail;
+	}
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (convert_flags & CONVERT_FLAG_COPY_LABEL) {
 		strncpy_null(root->fs_info->super_copy->label, cctx.label, BTRFS_LABEL_SIZE);
