@@ -2301,6 +2301,7 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 
 out:
 	close(fd);
+	__free_all_qgroups(&qgroup_lookup);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_clear_stale, "clear-stale");
