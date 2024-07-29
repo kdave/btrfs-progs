@@ -60,7 +60,8 @@ static int __ino_to_path_fd(u64 inum, int fd, const char *prepend)
 	int ret;
 	int i;
 	struct btrfs_ioctl_ino_path_args ipa;
-	struct btrfs_data_container fspath[PATH_MAX];
+	char pathbuf[PATH_MAX];
+	struct btrfs_data_container *fspath = (struct btrfs_data_container *)pathbuf;
 
 	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
