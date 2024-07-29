@@ -19,6 +19,7 @@
 
 #include "btrfsutilpy.h"
 
+#if 0
 static int fd_converter(PyObject *o, void *p)
 {
 	int *fd = p;
@@ -40,6 +41,7 @@ static int fd_converter(PyObject *o, void *p)
 	*fd = tmp;
 	return 1;
 }
+#endif
 
 int path_converter(PyObject *o, void *p)
 {
