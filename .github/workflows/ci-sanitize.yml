@@ -95,3 +95,45 @@ jobs:
           name: test-results
           path: "tests/*-results.txt"
           if-no-files-found: ignore
+  build-tsan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: uname -a
+      - run: sudo modprobe btrfs
+      - run: sudo apt-get update -qqq
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - name: Make
+        run: make V=1 D=tsan
+      - name: Tests cli
+        run: sudo make D=tsan TEST_LOG=dump test-cli
+      - name: Tests mkfs
+        run: sudo make D=tsan TEST_LOG=dump test-mkfs
+      - name: Tests check
+        run: sudo make D=tsan TEST_LOG=dump test-check
+      - name: Tests check (lowmem)
+        run: sudo make D=tsan TEST_LOG=dump test-check-lowmem
+      - name: Tests misc
+        run: sudo make D=tsan TEST_LOG=dump test-misc
+      - name: Tests fuzz
+        run: sudo make D=tsan TEST_LOG=dump test-fuzz
+      - name: Tests convert
+        run: sudo make D=tsan TEST_LOG=dump test-convert
+      - name: Test internal APIs
+        run: make D=tsan test-api
+# Temporary: the library or python bindings are not linked with ASAN and test cannot be run
+#     - name: Libbtrfsutil test
+#        run: make D=tsan test-libbtrfsutil
+#     - name: Libbtrfs build test
+#       run: make D=tsan library-test
+      - name: Tests hash (correctness)
+        run: make D=tsan hash-vectest && ./hash-vectest
+      - name: Save logs on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "tests/*-results.txt"
+          if-no-files-found: ignore
