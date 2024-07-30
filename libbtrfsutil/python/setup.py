@@ -70,7 +70,12 @@ void add_module_constants(PyObject *m)
 
 class my_build_ext(build_ext):
     def run(self):
-        if out_of_date(['../btrfsutil.h'], 'constants.c'):
+        # Running dist outside of git
+        if not os.path.exists('../btrfsutil.h'):
+            # But no generated constants.c found
+            if not os.path.exists('constants.c'):
+                raise Exception("No generated constants.c found, please fix")
+        elif out_of_date(['../btrfsutil.h'], 'constants.c'):
             try:
                 gen_constants()
             except Exception as e:
@@ -92,6 +97,9 @@ module = Extension(
         'qgroup.c',
         'subvolume.c',
     ],
+    headers=[
+        'btrfsutilpy.h'
+    ],
     include_dirs=['..'],
     library_dirs=['../..'],
     libraries=['btrfsutil'],
@@ -99,7 +107,9 @@ module = Extension(
 
 setup(
     name='btrfsutil',
-    version=get_version(),
+    # FIXME: version file is not present when building outside of git
+    #version=get_version(),
+    version='6.10',
     description='Library for managing Btrfs filesystems',
     url='https://github.com/kdave/btrfs-progs',
     license='LGPLv2+',
