@@ -436,6 +436,12 @@ LIST OF IOCTLS
    * - :ref:`BTRFS_IOC_SNAP_DESTROY_V2<BTRFS_IOC_SNAP_DESTROY_V2>`
      - destroy a (snapshot or regular) subvolume
      - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
+   * - BTRFS_IOC_ENCODED_READ
+     -
+     -
+   * - BTRFS_IOC_ENCODED_WRITE
+     -
+     -
 
 DETAILED DESCRIPTION
 --------------------
