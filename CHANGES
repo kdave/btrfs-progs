@@ -23,6 +23,20 @@ btrfs-progs-6.10 (2024-07-30)
       * build fix for python 3.13
       * documentation updates
 
+btrfs-progs-6.10.1 (2024-08-15)
+"""""""""""""""""""""""""""""""
+   * mkfs: rework --rootdir traversal, skip hardlinks and create new inodes
+     instead, also warn about them, this did not work as expected and will be
+     fixed in the future
+   * receive: search in older trees for UUIDs when detecting clone sources
+   * libbtrfsutil: bindings available at https://pypi.org/project/btrfsutil
+   * libbtrfs:
+      * patchlevel version update 0.1.4
+      * cleanup in headers, removed unused definitions, no functional changes
+      * don't ship list.h and rbtree.h
+   * other:
+      * documentation updates
+
 btrfs-progs-6.9 (2024-06-07)
 ----------------------------
    * mkfs:
