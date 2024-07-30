@@ -24,6 +24,11 @@ The fs-verity is a support layer that filesystems can hook into to
 support transparent integrity and authenticity protection of read-only
 files. This requires a separate management utility :command:`fsverity`.
 
+The ioctls supported by btrfs:
+
+* `FS_IOC_ENABLE_VERITY <https://www.kernel.org/doc/html/latest/filesystems/fsverity.html#fs-ioc-enable-verity>`__
+* `FS_IOC_MEASURE_VERITY <https://www.kernel.org/doc/html/latest/filesystems/fsverity.html#fs-ioc-measure-verity>`__
+
 See also:
 https://www.kernel.org/doc/html/latest/filesystems/fsverity.html
 
