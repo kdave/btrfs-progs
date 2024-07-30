@@ -63,7 +63,7 @@ commit_stats
                 total_commit_ms 170840
 
         * *commits* - number of transaction commits since the first mount
-        * *last_commit_ms* - duration in miliseconds of the last commit
+        * *last_commit_ms* - duration in milliseconds of the last commit
         * *max_commit_ms* - maximum time a transaction commit took since first mount or last reset
         * *total_commit_ms* - sum of all transaction commit times
 
