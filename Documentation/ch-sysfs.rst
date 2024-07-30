@@ -49,11 +49,23 @@ clone_alignment
 commit_stats
         (RW, since: 6.0)
 
-        The performance statistics for btrfs transaction commit.
-        Mostly for debug purposes.
+        The performance statistics for btrfs transaction commit since the first
+        mount. Mostly for debugging purposes.
 
-        Writing into this file will reset the maximum commit duration to
-        the input value.
+        Writing into this file will reset the maximum commit duration
+        (*max_commit_ms*) to 0. The file looks like:
+
+        .. code-block:: none
+
+                commits 70649
+                last_commit_ms 2
+                max_commit_ms 131
+                total_commit_ms 170840
+
+        * *commits* - number of transaction commits since the first mount
+        * *last_commit_ms* - duration in miliseconds of the last commit
+        * *max_commit_ms* - maximum time a transaction commit took since first mount or last reset
+        * *total_commit_ms* - sum of all transaction commit times
 
 exclusive_operation
         (RO, since: 5.10)
@@ -103,6 +115,12 @@ sectorsize
         Shows the sectorsize of the mounted filesystem.
 
 
+temp_fsid
+        (RO, since 6.7)
+
+        Indicate that this filesystem got assigned a temporary FSID at mount time,
+        making possible to mount devices with the same FSID.
+
 Files and directories in :file:`/sys/fs/btrfs/<UUID>/allocations` directory are:
 
 global_rsv_reserved
@@ -130,18 +148,45 @@ bg_reclaim_threshold
         permanently unusable space) to reclaim the block group.
         Can be used on regular or zoned devices.
 
+bytes_*
+        (RO)
+
+        Values of the corresponding data structures for the given block group
+        type and profile.
+
 chunk_size
         (RW, since: 6.0)
 
         Shows the chunk size. Can be changed for data and metadata.
         Cannot be set for zoned devices.
 
+size_classes
+        (RO, since: 6.3)
+
+        Numbers of block groups of a given classes based on heuristics that
+        measure extent length, age and fragmentation.
+
+        .. code-block:: none
+
+                none 136
+                small 374
+                medium 282
+                large 93
+
 Files in :file:`/sys/fs/btrfs/<UUID>/devinfo/<DEVID>` directory are:
 
 error_stats:
         (RO, since: 5.14)
 
-        Shows all the history error numbers of the device.
+        Shows device stats of this device, same as :command:`btrfs device stats` (:doc:`btrfs-device`).
+
+        .. code-block:: none
+
+                write_errs 0
+                read_errs 0
+                flush_errs 0
+                corruption_errs 0
+                generation_errs 0
 
 fsid:
         (RO, since: 5.17)
@@ -171,7 +216,7 @@ scrub_speed_max
         (RW, since: 5.14)
 
         Shows the scrub speed limit for this device. The unit is Bytes/s.
-        0 means no limit.
+        0 means no limit. The value can be set but is not persisent.
 
 writeable
         (RO, since: 5.6)
