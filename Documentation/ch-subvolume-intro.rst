@@ -86,10 +86,31 @@ descendants of the toplevel one), or nested.
 
 What should be mentioned early is that a snapshotting is not recursive, so a
 subvolume or a snapshot is effectively a barrier and no files in the nested
-appear in the snapshot. Instead there's a stub subvolume (also sometimes
+appear in the snapshot. Instead there's a stub subvolume (also sometimes called
 *empty subvolume* with the same name as original subvolume, with inode number
 2).  This can be used intentionally but could be confusing in case of nested
 layouts.
+
+.. code-block:: bash
+
+   $ btrfs subvolume create subvol1
+   $ btrfs subvolume create subvol1/subvol2
+   $ btrfs subvolume snapshot subvol1 snap1
+   $ find -ls
+   121093  0  drwxr-xr-x  1  user  users    24  Jul 30  12:34  .
+      256  0  drwxr-xr-x  1  user  users    14  Jul 30  12:34  ./subvol1
+      256  0  drwxr-xr-x  1  user  users     0  Jul 30  12:34  ./subvol1/subvol2
+      257  0  -rw-r--r--  1  user  users     0  Jul 30  12:34  ./subvol1/subvol2/file
+      256  0  drwxr-xr-x  1  user  users    14  Jul 30  12:34  ./snap1
+        2  0  drwxr-xr-x  1  user  users     0  Jul 30  12:34  ./snap1/subvol2
+
+The numbers in the first colums are inode numbers, 256 is for a regular
+subvolume (or snapshot), 2 is the *empty subvolume*. The snapshotted directory
+representing *subvol2* does not contain the *file*.
+
+.. note::
+   The *empty subvolume* will not be sent (:doc:`btrfs-send`) and thus will not be created on
+   the receive side (:doc:`btrfs-receive`).
 
 Case study: system root layouts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
