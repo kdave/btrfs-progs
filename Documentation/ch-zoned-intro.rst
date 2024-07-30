@@ -66,6 +66,20 @@ is 8GiB, which would mean that e.g. offset 0-16GiB would be reserved just for
 the super block on a hypothetical device of that zone size. This is wasteful
 but required to guarantee crash safety.
 
+Zone reclaim, garbage collection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As the zones are append-only, overwriting data or COW changes in metadata
+make parts of the zones used but not connected to the filesystem structures.
+This makes the space unusable and grows over time. Once the ratio hits a
+(configurable) threshold a background reclaim process is started and relocates
+the remaining blocks in use to a new zone. The old one is reset and can be used
+again.
+
+This process may take some time depending on other background work or
+amount of new data written. It is possible to hit an intermittent ENOSPC.
+Some devices also limit number of active zones.
+
 Devices
 ^^^^^^^
 
