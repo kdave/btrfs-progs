@@ -30,6 +30,7 @@ is in the :doc:`manual pages<man-index>`.
    Glossary
    INSTALL
    Source-repositories
+   Interoperability
 
 .. raw:: html
 
@@ -103,5 +104,4 @@ for missing contents.
    :caption: TODO
 
    Quick-start
-   Interoperability
    trouble-index
