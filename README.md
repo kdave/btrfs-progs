@@ -20,6 +20,7 @@ This repository hosts following utilities and also documentation:
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html))
 * all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://btrfs.readthedocs.io/en/latest/btrfs.html#standalone-tools))
 * **libbtrfsutil** (LGPL v2.1) &mdash; C and python 3 bindings, see [libbtrfsutil/README.md](libbtrfsutil/README.md) for more
+* **btrfsutil** python bindings published at https://pypi.org/project/btrfsutil
 * manual pages and documentation source published at [btrfs.readthedocs.io](https://btrfs.readthedocs.io) (RTD)
 
 See [INSTALL](INSTALL) for build instructions, [tests/README.md](tests/README.md) for
@@ -58,7 +59,8 @@ provided by the kernel.
 ### Build compatibility
 
 Build is supported on the [GNU C library](https://www.gnu.org/software/libc/)
-as the primary target, and on the [musl libc](https://musl.libc.org/).
+as the primary target, and on the [musl libc](https://musl.libc.org/)
+and [uClibc-ng](https://www.uclibc-ng.org/).
 
 The supported compilers are [gcc](https://gcc.gnu.org/) (minimal version 4.8)
 and [clang](https://clang.llvm.org/) (minimal version 3.4).
