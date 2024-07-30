@@ -1,3 +1,28 @@
+btrfs-progs-6.10 (2024-07-30)
+-----------------------------
+   * inspect:
+     * list-chunks: new command to print information about chunks (i.e.
+       the physical chunks as stored on devices), sortable; requires root as
+       it's using SEARCH_TREE ioctl
+     * tree-stats:
+        * new option -t to print only the given tree
+        * add long options for size units
+   * filesystem df: with increased verbosity print per-type information from sysfs
+   * version: print a line with built-in features or options (+FEATURE1 -FEATURE2)
+   * image: document option -s and its potential problems
+   * fixes:
+      * scrub status: user selected base for Rate values
+      * receive: escape special characters in paths and xattrs
+      * dump-tree: escape special characters in paths and xattrs
+      * image: sanitizing filenames did not work properly in all cases
+      * convert: fix displayed restored image path on rollback
+      * tune change csum: do conversion in smaller batches
+   * other:
+      * CI workflows updates (sanitizers, code spelling, manual page preview)
+      * build fixes for uClibc
+      * build fix for python 3.13
+      * documentation updates
+
 btrfs-progs-6.9 (2024-06-07)
 ----------------------------
    * mkfs:
