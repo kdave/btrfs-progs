@@ -3,6 +3,7 @@ Administration
 
 The main administration tool for BTRFS filesystems is :doc:`btrfs`.
 Please refer to the manual pages of the subcommands for further documentation.
+Other topics explaining features or concepts can be found in :doc:`btrfs-man5`.
 
 Mount options
 -------------
@@ -27,3 +28,8 @@ Flexibility
 -----------
 
 .. include:: ch-flexibility.rst
+
+Sysfs
+-----
+
+.. include:: ch-sysfs.rst
