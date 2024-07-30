@@ -17,26 +17,13 @@ integration:
 * branch `next-fixes <https://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git/log/?h=next-fixes>`__
   has fixes for the next upcoming *rcN* and is usually turned into a pull request
 
-The following git repositories are used for development and are updated with
+The following git repository is used for group development and is updated with
 patches from the mailing list:
 
-* https://github.com/kdave/btrfs-devel
-* https://gitlab.com/kdave/btrfs-devel
+* https://github.com/btrfs/linux
 
-Branches are usually pushed to both repositories, either can be used.
-
-There are:
-
-* `misc-next <https://github.com/kdave/btrfs-devel/tree/misc-next>`_) -
-  main queue with patches for next development cycle, this branch is usually
-  based on the last *rcN* tag of Linus' git tree
-* e.g. *for-4.15* or *misc-4.15* - queue with patches for current release cycle,
-  the version changes
-* topic branches, e.g. from a patchset picked from mailing list
-* snapshots of `for-next <https://github.com/kdave/btrfs-devel/tree/for-next>`_,
-  that contain all of the above (e.g. for-next-20200512)
-
-Note that the branches get rebased or updated (fixed typos, added Reviewed-by
+The main branch with patches is `for-next <https://github.com/btrfs/linux/tree/for-next>`__ .
+Note that it gets rebased or updated (fixed typos, added Reviewed-by
 tags etc).  The base point for patches depend on the development phase.  See
 :ref:`development schedule<devfaq-development-schedule>`.  Independent changes
 can be based on the *linus/master* branch, changes that could depend on patches
@@ -45,8 +32,8 @@ that have been added to one of the queues should use that as a base.
 btrfs-progs git repository
 --------------------------
 
-Official repositories
-^^^^^^^^^^^^^^^^^^^^^
+Release repositories
+^^^^^^^^^^^^^^^^^^^^
 
 The sources of the userspace utilities can be obtained from these repositories:
 
@@ -54,9 +41,11 @@ The sources of the userspace utilities can be obtained from these repositories:
   (`<http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary>`__)
   - release repository, not for development
 
-The **master** branch contains the latest released version and is never rebased.
+The **master** branch contains the latest released version is never rebased and
+updated after a release.
 
-Development git repositories:
+Development repositories
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 * git://github.com/kdave/btrfs-progs.git (`<https://github.com/kdave/btrfs-progs>`__)
 * git://gitlab.com/kdave/btrfs-progs.git (`<https://gitlab.com/kdave/btrfs-progs>`__)
@@ -74,16 +63,18 @@ added to the branch, a mail notification is sent as a reply to the patch.
 The git repositories on *kernel.org* are not used for development or
 integration branches.
 
-Note to GitHub users
-^^^^^^^^^^^^^^^^^^^^
+GitHub development
+^^^^^^^^^^^^^^^^^^
 
-The pull requests will not be accepted directly, the preferred way is to send
-patches to the mailing list instead. You can link to a branch in any git
-repository if the mails do not make it to the mailing list or for convenience.
+Pull requests are accepted for contributions, and slightly more preferred as
+they get tested by the CI (Github actions).  Patches to the mailing are also
+accepted but not mandatory. You can link to a branch in any git repository if
+the mails do not make it to the mailing list or for convenience.
 
-The development model of btrfs-progs shares a lot with the kernel model. The
-github.com way is different in some ways. We, the upstream community, expect that
-the patches meet some criteria (often lacking in github.com contributions):
+The development model of btrfs-progs has moved from kernel model to
+github and is less strict about some things. :doc:`dev/GithubReviewWorkflow`. 
+
+It is still desired to write good changelogs:
 
 * proper **subject line**: e.g. prefix with *btrfs-progs: subpart, ...* ,
   descriptive yet not too long
@@ -97,6 +88,10 @@ the patches meet some criteria (often lacking in github.com contributions):
 * **one logical change** per patch: e.g. not mixing bug fixes, cleanups,
   features etc., sometimes it's not clear and will be usually pointed out
   during reviews
+* references to reports, issues, pull requests
+
+Pull requests allow to update commits, fixups are possible and recommended.
+
 
 Administration and support tools
 --------------------------------

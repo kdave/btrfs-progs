@@ -360,10 +360,7 @@ of the above. Rather focus on design or potential uses and other impact.
 Kernel patches
 ^^^^^^^^^^^^^^
 
-If you think you're able to provide the expected quality of patches and are
-familiar with a bit more advanced git use, ask the maintainers. If you're a
-long-term developer, the maintainers can also ask you to start the pull-based
-workflow. The main point for the workflow is to make maintainers' life easier.
+Workflow is described at https://github.com/btrfs/btrfs-workflow .
 
 Suggested branch names for patchsets for current development cycle:
 
