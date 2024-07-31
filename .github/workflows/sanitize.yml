@@ -1,14 +1,14 @@
 # Run tests with sanitizers enabled
 # - UBSAN - undefined behaviour (default)
 # - ASAN - memory leaks etc
-#
-# There are known problems, for now only for targeted testing
+# - TSAN - multi-threading issues
 
 name: Sanitizer checks
 run-name: Sanitizer checks
 on:
   push:
     branches:
+      - devel
       - sanitize-test
       - master
 jobs:
@@ -123,7 +123,7 @@ jobs:
         run: sudo make D=tsan TEST_LOG=dump test-convert
       - name: Test internal APIs
         run: make D=tsan test-api
-# Temporary: the library or python bindings are not linked with ASAN and test cannot be run
+# Temporary: the library or python bindings are not linked with TSAN and test cannot be run
 #     - name: Libbtrfsutil test
 #        run: make D=tsan test-libbtrfsutil
 #     - name: Libbtrfs build test
