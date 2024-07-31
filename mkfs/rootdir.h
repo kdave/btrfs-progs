@@ -24,17 +24,9 @@
 #include "kerncompat.h"
 #include <sys/types.h>
 #include <stdbool.h>
-#include "kernel-lib/list.h"
 
 struct btrfs_fs_info;
 struct btrfs_root;
-
-struct directory_name_entry {
-	const char *dir_name;
-	char *path;
-	ino_t inum;
-	struct list_head list;
-};
 
 int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root);
 u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
