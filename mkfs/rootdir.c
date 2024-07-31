@@ -419,6 +419,21 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	u64 ino;
 	int ret;
 
+	/*
+	 * Hard link need extra detection code, not supported for now, but
+	 * it's not to break anything but splitting the hard links into
+	 * new inodes.
+	 * And we do not even know if the hard links are inside the rootdir.
+	 *
+	 * So here we only need to do extra warning.
+	 *
+	 * On most filesystems st_nlink of a directory is the number of
+	 * subdirs, including "." and "..", so skip directory inodes.
+	 */
+	if (unlikely(!S_ISDIR(st->st_mode) && st->st_nlink > 1))
+		warning("'%s' has extra hard links, they will be converted into new inodes.",
+			full_path);
+
 	/* The rootdir itself. */
 	if (unlikely(ftwbuf->level == 0)) {
 		u64 root_ino = btrfs_root_dirid(&root->root_item);
