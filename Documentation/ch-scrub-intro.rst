@@ -1,14 +1,40 @@
-Scrub is a pass over all filesystem data and metadata and verifying the
-checksums. If a valid copy is available (replicated block group profiles) then
-the damaged one is repaired. All copies of the replicated profiles are validated.
+Scrub is a validation pass over all filesystem data and metadata that detects
+checksum errors, super block errors, metadata block header errors, and disk
+read errors. All copies of replicated profiles are validated by default.
+
+On filesystems that use replicated block group profiles (e.g. raid1), scrub will
+also automatically repair any damage by default by copying verified good data
+from one of the other replicas.
+
+.. warning::
+   A read-write scrub will do no further harm to a damaged filesystem if it is not
+   possible to perform a correct repair, so it is safe to use at almost any time.
+
+   The only time a read-write scrub is unsafe is during a split-brain event. This
+   is unlikely and requires a specific sequence of events that cause an
+   unhealthy device or device set to be mounted read-write in the absence of the
+   healthy device or device set from the same filesystem. For example:
+
+   1. Device set F fails and drops from the bus, while device set H continues to
+      function and receive additional writes.
+   2. After a reboot, healthy set H does not reappear immediately, but failed set
+      F does.
+   3. Failed set F is mounted read-write. At this point, it is no longer safe for
+      set H to reappear as the transaction histories have diverged. Allowing set H
+      and set F to recombine at any point will cause corruption of set H. Running
+      scrub on a split-brained filesystem will overwrite good data from set H with
+      other data from set F, increasing the amount of permanent data loss.
 
 .. note::
-   Scrub is not a filesystem checker (fsck) and does not verify nor repair
-   structural damage in the filesystem. It really only checks checksums of data
-   and tree blocks, it doesn't ensure the content of tree blocks is valid and
-   consistent. There's some validation performed when metadata blocks are read
-   from disk (:doc:`Tree-checker`) but it's not extensive and cannot substitute
-   full :doc:`btrfs-check` run.
+   Scrub is not a filesystem checker (fsck). It can only detect filesystem damage
+   using the (:doc:`Tree-checker`) and checksum validation, and it can only repair
+   filesystem damage by copying from other known good replicas.
+
+   :doc:`btrfs-check` performs more exhaustive checking and can sometimes be
+   used, with expert guidance, to rebuild certain corrupted filesystem structures
+   in the absence of any good replica. However, when a replica exists, scrub is
+   able to automatically correct most errors reported by `btrfs-check`, so should
+   normally be run first to avoid false positives from `btrfs-check`.
 
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
