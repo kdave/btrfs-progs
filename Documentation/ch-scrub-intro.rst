@@ -1,14 +1,49 @@
-Scrub is a pass over all filesystem data and metadata and verifying the
-checksums. If a valid copy is available (replicated block group profiles) then
-the damaged one is repaired. All copies of the replicated profiles are validated.
+Scrub is a validation pass over all filesystem data and metadata that detects
+data checksum errors, basic super block errors, basic metadata block header errors,
+and disk read errors.
+
+Scrub is done on a per-device base, if a device is specified to `btrfs scrub`, then
+only that device will be scrubbed. Although btrfs will also try to read other device
+to find a good copy, if the mirror on that specified device failed to be read or pass
+verification.
+
+If a path of btrfs is specified to `btrfs scrub`, btrfs will scrub all devices
+in parallel.
+
+On filesystems that use replicated block group profiles (e.g. raid1), read-write
+scrub will also automatically repair any damage by copying verified good data
+from one of the other replicas.
+
+Such automatic repair is also carried out when reading metadata or data from a
+read-write mounted btrfs.
+
+.. warning::
+   Setting the ``No_COW`` (``chattr +C``) attribute on a file implicitly enables
+   ``nodatasum``. This means that while metadata for these files continues to
+   be validated and corrected by scrub, the actual file data is not.
+
+   Furthermore, btrfs does not currently mark missing or failed disks as
+   unreliable, so will continue to load-balance reads to potentially damaged
+   replicas. This is not a problem normally because damage is detected by
+   checksum validation, but because ``No_COW`` files are
+   not protected by checksum, btrfs has no idea which mirror is good thus it can
+   return the bad contents to the user space tool.
+
+   Detecting and recovering from such failure requires manual intervention.
+
+   Notably, `systemd sets +C on journals by default <https://github.com/systemd/systemd/commit/11689d2a021d95a8447d938180e0962cd9439763>`_,
+   and `libvirt ≥ 6.6 sets +C on storage pool directories by default <https://www.libvirt.org/news.html#v6-6-0-2020-08-02>`_.
+   Other applications or distributions may also set +C to try to improve
+   performance.
 
 .. note::
-   Scrub is not a filesystem checker (fsck) and does not verify nor repair
-   structural damage in the filesystem. It really only checks checksums of data
-   and tree blocks, it doesn't ensure the content of tree blocks is valid and
-   consistent. There's some validation performed when metadata blocks are read
-   from disk (:doc:`Tree-checker`) but it's not extensive and cannot substitute
-   full :doc:`btrfs-check` run.
+   Scrub is not a filesystem checker (fsck). It can only detect filesystem damage
+   using the checksum validation, and it can only repair
+   filesystem damage by copying from other known good replicas.
+
+   :doc:`btrfs-check` performs more exhaustive checking and can sometimes be
+   used, with expert guidance, to rebuild certain corrupted filesystem structures
+   in the absence of any good replica.
 
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
