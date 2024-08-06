@@ -19,6 +19,13 @@ by the option *--readonly*.
 
 :command:`btrfsck` is an alias of :command:`btrfs check` command and is now deprecated.
 
+.. note::
+   Even though the filesystem checker requires a device argument, it scans for all
+   devices belonging to the same filesystem, thus it should not cause a difference
+   using different devices of the same filesystem.
+   Furthermore `btrfs check` will automatically choose the good mirror, thus as long
+   as there is a good copy for metadata, it will not report such case as an error.
+
 .. warning::
    Do not use *--repair* unless you are advised to do so by a developer
    or an experienced user, and then only after having accepted that no *fsck*
