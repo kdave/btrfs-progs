@@ -269,7 +269,7 @@ libbtrfs_objects = \
 		libbtrfs/send-utils.o	\
 		libbtrfs/crc32c.o
 
-libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h libbtrfs/send.h kernel-lib/rbtree.h \
+libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h libbtrfs/send.h \
 	       kernel-lib/rbtree_types.h libbtrfs/kerncompat.h \
 	       libbtrfs/ioctl.h libbtrfs/ctree.h libbtrfs/version.h
 libbtrfs_version = $(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR).$(LIBBTRFS_PATCHLEVEL)
