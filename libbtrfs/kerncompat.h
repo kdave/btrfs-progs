@@ -26,17 +26,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <string.h>
 #include <endian.h>
 #include <byteswap.h>
-#include <assert.h>
 #include <stddef.h>
-#include <linux/types.h>
-#include <linux/const.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <features.h>
 
 /*
  * Libc compatibility.
