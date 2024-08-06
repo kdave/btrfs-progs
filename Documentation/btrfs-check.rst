@@ -19,6 +19,12 @@ by the option *--readonly*.
 
 :command:`btrfsck` is an alias of :command:`btrfs check` command and is now deprecated.
 
+.. note::
+   Even though the filesystem checker requires a device argument, it scans for all
+   devices belonging to the same filesystem and may report metadata errors from other
+   devices that are correctable by :command:`btrfs scrub`. In this case, run scrub
+   first to ensure any correctable metadata errors are fixed to avoid false-positives.
+
 .. warning::
    Do not use *--repair* unless you are advised to do so by a developer
    or an experienced user, and then only after having accepted that no *fsck*
