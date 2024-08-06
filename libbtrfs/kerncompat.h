@@ -43,10 +43,14 @@
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
 #define __bitwise__ __attribute__((bitwise))
+#define __bitwise __bitwise__
 #else
 #define __force
 #ifndef __bitwise__
 #define __bitwise__
+#endif
+#ifndef __bitwise
+#define __bitwise
 #endif
 #endif
 
@@ -117,13 +121,6 @@ do {									\
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
 	        (type *)( (char *)__mptr - offsetof(type,member) );})
-#ifndef __bitwise
-#ifdef __CHECKER__
-#define __bitwise __bitwise__
-#else
-#define __bitwise
-#endif /* __CHECKER__ */
-#endif	/* __bitwise */
 
 typedef u16 __bitwise __le16;
 typedef u16 __bitwise __be16;
