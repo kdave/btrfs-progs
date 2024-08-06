@@ -20,7 +20,7 @@
 #include "libbtrfs/kerncompat.h"
 #include "libbtrfs/version.h"
 #include "libbtrfs/ioctl.h"
-#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/send.h"
 #include "common/send-stream.h"
@@ -32,7 +32,7 @@
  */
 #include "btrfs/kerncompat.h"
 #include "btrfs/version.h"
-#include "btrfs/rbtree.h"
+#include "btrfs/rbtree_types.h"
 #include "btrfs/ctree.h"
 #include "btrfs/ioctl.h"
 #include "btrfs/send.h"
