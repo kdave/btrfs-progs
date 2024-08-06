@@ -23,15 +23,21 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "libbtrfs/kerncompat.h"
-#include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "libbtrfs/ioctl.h"
 #else
 #include <btrfs/kerncompat.h>
-#include <btrfs/list.h>
 #include <btrfs/rbtree.h>
 #include <btrfs/ioctl.h>
 #endif /* BTRFS_FLAT_INCLUDES */
+
+/*
+ * Stub definition used only for struct declarations, change the name so it
+ * does not clash with a real struct list_head if included.
+ */
+struct list_head_ {
+	struct list_head_ *next, *prev;
+};
 
 struct btrfs_root;
 struct btrfs_trans_handle;
@@ -224,7 +230,7 @@ struct cache_extent {
 struct extent_io_tree {
 	struct cache_tree state;
 	struct cache_tree cache;
-	struct list_head lru;
+	struct list_head_ lru;
 	u64 cache_size;
 	u64 max_cache_size;
 };
@@ -241,8 +247,8 @@ struct extent_state {
 struct extent_buffer {
 	struct cache_extent cache_node;
 	u64 start;
-	struct list_head lru;
-	struct list_head recow;
+	struct list_head_ lru;
+	struct list_head_ recow;
 	u32 len;
 	int refs;
 	u32 flags;
@@ -1193,7 +1199,7 @@ struct btrfs_space_info {
 	 */
 	u64 bytes_reserved;
 	int full;
-	struct list_head list;
+	struct list_head_ list;
 };
 
 struct btrfs_block_group {
@@ -1222,7 +1228,7 @@ struct btrfs_block_group {
 	struct rb_node cache_node;
 
 	/* For dirty block groups */
-	struct list_head dirty_list;
+	struct list_head_ dirty_list;
 
 	/*
 	 * Allocation offset for the block group to implement sequential
@@ -1280,11 +1286,11 @@ struct btrfs_fs_info {
 	u64 total_pinned;
 	u64 nr_global_roots;
 
-	struct list_head dirty_cowonly_roots;
-	struct list_head recow_ebs;
+	struct list_head_ dirty_cowonly_roots;
+	struct list_head_ recow_ebs;
 
 	struct btrfs_fs_devices *fs_devices;
-	struct list_head space_info;
+	struct list_head_ space_info;
 
 	unsigned int system_allocs:1;
 	unsigned int readonly:1;
@@ -1354,10 +1360,10 @@ struct btrfs_root {
 	u32 type;
 	u64 last_inode_alloc;
 
-	struct list_head unaligned_extent_recs;
+	struct list_head_ unaligned_extent_recs;
 
 	/* the dirty list is only used by non-reference counted roots */
-	struct list_head dirty_list;
+	struct list_head_ dirty_list;
 	struct rb_node rb_node;
 };
 
