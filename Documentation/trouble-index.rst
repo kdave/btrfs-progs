@@ -9,8 +9,9 @@ for description and may need further explanation what needs to be done.
 Error: parent transid verify error
 ----------------------------------
 
-Reason: result of a failed internal consistency check of the filesystem's metadata.
-Type: permanent
+| Reason: result of a failed internal consistency check of the filesystem's metadata.
+| Type: correctable by ``btrfs-scrub`` if a good copy exists on another replica; otherwise, permanent
+|
 
 .. code-block:: none
 
@@ -21,17 +22,26 @@ contains target block offset and generation that last changed this block. The
 block it points to then upon read verifies that the block address and the
 generation matches. This check is done on all tree levels.
 
-The number in **faled on 30736384** is the logical block number, **wanted 10**
+The number in **failed on 30736384** is the logical block number, **wanted 10**
 is the expected generation number in the parent node, **found 8** is the one
 found in the target block.  The number difference between the generation can
 give a hint when the problem could have happened, in terms of transaction
 commits.
 
-Once the mismatched generations are stored on the device, it's permanent and
-cannot be easily recovered, because of information loss. The recovery tool
-``btrfs restore`` is able to ignore the errors and attempt to restore the data
-but due to the inconsistency in the metadata the data need to be verified by the
-user.
+Once the mismatched generations are stored on the device, without a good copy
+from another replica, it's permanent and cannot be easily recovered because of
+information loss. However, if a valid copy exists on another replica, btrfs will
+transparently choose the good copy and overwrite the bad one with the correct
+metadata to fix it permanently.
+Manually running ``btrfs scrub`` in read-write mode will also do the same trick.
+
+Otherwise one can only salvage the data either through ``-o rescue=all,ro``
+mount option, which will try its best to read what is still intact.
+Or through ``btrfs restore`` which can ignore the transid mismatch error to some
+extent.
+
+The user needs to manually to verify the contents of salvaged data.
+Since either way data checksum verification is no longer in place.
 
 The root cause of the error cannot be easily determined, possible reasons are:
 
