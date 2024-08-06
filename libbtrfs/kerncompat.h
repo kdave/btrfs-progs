@@ -39,22 +39,13 @@
 #include <features.h>
 
 /*
- * Glibc supports backtrace, some other libc implementations don't but need to
- * be more careful detecting proper glibc.
+ * Libc compatibility.
  */
 #if !defined(__GLIBC__) || defined(__UCLIBC__)
-#ifndef BTRFS_DISABLE_BACKTRACE
-#define BTRFS_DISABLE_BACKTRACE
-#endif
-
+/* Musl does not define __always_inline */
 #ifndef __always_inline
 #define __always_inline __inline __attribute__ ((__always_inline__))
 #endif
-
-#endif
-
-#ifndef BTRFS_DISABLE_BACKTRACE
-#include <execinfo.h>
 #endif
 
 #define __token_glue(a,b,c)	___token_glue(a,b,c)
@@ -64,46 +55,6 @@
 #else
 #define BUILD_ASSERT(x)
 #endif
-
-#ifndef BTRFS_DISABLE_BACKTRACE
-#define MAX_BACKTRACE	16
-static inline void print_trace(void)
-{
-	void *array[MAX_BACKTRACE];
-	int size;
-
-	size = backtrace(array, MAX_BACKTRACE);
-	backtrace_symbols_fd(array, size, 2);
-}
-#endif
-
-static inline void warning_trace(const char *assertion, const char *filename,
-			      const char *func, unsigned line, long val)
-{
-	if (!val)
-		return;
-	fprintf(stderr,
-		"%s:%u: %s: Warning: assertion `%s` failed, value %ld\n",
-		filename, line, func, assertion, val);
-#ifndef BTRFS_DISABLE_BACKTRACE
-	print_trace();
-#endif
-}
-
-static inline void bugon_trace(const char *assertion, const char *filename,
-			      const char *func, unsigned line, long val)
-{
-	if (!val)
-		return;
-	fprintf(stderr,
-		"%s:%u: %s: BUG_ON `%s` triggered, value %ld\n",
-		filename, line, func, assertion, val);
-#ifndef BTRFS_DISABLE_BACKTRACE
-	print_trace();
-#endif
-	abort();
-	exit(1);
-}
 
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
@@ -171,13 +122,13 @@ static inline int IS_ERR_OR_NULL(const void *ptr)
 	return !ptr || IS_ERR(ptr);
 }
 
-#define BUG_ON(c) bugon_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#define BUG()				\
-do {					\
-	BUG_ON(1);			\
-	__builtin_unreachable();	\
+#define BUG()								\
+do {									\
+	fprintf(stderr, "%s:%u: BUG in %s()\n", __FILE__, __LINE__, __func__);	\
+	abort();							\
+	exit(1);							\
+	__builtin_unreachable();					\
 } while (0)
-#define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
