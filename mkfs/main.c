@@ -65,8 +65,6 @@
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 
-#include "libbtrfs/ctree.h"
-
 struct mkfs_allocation {
 	u64 data;
 	u64 metadata;
