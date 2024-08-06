@@ -91,6 +91,16 @@ is in the :doc:`manual pages<man-index>`.
 
    </td></tr></table>
 
+Need help?
+----------
+
+Assistance is available from the
+`#btrfs channel on Libera Chat <https://web.libera.chat/#btrfs>`__
+or the `linux-btrfs mailing list
+<https://subspace.kernel.org/vger.kernel.org.html>`__. Issues with the
+userspace btrfs tools can be reported to the `btrfs-progs issue tracker on
+GitHub <https://github.com/kdave/btrfs-progs/issues>`__.
+
 .. raw:: html
 
    <hr />
