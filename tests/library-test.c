@@ -42,6 +42,8 @@
 #include "btrfs/send-utils.h"
 #endif
 
+#include <string.h>
+
 /*
  * Reduced code snippet from snapper.git/snapper/Btrfs.cc
  */
