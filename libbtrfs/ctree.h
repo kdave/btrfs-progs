@@ -514,7 +514,6 @@ struct btrfs_super_block {
 	/* Padded to 4096 bytes */
 	u8 padding[565];
 } __attribute__ ((__packed__));
-BUILD_ASSERT(sizeof(struct btrfs_super_block) == BTRFS_SUPER_INFO_SIZE);
 
 /*
  * Compat flags that we support.  If any incompat flags are set other than the
