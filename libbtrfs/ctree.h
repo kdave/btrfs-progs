@@ -356,7 +356,6 @@ struct btrfs_free_space_header {
 
 static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 {
-	BUG_ON(num_stripes == 0);
 	return sizeof(struct btrfs_chunk) +
 		sizeof(struct btrfs_stripe) * (num_stripes - 1);
 }
@@ -1375,8 +1374,6 @@ static inline u32 BTRFS_NODEPTRS_PER_BLOCK(const struct btrfs_fs_info *info)
 
 static inline u32 BTRFS_NODEPTRS_PER_EXTENT_BUFFER(const struct extent_buffer *eb)
 {
-	BUG_ON(!eb->fs_info);
-	BUG_ON(eb->fs_info->nodesize != eb->len);
 	return BTRFS_LEAF_DATA_SIZE(eb->fs_info) / sizeof(struct btrfs_key_ptr);
 }
 
