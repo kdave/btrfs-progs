@@ -28,7 +28,14 @@
 struct btrfs_fs_info;
 struct btrfs_root;
 
-int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root);
+struct rootdir_subvol {
+	struct list_head list;
+	char *dir;
+	char *full_path;
+};
+
+int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
+			struct btrfs_root *root, struct list_head *subvols);
 u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 			u64 meta_profile, u64 data_profile);
 int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
