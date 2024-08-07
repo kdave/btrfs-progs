@@ -612,30 +612,30 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 	memcpy(dst, eb->data + start, len);
 }
 
-void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *src)
+void write_extent_buffer_fsid(struct extent_buffer *eb, const void *src)
 {
 	write_extent_buffer(eb, src, btrfs_header_fsid(), BTRFS_FSID_SIZE);
 }
 
-void write_extent_buffer_chunk_tree_uuid(const struct extent_buffer *eb,
+void write_extent_buffer_chunk_tree_uuid(struct extent_buffer *eb,
 		const void *src)
 {
 	write_extent_buffer(eb, src, btrfs_header_chunk_tree_uuid(eb), BTRFS_FSID_SIZE);
 }
 
-void write_extent_buffer(const struct extent_buffer *eb, const void *src,
+void write_extent_buffer(struct extent_buffer *eb, const void *src,
 			 unsigned long start, unsigned long len)
 {
 	memcpy((void *)eb->data + start, src, len);
 }
 
-void copy_extent_buffer_full(const struct extent_buffer *dst,
+void copy_extent_buffer_full(struct extent_buffer *dst,
 			     const struct extent_buffer *src)
 {
 	copy_extent_buffer(dst, src, 0, 0, src->len);
 }
 
-void copy_extent_buffer(const struct extent_buffer *dst,
+void copy_extent_buffer(struct extent_buffer *dst,
 			const struct extent_buffer *src,
 			unsigned long dst_offset, unsigned long src_offset,
 			unsigned long len)
@@ -643,19 +643,19 @@ void copy_extent_buffer(const struct extent_buffer *dst,
 	memcpy((void *)dst->data + dst_offset, src->data + src_offset, len);
 }
 
-void memcpy_extent_buffer(const struct extent_buffer *dst, unsigned long dst_offset,
+void memcpy_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
 			  unsigned long src_offset, unsigned long len)
 {
 	memcpy((void *)dst->data + dst_offset, dst->data + src_offset, len);
 }
 
-void memmove_extent_buffer(const struct extent_buffer *dst, unsigned long dst_offset,
+void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len)
 {
 	memmove((void *)dst->data + dst_offset, dst->data + src_offset, len);
 }
 
-void memset_extent_buffer(const struct extent_buffer *eb, char c,
+void memset_extent_buffer(struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len)
 {
 	memset((void *)eb->data + start, c, len);

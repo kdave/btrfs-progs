@@ -40,6 +40,7 @@ void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *e
 /*
  * MODIFIED:
  *  - We don't have eb->folios, simply wrap the set/get helpers.
+ *  - no const for extent buffer in btrfs_set_*
  */
 
 /*
@@ -96,7 +97,7 @@ void btrfs_set_token_##bits(struct btrfs_map_token *token,		\
 	ASSERT(check_setget_bounds(token->eb, ptr, off, size));		\
 	put_unaligned_le##bits(val, token->kaddr + member_offset);	\
 }									\
-void btrfs_set_##bits(const struct extent_buffer *eb, void *ptr,	\
+void btrfs_set_##bits(struct extent_buffer *eb, void *ptr,		\
 		      unsigned long off, u##bits val)			\
 {									\
 	unsigned long member_offset = (unsigned long)ptr + off;		\
