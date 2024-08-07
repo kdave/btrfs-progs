@@ -440,6 +440,7 @@ static const char * const mkfs_usage[] = {
 	"Creation:",
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),
+	OPTLINE("-u|--subvol SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
@@ -1055,6 +1056,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *label = NULL;
 	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
 	char *source_dir = NULL;
+	size_t source_dir_len = 0;
+	struct rootdir_subvol *rds;
+	LIST_HEAD(subvols);
 
 	cpu_detect_flags();
 	hash_init_accel();
@@ -1085,6 +1089,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "data", required_argument, NULL, 'd' },
 			{ "version", no_argument, NULL, 'V' },
 			{ "rootdir", required_argument, NULL, 'r' },
+			{ "subvol", required_argument, NULL, 'u' },
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
 			{ "runtime-features", required_argument, NULL, 'R' },
@@ -1102,7 +1107,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VvMKq",
+		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VvMKqu:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1208,6 +1213,22 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				free(source_dir);
 				source_dir = strdup(optarg);
 				break;
+			case 'u': {
+				struct rootdir_subvol *subvol;
+
+				subvol = malloc(sizeof(struct rootdir_subvol));
+				if (!subvol) {
+					error_msg(ERROR_MSG_MEMORY, NULL);
+					ret = 1;
+					goto error;
+				}
+
+				subvol->dir = strdup(optarg);
+				subvol->full_path = NULL;
+
+				list_add_tail(&subvol->list, &subvols);
+				break;
+				}
 			case 'U':
 				strncpy_null(fs_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
@@ -1271,6 +1292,89 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		error("the option --shrink must be used with --rootdir");
 		ret = 1;
 		goto error;
+	}
+	if (!list_empty(&subvols) && source_dir == NULL) {
+		error("option --subvol must be used with --rootdir");
+		ret = 1;
+		goto error;
+	}
+
+	if (source_dir) {
+		char *canonical = realpath(source_dir, NULL);
+
+		if (!canonical) {
+			error("could not get canonical path to %s", source_dir);
+			ret = 1;
+			goto error;
+		}
+
+		free(source_dir);
+		source_dir = canonical;
+		source_dir_len = strlen(source_dir);
+	}
+
+	list_for_each_entry(rds, &subvols, list) {
+		char *path, *canonical;
+		struct rootdir_subvol *rds2;
+		size_t dir_len;
+
+		dir_len = strlen(rds->dir);
+
+		path = malloc(source_dir_len + 1 + dir_len + 1);
+		if (!path) {
+			error_msg(ERROR_MSG_MEMORY, NULL);
+			ret = 1;
+			goto error;
+		}
+
+		memcpy(path, source_dir, source_dir_len);
+		path[source_dir_len] = '/';
+		memcpy(path + source_dir_len + 1, rds->dir, dir_len + 1);
+
+		canonical = realpath(path, NULL);
+		if (!canonical) {
+			error("could not get canonical path to %s", rds->dir);
+			free(path);
+			ret = 1;
+			goto error;
+		}
+
+		free(path);
+		path = canonical;
+
+		if (!path_exists(path)) {
+			error("subvolume %s does not exist", rds->dir);
+			free(path);
+			ret = 1;
+			goto error;
+		}
+
+		if (!path_is_dir(path)) {
+			error("subvolume %s is not a directory", rds->dir);
+			free(path);
+			ret = 1;
+			goto error;
+		}
+
+		rds->full_path = path;
+
+		if (strlen(path) < source_dir_len + 1 ||
+		    memcmp(path, source_dir, source_dir_len) != 0 ||
+		    path[source_dir_len] != '/') {
+			error("subvolume %s is not a child of %s", rds->dir, source_dir);
+			ret = 1;
+			goto error;
+		}
+
+		for (rds2 = list_first_entry(&subvols, struct rootdir_subvol, list);
+		     rds2 != rds;
+		     rds2 = list_next_entry(rds2, list)) {
+			if (strcmp(rds2->full_path, path) == 0) {
+				error("subvolume %s specified more than once", rds->dir);
+				ret = 1;
+				goto error;
+			}
+		}
 	}
 
 	if (*fs_uuid) {
@@ -1822,24 +1926,37 @@ raid_groups:
 		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
-	ret = btrfs_rebuild_uuid_tree(fs_info);
-	if (ret < 0)
-		goto out;
-
-	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
-				  metadata_profile, metadata_profile);
-	if (ret < 0) {
-		error("failed to cleanup temporary chunks: %d", ret);
-		goto out;
-	}
 
 	if (source_dir) {
 		pr_verbose(LOG_DEFAULT, "Rootdir from:       %s\n", source_dir);
-		ret = btrfs_mkfs_fill_dir(source_dir, root);
-		if (ret) {
-			error("error while filling filesystem: %d", ret);
+
+		trans = btrfs_start_transaction(root, 1);
+		if (IS_ERR(trans)) {
+			errno = -PTR_ERR(trans);
+			error_msg(ERROR_MSG_START_TRANS, "%m");
 			goto out;
 		}
+
+		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
+					  &subvols);
+		if (ret) {
+			error("error while filling filesystem: %d", ret);
+			btrfs_abort_transaction(trans, ret);
+			goto out;
+		}
+
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+			goto out;
+		}
+
+		list_for_each_entry(rds, &subvols, list) {
+			pr_verbose(LOG_DEFAULT, "  Subvolume:        %s\n",
+				   rds->full_path);
+		}
+
 		if (shrink_rootdir) {
 			pr_verbose(LOG_DEFAULT, "  Shrink:           yes\n");
 			ret = btrfs_mkfs_shrink_fs(fs_info, &shrink_size,
@@ -1852,6 +1969,17 @@ raid_groups:
 		} else {
 			pr_verbose(LOG_DEFAULT, "  Shrink:           no\n");
 		}
+	}
+
+	ret = btrfs_rebuild_uuid_tree(fs_info);
+	if (ret < 0)
+		goto out;
+
+	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
+				  metadata_profile, metadata_profile);
+	if (ret < 0) {
+		error("failed to cleanup temporary chunks: %d", ret);
+		goto out;
 	}
 
 	if (features.runtime_flags & BTRFS_FEATURE_RUNTIME_QUOTA ||
@@ -1946,6 +2074,16 @@ error:
 	free(prepare_ctx);
 	free(label);
 	free(source_dir);
+
+	while (!list_empty(&subvols)) {
+		struct rootdir_subvol *head;
+
+		head = list_entry(subvols.next, struct rootdir_subvol, list);
+		free(head->dir);
+		free(head->full_path);
+		list_del(&head->list);
+		free(head);
+	}
 
 	return !!ret;
 

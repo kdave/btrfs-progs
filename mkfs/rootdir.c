@@ -40,6 +40,8 @@
 #include "common/messages.h"
 #include "common/utils.h"
 #include "common/extent-tree-utils.h"
+#include "common/root-tree-utils.h"
+#include "common/path-utils.h"
 #include "mkfs/rootdir.h"
 
 static u32 fs_block_size;
@@ -68,6 +70,7 @@ static u64 ftw_data_size;
 struct inode_entry {
 	/* The inode number inside btrfs. */
 	u64 ino;
+	struct btrfs_root *root;
 	struct list_head list;
 };
 
@@ -94,6 +97,8 @@ static struct rootdir_path current_path = {
 static bool g_hardlink_warning;
 static u64 g_hardlink_count;
 static struct btrfs_trans_handle *g_trans = NULL;
+static struct list_head *g_subvols;
+static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -114,13 +119,14 @@ static void rootdir_path_pop(struct rootdir_path *path)
 	free(last);
 }
 
-static int rootdir_path_push(struct rootdir_path *path, u64 ino)
+static int rootdir_path_push(struct rootdir_path *path, struct btrfs_root *root, u64 ino)
 {
 	struct inode_entry *new;
 
 	new = malloc(sizeof(*new));
 	if (!new)
 		return -ENOMEM;
+	new->root = root;
 	new->ino = ino;
 	list_add_tail(&new->list, &path->inode_list);
 	path->level++;
@@ -410,13 +416,88 @@ static u8 ftype_to_btrfs_type(mode_t ftype)
 	return BTRFS_FT_UNKNOWN;
 }
 
+static int ftw_add_subvol(const char *full_path, const struct stat *st,
+			  int typeflag, struct FTW *ftwbuf,
+			  struct rootdir_subvol *subvol)
+{
+	int ret;
+	struct btrfs_key key;
+	struct btrfs_root *new_root;
+	struct inode_entry *parent;
+	struct btrfs_inode_item inode_item = { 0 };
+	u64 subvol_id, ino;
+
+	subvol_id = next_subvol_id++;
+
+	ret = btrfs_make_subvolume(g_trans, subvol_id);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to create subvolume: %m");
+		return ret;
+	}
+
+	key.objectid = subvol_id;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	new_root = btrfs_read_fs_root(g_trans->fs_info, &key);
+	if (IS_ERR(new_root)) {
+		ret = PTR_ERR(new_root);
+		errno = -ret;
+		error("unable to read fs root id %llu: %m", subvol_id);
+		return ret;
+	}
+
+	parent = rootdir_path_last(&current_path);
+
+	ret = btrfs_link_subvolume(g_trans, parent->root, parent->ino,
+				   path_basename(subvol->full_path),
+				   strlen(path_basename(subvol->full_path)),
+				   new_root);
+	if (ret) {
+		errno = -ret;
+		error("unable to link subvolume %s: %m", path_basename(subvol->full_path));
+		return ret;
+	}
+
+	ino = btrfs_root_dirid(&new_root->root_item);
+
+	ret = add_xattr_item(g_trans, new_root, ino, full_path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to add xattr item for the top level inode in subvol %llu: %m",
+		      subvol_id);
+		return ret;
+	}
+	stat_to_inode_item(&inode_item, st);
+
+	btrfs_set_stack_inode_nlink(&inode_item, 1);
+	ret = update_inode_item(g_trans, new_root, &inode_item, ino);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to update root dir for root %llu: %m", subvol_id);
+		return ret;
+	}
+
+	ret = rootdir_path_push(&current_path, new_root, ino);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to allocate new entry for subvolume %llu ('%s'): %m",
+		      subvol_id, full_path);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int ftw_add_inode(const char *full_path, const struct stat *st,
 			 int typeflag, struct FTW *ftwbuf)
 {
 	struct btrfs_fs_info *fs_info = g_trans->fs_info;
-	struct btrfs_root *root = fs_info->fs_root;
+	struct btrfs_root *root;
 	struct btrfs_inode_item inode_item = { 0 };
 	struct inode_entry *parent;
+	struct rootdir_subvol *rds;
 	u64 ino;
 	int ret;
 
@@ -442,7 +523,10 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 
 	/* The rootdir itself. */
 	if (unlikely(ftwbuf->level == 0)) {
-		u64 root_ino = btrfs_root_dirid(&root->root_item);
+		u64 root_ino;
+
+		root = fs_info->fs_root;
+		root_ino = btrfs_root_dirid(&root->root_item);
 
 		UASSERT(S_ISDIR(st->st_mode));
 		UASSERT(current_path.level == 0);
@@ -468,7 +552,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		}
 
 		/* Push (and initialize) the rootdir directory into the stack. */
-		ret = rootdir_path_push(&current_path, btrfs_root_dirid(&root->root_item));
+		ret = rootdir_path_push(&current_path, root, btrfs_root_dirid(&root->root_item));
 		if (ret < 0) {
 			errno = -ret;
 			error_msg(ERROR_MSG_MEMORY, "push path for rootdir: %m");
@@ -516,6 +600,26 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	while (current_path.level > ftwbuf->level)
 		rootdir_path_pop(&current_path);
 
+	if (S_ISDIR(st->st_mode)) {
+		list_for_each_entry(rds, g_subvols, list) {
+			if (!strcmp(full_path, rds->full_path)) {
+				ret = ftw_add_subvol(full_path, st, typeflag,
+						     ftwbuf, rds);
+
+				free(rds->dir);
+				free(rds->full_path);
+
+				list_del(&rds->list);
+				free(rds);
+
+				return ret;
+			}
+		}
+	}
+
+	parent = rootdir_path_last(&current_path);
+	root = parent->root;
+
 	ret = btrfs_find_free_objectid(g_trans, root,
 				       BTRFS_FIRST_FREE_OBJECTID, &ino);
 	if (ret < 0) {
@@ -532,7 +636,6 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		return ret;
 	}
 
-	parent = rootdir_path_last(&current_path);
 	ret = btrfs_add_link(g_trans, root, ino, parent->ino,
 			     full_path + ftwbuf->base,
 			     strlen(full_path) - ftwbuf->base,
@@ -557,7 +660,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		return ret;
 	}
 	if (S_ISDIR(st->st_mode)) {
-		ret = rootdir_path_push(&current_path, ino);
+		ret = rootdir_path_push(&current_path, root, ino);
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to allocate new entry for inode %llu ('%s'): %m",
@@ -598,42 +701,28 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	return 0;
 };
 
-int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root)
+int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
+			struct btrfs_root *root, struct list_head *subvols)
 {
 	int ret;
-	struct btrfs_trans_handle *trans;
 	struct stat root_st;
 
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
 		error("unable to lstat %s: %m", source_dir);
-		ret = -errno;
-		goto out;
-	}
-
-	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error_msg(ERROR_MSG_START_TRANS, "%m");
-		goto fail;
+		return -errno;
 	}
 
 	g_trans = trans;
 	g_hardlink_warning = false;
 	g_hardlink_count = 0;
+	g_subvols = subvols;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
 	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
 	if (ret) {
 		error("unable to traverse directory %s: %d", source_dir, ret);
-		goto fail;
-	}
-	ret = btrfs_commit_transaction(trans, root);
-	if (ret) {
-		errno = -ret;
-		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
-		goto out;
+		return ret;
 	}
 
 	if (g_hardlink_warning)
@@ -644,10 +733,6 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root)
 		rootdir_path_pop(&current_path);
 
 	return 0;
-fail:
-	btrfs_abort_transaction(trans, ret);
-out:
-	return ret;
 }
 
 static int ftw_add_entry_size(const char *fpath, const struct stat *st,
