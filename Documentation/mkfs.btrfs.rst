@@ -155,6 +155,11 @@ OPTIONS
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
                 not minimized. Please see option *--shrink* if you need that functionality.
 
+-u|--subvol <subdir>
+        Specify that *subdir* is to be created as a subvolume rather than a regular
+        directory.  The option *--rootdir* must also be specified, and *subdir* must be an
+        existing subdirectory within it.  This option can be specified multiple times.
+
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 
