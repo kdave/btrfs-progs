@@ -116,3 +116,13 @@ In order to remove a device, you need to convert the profile in this case:
 
         $ btrfs balance start -mconvert=dup -dconvert=single /mnt
         $ btrfs device remove /dev/sda /mnt
+
+.. warning::
+   Do not run balance to convert from a profile with more redundancy to one with
+   less redundancy in order to remove a failing device from a filesystem.
+
+   Balance is done by reading out the good metadata/data and write them into into a
+   new chunk.
+   Thus it's possible the new chunk is written into the failing device.
+
+   Use `btrfs device replace` instead.
