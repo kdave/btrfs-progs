@@ -116,3 +116,20 @@ In order to remove a device, you need to convert the profile in this case:
 
         $ btrfs balance start -mconvert=dup -dconvert=single /mnt
         $ btrfs device remove /dev/sda /mnt
+
+.. warning::
+   Do not run balance to convert from a profile with more redundancy to one with
+   less redundancy in order to remove a failing device from a filesystem.
+   As the name suggests, balance tries to balance data across devices.
+   Converting from e.g. raid1 to single may move data from the healthy device to
+   the failing device. This data will become irretrievable if the failing device
+   corrupts the new data or fails completely before ``btrfs device remove`` can
+   finish moving it back onto the healthy device.
+
+   To recover from a failing device with a replicated profile when you cannot
+   add enough new devices to maintain the required level of redundancy,
+   physically remove and replace the failing device, mount the filesystem with
+   ``-o degraded``, then use :command:`btrfs-replace` to replace the missing
+   device with the new one. Once the device is replaced, check
+   ``btrfs filesystem usage``, and if any single profiles are listed, run
+   ``btrfs balance start convert=raid1,soft`` to convert them back to raid1.
