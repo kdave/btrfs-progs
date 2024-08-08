@@ -7,13 +7,26 @@ also automatically repair any damage by default by copying verified good data
 from one of the other replicas.
 
 .. warning::
+   Files with the NOCOW (``chattr +C``) attribute imply ``nodatasum``.
+   Errors in these files cannot be detected or corrected by scrub. This means
+   the NOCOW attribute is not currently safe in the presence of replicas since
+   btrfs cannot determine which copy of data to use after a failure and may
+   return data from any replica, including corrupt or outdated data.
+   Detecting and recovering from a failure in this case requires manual
+   intervention. See issue `#482 <https://github.com/kdave/btrfs-progs/issues/482>`_.
+   
+   Notably, `systemd sets NOCOW on journals by default <https://github.com/systemd/systemd/commit/11689d2a021d95a8447d938180e0962cd9439763>`_,
+   and `libvirt ≥ 6.6 sets NOCOW on storage pool directories by default <https://www.libvirt.org/news.html#v6-6-0-2020-08-02>`_.
+   Other distributions may also enable NOCOW on database files or directories to
+   try to improve performance.
+
+.. warning::
    A read-write scrub will do no further harm to a damaged filesystem if it is not
    possible to perform a correct repair, so it is safe to use at almost any time.
-
-   The only time a read-write scrub is unsafe is during a split-brain event. This
-   is unlikely and requires a specific sequence of events that cause an
-   unhealthy device or device set to be mounted read-write in the absence of the
-   healthy device or device set from the same filesystem. For example:
+   However, if a split-brain event occurs, btrfs scrub may cause unrecoverable data
+   loss. This situation is unlikely and requires a specific sequence of events that
+   cause an unhealthy device or device set to be mounted read-write in the absence
+   of the healthy device or device set from the same filesystem. For example:
 
    1. Device set F fails and drops from the bus, while device set H continues to
       function and receive additional writes.
@@ -33,8 +46,8 @@ from one of the other replicas.
    :doc:`btrfs-check` performs more exhaustive checking and can sometimes be
    used, with expert guidance, to rebuild certain corrupted filesystem structures
    in the absence of any good replica. However, when a replica exists, scrub is
-   able to automatically correct most errors reported by `btrfs-check`, so should
-   normally be run first to avoid false positives from `btrfs-check`.
+   able to automatically correct most errors reported by ``btrfs-check``, so should
+   normally be run first to avoid false positives from ``btrfs-check``.
 
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
