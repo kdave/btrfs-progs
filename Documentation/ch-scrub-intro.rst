@@ -7,18 +7,30 @@ also automatically repair any damage by default by copying verified good data
 from one of the other replicas.
 
 .. warning::
-   Files with the NOCOW (``chattr +C``) attribute imply ``nodatasum``.
-   Errors in these files cannot be detected or corrected by scrub. This means
-   the NOCOW attribute is not currently safe in the presence of replicas since
-   btrfs cannot determine which copy of data to use after a failure and may
-   return data from any replica, including corrupt or outdated data.
-   Detecting and recovering from a failure in this case requires manual
-   intervention. See issue `#482 <https://github.com/kdave/btrfs-progs/issues/482>`_.
-   
-   Notably, `systemd sets NOCOW on journals by default <https://github.com/systemd/systemd/commit/11689d2a021d95a8447d938180e0962cd9439763>`_,
-   and `libvirt ≥ 6.6 sets NOCOW on storage pool directories by default <https://www.libvirt.org/news.html#v6-6-0-2020-08-02>`_.
-   Other distributions may also enable NOCOW on database files or directories to
-   try to improve performance.
+   Setting the ``No_COW`` (``chattr +C``) attribute on a file implicitly enables
+   ``nodatasum``. This means that while metadata for these files continues to
+   be validated and corrected by scrub, the actual file data is not.
+
+   Furthermore, btrfs does not currently mark missing or failed disks as
+   unreliable, so will continue to load-balance reads to potentially damaged
+   replicas in a replicated filesystem. This is not a problem normally because
+   damage is detected by checksum validation and a mirror copy is used, but
+   because ``No_COW`` files are not protected by checksum, bad data may be
+   returned even if a good copy exists on another replica. Which replica is used
+   is based on the process ID of the executable reading the file.
+
+   Writing to a ``No_COW`` file after reading from a bad replica will overwrite
+   all replicas with the bad data. Detecting and recovering from a failure in
+   this case requires manual intervention before the file is rewritten to avoid
+   data loss. See issue `#482 <https://github.com/kdave/btrfs-progs/issues/482>`_.
+   Even with raid1c3 or higher, for performance reasons, btrfs does not use
+   consensus reads on any files, even ``No_COW`` files, to validate or correct
+   data errors.
+
+   Notably, `systemd sets +C on journals by default <https://github.com/systemd/systemd/commit/11689d2a021d95a8447d938180e0962cd9439763>`_,
+   and `libvirt ≥ 6.6 sets +C on storage pool directories by default <https://www.libvirt.org/news.html#v6-6-0-2020-08-02>`_.
+   Other applications or distributions may also set +C to try to improve
+   performance.
 
 .. warning::
    A read-write scrub will do no further harm to a damaged filesystem if it is not
