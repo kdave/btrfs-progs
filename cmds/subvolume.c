@@ -347,6 +347,7 @@ static const char * const cmd_subvolume_delete_usage[] = {
 	OPTLINE("-c|--commit-after", "wait for transaction commit at the end of the operation"),
 	OPTLINE("-C|--commit-each", "wait for transaction commit after deleting each subvolume"),
 	OPTLINE("-i|--subvolid", "subvolume id of the to be removed subvolume"),
+	OPTLINE("-R|--recursive", "delete subvolumes beneath each subvolume recursively"),
 	OPTLINE("-v|--verbose", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
@@ -367,6 +368,7 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	char	*path = NULL;
 	int commit_mode = 0;
 	bool subvol_path_not_found = false;
+	int flags = 0;
 	u8 fsid[BTRFS_FSID_SIZE];
 	u64 subvolid = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
@@ -383,11 +385,12 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 			{"commit-after", no_argument, NULL, 'c'},
 			{"commit-each", no_argument, NULL, 'C'},
 			{"subvolid", required_argument, NULL, 'i'},
+			{"recursive", no_argument, NULL, 'R'},
 			{"verbose", no_argument, NULL, 'v'},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "cCi:v", long_options, NULL);
+		c = getopt_long(argc, argv, "cCi:Rv", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -400,6 +403,9 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 			break;
 		case 'i':
 			subvolid = arg_strtou64(optarg);
+			break;
+		case 'R':
+			flags |= BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE;
 			break;
 		case 'v':
 			bconf_be_verbose();
@@ -415,6 +421,11 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	/* When using --subvolid, ensure that we have only one argument */
 	if (subvolid > 0 && check_argc_exact(argc - optind, 1))
 		return 1;
+
+	if (subvolid > 0 && flags & BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE) {
+		error("option --recursive not supported with --subvolid");
+		return 1;
+	}
 
 	pr_verbose(LOG_INFO, "Transaction commit: %s\n",
 		   !commit_mode ? "none (default)" :
@@ -528,7 +539,7 @@ again:
 
 	/* Start deleting. */
 	if (subvolid == 0)
-		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
+		err = btrfs_util_delete_subvolume_fd(fd, vname, flags);
 	else
 		err = btrfs_util_delete_subvolume_by_id_fd(fd, subvolid);
 	if (err) {
