@@ -365,7 +365,6 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices,
 	if (devs_found < total) {
 		pr_verbose(LOG_DEFAULT, "\t*** Some devices missing\n");
 	}
-	pr_verbose(LOG_DEFAULT, "\n");
 }
 
 /* adds up all the used spaces as reported by the space info ioctl
@@ -431,7 +430,6 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		free(canonical_path);
 	}
 
-	pr_verbose(LOG_DEFAULT, "\n");
 	return 0;
 }
 
