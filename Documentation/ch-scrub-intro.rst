@@ -17,7 +17,9 @@ from one of the other replicas.
    damage is detected by checksum validation and a mirror copy is used, but
    because ``No_COW`` files are not protected by checksum, bad data may be
    returned even if a good copy exists on another replica. Which replica is used
-   is based on the process ID of the executable reading the file.
+   is determined by the setting in ``/sys/fs/btrfs/<uuid>/read_policy``.
+   Currently, the only possible value for this setting is ``pid``, which uses
+   the process ID of the executable reading the file to pick the replica.
 
    Writing to a ``No_COW`` file after reading from a bad replica will overwrite
    all replicas with the bad data. Detecting and recovering from a failure in
