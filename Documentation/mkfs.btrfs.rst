@@ -151,6 +151,12 @@ OPTIONS
         require root permissions to write the new files or to mount the filesystem.
 
         .. note::
+		Since btrfs-progs v6.11, this option will not create extra hard links,
+		as the old hard link handling have bugs that can corrupt the result
+		filesystem.
+		Thus if there are multiple hard links inside *rootdir*, each
+		hard link will be created as an independent file.
+
                 This option may enlarge the image or file to ensure it's big enough to
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
                 not minimized. Please see option *--shrink* if you need that functionality.
