@@ -13,6 +13,12 @@ run_check mkdir "$tmpdir/rootdir"
 run_check touch "$tmpdir/rootdir/inside_link"
 run_check ln "$tmpdir/rootdir/inside_link" "$tmpdir/outside_link"
 
+# Add more links to trigger the warnings
+run_check touch "$tmpdir/rootdir/link0"
+for i in {1..10}; do
+	run_check ln "$tmpdir/rootdir/link0" "$tmpdir/rootdir/link$i"
+done
+
 run_check_mkfs_test_dev --rootdir "$tmpdir/rootdir"
 
 # For older mkfs.btrfs --rootdir we will create inside_link with 2 links,

@@ -90,6 +90,9 @@ static struct rootdir_path current_path = {
 	.level = 0,
 };
 
+/* Track if a hardlink was found and a warning was printed. */
+static bool g_hardlink_warning;
+static u64 g_hardlink_count;
 static struct btrfs_trans_handle *g_trans = NULL;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
@@ -428,9 +431,14 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	 * On most filesystems st_nlink of a directory is the number of
 	 * subdirs, including "." and "..", so skip directory inodes.
 	 */
-	if (unlikely(!S_ISDIR(st->st_mode) && st->st_nlink > 1))
-		warning("'%s' has extra hard links, they will be converted into new inodes",
-			full_path);
+	if (unlikely(!S_ISDIR(st->st_mode) && st->st_nlink > 1)) {
+		if (!g_hardlink_warning) {
+			warning("'%s' has extra hardlinks, they will be converted into new inodes",
+				full_path);
+			g_hardlink_warning = true;
+		}
+		g_hardlink_count++;
+	}
 
 	/* The rootdir itself. */
 	if (unlikely(ftwbuf->level == 0)) {
@@ -612,6 +620,8 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root)
 	}
 
 	g_trans = trans;
+	g_hardlink_warning = false;
+	g_hardlink_count = 0;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
 	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
@@ -625,6 +635,11 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root)
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		goto out;
 	}
+
+	if (g_hardlink_warning)
+		warning("%llu hardlinks were detected in %s, all converted to new inodes",
+			g_hardlink_count, source_dir);
+
 	while (current_path.level > 0)
 		rootdir_path_pop(&current_path);
 
