@@ -441,6 +441,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),
 	OPTLINE("-u|--subvol SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
+	OPTLINE("--default-subvol SUBDIR", "create SUBDIR as subvolume rather than normal directory, and set it as the default"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
@@ -1058,6 +1059,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *source_dir = NULL;
 	size_t source_dir_len = 0;
 	struct rootdir_subvol *rds;
+	bool has_default_subvol = false;
 	LIST_HEAD(subvols);
 
 	cpu_detect_flags();
@@ -1072,6 +1074,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
 			GETOPT_VAL_DEVICE_UUID,
+			GETOPT_VAL_DEFAULT_SUBVOL,
 		};
 		static const struct option long_options[] = {
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -1090,6 +1093,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "version", no_argument, NULL, 'V' },
 			{ "rootdir", required_argument, NULL, 'r' },
 			{ "subvol", required_argument, NULL, 'u' },
+			{ "default-subvol", required_argument, NULL,
+				GETOPT_VAL_DEFAULT_SUBVOL },
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
 			{ "runtime-features", required_argument, NULL, 'R' },
@@ -1213,7 +1218,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				free(source_dir);
 				source_dir = strdup(optarg);
 				break;
-			case 'u': {
+			case 'u':
+			case GETOPT_VAL_DEFAULT_SUBVOL: {
 				struct rootdir_subvol *subvol;
 
 				subvol = malloc(sizeof(struct rootdir_subvol));
@@ -1225,6 +1231,19 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 				subvol->dir = strdup(optarg);
 				subvol->full_path = NULL;
+
+				if (c == GETOPT_VAL_DEFAULT_SUBVOL) {
+					if (has_default_subvol) {
+						error("--default-subvol can only be specified once");
+						ret = 1;
+						goto error;
+					}
+
+					has_default_subvol = true;
+					subvol->is_default = true;
+				} else {
+					subvol->is_default = false;
+				}
 
 				list_add_tail(&subvol->list, &subvols);
 				break;

@@ -160,6 +160,10 @@ OPTIONS
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
         existing subdirectory within it.  This option can be specified multiple times.
 
+--default-subvol <subdir>
+        As *--subvol*, except that it also sets the subvolume as the default for the
+        filesystem.  This option can only be specified once.
+
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 

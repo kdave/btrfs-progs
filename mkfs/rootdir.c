@@ -99,6 +99,7 @@ static u64 g_hardlink_count;
 static struct btrfs_trans_handle *g_trans = NULL;
 static struct list_head *g_subvols;
 static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
+static u64 default_subvol_id;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -436,6 +437,9 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 		return ret;
 	}
 
+	if (subvol->is_default)
+		default_subvol_id = subvol_id;
+
 	key.objectid = subvol_id;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
@@ -701,6 +705,47 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	return 0;
 };
 
+static int set_default_subvolume(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_dir_item *di;
+	struct btrfs_key location;
+	struct extent_buffer *leaf;
+	struct btrfs_disk_key disk_key;
+	u64 features;
+
+	di = btrfs_lookup_dir_item(trans, trans->fs_info->tree_root, &path,
+				   btrfs_super_root_dir(trans->fs_info->super_copy),
+				   "default", 7, 1);
+	if (IS_ERR_OR_NULL(di)) {
+		btrfs_release_path(&path);
+
+		if (di)
+			return PTR_ERR(di);
+		else
+			return -ENOENT;
+	}
+
+	leaf = path.nodes[0];
+
+	location.objectid = default_subvol_id;
+	location.type = BTRFS_ROOT_ITEM_KEY;
+	location.offset = 0;
+
+	btrfs_cpu_key_to_disk(&disk_key, &location);
+	btrfs_set_dir_item_key(leaf, di, &disk_key);
+
+	btrfs_mark_buffer_dirty(leaf);
+
+	btrfs_release_path(&path);
+
+	features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
+	features |= BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL;
+	btrfs_set_super_incompat_flags(trans->fs_info->super_copy, features);
+
+	return 0;
+}
+
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols)
 {
@@ -731,6 +776,14 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 
 	while (current_path.level > 0)
 		rootdir_path_pop(&current_path);
+
+	if (default_subvol_id != 0) {
+		ret = set_default_subvolume(trans);
+		if (ret < 0) {
+			error("error setting default subvolume: %d", ret);
+			return ret;
+		}
+	}
 
 	return 0;
 }
