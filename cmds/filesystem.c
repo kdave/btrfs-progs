@@ -480,9 +480,8 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		fd = open(mnt->mnt_dir, O_RDONLY);
 		if ((fd != -1) && !get_df(fd, &space_info_arg)) {
 			/* put spacing between filesystem entries for readability */
-			if (found != 0) {
+			if (found != 0)
 				pr_verbose(LOG_DEFAULT, "\n");
-			}
 
 			print_one_fs(&fs_info_arg, dev_info_arg,
 				     space_info_arg, label, unit_mode);
@@ -760,7 +759,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
 	unsigned unit_mode;
 	int found = 0;
-	int needs_newline = 0;
+	bool needs_newline = false;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
@@ -891,9 +890,9 @@ devs_only:
 
 	list_for_each_entry(fs_devices, &all_uuids, fs_list) {
 		/* put spacing between filesystem entries for readability */
-		if (needs_newline) {
+		if (needs_newline)
 			pr_verbose(LOG_DEFAULT, "\n");
-		}
+
 		print_one_uuid(fs_devices, unit_mode);
 		needs_newline = true;
 	}
