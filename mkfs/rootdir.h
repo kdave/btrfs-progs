@@ -32,6 +32,7 @@ struct rootdir_subvol {
 	struct list_head list;
 	char *dir;
 	char *full_path;
+	bool is_default;
 };
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
