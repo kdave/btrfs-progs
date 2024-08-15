@@ -155,10 +155,14 @@ OPTIONS
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
                 not minimized. Please see option *--shrink* if you need that functionality.
 
--u|--subvol <subdir>
+-u|--subvol <subdir>:<flags>
         Specify that *subdir* is to be created as a subvolume rather than a regular
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
         existing subdirectory within it.  This option can be specified multiple times.
+
+        *flags* is an optional comma-separated list of modifiers. Valid choices are:
+
+        * *default*: create as default subvolume (this can only be specified once)
 
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
