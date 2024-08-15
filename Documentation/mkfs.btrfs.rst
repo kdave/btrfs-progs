@@ -165,6 +165,19 @@ OPTIONS
         * *default*: create as default subvolume (this can only be specified once)
         * *ro*: create as readonly subvolume
 
+	If there are hard links inside *rootdir* and *subdir* will split the
+	subvolumes, like the following case::
+
+		rootdir/
+		|- hardlink1
+		|- hardlink2
+		|- subdir/  <- will be a subvolume
+		   |- hardlink3
+
+	In that case we cannot create `hardlink3` as hardlinks of
+	`hardlink1` and `hardlink2` because hardlink3 will be inside a new
+	subvolume.
+
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 
