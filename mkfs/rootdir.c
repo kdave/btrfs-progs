@@ -42,6 +42,7 @@
 #include "common/extent-tree-utils.h"
 #include "common/root-tree-utils.h"
 #include "common/path-utils.h"
+#include "common/rbtree-utils.h"
 #include "mkfs/rootdir.h"
 
 static u32 fs_block_size;
@@ -75,6 +76,52 @@ struct inode_entry {
 };
 
 /*
+ * Record all the hard links we found for a specific file inside
+ * rootdir.
+ *
+ * The search is based on (root, st_dev, st_ino).
+ * The reason for @root as a search index is, for hard links separated by
+ * subvolume boundaries:
+ *
+ * rootdir/
+ * |- foobar_hardlink1
+ * |- foobar_hardlink2
+ * |- subv/	<- Will be created as a subvolume
+ *    |- foobar_hardlink3.
+ *
+ * Since all the 3 hard links are inside the same rootdir and the same
+ * filesystem, on the host fs they are all hard links to the same inode.
+ *
+ * But for the btrfs we are building, only hardlink1 and hardlink2 can be
+ * created as hardlinks. Since we cannot create hardlink across subvolume.
+ * So we need @root as a search index to handle such case.
+ */
+struct hardlink_entry {
+	struct rb_node node;
+	/*
+	 * The following three members are reported from the stat() of the
+	 * host filesystem.
+	 *
+	 * For st_nlink we cannot trust it unconditionally, as
+	 * some hard links may be out of rootdir.
+	 * If @found_nlink reached @st_nlink, we know we have created all
+	 * the hard links and can remove the entry.
+	 */
+	dev_t st_dev;
+	ino_t st_ino;
+	nlink_t st_nlink;
+
+	/* The following two are inside the new btrfs. */
+	struct btrfs_root *root;
+	u64 btrfs_ino;
+
+	/* How many hard links we have created. */
+	nlink_t found_nlink;
+};
+
+static struct rb_root hardlink_root = RB_ROOT;
+
+/*
  * The path towards the rootdir.
  *
  * Only directory inodes are stored inside the path.
@@ -93,9 +140,6 @@ static struct rootdir_path current_path = {
 	.level = 0,
 };
 
-/* Track if a hardlink was found and a warning was printed. */
-static bool g_hardlink_warning;
-static u64 g_hardlink_count;
 static struct btrfs_trans_handle *g_trans = NULL;
 static struct list_head *g_subvols;
 static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
@@ -132,6 +176,82 @@ static int rootdir_path_push(struct rootdir_path *path, struct btrfs_root *root,
 	list_add_tail(&new->list, &path->inode_list);
 	path->level++;
 	return 0;
+}
+
+static int hardlink_compare_nodes(const struct rb_node *node1,
+				  const struct rb_node *node2)
+{
+	const struct hardlink_entry *entry1;
+	const struct hardlink_entry *entry2;
+
+	entry1 = rb_entry(node1, struct hardlink_entry, node);
+	entry2 = rb_entry(node2, struct hardlink_entry, node);
+	UASSERT(entry1->root);
+	UASSERT(entry2->root);
+
+	if (entry1->st_dev < entry2->st_dev)
+		return -1;
+	if (entry1->st_dev > entry2->st_dev)
+		return 1;
+	if (entry1->st_ino < entry2->st_ino)
+		return -1;
+	if (entry1->st_ino > entry2->st_ino)
+		return 1;
+	if (entry1->root < entry2->root)
+		return -1;
+	if (entry1->root > entry2->root)
+		return 1;
+	return 0;
+}
+
+static struct hardlink_entry *find_hard_link(struct btrfs_root *root,
+					     const struct stat *st)
+{
+	struct rb_node *node;
+	const struct hardlink_entry tmp = {
+		.st_dev = st->st_dev,
+		.st_ino = st->st_ino,
+		.root = root,
+	};
+
+	node = rb_search(&hardlink_root, &tmp,
+			(rb_compare_keys)hardlink_compare_nodes, NULL);
+	if (node)
+		return rb_entry(node, struct hardlink_entry, node);
+	return NULL;
+}
+
+static int add_hard_link(struct btrfs_root *root, u64 btrfs_ino,
+			 const struct stat *st)
+{
+	struct hardlink_entry *new;
+	int ret;
+
+	UASSERT(st->st_nlink > 1);
+
+	new = calloc(1, sizeof(*new));
+	if (!new)
+		return -ENOMEM;
+
+	new->root = root;
+	new->btrfs_ino = btrfs_ino;
+	new->found_nlink = 1;
+	new->st_dev = st->st_dev;
+	new->st_ino = st->st_ino;
+	new->st_nlink = st->st_nlink;
+	ret = rb_insert(&hardlink_root, &new->node, hardlink_compare_nodes);
+	if (ret) {
+		free(new);
+		return -EEXIST;
+	}
+	return 0;
+}
+
+static void free_one_hardlink(struct rb_node *node)
+{
+	struct hardlink_entry *entry = rb_entry(node, struct hardlink_entry, node);
+
+	free(entry);
 }
 
 static void stat_to_inode_item(struct btrfs_inode_item *dst, const struct stat *st)
@@ -502,28 +622,9 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	struct btrfs_inode_item inode_item = { 0 };
 	struct inode_entry *parent;
 	struct rootdir_subvol *rds;
+	const bool have_hard_links = (!S_ISDIR(st->st_mode) && st->st_nlink > 1);
 	u64 ino;
 	int ret;
-
-	/*
-	 * Hard link needs extra detection code, not supported for now, but
-	 * it's not to break anything but splitting the hard links into new
-	 * inodes.  And we do not even know if the hard links are inside the
-	 * rootdir.
-	 *
-	 * So here we only need to do extra warning.
-	 *
-	 * On most filesystems st_nlink of a directory is the number of
-	 * subdirs, including "." and "..", so skip directory inodes.
-	 */
-	if (unlikely(!S_ISDIR(st->st_mode) && st->st_nlink > 1)) {
-		if (!g_hardlink_warning) {
-			warning("'%s' has extra hardlinks, they will be converted into new inodes",
-				full_path);
-			g_hardlink_warning = true;
-		}
-		g_hardlink_count++;
-	}
 
 	/* The rootdir itself. */
 	if (unlikely(ftwbuf->level == 0)) {
@@ -624,6 +725,37 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	parent = rootdir_path_last(&current_path);
 	root = parent->root;
 
+	/* For non-directory inode, check if there is already any hard link. */
+	if (have_hard_links) {
+		struct hardlink_entry *found;
+
+		found = find_hard_link(root, st);
+		/*
+		 * Can only add the hard link if it doesn't cross subvolume
+		 * boundary.
+		 */
+		if (found && found->root == root) {
+			ret = btrfs_add_link(g_trans, root, found->btrfs_ino,
+					     parent->ino, full_path + ftwbuf->base,
+					     strlen(full_path) - ftwbuf->base,
+					     ftype_to_btrfs_type(st->st_mode),
+					     NULL, 1, 0);
+			if (ret < 0) {
+				errno = -ret;
+				error(
+			"failed to add link for hard link ('%s'): %m", full_path);
+				return ret;
+			}
+			found->found_nlink++;
+			/* We found all hard links for it. Can remove the entry. */
+			if (found->found_nlink >= found->st_nlink) {
+				rb_erase(&found->node, &hardlink_root);
+				free(found);
+			}
+			return 0;
+		}
+	}
+
 	ret = btrfs_find_free_objectid(g_trans, root,
 				       BTRFS_FIRST_FREE_OBJECTID, &ino);
 	if (ret < 0) {
@@ -639,7 +771,6 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		error("failed to insert inode item %llu for '%s': %m", ino, full_path);
 		return ret;
 	}
-
 	ret = btrfs_add_link(g_trans, root, ino, parent->ino,
 			     full_path + ftwbuf->base,
 			     strlen(full_path) - ftwbuf->base,
@@ -650,6 +781,22 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		error("failed to add link for inode %llu ('%s'): %m", ino, full_path);
 		return ret;
 	}
+
+	/*
+	 * Found a possible hard link, add it into the hard link rb tree for
+	 * future detection.
+	 */
+	if (have_hard_links) {
+		ret = add_hard_link(root, ino, st);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to add hard link record for '%s': %m",
+			       full_path);
+			return ret;
+		}
+		ret = 0;
+	}
+
 	/*
 	 * btrfs_add_link() has increased the nlink to 1 in the metadata.
 	 * Also update the value in case we need to update the inode item
@@ -759,8 +906,6 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 	}
 
 	g_trans = trans;
-	g_hardlink_warning = false;
-	g_hardlink_count = 0;
 	g_subvols = subvols;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
@@ -769,10 +914,6 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 		error("unable to traverse directory %s: %d", source_dir, ret);
 		return ret;
 	}
-
-	if (g_hardlink_warning)
-		warning("%llu hardlinks were detected in %s, all converted to new inodes",
-			g_hardlink_count, source_dir);
 
 	while (current_path.level > 0)
 		rootdir_path_pop(&current_path);
@@ -785,6 +926,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 		}
 	}
 
+	rb_free_nodes(&hardlink_root, free_one_hardlink);
 	return 0;
 }
 
