@@ -725,7 +725,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	parent = rootdir_path_last(&current_path);
 	root = parent->root;
 
-	/* For non-directory inode, check if there is already any hard link. */
+	/* Check if there is already a hard link record for this. */
 	if (have_hard_links) {
 		struct hardlink_entry *found;
 
@@ -771,6 +771,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		error("failed to insert inode item %llu for '%s': %m", ino, full_path);
 		return ret;
 	}
+
 	ret = btrfs_add_link(g_trans, root, ino, parent->ino,
 			     full_path + ftwbuf->base,
 			     strlen(full_path) - ftwbuf->base,
@@ -782,10 +783,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		return ret;
 	}
 
-	/*
-	 * Found a possible hard link, add it into the hard link rb tree for
-	 * future detection.
-	 */
+	/* Record this new hard link. */
 	if (have_hard_links) {
 		ret = add_hard_link(root, ino, st);
 		if (ret < 0) {
