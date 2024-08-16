@@ -7,7 +7,7 @@ repo="kdave/btrfs-progs"
 
 from=11
 
-for id in $(gh run -R "$repo" list -w 'Devel build and tests' --json databaseId | jq '.[].databaseId' | tail -n +${from}); do
+for id in $(gh run -R "$repo" list --limit 100 --workflow 'Devel build and tests' --json databaseId | jq '.[].databaseId' | tail -n +${from}); do
 	echo "Delete run $id"
 	gh run -R "$repo" delete "$id"
 done

@@ -8,7 +8,7 @@ repo="kdave/btrfs-progs"
 type -p gh > /dev/null || { echo "ERROR: gh tool not found"; exit 1; }
 type -p jq > /dev/null || { echo "ERROR: jq tool not found"; exit 1; }
 
-for id in $(gh run -R "$repo" list --workflow "$workflow" --status failure --json databaseId | jq '.[].databaseId'); do
+for id in $(gh run -R "$repo" list --limit 100 --workflow "$workflow" --status failure --json databaseId | jq '.[].databaseId'); do
 	echo "Delete run $id"
 	gh run -R "$repo" delete "$id"
 done

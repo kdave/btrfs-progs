@@ -11,7 +11,7 @@ daysmax=8
 
 clean_workflow() {
 	local wf="$1"
-	local json=$(gh run -R "$repo" list --workflow "$wf" --json databaseId,startedAt)
+	local json=$(gh run -R "$repo" list --limit 100 --workflow "$wf" --json databaseId,startedAt)
 
 	echo "Cleaning workflow $wf"
 	i=0
@@ -40,3 +40,6 @@ clean_workflow() {
 clean_workflow "Testing CI build"
 clean_workflow "Devel build and tests"
 clean_workflow "Pull request build and tests"
+clean_workflow "Codespell"
+clean_workflow "CI image tests"
+clean_workflow "Sanitizer checks"
