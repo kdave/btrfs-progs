@@ -16,11 +16,13 @@ notthatone() {
 	exit 1
 }
 
+areyousure() {
+	echo "WARNING: protected branch, make sure you want to remove it: $1"
+}
+
 case "$branch" in
 	master) notthatone "$branch";;
-	devel) notthatone "$branch";;
-	coverage-test) notthatone "$branch";;
-	release-test) notthatone "$branch";;
+	devel) areyousure "$branch";;
 esac
 
 echo "Delete all runs of branch $branch, are you sure? [y/N]"
@@ -31,7 +33,7 @@ if ! [ "$answer" = 'y' ]; then
 fi
 echo
 
-for id in $(gh run -R "$repo" list --json databaseId --branch "$branch" | jq '.[].databaseId'); do
+for id in $(gh run -R "$repo" list --limit 100 --json databaseId --branch "$branch" | jq '.[].databaseId'); do
 	echo "Delete run $id"
 	gh run -R "$repo" delete "$id"
 done

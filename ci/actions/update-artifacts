@@ -16,8 +16,8 @@ repo="kdave/btrfs-progs"
 tag="$1"
 # TODO: verify that tag exists
 
-# Read last workflow id
-id=$(gh run -R "$repo" list -w 'Static binaries' -L 1 --json databaseId | jq '.[].databaseId')
+# Read last workflow id for master branch
+id=$(gh run -R "$repo" list --limit 1 --workflow 'Static binaries' --branch 'master' --json databaseId | jq '.[].databaseId')
 
 for asset in btrfs.box.static btrfs.static; do
 	gh run -R "$repo" download "$id" -n "$asset"
