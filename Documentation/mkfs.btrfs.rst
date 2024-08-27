@@ -163,6 +163,7 @@ OPTIONS
         *flags* is an optional comma-separated list of modifiers. Valid choices are:
 
         * *default*: create as default subvolume (this can only be specified once)
+        * *ro*: create as readonly subvolume
 
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.

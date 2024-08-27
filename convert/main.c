@@ -1022,13 +1022,14 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 			     BTRFS_FIRST_FREE_OBJECTID);
 
 	/* subvol for fs image file */
-	ret = btrfs_make_subvolume(trans, CONV_IMAGE_SUBVOL_OBJECTID);
+	ret = btrfs_make_subvolume(trans, CONV_IMAGE_SUBVOL_OBJECTID, false);
 	if (ret < 0) {
 		error("failed to create subvolume image root: %d", ret);
 		goto err;
 	}
 	/* subvol for data relocation tree */
-	ret = btrfs_make_subvolume(trans, BTRFS_DATA_RELOC_TREE_OBJECTID);
+	ret = btrfs_make_subvolume(trans, BTRFS_DATA_RELOC_TREE_OBJECTID,
+				   false);
 	if (ret < 0) {
 		error("failed to create DATA_RELOC root: %d", ret);
 		goto err;
