@@ -66,7 +66,8 @@ error:
  * The created tree root would have its root_ref as 1.
  * Thus for subvolumes caller needs to properly add ROOT_BACKREF items.
  */
-int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid)
+int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid,
+			 bool readonly)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *root;
@@ -98,6 +99,13 @@ int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid)
 	ret = btrfs_make_root_dir(trans, root, BTRFS_FIRST_FREE_OBJECTID);
 	if (ret < 0)
 		goto error;
+
+	btrfs_set_stack_inode_flags(&root->root_item.inode,
+				    BTRFS_INODE_ROOT_ITEM_INIT);
+
+	if (readonly)
+		btrfs_set_root_flags(&root->root_item, BTRFS_ROOT_SUBVOL_RDONLY);
+
 	ret = btrfs_update_root(trans, fs_info->tree_root, &root->root_key,
 				&root->root_item);
 	if (ret < 0)

@@ -430,7 +430,7 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 
 	subvol_id = next_subvol_id++;
 
-	ret = btrfs_make_subvolume(g_trans, subvol_id);
+	ret = btrfs_make_subvolume(g_trans, subvol_id, subvol->readonly);
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to create subvolume: %m");
