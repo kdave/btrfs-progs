@@ -1036,6 +1036,8 @@ static int parse_subvol_flags(struct rootdir_subvol *subvol, const char *flags)
 
 		if (!strcmp(buf, "default")) {
 			subvol->is_default = true;
+		} else if (!strcmp(buf, "ro")) {
+			subvol->readonly = true;
 		} else if (buf[0] != 0) {
 			error("unrecognized subvol flag \"%s\"", buf);
 			ret = 1;
@@ -1988,7 +1990,8 @@ raid_groups:
 		goto out;
 	}
 
-	ret = btrfs_make_subvolume(trans, BTRFS_DATA_RELOC_TREE_OBJECTID);
+	ret = btrfs_make_subvolume(trans, BTRFS_DATA_RELOC_TREE_OBJECTID,
+				   false);
 	if (ret) {
 		error("unable to create data reloc tree: %d", ret);
 		goto out;

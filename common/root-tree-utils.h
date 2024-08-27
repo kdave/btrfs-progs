@@ -21,7 +21,8 @@
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid);
+int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid,
+			 bool readonly);
 int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *parent_root,
 			 u64 parent_dir, const char *name,
