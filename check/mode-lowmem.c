@@ -3351,6 +3351,31 @@ out_no_release:
 	return err;
 }
 
+static int read_inode_item(struct btrfs_root *root,
+			   u64 ino, struct btrfs_inode_item *ret_ii)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = {
+		.objectid = ino,
+		.type = BTRFS_INODE_ITEM_KEY,
+		.offset = 0
+	};
+	int ret;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	read_extent_buffer(path.nodes[0], ret_ii,
+			   btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+			   sizeof(*ret_ii));
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 /*
  * Check EXTENT_DATA item, mainly for its dbackref in extent tree
  *
@@ -3371,6 +3396,7 @@ static int check_extent_data_item(struct btrfs_root *root,
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_extent_data_ref *dref;
+	struct btrfs_inode_item inode_item;
 	u64 owner;
 	u64 disk_bytenr;
 	u64 disk_num_bytes;
@@ -3399,6 +3425,24 @@ static int check_extent_data_item(struct btrfs_root *root,
 	disk_num_bytes = btrfs_file_extent_disk_num_bytes(eb, fi);
 	extent_num_bytes = btrfs_file_extent_num_bytes(eb, fi);
 	offset = btrfs_file_extent_offset(eb, fi);
+
+	/*
+	 * There is a regular/preallocated data extent. Make sure the owning
+	 * inode is not a symbolic link.
+	 * As symbolic links can only have inline data extents.
+	 */
+	ret = read_inode_item(root, fi_key.objectid, &inode_item);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to grab the inode item for inode %llu: %m",
+		      fi_key.objectid);
+		err |= INODE_ITEM_MISSING;
+	}
+	if (S_ISLNK(inode_item.mode)) {
+		error("symbolic link at root %lld ino %llu has regular/preallocated extents",
+		      root->root_key.objectid, fi_key.objectid);
+		err |= FILE_EXTENT_ERROR;
+	}
 
 	/* Check unaligned disk_bytenr, disk_num_bytes and num_bytes */
 	if (!IS_ALIGNED(disk_bytenr, gfs_info->sectorsize)) {
