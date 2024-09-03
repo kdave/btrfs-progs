@@ -92,5 +92,23 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
 			       u64 offset, const char *buffer, size_t size);
+/*
+ * For symlink we allow up to PATH_MAX - 1 (PATH_MAX includes the terminating NUL,
+ * but fs doesn't store that terminating NUL).
+ *
+ * But for inlined data extents, the up limit is sectorsize - 1 (inclusive), or a
+ * regular extent should be created instead.
+ */
+static inline u32 btrfs_symlink_max_size(struct btrfs_fs_info *fs_info)
+{
+	return min_t(u32, BTRFS_MAX_INLINE_DATA_SIZE(fs_info),
+		     PATH_MAX - 1);
+}
+
+static inline u32 btrfs_data_inline_max_size(struct btrfs_fs_info *fs_info)
+{
+	return min_t(u32, BTRFS_MAX_INLINE_DATA_SIZE(fs_info),
+		     fs_info->sectorsize - 1);
+}
 
 #endif
