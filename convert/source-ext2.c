@@ -390,6 +390,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 			       ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
 			       u32 convert_flags)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int ret;
 	char *buffer = NULL;
 	errcode_t err;
@@ -397,7 +398,19 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	u32 last_block;
 	u32 sectorsize = root->fs_info->sectorsize;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
+	bool meet_inline_size_limit;
 	struct blk_iterate_data data;
+
+	if (S_ISLNK(btrfs_stack_inode_mode(btrfs_inode))) {
+		meet_inline_size_limit = inode_size <= btrfs_symlink_max_size(fs_info);
+		if (!meet_inline_size_limit) {
+			error("symlink too large for ext2 inode %u, has %llu max %u",
+			     ext2_ino, inode_size, btrfs_symlink_max_size(fs_info));
+			return -ENAMETOOLONG;
+		}
+	} else {
+		meet_inline_size_limit = inode_size <= btrfs_data_inline_max_size(fs_info);
+	}
 
 	init_blk_iterate_data(&data, trans, root, btrfs_inode, objectid,
 			convert_flags & CONVERT_FLAG_DATACSUM);
@@ -430,8 +443,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto fail;
 	if ((convert_flags & CONVERT_FLAG_INLINE_DATA) && data.first_block == 0
-	    && data.num_blocks > 0 && inode_size < sectorsize
-	    && inode_size <= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info)) {
+	    && data.num_blocks > 0 && meet_inline_size_limit) {
 		u64 num_bytes = data.num_blocks * sectorsize;
 		u64 disk_bytenr = data.disk_block * sectorsize;
 		u64 nbytes;
@@ -476,21 +488,26 @@ static int ext2_create_symlink(struct btrfs_trans_handle *trans,
 	int ret;
 	char *pathname;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
+
 	if (ext2fs_inode_data_blocks2(ext2_fs, ext2_inode)) {
-		btrfs_set_stack_inode_size(btrfs_inode, inode_size + 1);
+		if (inode_size > btrfs_symlink_max_size(trans->fs_info)) {
+			error("symlink too large for ext2 inode %u, has %llu max %u",
+				ext2_ino, inode_size,
+				btrfs_symlink_max_size(trans->fs_info));
+			return -ENAMETOOLONG;
+		}
 		ret = ext2_create_file_extents(trans, root, objectid,
 				btrfs_inode, ext2_fs, ext2_ino,
 				CONVERT_FLAG_DATACSUM |
 				CONVERT_FLAG_INLINE_DATA);
-		btrfs_set_stack_inode_size(btrfs_inode, inode_size);
 		return ret;
 	}
 
 	pathname = (char *)&(ext2_inode->i_block[0]);
 	BUG_ON(pathname[inode_size] != 0);
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
-					 pathname, inode_size + 1);
-	btrfs_set_stack_inode_nbytes(btrfs_inode, inode_size + 1);
+					 pathname, inode_size);
+	btrfs_set_stack_inode_nbytes(btrfs_inode, inode_size);
 	return ret;
 }
 
