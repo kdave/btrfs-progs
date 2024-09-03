@@ -26,6 +26,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "common/internal.h"
+#include "common/messages.h"
 
 #define MAX_CSUM_ITEMS(r, size) ((((BTRFS_LEAF_DATA_SIZE(r->fs_info) - \
 			       sizeof(struct btrfs_item) * 2) / \
@@ -88,6 +89,7 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
 			       u64 offset, const char *buffer, size_t size)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_key key;
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
@@ -96,6 +98,10 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 	u32 datasize;
 	int err = 0;
 	int ret;
+
+	if (size > max(btrfs_symlink_max_size(fs_info),
+		       btrfs_data_inline_max_size(fs_info)))
+		return -EUCLEAN;
 
 	path = btrfs_alloc_path();
 	if (!path)
