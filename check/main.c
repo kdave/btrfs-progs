@@ -1745,6 +1745,13 @@ static int process_file_extent(struct btrfs_root *root,
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (disk_bytenr > 0)
 			rec->found_size += num_bytes;
+		/*
+		 * Symbolic links should only have inlined extents.
+		 * A regular extent means it's already too large to
+		 * be inlined.
+		 */
+		if (S_ISLNK(rec->imode))
+			rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
 	} else {
 		rec->errors |= I_ERR_BAD_FILE_EXTENT;
 	}
