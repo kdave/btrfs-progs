@@ -538,8 +538,8 @@ static int reiserfs_copy_symlink(struct btrfs_trans_handle *trans,
 	len = get_ih_item_len(tp_item_head(&path));
 
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
-					 symlink, len + 1);
-	btrfs_set_stack_inode_nbytes(btrfs_inode, len + 1);
+					 symlink, len);
+	btrfs_set_stack_inode_nbytes(btrfs_inode, len);
 fail:
 	pathrelse(&path);
 	return ret;
