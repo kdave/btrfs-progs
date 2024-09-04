@@ -616,7 +616,7 @@ keep_fd:
 static DEFINE_COMMAND_WITH_FLAGS(subvolume_delete, "delete", CMD_DRY_RUN);
 
 static const char * const cmd_subvolume_snapshot_usage[] = {
-	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> { <subdir>/<name> | <subdir> }",
+	"btrfs subvolume snapshot [-r|-R|--recursive] [-i <qgroupid>] <subvolume> { <subdir>/<name> | <subdir> }",
 	"",
 	"Create a snapshot of a <subvolume>. Call it <name> and place it in the <subdir>.",
 	"(<subvolume> will look like a new sub-directory, but is actually a btrfs subvolume",
@@ -625,6 +625,7 @@ static const char * const cmd_subvolume_snapshot_usage[] = {
 	"When only <subdir> is given, the subvolume will be named the basename of <subvolume>.",
 	"",
 	OPTLINE("-r", "make the new snapshot readonly"),
+	OPTLINE("-R|--recursive", "recursively snapshot subvolumes beneath the source; this option cannot be combined with -r"),
 	OPTLINE("-i <qgroupid>", "Add the new snapshot to a qgroup (a quota group). This option can be given multiple times."),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
@@ -642,7 +643,7 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 
 	optind = 0;
 	while (1) {
-		int c = getopt(argc, argv, "i:r");
+		int c = getopt(argc, argv, "i:rR");
 		if (c < 0)
 			break;
 
@@ -657,9 +658,19 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		case 'r':
 			flags |= BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY;
 			break;
+		case 'R':
+			flags |= BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE;
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
+	}
+
+	if ((flags & BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY) &&
+	    (flags & BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE)) {
+		error("-r and -R cannot be combined");
+		retval = 1;
+		goto out;
 	}
 
 	if (check_argc_exact(argc - optind, 2)) {

@@ -252,17 +252,23 @@ show [options] <path>
         -u|--uuid UUID
                 show details about subvolume with the given *UUID*, looked up in *path*
 
-snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>
+snapshot [-r|-R|--recursive] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>
         Create a snapshot of the subvolume *source* with the
         name *name* in the *dest* directory.
 
         If only *dest* is given, the subvolume will be named the basename of *source*.
         If *source* is not a subvolume, btrfs returns an error.
 
+        If you wish to recursively create a readonly snapshot, you can run
+        :command:`btrfs property set <path> ro true` on each subvolume after this command completes.
+
         ``Options``
 
         -r
                 Make the new snapshot read only.
+        -R|--recursive
+                Recursively snapshot subvolumes beneath the source. This option cannot be
+                combined with -r.
         -i <qgroupid>
                 Add the newly created subvolume to a qgroup. This option can be given multiple
                 times.
