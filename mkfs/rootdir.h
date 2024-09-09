@@ -22,6 +22,7 @@
 #define __BTRFS_MKFS_ROOTDIR_H__
 
 #include "kerncompat.h"
+#include "kernel-shared/compression.h"
 #include <sys/types.h>
 #include <stdbool.h>
 
@@ -37,7 +38,9 @@ struct rootdir_subvol {
 };
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
-			struct btrfs_root *root, struct list_head *subvols);
+			struct btrfs_root *root, struct list_head *subvols,
+			enum btrfs_compression_type compression,
+			u64 compression_level);
 u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 			u64 meta_profile, u64 data_profile);
 int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
