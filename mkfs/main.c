@@ -1666,7 +1666,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	oca.filename = file;
-	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER |
+		    OPEN_CTREE_EXCLUSIVE;
 	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("open ctree failed");

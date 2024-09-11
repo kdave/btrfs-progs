@@ -1373,7 +1373,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	btrfs_sb_committed = true;
 
 	root = open_ctree_fd(fd, devname, 0,
-			     OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
+			     OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER |
+			     OPEN_CTREE_EXCLUSIVE);
 	if (!root) {
 		error("unable to open ctree for finalization");
 		goto fail;

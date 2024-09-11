@@ -203,7 +203,7 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 	}
 
 	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL |
-			  OPEN_CTREE_NO_BLOCK_GROUPS);
+			  OPEN_CTREE_NO_BLOCK_GROUPS | OPEN_CTREE_EXCLUSIVE);
 	if (!root) {
 		error("could not open ctree");
 		return 1;
@@ -258,7 +258,7 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 	}
 
 	oca.filename = devname;
-	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL | OPEN_CTREE_EXCLUSIVE;
 	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("could not open btrfs");
@@ -437,7 +437,7 @@ static int cmd_rescue_clear_ino_cache(const struct cmd_struct *cmd,
 		goto out;
 	}
 	oca.filename = devname;
-	oca.flags = OPEN_CTREE_WRITES;
+	oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_EXCLUSIVE;
 	fs_info = open_ctree_fs_info(&oca);
 	if (!fs_info) {
 		error("could not open btrfs");
