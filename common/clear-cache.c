@@ -555,69 +555,86 @@ out:
 	return ret;
 }
 
-int clear_ino_cache_items(struct btrfs_fs_info *fs_info)
+/*
+ * Find a root item whose key.objectid >= @rootid, and save the found
+ * key into @found_key.
+ *
+ * Return 0 if a root item is found.
+ * Return >0 if no more root item is found.
+ * Return <0 for error.
+ */
+static int find_next_root(struct btrfs_fs_info *fs_info, u64 rootid,
+			  struct btrfs_key *found_key)
 {
-	int ret;
+	struct btrfs_key key = {
+		.objectid = rootid,
+		.type = BTRFS_ROOT_ITEM_KEY,
+		.offset = 0,
+	};
 	struct btrfs_path path = { 0 };
-	struct btrfs_key key;
-
-	key.objectid = BTRFS_FS_TREE_OBJECTID;
-	key.type = BTRFS_ROOT_ITEM_KEY;
-	key.offset = 0;
+	int ret;
 
 	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
-
-	while(1) {
-		struct btrfs_key found_key;
-
-		btrfs_item_key_to_cpu(path.nodes[0], &found_key, path.slots[0]);
-		if (found_key.type == BTRFS_ROOT_ITEM_KEY &&
-		    is_fstree(found_key.objectid)) {
-			struct btrfs_root *root;
-
-			found_key.offset = (u64)-1;
-			root = btrfs_read_fs_root(fs_info, &found_key);
-			if (IS_ERR(root))
-				goto next;
-			ret = truncate_free_ino_items(root);
-			if (ret)
-				goto out;
-			printf("Successfully cleaned up ino cache for root id: %lld\n",
-					root->objectid);
-		} else {
-			/* If we get a negative tree this means it's the last one */
-			if ((s64)found_key.objectid < 0 &&
-			    found_key.type == BTRFS_ROOT_ITEM_KEY)
-				goto out;
+	while (true) {
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		if (key.type == BTRFS_ROOT_ITEM_KEY && key.objectid >= rootid) {
+			memcpy(found_key, &key, sizeof(key));
+			ret = 0;
+			goto out;
 		}
-
-		/*
-		 * Only fs roots contain an ino cache information - either
-		 * FS_TREE_OBJECTID or subvol id >= BTRFS_FIRST_FREE_OBJECTID
-		 */
-next:
-		if (key.objectid == BTRFS_FS_TREE_OBJECTID) {
-			key.objectid = BTRFS_FIRST_FREE_OBJECTID;
-			btrfs_release_path(&path);
-			ret = btrfs_search_slot(NULL, fs_info->tree_root, &key,
-						&path,	0, 0);
-			if (ret < 0)
-				return ret;
-		} else {
-			ret = btrfs_next_item(fs_info->tree_root, &path);
-			if (ret < 0) {
-				goto out;
-			} else if (ret > 0) {
-				ret = 0;
-				goto out;
-			}
-		}
+		ret = btrfs_next_item(fs_info->tree_root, &path);
+		if (ret)
+			goto out;
 	}
-
 out:
 	btrfs_release_path(&path);
+	return ret;
+}
+
+int clear_ino_cache_items(struct btrfs_fs_info *fs_info)
+{
+	u64 cur_subvol = BTRFS_FS_TREE_OBJECTID;
+	int ret;
+
+	while (1) {
+		struct btrfs_key key = { 0 };
+		struct btrfs_root *root;
+
+		ret = find_next_root(fs_info, cur_subvol, &key);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to find the next root item for rootid %llu: %m",
+			      cur_subvol);
+			break;
+		}
+		if (ret > 0 || !is_fstree(key.objectid)) {
+			ret = 0;
+			break;
+		}
+		root = btrfs_read_fs_root(fs_info, &key);
+		if (IS_ERR(root)) {
+			ret = PTR_ERR(root);
+			errno = -ret;
+			error("failed to read root %llu: %m", key.objectid);
+			break;
+		}
+		ret = truncate_free_ino_items(root);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to clean up ino cache for root %llu: %m",
+			      key.objectid);
+			break;
+		}
+		printf("Successfully cleaned up ino cache for root id: %lld\n",
+			root->objectid);
+
+		if (cur_subvol == BTRFS_FS_TREE_OBJECTID)
+			cur_subvol = BTRFS_FIRST_FREE_OBJECTID;
+		else
+			cur_subvol = root->objectid + 1;
+	}
 	return ret;
 }
 
