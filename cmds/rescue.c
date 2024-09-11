@@ -449,7 +449,7 @@ static int cmd_rescue_clear_ino_cache(const struct cmd_struct *cmd,
 		errno = -ret;
 		error("failed to clear ino cache: %m");
 	} else {
-		pr_verbose(LOG_DEFAULT, "Successfully cleared ino cache");
+		pr_verbose(LOG_DEFAULT, "Successfully cleared ino cache\n");
 	}
 	close_ctree(fs_info->tree_root);
 out:
