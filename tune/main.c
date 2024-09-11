@@ -185,7 +185,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *fs_info;
-	unsigned ctree_flags = OPEN_CTREE_WRITES;
+	unsigned ctree_flags = OPEN_CTREE_WRITES | OPEN_CTREE_EXCLUSIVE;
 	int seeding_flag = 0;
 	u64 seeding_value = 0;
 	int random_fsid = 0;

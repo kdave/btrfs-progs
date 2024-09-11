@@ -1790,7 +1790,8 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 
 		oca.filename = target;
 		oca.flags = OPEN_CTREE_WRITES | OPEN_CTREE_RESTORE |
-			    OPEN_CTREE_PARTIAL | OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS;
+			    OPEN_CTREE_PARTIAL | OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS |
+			    OPEN_CTREE_EXCLUSIVE;
 		info = open_ctree_fs_info(&oca);
 		if (!info) {
 			error("open ctree failed");
@@ -1855,6 +1856,7 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 		root = open_ctree_fd(fileno(out), target, 0,
 					  OPEN_CTREE_PARTIAL |
 					  OPEN_CTREE_WRITES |
+					  OPEN_CTREE_EXCLUSIVE |
 					  OPEN_CTREE_NO_DEVICES |
 					  OPEN_CTREE_ALLOW_TRANSID_MISMATCH |
 					  OPEN_CTREE_SKIP_LEAF_ITEM_CHECKS);
