@@ -44,6 +44,7 @@
 
 static u64 last_allocated_chunk;
 static u64 total_used = 0;
+static bool found_free_ino_cache = false;
 
 static int calc_extent_flag(struct btrfs_root *root, struct extent_buffer *eb,
 			    u64 *flags_ret)
@@ -2627,6 +2628,12 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		if (ret > 0)
 			err |= LAST_ITEM;
 		return err;
+	}
+
+	if (inode_id == BTRFS_FREE_INO_OBJECTID) {
+		warning("subvolume %lld has deprecated inode cache",
+			root->root_key.objectid);
+		found_free_ino_cache = true;
 	}
 
 	is_orphan = has_orphan_item(root, inode_id);
@@ -5616,6 +5623,9 @@ next:
 
 out:
 	btrfs_release_path(&path);
+	if (found_free_ino_cache)
+		pr_verbose(LOG_DEFAULT,
+			   "deprecated inode cache can be removed by 'btrfs rescue clear-ino-cache'\n");
 	return err;
 }
 
