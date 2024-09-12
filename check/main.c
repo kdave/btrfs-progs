@@ -86,6 +86,7 @@ bool no_holes = false;
 bool is_free_space_tree = false;
 bool init_extent_tree = false;
 bool check_data_csum = false;
+static bool found_free_ino_cache = false;
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -606,6 +607,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 	fprintf(stderr, "root %llu inode %llu errors %x",
 		root_objectid, rec->ino, rec->errors);
 
+	if (errors & I_ERR_DEPRECATED_FREE_INO)
+		fprintf(stderr, ", deprecated free inode cache");
 	if (errors & I_ERR_NO_INODE_ITEM)
 		fprintf(stderr, ", no inode item");
 	if (errors & I_ERR_NO_ORPHAN_ITEM)
@@ -772,9 +775,6 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		node->cache.start = ino;
 		node->cache.size = 1;
 		node->data = rec;
-
-		if (ino == BTRFS_FREE_INO_OBJECTID)
-			rec->found_link = 1;
 
 		ret = insert_cache_extent(inode_cache, &node->cache);
 		if (ret) {
@@ -3224,6 +3224,10 @@ static int check_inode_recs(struct btrfs_root *root,
 			}
 		}
 
+		if (rec->ino == BTRFS_FREE_INO_OBJECTID) {
+			rec->errors |= I_ERR_DEPRECATED_FREE_INO;
+			found_free_ino_cache = true;
+		}
 		if (!rec->found_inode_item)
 			rec->errors |= I_ERR_NO_INODE_ITEM;
 		if (rec->found_link != rec->nlink)
@@ -10832,6 +10836,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	ret = do_check_fs_roots(&root_cache);
 	task_stop(g_task_ctx.info);
+	if (found_free_ino_cache)
+		pr_verbose(LOG_DEFAULT,
+			   "deprecated inode cache can be removed by 'btrfs rescue clear-ino-cache'\n");
 	err |= !!ret;
 	if (ret) {
 		error("errors found in fs roots");
