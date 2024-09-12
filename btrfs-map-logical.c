@@ -74,6 +74,11 @@ static int map_one_extent(struct btrfs_fs_info *fs_info,
 	BUG_ON(ret == 0);
 	ret = 0;
 
+	if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+		ret = btrfs_next_leaf(extent_root, path);
+		if (ret)
+			goto out;
+	}
 again:
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	if ((search_forward && key.objectid < logical) ||
