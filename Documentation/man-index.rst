@@ -16,6 +16,7 @@ Manual pages
    btrfs-find-root
    btrfs-image
    btrfs-inspect-internal
+   btrfs-ioctl
    btrfs-map-logical
    btrfs-property
    btrfs-qgroup

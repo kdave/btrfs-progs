@@ -66,6 +66,7 @@ man_pages = [
     ('btrfs-qgroup', 'btrfs-qgroup', 'control the quota group of a btrfs filesystem', '', 8),
     ('btrfs-property', 'btrfs-property', 'get/set/list properties for given filesystem object', '', 8),
     ('btrfs-inspect-internal', 'btrfs-inspect-internal', 'query various internal information', '', 8),
+    ('btrfs-ioctl', 'btrfs-ioctl', 'documentation about btrfs ioctls', '', 2),
     ('btrfs-image', 'btrfs-image', 'create/restore an image of the filesystem', '', 8),
     ('btrfs-find-root', 'btrfs-find-root', 'filter to find btrfs root', '', 8),
     ('btrfs-filesystem', 'btrfs-filesystem', 'command group that primarily does work on the whole filesystems', '', 8),

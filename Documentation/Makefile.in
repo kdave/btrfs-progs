@@ -23,6 +23,7 @@ endif
 endif
 
 mandir ?= $(prefix)/share/man
+man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
@@ -44,8 +45,10 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 install: man
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man2dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man8dir)
+	$(INSTALL) -m 644 $(BUILDDIR)/man/*.2 $(DESTDIR)$(man2dir)
 	$(INSTALL) -m 644 $(BUILDDIR)/man/*.5 $(DESTDIR)$(man5dir)
 	$(INSTALL) -m 644 $(BUILDDIR)/man/*.8 $(DESTDIR)$(man8dir)
 	$(INSTALL) -m 644 btrfsck.8 $(DESTDIR)$(man8dir)

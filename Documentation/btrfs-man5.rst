@@ -455,6 +455,7 @@ SEE ALSO
 :manref:`chattr(1)`,
 :manref:`fstrim(8)`,
 :manref:`ioctl(2)`,
+:doc:`btrfs-ioctl`,
 :doc:`mkfs.btrfs`,
 :manref:`mount(8)`,
 :manref:`swapon(8)`
