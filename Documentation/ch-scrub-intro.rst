@@ -1,14 +1,67 @@
-Scrub is a pass over all filesystem data and metadata and verifying the
-checksums. If a valid copy is available (replicated block group profiles) then
-the damaged one is repaired. All copies of the replicated profiles are validated.
+Scrub is a validation pass over all filesystem data and metadata that detects
+checksum errors, super block errors, metadata block header errors, and disk
+read errors. All copies of replicated profiles are validated by default.
+
+On filesystems that use replicated block group profiles (e.g. raid1), scrub will
+also automatically repair any damage by default by copying verified good data
+from one of the other replicas.
+
+.. warning::
+   Setting the ``No_COW`` (``chattr +C``) attribute on a file implicitly enables
+   ``nodatasum``. This means that while metadata for these files continues to
+   be validated and corrected by scrub, the actual file data is not.
+
+   Furthermore, btrfs does not currently mark missing or failed disks as
+   unreliable, so will continue to load-balance reads to potentially damaged
+   replicas in a replicated filesystem. This is not a problem normally because
+   damage is detected by checksum validation and a mirror copy is used, but
+   because ``No_COW`` files are not protected by checksum, bad data may be
+   returned even if a good copy exists on another replica. Which replica is used
+   is determined by the setting in ``/sys/fs/btrfs/<uuid>/read_policy``.
+   Currently, the only possible value for this setting is ``pid``, which uses
+   the process ID of the executable reading the file to pick the replica.
+
+   Writing to a ``No_COW`` file after reading from a bad replica will overwrite
+   all replicas with the bad data. Detecting and recovering from a failure in
+   this case requires manual intervention before the file is rewritten to avoid
+   data loss. See issue `#482 <https://github.com/kdave/btrfs-progs/issues/482>`_.
+   Even with raid1c3 or higher, for performance reasons, btrfs does not use
+   consensus reads on any files, even ``No_COW`` files, to validate or correct
+   data errors.
+
+   Notably, `systemd sets +C on journals by default <https://github.com/systemd/systemd/commit/11689d2a021d95a8447d938180e0962cd9439763>`_,
+   and `libvirt ≥ 6.6 sets +C on storage pool directories by default <https://www.libvirt.org/news.html#v6-6-0-2020-08-02>`_.
+   Other applications or distributions may also set +C to try to improve
+   performance.
+
+.. warning::
+   A read-write scrub will do no further harm to a damaged filesystem if it is not
+   possible to perform a correct repair, so it is safe to use at almost any time.
+   However, if a split-brain event occurs, btrfs scrub may cause unrecoverable data
+   loss. This situation is unlikely and requires a specific sequence of events that
+   cause an unhealthy device or device set to be mounted read-write in the absence
+   of the healthy device or device set from the same filesystem. For example:
+
+   1. Device set F fails and drops from the bus, while device set H continues to
+      function and receive additional writes.
+   2. After a reboot, healthy set H does not reappear immediately, but failed set
+      F does.
+   3. Failed set F is mounted read-write. At this point, it is no longer safe for
+      set H to reappear as the transaction histories have diverged. Allowing set H
+      and set F to recombine at any point will cause corruption of set H. Running
+      scrub on a split-brained filesystem will overwrite good data from set H with
+      other data from set F, increasing the amount of permanent data loss.
 
 .. note::
-   Scrub is not a filesystem checker (fsck) and does not verify nor repair
-   structural damage in the filesystem. It really only checks checksums of data
-   and tree blocks, it doesn't ensure the content of tree blocks is valid and
-   consistent. There's some validation performed when metadata blocks are read
-   from disk (:doc:`Tree-checker`) but it's not extensive and cannot substitute
-   full :doc:`btrfs-check` run.
+   Scrub is not a filesystem checker (fsck). It can only detect filesystem damage
+   using the (:doc:`Tree-checker`) and checksum validation, and it can only repair
+   filesystem damage by copying from other known good replicas.
+
+   :doc:`btrfs-check` performs more exhaustive checking and can sometimes be
+   used, with expert guidance, to rebuild certain corrupted filesystem structures
+   in the absence of any good replica. However, when a replica exists, scrub is
+   able to automatically correct most errors reported by ``btrfs-check``, so should
+   normally be run first to avoid false positives from ``btrfs-check``.
 
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
