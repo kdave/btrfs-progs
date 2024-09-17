@@ -25,3 +25,15 @@ An inline file can be identified by enumerating the extents, e.g. by the tool
 In the above example, the file is not compressed, otherwise it would have the
 *encoded* flag. The inline files have no limitations and behave like regular
 files with respect to copying, renaming, reflink, truncate etc.
+
+.. note::
+   This is not `tail packing <https://en.wikipedia.org/wiki/Block_suballocation#Tail_packing>`__,
+   known e.g. from `ReiserFS <https://en.wikipedia.org/wiki/ReiserFS>`__ . The
+   whole inline file must fit and is stored in the metadata block. Larger files
+   have their extents stored in blocks and the last one can be underutilized.
+   With tail packing such blocks would be stored elsewhere out of order,
+   possibly mixed with other last blocks from other files.
+
+   This was an early design decision not to implement it due to experience with
+   the complexity in ReiserFS and does not seem justified with the possible
+   space savings in the data blocks but increased metadata to track the packed blocks.
