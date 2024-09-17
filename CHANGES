@@ -1,3 +1,24 @@
+btrfs-progs-6.11 (2024-09-17)
+-----------------------------
+   * check:
+      * check items in tree-log
+      * detect invalid file extent items for symlinks
+      * properly detect inode cache and suggest removal by 'clear-ino-cache'
+   * convert: fix symlink length checks
+   * fi show: remove stray newline at the end of the output
+   * fixes:
+      * open devices in write-exclusive mode in most commands, prevent
+        concurrent mount by other programs
+      * rescue clear-ino-cache: fix subvolume iteration that can fail in some cases
+      * map-logical: fix first extent searching condition
+      * fi resize: warn if new size is below 256M
+   * tree-checker:
+      * slightly stricter file type validation
+      * verify device extent items
+   * other:
+      * documentation updates
+      * ship btrfs-ioctl manual page (incomplete)
+
 btrfs-progs-6.10 (2024-07-30)
 -----------------------------
    * inspect:
