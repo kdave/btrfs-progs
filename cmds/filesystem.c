@@ -1408,6 +1408,9 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		di_args[dev_idx].path,
 		pretty_size_mode(di_args[dev_idx].total_bytes, UNITS_DEFAULT),
 		res_str);
+	if (new_size < 256 * SZ_1M)
+		warning("the new size %lld (%s) is < 256MiB, this may be rejected by kernel",
+			new_size, pretty_size_mode(new_size, UNITS_DEFAULT));
 
 out:
 	free(di_args);

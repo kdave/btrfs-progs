@@ -269,6 +269,11 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         take a long time if there are data in the device area that's beyond the new
         end. Relocation of the data takes time.
 
+        Note that there's a lower limit on the new size (either specified
+        as an absolute size or difference) that is checked by kernel and
+        rejected eventually as invalid. Lower values will print a warning but
+        still pass the request to kernel. The currently known value is 256MiB.
+
         See also section *EXAMPLES*.
 
         ``Options``
