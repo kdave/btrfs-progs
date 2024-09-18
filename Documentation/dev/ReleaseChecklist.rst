@@ -27,6 +27,17 @@ Pre-release:
 
 *  write CHANGES entry (will be visible on RTD right away)
 
+Python btrfsutil (pypi.org):
+
+*  rebuild whole project (regenerate constants.c)
+*  ``cd libbtrfsutil/python``
+*  edit ``setup.py`` version manually (the toplevel VERSION is not accessible
+   during dist build)
+*  ``python3 -m build`` -- build dist files
+*  ``twine check dist/*.tar.gz`` -- look for warnings
+*  ``twine upload dist/*.tar.gz`` -- make sure there's only the latest version,
+   *twine* must need access token to pypi.org
+
 Release:
 
 *  tag release, sign
