@@ -109,7 +109,7 @@ setup(
     name='btrfsutil',
     # FIXME: version file is not present when building outside of git
     #version=get_version(),
-    version='6.10',
+    version='6.12',
     description='Library for managing Btrfs filesystems',
     url='https://github.com/kdave/btrfs-progs',
     license='LGPLv2+',
