@@ -68,26 +68,8 @@ void add_module_constants(PyObject *m)
 """)
 
 
-def read_readme():
-    # FIXME: hackish, needs to be run twice to work
-    if not os.path.exists('pypi-README.md'):
-        copy_readme()
-        raise Exception("Copied ../README.md to pypi-README.md, run again")
-    with open('pypi-README.md', 'r') as f:
-        desc = f.read()
-    return desc
-
-
-def copy_readme():
-    with open('../README.md', 'r') as f:
-        desc = f.read()
-    with open('pypi-README.md', 'w') as f:
-        f.write(desc)
-
-
 class my_build_ext(build_ext):
     def run(self):
-        open(os.path.join(os.path.dirname(__file__), "pypi-README.md"), 'r')
         # Running dist outside of git
         if not os.path.exists('../btrfsutil.h'):
             # But no generated constants.c found
@@ -99,19 +81,6 @@ class my_build_ext(build_ext):
             except Exception as e:
                 try:
                     os.remove('constants.c')
-                except OSError:
-                    pass
-                raise e
-        if not os.path.exists('../README.md'):
-            # But no generated constants.c found
-            if not os.path.exists('pypi-README.md'):
-                raise Exception("The temporary description file pypi-README.md not found, please fix manually")
-        elif out_of_date(['../README.md'], 'pypi-README.md'):
-            try:
-                copy_readme()
-            except Exception as e:
-                try:
-                    os.remove('pypi-README.md')
                 except OSError:
                     pass
                 raise e
@@ -142,7 +111,7 @@ setup(
     #version=get_version(),
     version='6.11',
     description='Library for managing Btrfs filesystems',
-    long_description=read_readme(),
+    long_description=open('../README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/kdave/btrfs-progs',
     license='LGPLv2+',
