@@ -97,9 +97,6 @@ module = Extension(
         'qgroup.c',
         'subvolume.c',
     ],
-    headers=[
-        'btrfsutilpy.h'
-    ],
     include_dirs=['..'],
     library_dirs=['../..'],
     libraries=['btrfsutil'],
@@ -113,6 +110,7 @@ setup(
     description='Library for managing Btrfs filesystems',
     long_description=open('../README.md').read(),
     long_description_content_type='text/markdown',
+    package_data = { "btrfstuil" : [ "btrfsutilpy.h" ] },
     url='https://github.com/kdave/btrfs-progs',
     license='LGPLv2+',
     cmdclass={'build_ext': my_build_ext},
