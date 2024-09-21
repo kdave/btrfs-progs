@@ -108,6 +108,8 @@ setup(
     #version=get_version(),
     version='6.12',
     description='Library for managing Btrfs filesystems',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     url='https://github.com/kdave/btrfs-progs',
     license='LGPLv2+',
     cmdclass={'build_ext': my_build_ext},
