@@ -97,9 +97,6 @@ module = Extension(
         'qgroup.c',
         'subvolume.c',
     ],
-    headers=[
-        'btrfsutilpy.h'
-    ],
     include_dirs=['..'],
     library_dirs=['../..'],
     libraries=['btrfsutil'],
