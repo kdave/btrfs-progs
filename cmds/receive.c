@@ -56,6 +56,8 @@
 #include "cmds/commands.h"
 #include "cmds/receive-dump.h"
 
+static u32 g_sectorsize;
+
 struct btrfs_receive
 {
 	int mnt_fd;
@@ -739,6 +741,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	struct btrfs_receive *rctx = user;
 	struct btrfs_ioctl_clone_range_args clone_args;
 	struct subvol_info *si = NULL;
+	struct stat st = { 0 };
 	char full_path[PATH_MAX];
 	const char *subvol_path;
 	char full_clone_path[PATH_MAX];
@@ -802,11 +805,36 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		error("cannot open %s: %m", full_clone_path);
 		goto out;
 	}
+	ret = fstat(clone_fd, &st);
+	if (ret < 0) {
+		errno = -ret;
+		error("cannot stat %s: %m", full_clone_path);
+		goto out;
+	}
 
 	if (bconf.verbose >= 2)
 		fprintf(stderr,
 			"clone %s - source=%s source offset=%llu offset=%llu length=%llu\n",
 			path, clone_path, clone_offset, offset, len);
+	/*
+	 * Since kernel commit 46a6e10a1ab1 ("btrfs: send: allow cloning
+	 * non-aligned extent if it ends at i_size"), we can have send
+	 * stream cloning a full file even its size is not sector aligned.
+	 *
+	 * But if we're cloning this unaligned range into an existing file,
+	 * which has a larger i_size, the clone will fail.
+	 *
+	 * Address this quirk by introducing an extra truncation to size 0.
+	 */
+	if (clone_offset == 0 && !IS_ALIGNED(len, g_sectorsize) &&
+	    len == st.st_size) {
+		ret = ftruncate(rctx->write_fd, 0);
+		if (ret < 0) {
+			errno = - ret;
+			error("failed to truncate %s: %m", path);
+			goto out;
+		}
+	}
 
 	clone_args.src_fd = clone_fd;
 	clone_args.src_offset = clone_offset;
@@ -1468,6 +1496,18 @@ static struct btrfs_send_ops send_ops = {
 	.enable_verity = process_enable_verity,
 };
 
+static int get_fs_sectorsize(int fd, u32 *sectorsize_ret)
+{
+	struct btrfs_ioctl_fs_info_args args = { 0 };
+	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &args);
+	if (ret < 0)
+		return -errno;
+	*sectorsize_ret = args.sectorsize;
+	return 0;
+}
+
 static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		      char *realmnt, int r_fd, u64 max_errors)
 {
@@ -1488,6 +1528,13 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	if (rctx->dest_dir_fd < 0) {
 		ret = -errno;
 		error("cannot open destination directory %s: %m",
+			dest_dir_full_path);
+		goto out;
+	}
+	ret = get_fs_sectorsize(rctx->dest_dir_fd, &g_sectorsize);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get sectorsize of the destination directory %s: %m",
 			dest_dir_full_path);
 		goto out;
 	}
