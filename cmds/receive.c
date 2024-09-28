@@ -1555,7 +1555,8 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 			error("failed to chdir to / after chroot: %m");
 			goto out;
 		}
-		fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
+		if (bconf.verbose > BTRFS_BCONF_QUIET)
+			fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
 		rctx->root_path = strdup("/");
 		rctx->dest_dir_path = rctx->root_path;
 	} else {
