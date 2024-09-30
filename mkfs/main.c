@@ -1056,7 +1056,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *label = NULL;
 	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
 	char *source_dir = NULL;
-	size_t source_dir_len = 0;
 	struct rootdir_subvol *rds;
 	bool has_default_subvol = false;
 	LIST_HEAD(subvols);
@@ -1245,10 +1244,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					}
 				}
 
-				if (valid_prefix)
-					subvol->dir = strndup(colon + 1, strlen(colon + 1));
-				else
-					subvol->dir = strdup(optarg);
+				if (arg_copy_path(subvol->dir, valid_prefix ? colon + 1 : optarg,
+						  sizeof(subvol->dir))) {
+					error("--subvol path too long");
+					ret = 1;
+					goto error;
+				}
 
 				if (subvol->is_default) {
 					if (has_default_subvol) {
@@ -1343,57 +1344,37 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 		free(source_dir);
 		source_dir = canonical;
-		source_dir_len = strlen(source_dir);
 	}
 
 	list_for_each_entry(rds, &subvols, list) {
-		char *path, *canonical;
+		char path[PATH_MAX];
 		struct rootdir_subvol *rds2;
-		size_t dir_len;
 
-		dir_len = strlen(rds->dir);
-
-		path = malloc(source_dir_len + 1 + dir_len + 1);
-		if (!path) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+		if (path_cat_out(path, source_dir, rds->dir)) {
+			error("path invalid");
 			ret = 1;
 			goto error;
 		}
 
-		memcpy(path, source_dir, source_dir_len);
-		path[source_dir_len] = '/';
-		memcpy(path + source_dir_len + 1, rds->dir, dir_len + 1);
-
-		canonical = realpath(path, NULL);
-		if (!canonical) {
+		if (!realpath(path, rds->full_path)) {
 			error("could not get canonical path to %s", rds->dir);
-			free(path);
 			ret = 1;
 			goto error;
 		}
 
-		free(path);
-		path = canonical;
-
-		if (!path_exists(path)) {
+		if (!path_exists(rds->full_path)) {
 			error("subvolume %s does not exist", rds->dir);
-			free(path);
 			ret = 1;
 			goto error;
 		}
 
-		if (!path_is_dir(path)) {
+		if (!path_is_dir(rds->full_path)) {
 			error("subvolume %s is not a directory", rds->dir);
-			free(path);
 			ret = 1;
 			goto error;
 		}
 
-		rds->full_path = path;
-
-		if (strlen(path) < source_dir_len + 1 ||
-		    memcmp(path, source_dir, source_dir_len) != 0 ||
-		    path[source_dir_len] != '/') {
+		if (!path_is_in_dir(source_dir, rds->full_path)) {
 			error("subvolume %s is not a child of %s", rds->dir, source_dir);
 			ret = 1;
 			goto error;
@@ -1402,7 +1383,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		for (rds2 = list_first_entry(&subvols, struct rootdir_subvol, list);
 		     rds2 != rds;
 		     rds2 = list_next_entry(rds2, list)) {
-			if (strcmp(rds2->full_path, path) == 0) {
+			if (strcmp(rds2->full_path, rds->full_path) == 0) {
 				error("subvolume %s specified more than once", rds->dir);
 				ret = 1;
 				goto error;
@@ -2113,8 +2094,6 @@ error:
 		struct rootdir_subvol *head;
 
 		head = list_entry(subvols.next, struct rootdir_subvol, list);
-		free(head->dir);
-		free(head->full_path);
 		list_del(&head->list);
 		free(head);
 	}
