@@ -30,8 +30,8 @@ struct btrfs_root;
 
 struct rootdir_subvol {
 	struct list_head list;
-	char *dir;
-	char *full_path;
+	char dir[PATH_MAX];
+	char full_path[PATH_MAX];
 	bool is_default;
 	bool readonly;
 };
