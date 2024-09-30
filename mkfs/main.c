@@ -440,7 +440,7 @@ static const char * const mkfs_usage[] = {
 	"Creation:",
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),
-	OPTLINE("-u|--subvol SUBDIR:FLAGS", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
+	OPTLINE("-u|--subvol TYPE:SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
@@ -1015,48 +1015,6 @@ static void *prepare_one_device(void *ctx)
 	return NULL;
 }
 
-static int parse_subvol_flags(struct rootdir_subvol *subvol, const char *flags)
-{
-	char *buf, *orig_buf;
-	int ret;
-
-	buf = orig_buf = strdup(flags);
-
-	if (!buf) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	while (true) {
-		char *comma = strstr(buf, ",");
-
-		if (comma)
-			*comma = 0;
-
-		if (!strcmp(buf, "default")) {
-			subvol->is_default = true;
-		} else if (!strcmp(buf, "ro")) {
-			subvol->readonly = true;
-		} else if (buf[0] != 0) {
-			error("unrecognized subvol flag \"%s\"", buf);
-			ret = 1;
-			goto out;
-		}
-
-		if (comma)
-			buf = comma + 1;
-		else
-			break;
-	}
-
-	ret = 0;
-
-out:
-	free(orig_buf);
-	return ret;
-}
-
 int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
@@ -1259,6 +1217,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'u': {
 				struct rootdir_subvol *subvol;
 				char *colon;
+				bool valid_prefix = false;
 
 				subvol = calloc(1, sizeof(struct rootdir_subvol));
 				if (!subvol) {
@@ -1270,32 +1229,30 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				colon = strstr(optarg, ":");
 
 				if (colon) {
-					/* Make sure we choose the last colon in
-					 * optarg, in case the subvol name
-					 * itself contains a colon.  */
-					do {
-						char *colon2;
-
-						colon2 = strstr(colon + 1, ":");
-
-						if (colon2)
-							colon = colon2;
-						else
-							break;
-					} while (true);
-
-					subvol->dir = strndup(optarg, colon - optarg);
-					if (parse_subvol_flags(subvol, colon + 1)) {
-						ret = 1;
-						goto error;
+					if (!string_has_prefix(optarg, "default:")) {
+						subvol->is_default = true;
+						valid_prefix = true;
+					} else if (!string_has_prefix(optarg, "ro:")) {
+						subvol->readonly = true;
+						valid_prefix = true;
+					} else if (!string_has_prefix(optarg, "rw:")) {
+						subvol->readonly = false;
+						valid_prefix = true;
+					} else if (!string_has_prefix(optarg, "default-ro:")) {
+						subvol->is_default = true;
+						subvol->readonly = true;
+						valid_prefix = true;
 					}
-				} else {
-					subvol->dir = strdup(optarg);
 				}
+
+				if (valid_prefix)
+					subvol->dir = strndup(colon + 1, strlen(colon + 1));
+				else
+					subvol->dir = strdup(optarg);
 
 				if (subvol->is_default) {
 					if (has_default_subvol) {
-						error("subvol default flag can only be specified once");
+						error("default subvol can only be specified once");
 						ret = 1;
 						goto error;
 					}

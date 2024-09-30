@@ -155,15 +155,26 @@ OPTIONS
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
                 not minimized. Please see option *--shrink* if you need that functionality.
 
--u|--subvol <subdir>:<flags>
+-u|--subvol <type>:<subdir>
         Specify that *subdir* is to be created as a subvolume rather than a regular
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
         existing subdirectory within it.  This option can be specified multiple times.
 
-        *flags* is an optional comma-separated list of modifiers. Valid choices are:
+        *type* is an optional additional modifier. Valid choices are:
 
-        * *default*: create as default subvolume (this can only be specified once)
-        * *ro*: create as readonly subvolume
+        * *default*: create as default subvolume
+        * *ro*: create as read-only subvolume
+        * *rw*: create as read-write subvolume (the default)
+        * *default-ro*: create as read-only default subvolume
+
+        Only one of *default* and *default-ro* may be specified.
+
+        If you wish to create a subvolume with a name containing a colon and you don't
+        want this to be parsed as containing a modifier, you can prefix the path with `./`:
+
+        .. code-block:: bash
+
+                $ mkfs.btrfs --rootdir dir --subvol ./ro:subdir /dev/loop0
 
 	If there are hard links inside *rootdir* and *subdir* will split the
 	subvolumes, like the following case::
