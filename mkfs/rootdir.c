@@ -711,9 +711,6 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 				ret = ftw_add_subvol(full_path, st, typeflag,
 						     ftwbuf, rds);
 
-				free(rds->dir);
-				free(rds->full_path);
-
 				list_del(&rds->list);
 				free(rds);
 
