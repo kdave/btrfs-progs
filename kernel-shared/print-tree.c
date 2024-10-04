@@ -183,8 +183,42 @@ static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 	}
 }
 
+struct readable_flag_entry {
+	u64 bit;
+	char *output;
+};
+
 /* The minimal length for the string buffer of block group/chunk flags */
 #define BG_FLAG_STRING_LEN	64
+
+static void sprint_readable_flag(char *restrict dest, u64 flag,
+				 struct readable_flag_entry *array,
+				 int array_size)
+{
+	int i;
+	u64 supported_flags = 0;
+	int cur = 0;
+
+	dest[0] = '\0';
+	for (i = 0; i < array_size; i++)
+		supported_flags |= array[i].bit;
+
+	for (i = 0; i < array_size; i++) {
+		struct readable_flag_entry *entry = array + i;
+
+		if ((flag & supported_flags) && (flag & entry->bit)) {
+			if (dest[0])
+				cur += sprintf(dest + cur, "|");
+			cur += sprintf(dest + cur, "%s", entry->output);
+		}
+	}
+	flag &= ~supported_flags;
+	if (flag) {
+		if (dest[0])
+			cur += sprintf(dest + cur, "|");
+		cur += sprintf(dest + cur, "UNKNOWN: 0x%llx", flag);
+	}
+}
 
 static void bg_flags_to_str(u64 flags, char *ret)
 {
@@ -932,37 +966,35 @@ static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
 	}
 }
 
-/* Btrfs inode flag stringification helper */
-#define STRCAT_ONE_INODE_FLAG(flags, name, empty, dst) ({			\
-	if (flags & BTRFS_INODE_##name) {				\
-		if (!empty)						\
-			strcat(dst, "|");				\
-		strcat(dst, #name);					\
-		empty = 0;						\
-	}								\
-})
+#define DEF_INODE_FLAG_ENTRY(name)			\
+	{ BTRFS_INODE_##name, #name }
+
+static struct readable_flag_entry inode_flags_array[] = {
+	DEF_INODE_FLAG_ENTRY(NODATASUM),
+	DEF_INODE_FLAG_ENTRY(NODATACOW),
+	DEF_INODE_FLAG_ENTRY(READONLY),
+	DEF_INODE_FLAG_ENTRY(NOCOMPRESS),
+	DEF_INODE_FLAG_ENTRY(PREALLOC),
+	DEF_INODE_FLAG_ENTRY(SYNC),
+	DEF_INODE_FLAG_ENTRY(IMMUTABLE),
+	DEF_INODE_FLAG_ENTRY(APPEND),
+	DEF_INODE_FLAG_ENTRY(NODUMP),
+	DEF_INODE_FLAG_ENTRY(NOATIME),
+	DEF_INODE_FLAG_ENTRY(DIRSYNC),
+	DEF_INODE_FLAG_ENTRY(COMPRESS),
+	DEF_INODE_FLAG_ENTRY(ROOT_ITEM_INIT),
+};
+static const int inode_flags_num = ARRAY_SIZE(inode_flags_array);
 
 /*
- * Caller should ensure sizeof(*ret) >= 102: all characters plus '|' of
- * BTRFS_INODE_* flags
+ * Caller should ensure sizeof(*ret) >= 129: all characters plus '|' of
+ * BTRFS_INODE_* flags + "UNKNOWN: 0xffffffffffffffff"
  */
 static void inode_flags_to_str(u64 flags, char *ret)
 {
-	int empty = 1;
-
-	STRCAT_ONE_INODE_FLAG(flags, NODATASUM, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, NODATACOW, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, READONLY, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, NOCOMPRESS, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, PREALLOC, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, SYNC, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, IMMUTABLE, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, APPEND, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, NODUMP, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, NOATIME, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, DIRSYNC, empty, ret);
-	STRCAT_ONE_INODE_FLAG(flags, COMPRESS, empty, ret);
-	if (empty)
+	sprint_readable_flag(ret, flags, inode_flags_array, inode_flags_num);
+	/* No flag hit at all, set the output to "none"*/
+	if (!ret[0])
 		strcat(ret, "none");
 }
 
@@ -1875,11 +1907,6 @@ static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 
 	return !memcmp(sb, result, csum_size);
 }
-
-struct readable_flag_entry {
-	u64 bit;
-	char *output;
-};
 
 #define DEF_COMPAT_RO_FLAG_ENTRY(bit_name)		\
 	{BTRFS_FEATURE_COMPAT_RO_##bit_name, #bit_name}
