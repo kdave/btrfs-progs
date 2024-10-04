@@ -9694,6 +9694,10 @@ static int check_log_csum(struct btrfs_root *root, u64 addr, u64 length)
 	u64 data_len;
 	int ret;
 
+	/* Explicit holes don't get csummed */
+	if (addr == 0)
+		return 0;
+
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
