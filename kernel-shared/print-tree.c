@@ -1889,8 +1889,7 @@ static struct readable_flag_entry compat_ro_flags_array[] = {
 	DEF_COMPAT_RO_FLAG_ENTRY(FREE_SPACE_TREE_VALID),
 	DEF_COMPAT_RO_FLAG_ENTRY(BLOCK_GROUP_TREE),
 };
-static const int compat_ro_flags_num = sizeof(compat_ro_flags_array) /
-				       sizeof(struct readable_flag_entry);
+static const int compat_ro_flags_num = ARRAY_SIZE(compat_ro_flags_array);
 
 #define DEF_INCOMPAT_FLAG_ENTRY(bit_name)		\
 	{BTRFS_FEATURE_INCOMPAT_##bit_name, #bit_name}
@@ -1913,8 +1912,7 @@ static struct readable_flag_entry incompat_flags_array[] = {
 	DEF_INCOMPAT_FLAG_ENTRY(RAID_STRIPE_TREE),
 	DEF_INCOMPAT_FLAG_ENTRY(SIMPLE_QUOTA),
 };
-static const int incompat_flags_num = sizeof(incompat_flags_array) /
-				      sizeof(struct readable_flag_entry);
+static const int incompat_flags_num = ARRAY_SIZE(incompat_flags_array);
 
 #define DEF_HEADER_FLAG_ENTRY(bit_name)			\
 	{BTRFS_HEADER_FLAG_##bit_name, #bit_name}
