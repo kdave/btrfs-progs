@@ -9807,9 +9807,14 @@ static int check_log_root(struct btrfs_root *root, struct cache_tree *root_cache
 			if (btrfs_file_extent_type(leaf, fi) != BTRFS_FILE_EXTENT_REG)
 				goto next;
 
-			addr = btrfs_file_extent_disk_bytenr(leaf, fi) +
-			       btrfs_file_extent_offset(leaf, fi);
-			length = btrfs_file_extent_num_bytes(leaf, fi);
+			if (btrfs_file_extent_compression(leaf, fi)) {
+				addr = btrfs_file_extent_disk_bytenr(leaf, fi);
+				length = btrfs_file_extent_disk_num_bytes(leaf, fi);
+			} else {
+				addr = btrfs_file_extent_disk_bytenr(leaf, fi) +
+				       btrfs_file_extent_offset(leaf, fi);
+				length = btrfs_file_extent_num_bytes(leaf, fi);
+			}
 
 			ret = check_log_csum(root, addr, length);
 			if (ret < 0) {
