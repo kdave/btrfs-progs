@@ -1933,12 +1933,16 @@ static struct readable_flag_entry super_flags_array[] = {
 };
 static const int super_flags_num = ARRAY_SIZE(super_flags_array);
 
-static void __print_readable_flag(u64 flag, struct readable_flag_entry *array,
-				  int array_size, u64 supported_flags)
+static void print_readable_flag(u64 flag, struct readable_flag_entry *array,
+				int array_size)
 {
 	int i;
 	int first = 1;
+	u64 supported_flags = 0;
 	struct readable_flag_entry *entry;
+
+	for (i = 0; i < array_size; i++)
+		supported_flags |= array[i].bit;
 
 	if (!flag)
 		return;
@@ -1966,33 +1970,20 @@ static void __print_readable_flag(u64 flag, struct readable_flag_entry *array,
 
 static void print_readable_compat_ro_flag(u64 flag)
 {
-	u64 print_flags = 0;
-
-	for (int i = 0; i < compat_ro_flags_num; i++)
-		print_flags |= compat_ro_flags_array[i].bit;
-	return __print_readable_flag(flag, compat_ro_flags_array,
-				     compat_ro_flags_num,
-				     print_flags);
+	return print_readable_flag(flag, compat_ro_flags_array,
+				   compat_ro_flags_num);
 }
 
 static void print_readable_incompat_flag(u64 flag)
 {
-	u64 print_flags = 0;
-
-	for (int i = 0; i < incompat_flags_num; i++)
-		print_flags |= incompat_flags_array[i].bit;
-	return __print_readable_flag(flag, incompat_flags_array,
-				     incompat_flags_num, print_flags);
+	return print_readable_flag(flag, incompat_flags_array,
+				   incompat_flags_num);
 }
 
 static void print_readable_super_flag(u64 flag)
 {
-	u64 print_flags = 0;
-
-	for (int i = 0; i < super_flags_num; i++)
-		print_flags |= super_flags_array[i].bit;
-	return __print_readable_flag(flag, super_flags_array,
-				     super_flags_num, print_flags);
+	return print_readable_flag(flag, super_flags_array,
+				   super_flags_num);
 }
 
 static void print_sys_chunk_array(struct btrfs_super_block *sb)
