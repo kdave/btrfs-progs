@@ -9681,7 +9681,7 @@ static int zero_log_tree(struct btrfs_root *root)
 	return ret;
 }
 
-static int check_log_csum(struct btrfs_root *root, u64 addr, u64 length)
+static int check_range_csummed(struct btrfs_root *root, u64 addr, u64 length)
 {
 	struct btrfs_path path = { 0 };
 	struct btrfs_key key = {
@@ -9816,10 +9816,19 @@ static int check_log_root(struct btrfs_root *root, struct cache_tree *root_cache
 				length = btrfs_file_extent_num_bytes(leaf, fi);
 			}
 
-			ret = check_log_csum(root, addr, length);
+			ret = check_range_csummed(root, addr, length);
 			if (ret < 0) {
 				err = 1;
 				break;
+			}
+
+			if (ret) {
+				ret = check_range_csummed(btrfs_csum_root(gfs_info, 0),
+							  addr, length);
+				if (ret < 0) {
+					err = 1;
+					break;
+				}
 			}
 
 			if (ret) {
