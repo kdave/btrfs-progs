@@ -146,7 +146,7 @@ TODO
    | 0x23b  | 0xf0  |       | reserved /\* future expansion \*/                                       |
    +--------+-------+-------+-------------------------------------------------------------------------+
    | 0x2b   | 0x800 |       | sys_chunk_array:(*n* bytes valid) Contains (KEY,                        |
-   |        |       |       | `CHUNK_ITEM <#CHUNK_ITEM_.28e4.29>`__) pairs for all SYSTEM chunks.     |
+   |        |       |       | :ref:`CHUNK_ITEM<CHUNK_ITEM_CONTENT>`) pairs for all SYSTEM chunks.     |
    |        |       |       | This is needed to bootstrap the mapping from logical addresses to       |
    |        |       |       | physical.                                                               |
    +--------+-------+-------+-------------------------------------------------------------------------+
@@ -412,7 +412,7 @@ Reserved objectids
 
    This objectid indicates the first available objectid in this ``CHUNK_TREE``. In practice, it is
    the only objectid used in the tree. The ``offset`` field of the key is the only component used to
-   distinguish separate ```CHUNK_ITEM`` <#CHUNK_ITEM>`__ items.
+   distinguish separate :ref:`CHUNK_ITEM<CHUNK_ITEM_CONTENT>` items.
 
 
 Dev tree (4)
@@ -1074,6 +1074,7 @@ Off   Size Type Description
 ===== ==== ==== ==============================
 
 
+.. _CHUNK_ITEM_CONTENT:
 CHUNK_ITEM (0xe4)
 ^^^^^^^^^^^^^^^
 
