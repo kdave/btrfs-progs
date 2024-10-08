@@ -1171,6 +1171,9 @@ int remove_block_group_free_space(struct btrfs_trans_handle *trans,
 	int done = 0, nr;
 	int ret;
 
+	if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
+		return 0;
+
 	path = btrfs_alloc_path();
 	if (!path) {
 		ret = -ENOMEM;
