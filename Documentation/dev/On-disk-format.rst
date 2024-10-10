@@ -146,7 +146,7 @@ TODO
    | 0x23b  | 0xf0  |       | reserved /\* future expansion \*/                                       |
    +--------+-------+-------+-------------------------------------------------------------------------+
    | 0x2b   | 0x800 |       | sys_chunk_array:(*n* bytes valid) Contains (KEY,                        |
-   |        |       |       | `CHUNK_ITEM <#CHUNK_ITEM_.28e4.29>`__) pairs for all SYSTEM chunks.     |
+   |        |       |       | :ref:`CHUNK_ITEM<CHUNK_ITEM_CONTENT>`) pairs for all SYSTEM chunks.     |
    |        |       |       | This is needed to bootstrap the mapping from logical addresses to       |
    |        |       |       | physical.                                                               |
    +--------+-------+-------+-------------------------------------------------------------------------+
@@ -412,7 +412,7 @@ Reserved objectids
 
    This objectid indicates the first available objectid in this ``CHUNK_TREE``. In practice, it is
    the only objectid used in the tree. The ``offset`` field of the key is the only component used to
-   distinguish separate ```CHUNK_ITEM`` <#CHUNK_ITEM>`__ items.
+   distinguish separate :ref:`CHUNK_ITEM<CHUNK_ITEM_CONTENT>` items.
 
 
 Dev tree (4)
@@ -1074,27 +1074,39 @@ Off   Size Type Description
 ===== ==== ==== ==============================
 
 
-CHUNK_ITEM (e4)
+.. _CHUNK_ITEM_CONTENT:
+CHUNK_ITEM (0xe4)
 ^^^^^^^^^^^^^^^
 
-(100, logical address) TODO
+Key format: (100, logical address)
 
-| ``   Maps logical address to physical.``
-| ``    0  8 UINT   size of chunk (bytes)``
-| ``    8  8 OBJID  root referencing this chunk (2)``
-| ``   10  8 UINT   stripe length``
-| ``   18  8 UINT   type (same as flags for block group?)``
-| ``   20  4 UINT   optimal io alignment``
-| ``   24  4 UINT   optimal io width``
-| ``   28  4 UINT   minimal io size (sector size)``
-| ``   2c  2 UINT   number of stripes``
-| ``   2e  2 UINT   sub stripes``
-| ``   30``
-| ``   Stripes follow (for each number of stripes):``
-| ``    0  8 OBJID  device id``
-| ``    8  8 UINT   offset``
-| ``   10 10 UUID   device UUID``
-| ``   20``
+Maps logical address to physical.
+
+==== ==== ===== ===========
+Off  Size Type  Description
+==== ==== ===== ===========
+0x0  0x8  UINT  size of chunk (bytes)
+0x8  0x8  OBJID root referencing this chunk(2)
+0x10 0x8  UINT  stripe length
+0x18 0x8  UINT  type (same as flags for block group?)
+0x20 0x4  UINT  optimal io alignment
+0x24 0x4  UINT  optimal io width
+0x28 0x4  UINT  minimal io size (sector size)
+0x2c 0x2  UINT  number of stripes
+0x2e 0x2  UINT  sub stripes (only for RAID10,fixed 2)
+0x30
+==== ==== ===== ===========
+
+Stripes follow (for each number of stripes):
+
+==== ==== ===== ===========
+Off  Size Type  Description
+==== ==== ===== ===========
+0x0  0x8  OBJID device id
+0x8  0x8  UINT  physical offset of stripe on device
+0x10 0x10 UUID  device UUID
+0x20
+==== ==== ===== ===========
 
 
 STRING_ITEM (fd)
