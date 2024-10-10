@@ -32,11 +32,6 @@
 
 #include "btrfsutil_internal.h"
 
-static bool is_root(void)
-{
-	return geteuid() == 0;
-}
-
 /*
  * This intentionally duplicates btrfs_util_is_subvolume_fd() instead of opening
  * a file descriptor and calling it, because fstat() and fstatfs() don't accept
@@ -451,8 +446,10 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 		if (err)
 			return err;
 
-		if (!is_root())
-			return get_subvolume_info_unprivileged(fd, subvol);
+		err = get_subvolume_info_unprivileged(fd, subvol);
+		if (err != BTRFS_UTIL_ERROR_GET_SUBVOL_INFO_FAILED ||
+		    errno != ENOTTY)
+			return err;
 
 		err = btrfs_util_subvolume_id_fd(fd, &id);
 		if (err)
@@ -805,7 +802,11 @@ struct search_stack_entry {
 };
 
 struct btrfs_util_subvolume_iterator {
-	bool use_tree_search;
+	/*
+	 * 1 if using tree search, 0 if using unprivileged ioctls, -1 if not
+	 * determined yet.
+	 */
+	int use_tree_search;
 	int fd;
 	/* cur_fd is only used for subvolume_iterator_next_unprivileged(). */
 	int cur_fd;
@@ -1007,14 +1008,14 @@ PUBLIC enum btrfs_util_error btrfs_util_create_subvolume_iterator_fd(int fd,
 {
 	struct btrfs_util_subvolume_iterator *iter;
 	enum btrfs_util_error err;
-	bool use_tree_search;
+	int use_tree_search;
 
 	if (flags & ~BTRFS_UTIL_SUBVOLUME_ITERATOR_MASK) {
 		errno = EINVAL;
 		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
 	}
 
-	use_tree_search = top != 0 || is_root();
+	use_tree_search = top == 0 ? -1 : 1;
 	if (top == 0) {
 		err = btrfs_util_is_subvolume_fd(fd);
 		if (err)
@@ -1664,13 +1665,29 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_iterator_next(struct btrfs_uti
 								char **path_ret,
 								uint64_t *id_ret)
 {
+	/*
+	 * On the first iteration, iter->use_tree_search < 0. In that case, we
+	 * try a tree search, and if it fails with a permission error, we fall
+	 * back to the unprivileged ioctls.
+	 */
 	if (iter->use_tree_search) {
-		return subvolume_iterator_next_tree_search(iter, path_ret,
-							   id_ret);
-	} else {
-		return subvolume_iterator_next_unprivileged(iter, path_ret,
-							    id_ret);
+		enum btrfs_util_error err;
+		struct search_stack_entry *entry;
+
+		err = subvolume_iterator_next_tree_search(iter, path_ret,
+							  id_ret);
+		if (iter->use_tree_search > 0)
+			return err;
+
+		if (err != BTRFS_UTIL_ERROR_SEARCH_FAILED || errno != EPERM) {
+			iter->use_tree_search = 1;
+			return err;
+		}
+		entry = iter->search_stack;
+		entry->id = entry->search.key.min_objectid;
+		iter->use_tree_search = 0;
 	}
+	return subvolume_iterator_next_unprivileged(iter, path_ret, id_ret);
 }
 PUBLIC enum btrfs_util_error btrfs_util_subvolume_iter_next(struct btrfs_util_subvolume_iterator *iter,
 							     char **path_ret,
