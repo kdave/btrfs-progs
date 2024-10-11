@@ -309,10 +309,10 @@ static int usage_command_internal(const char * const *usagestr,
 	ret = do_usage_one_command(usagestr, flags, cmd_flags, outf);
 	switch (ret) {
 	case -1:
-		fprintf(outf, "No usage for '%s'\n", token);
+		fprintf(outf, "No usage for '%s'\n", token ? : "");
 		break;
 	case -2:
-		fprintf(outf, "No short description for '%s'\n", token);
+		fprintf(outf, "No short description for '%s'\n", token ? : "");
 		break;
 	}
 
