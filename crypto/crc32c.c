@@ -20,7 +20,7 @@ static uint32_t (*crc32c_impl)(uint32_t crc, unsigned char const *data, uint32_t
 
 #ifdef __GLIBC__
 
-/* asmlinkage */ unsigned int crc_pcl(const unsigned char *buffer, int len, unsigned int crc_init);
+/* asmlinkage */ unsigned int crc_pcl(const unsigned char *buffer, unsigned int len, unsigned int crc_init);
 static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t len) {
 	return crc_pcl(data, len, crc);
 }
