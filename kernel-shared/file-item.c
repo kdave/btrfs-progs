@@ -87,7 +87,9 @@ out:
 
 int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
-			       u64 offset, const char *buffer, size_t size)
+			       u64 offset, const char *buffer, size_t size,
+			       enum btrfs_compression_type comp,
+			       u64 ram_bytes)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_key key;
@@ -123,8 +125,8 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			    struct btrfs_file_extent_item);
 	btrfs_set_file_extent_generation(leaf, ei, trans->transid);
 	btrfs_set_file_extent_type(leaf, ei, BTRFS_FILE_EXTENT_INLINE);
-	btrfs_set_file_extent_ram_bytes(leaf, ei, size);
-	btrfs_set_file_extent_compression(leaf, ei, 0);
+	btrfs_set_file_extent_ram_bytes(leaf, ei, ram_bytes);
+	btrfs_set_file_extent_compression(leaf, ei, comp);
 	btrfs_set_file_extent_encryption(leaf, ei, 0);
 	btrfs_set_file_extent_other_encoding(leaf, ei, 0);
 

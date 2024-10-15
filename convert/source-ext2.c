@@ -457,7 +457,8 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 		if (num_bytes > inode_size)
 			num_bytes = inode_size;
 		ret = btrfs_insert_inline_extent(trans, root, objectid,
-						 0, buffer, num_bytes);
+						 0, buffer, num_bytes,
+						 0, num_bytes);
 		if (ret)
 			goto fail;
 		nbytes = btrfs_stack_inode_nbytes(btrfs_inode) + num_bytes;
@@ -506,7 +507,8 @@ static int ext2_create_symlink(struct btrfs_trans_handle *trans,
 	pathname = (char *)&(ext2_inode->i_block[0]);
 	BUG_ON(pathname[inode_size] != 0);
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
-					 pathname, inode_size);
+					 pathname, inode_size,
+					 0, inode_size);
 	btrfs_set_stack_inode_nbytes(btrfs_inode, inode_size);
 	return ret;
 }
