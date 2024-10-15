@@ -443,6 +443,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-u|--subvol TYPE:SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
+	OPTLINE("--compress ALGO:LEVEL", "compression algorithm and level to use; ALGO can be no (default), zlib"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
 	"General:",
 	OPTLINE("-q|--quiet", "no messages except errors"),
@@ -1058,6 +1059,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *source_dir = NULL;
 	struct rootdir_subvol *rds;
 	bool has_default_subvol = false;
+	enum btrfs_compression_type compression = BTRFS_COMPRESS_NONE;
+	u64 compression_level = 0;
 	LIST_HEAD(subvols);
 
 	cpu_detect_flags();
@@ -1072,6 +1075,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
 			GETOPT_VAL_DEVICE_UUID,
+			GETOPT_VAL_COMPRESS,
 		};
 		static const struct option long_options[] = {
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -1099,6 +1103,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "quiet", 0, NULL, 'q' },
 			{ "verbose", 0, NULL, 'v' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
+			{ "compress", required_argument, NULL,
+				GETOPT_VAL_COMPRESS },
 #if EXPERIMENTAL
 			{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 			{ "num-global-roots", required_argument, NULL, GETOPT_VAL_GLOBAL_ROOTS },
@@ -1272,6 +1278,42 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'q':
 				bconf_be_quiet();
 				break;
+			case GETOPT_VAL_COMPRESS: {
+				char *colon;
+				size_t type_size;
+
+				if (!strcmp(optarg, "no")) {
+					compression = BTRFS_COMPRESS_NONE;
+					break;
+				}
+
+				colon = strstr(optarg, ":");
+
+				if (colon)
+					type_size = colon - optarg;
+				else
+					type_size = strlen(optarg);
+
+				if (!strncmp(optarg, "zlib", type_size)) {
+					compression = BTRFS_COMPRESS_ZLIB;
+				} else if (!strncmp(optarg, "lzo", type_size)) {
+					compression = BTRFS_COMPRESS_LZO;
+				} else if (!strncmp(optarg, "zstd", type_size)) {
+					compression = BTRFS_COMPRESS_ZSTD;
+				} else {
+					error("unrecognized compression type %s",
+					      optarg);
+					ret = 1;
+					goto error;
+				}
+
+				if (colon)
+					compression_level = arg_strtou64(colon + 1);
+				else
+					compression_level = 0;
+
+				break;
+			}
 			case GETOPT_VAL_DEVICE_UUID:
 				strncpy_null(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
@@ -1953,7 +1995,8 @@ raid_groups:
 		}
 
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
-					  &subvols);
+					  &subvols, compression,
+					  compression_level);
 		if (ret) {
 			error("error while filling filesystem: %d", ret);
 			btrfs_abort_transaction(trans, ret);
