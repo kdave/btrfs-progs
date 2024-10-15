@@ -29,6 +29,12 @@ specifically it contains "chunk items" for all system chunks. The superblock
 also contains a logical reference to root nodes in the root and chunk trees,
 which can then be used to locate all the other trees and data stored.
 
+To avoid duplicated suffixes/prefixes, sometimes the macro name will have
+the "BTRFS_" prefix and "_OBJECTID" suffix removed.
+
+E.g. "BTRFS_DEV_ITEMS_OBJECTID" (0x1) can be shown as "DEV_ITEMS" for short,
+this matches the output of "btrfs inspect-internal dump-tree".
+
 TODO Subvolumes and snapshots.
 
 
@@ -267,6 +273,12 @@ Otherwise, the objectid should be considered reserved for internal use.
 -  BTRFS_ROOT_TREE_OBJECTID = 1
 
    The object id that refers to the ``ROOT_TREE`` itself.
+
+-  BTRFS_DEV_ITEMS_OBJECTID = 1
+
+   The object id that refers to the :ref:`DEV_ITEM<DEV_ITEM_CONTENT>`.
+
+   duplicate with BTRFS_ROOT_TREE_OBJECTID for historical reason.
 
 -  BTRFS_EXTENT_TREE_OBJECTID = 2
 
@@ -1045,11 +1057,12 @@ Off   Size Type  Description
 0x30
 ===== ==== ===== =======================
 
+.. _DEV_ITEM_CONTENT:
 
-DEV_ITEM (d8)
-^^^^^^^^^^^^^
+DEV_ITEM (0xd8)
+^^^^^^^^^^^^^^^
 
-(1, device id) TODO
+Key format: (DEV_ITEMS DEV_ITEM <device id>)
 
 Contains information about one device.
 
