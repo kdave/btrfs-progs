@@ -661,8 +661,8 @@ and having your name in the git history.
 References
 ----------
 
--  `Kernel maintainersip: an oral
-   tradition <https://events.linuxfoundation.org/sites/events/files/slides/clement-kernel-maintainership-oral-tradition.pdf>`__
+-  `Kernel maintainership: an oral
+   tradition <https://bootlin.com/pub/conferences/2015/elce/clement-kernel-maintainership-oral-tradition/clement-kernel-maintainership-oral-tradition.pdf>`__
    (pdf) a nice presentation from ELCE 2015 what does it mean to be a
    maintainer and what the developers can expect.
 -  https://www.kernel.org/doc/html/latest/process/submitting-patches.html
