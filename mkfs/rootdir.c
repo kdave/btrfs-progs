@@ -27,6 +27,12 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#if COMPRESSION_ZSTD
+#include <zstd.h>
+#include <zstd_errors.h>
+#endif
+#include <zlib.h>
+#include <lzo/lzo1x.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
@@ -44,6 +50,14 @@
 #include "common/path-utils.h"
 #include "common/rbtree-utils.h"
 #include "mkfs/rootdir.h"
+
+#define ZLIB_BTRFS_DEFAULT_LEVEL 3
+#define ZLIB_BTRFS_MAX_LEVEL 9
+
+#define ZSTD_BTRFS_DEFAULT_LEVEL 3
+#define ZSTD_BTRFS_MAX_LEVEL 15
+
+#define LZO_LEN 4
 
 static u32 fs_block_size;
 
@@ -144,6 +158,8 @@ static struct btrfs_trans_handle *g_trans = NULL;
 static struct list_head *g_subvols;
 static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
 static u64 default_subvol_id;
+static enum btrfs_compression_type g_compression;
+static u64 g_compression_level;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -351,7 +367,8 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 
 	buf[ret] = '\0'; /* readlink does not do it for us */
 	nbytes = ret + 1;
-	ret = btrfs_insert_inline_extent(trans, root, objectid, 0, buf, nbytes);
+	ret = btrfs_insert_inline_extent(trans, root, objectid, 0, buf, nbytes,
+					 0, nbytes);
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to insert inline extent for %s: %m", path_name);
@@ -362,6 +379,591 @@ fail:
 	return ret;
 }
 
+static ssize_t zlib_compress_extent(struct btrfs_inode_item *btrfs_inode,
+				    u32 sectorsize, const void *in_buf,
+				    size_t in_size, void *out_buf)
+{
+	int ret;
+	z_stream strm;
+
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	ret = deflateInit(&strm, g_compression_level);
+	if (ret != Z_OK) {
+		error("deflateInit failed: %s", strm.msg);
+		return -EINVAL;
+	}
+
+	strm.next_out = out_buf;
+	strm.avail_out = BTRFS_MAX_COMPRESSED;
+	strm.next_in = (void *)in_buf;
+	strm.avail_in = in_size;
+
+	/* Try to compress the first sector - if it would be larger, mark the
+	 * inode as nocompress and return. */
+	if (!(btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_COMPRESS)) {
+		strm.avail_in = sectorsize;
+
+		ret = deflate(&strm, Z_SYNC_FLUSH);
+
+		if (ret != Z_OK) {
+			error("deflate failed: %s", strm.msg);
+			return -EINVAL;
+		}
+
+		if (strm.avail_out < BTRFS_MAX_COMPRESSED - sectorsize) {
+			u64 flags;
+
+			flags = btrfs_stack_inode_flags(btrfs_inode);
+			flags |= BTRFS_INODE_NOCOMPRESS;
+			btrfs_set_stack_inode_flags(btrfs_inode, flags);
+
+			return 0;
+		}
+
+		strm.avail_in += in_size - sectorsize;
+	}
+
+	ret = deflate(&strm, Z_FINISH);
+
+	if (ret != Z_OK && ret != Z_STREAM_END) {
+		error("deflate failed: %s", strm.msg);
+		return -EINVAL;
+	}
+
+	if (ret == Z_STREAM_END &&
+	    out_buf + BTRFS_MAX_COMPRESSED - (void *)strm.next_out > sectorsize) {
+		return (void *)strm.next_out - out_buf;
+	}
+
+	if (!(btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_COMPRESS)) {
+		u64 flags;
+
+		flags = btrfs_stack_inode_flags(btrfs_inode);
+		flags |= BTRFS_INODE_NOCOMPRESS;
+		btrfs_set_stack_inode_flags(btrfs_inode, flags);
+	}
+
+	return 0;
+}
+
+static ssize_t lzo_compress_extent(struct btrfs_inode_item *btrfs_inode,
+				   u32 sectorsize, const void *in_buf,
+				   size_t in_size, void *out_buf, char *wrkmem)
+{
+	int ret;
+	unsigned int sectors;
+	u32 total_size, out_pos;
+	u64 flags;
+
+	out_pos = LZO_LEN;
+	total_size = LZO_LEN;
+	sectors = DIV_ROUND_UP(in_size, sectorsize);
+
+	for (unsigned int i = 0; i < sectors; i++) {
+		size_t in_len, out_len, new_pos;
+		u32 padding;
+
+		in_len = min((size_t)sectorsize, in_size - (i * sectorsize));
+
+		ret = lzo1x_1_compress(in_buf + (i * sectorsize), in_len,
+				       out_buf + out_pos + LZO_LEN, &out_len,
+				       wrkmem);
+		if (ret) {
+			error("lzo1x_1_compress returned %i", ret);
+			return -EINVAL;
+		}
+
+		put_unaligned_le32(out_len, out_buf + out_pos);
+
+		new_pos = out_pos + LZO_LEN + out_len;
+
+		/* Make sure that our header doesn't cross a sector boundary. */
+		if (new_pos / sectorsize != (new_pos + LZO_LEN - 1) / sectorsize)
+			padding = round_up(new_pos, LZO_LEN) - new_pos;
+		else
+			padding = 0;
+
+		out_pos += out_len + LZO_LEN + padding;
+		total_size += out_len + LZO_LEN + padding;
+
+		/* Follow kernel in trying to compress the first three sectors,
+		 * then giving up if the output isn't any smaller. */
+		if (i >= 3 && total_size > i * sectorsize) {
+			total_size = 0;
+			goto out;
+		}
+	}
+
+	if (total_size > in_size) {
+		total_size = 0;
+		goto out;
+	}
+
+	put_unaligned_le32(total_size, out_buf);
+
+out:
+	flags = btrfs_stack_inode_flags(btrfs_inode);
+
+	if (total_size == 0) {
+		if (!(flags & BTRFS_INODE_COMPRESS)) {
+			flags |= BTRFS_INODE_NOCOMPRESS;
+			btrfs_set_stack_inode_flags(btrfs_inode, flags);
+		}
+	} else {
+		flags |= BTRFS_INODE_COMPRESS;
+		btrfs_set_stack_inode_flags(btrfs_inode, flags);
+	}
+
+	return total_size;
+}
+
+#if COMPRESSION_ZSTD
+static ssize_t zstd_compress_extent(struct btrfs_inode_item *btrfs_inode,
+				    u32 sectorsize, const void *in_buf,
+				    size_t in_size, void *out_buf)
+{
+	ZSTD_CCtx *zstd_ctx;
+	ZSTD_inBuffer input;
+	ZSTD_outBuffer output;
+	size_t zstd_ret;
+	ssize_t ret;
+
+	zstd_ctx = ZSTD_createCCtx();
+	if (!zstd_ctx) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return -ENOMEM;
+	}
+
+	zstd_ret = ZSTD_CCtx_setParameter(zstd_ctx, ZSTD_c_compressionLevel,
+					  g_compression_level);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setParameter failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	zstd_ret = ZSTD_CCtx_setPledgedSrcSize(zstd_ctx, in_size);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setPledgedSrcSize failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	output.dst = out_buf;
+	output.size = BTRFS_MAX_COMPRESSED;
+	output.pos = 0;
+
+	input.src = in_buf;
+	input.pos = 0;
+
+	/* Try to compress the first sector - if it would be larger, mark the
+	 * inode as nocompress and return. */
+	if (!(btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_COMPRESS)) {
+		input.size = sectorsize;
+
+		zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input,
+						ZSTD_e_flush);
+
+		if (ZSTD_isError(zstd_ret)) {
+			error("ZSTD_compressStream2 failed: %s",
+			      ZSTD_getErrorName(zstd_ret));
+			ret = -EINVAL;
+			goto out;
+		}
+
+		if (zstd_ret != 0 || output.pos > sectorsize) {
+			u64 flags;
+
+			flags = btrfs_stack_inode_flags(btrfs_inode);
+			flags |= BTRFS_INODE_NOCOMPRESS;
+			btrfs_set_stack_inode_flags(btrfs_inode, flags);
+
+			ret = 0;
+			goto out;
+		}
+	}
+
+	input.size = in_size;
+
+	zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input, ZSTD_e_end);
+
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_compressStream2 failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zstd_ret == 0 && output.pos <= in_size - sectorsize) {
+		ret = output.pos;
+		goto out;
+	}
+
+	if (!(btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_COMPRESS)) {
+		u64 flags;
+
+		flags = btrfs_stack_inode_flags(btrfs_inode);
+		flags |= BTRFS_INODE_NOCOMPRESS;
+		btrfs_set_stack_inode_flags(btrfs_inode, flags);
+	}
+
+	ret = 0;
+
+out:
+	ZSTD_freeCCtx(zstd_ctx);
+
+	return ret;
+}
+#endif
+
+/*
+ * keep our extent size at 1MB max, this makes it easier to work
+ * inside the tiny block groups created during mkfs
+ */
+#define MAX_EXTENT_SIZE SZ_1M
+
+static int read_and_write_extent(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 struct btrfs_inode_item *btrfs_inode,
+				 u64 objectid, int fd, u64 file_pos, char *buf,
+				 u64 size, const char *path_name,
+				 char *comp_buf, char *wrkmem)
+{
+	int ret;
+	u32 sectorsize = root->fs_info->sectorsize;
+	u64 bytes_read, first_block, to_read, to_write;
+	struct btrfs_key key;
+	u64 buf_size;
+	char *write_buf;
+	bool do_comp = g_compression != BTRFS_COMPRESS_NONE;
+	ssize_t comp_ret;
+
+	if (btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_NOCOMPRESS)
+		do_comp = false;
+
+	buf_size = do_comp ? BTRFS_MAX_COMPRESSED : MAX_EXTENT_SIZE;
+	to_read = min(file_pos + buf_size, size) - file_pos;
+
+	bytes_read = 0;
+
+	while (bytes_read < to_read) {
+		ssize_t ret_read;
+
+		ret_read = pread(fd, buf + bytes_read, to_read - bytes_read,
+				 file_pos + bytes_read);
+		if (ret_read == -1) {
+			error("cannot read %s at offset %llu length %llu: %m",
+			      path_name, file_pos + bytes_read,
+			      to_read - bytes_read);
+			return -errno;
+		}
+
+		bytes_read += ret_read;
+	}
+
+	if (bytes_read <= sectorsize)
+		do_comp = false;
+
+	if (do_comp) {
+		switch (g_compression) {
+		case BTRFS_COMPRESS_ZLIB:
+			comp_ret = zlib_compress_extent(btrfs_inode, sectorsize,
+							buf, bytes_read,
+							comp_buf);
+			break;
+		case BTRFS_COMPRESS_LZO:
+			comp_ret = lzo_compress_extent(btrfs_inode, sectorsize,
+						       buf, bytes_read,
+						       comp_buf, wrkmem);
+			break;
+#if COMPRESSION_ZSTD
+		case BTRFS_COMPRESS_ZSTD:
+			comp_ret = zstd_compress_extent(btrfs_inode, sectorsize,
+							buf, bytes_read,
+							comp_buf);
+			break;
+#endif
+		default:
+			comp_ret = -EINVAL;
+			break;
+		}
+
+		if (comp_ret < 0)
+			return comp_ret;
+		else if (comp_ret == 0)
+			do_comp = false;
+
+		/* If we've just marked this inode nocompress, increase the
+		 * buffer size and read the rest of the extent.  */
+		if (btrfs_stack_inode_flags(btrfs_inode) & BTRFS_INODE_NOCOMPRESS) {
+			buf_size = MAX_EXTENT_SIZE;
+			to_read = min(file_pos + buf_size, size) - file_pos;
+
+			while (bytes_read < to_read) {
+				ssize_t ret_read;
+
+				ret_read = pread(fd, buf + bytes_read,
+						 to_read - bytes_read,
+						 file_pos + bytes_read);
+				if (ret_read == -1) {
+					error("cannot read %s at offset %llu length %llu: %m",
+					      path_name, file_pos + bytes_read,
+					      to_read - bytes_read);
+					return -errno;
+				}
+
+				bytes_read += ret_read;
+			}
+		}
+	}
+
+	if (do_comp) {
+		u64 flags, features;
+
+		to_write = round_up(comp_ret, sectorsize);
+		write_buf = comp_buf;
+		memset(write_buf + comp_ret, 0, to_write - comp_ret);
+
+		flags = btrfs_stack_inode_flags(btrfs_inode);
+		flags |= BTRFS_INODE_COMPRESS;
+		btrfs_set_stack_inode_flags(btrfs_inode, flags);
+
+		if (g_compression == BTRFS_COMPRESS_ZSTD) {
+			features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
+			features |= BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD;
+			btrfs_set_super_incompat_flags(trans->fs_info->super_copy,
+						       features);
+		} else if (g_compression == BTRFS_COMPRESS_LZO) {
+			features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
+			features |= BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO;
+			btrfs_set_super_incompat_flags(trans->fs_info->super_copy,
+						       features);
+		}
+	} else {
+		to_write = round_up(to_read, sectorsize);
+		write_buf = buf;
+		memset(write_buf + to_read, 0, to_write - to_read);
+	}
+
+	ret = btrfs_reserve_extent(trans, root, to_write, 0, 0,
+				   (u64)-1, &key, 1);
+	if (ret)
+		return ret;
+
+	first_block = key.objectid;
+
+	ret = write_data_to_disk(root->fs_info, write_buf, first_block,
+				 to_write);
+	if (ret) {
+		error("failed to write %s", path_name);
+		return ret;
+	}
+
+	for (unsigned int i = 0; i < to_write / sectorsize; i++) {
+		ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
+					BTRFS_EXTENT_CSUM_OBJECTID,
+					root->fs_info->csum_type,
+					write_buf + (i * sectorsize));
+		if (ret)
+			return ret;
+	}
+
+	if (do_comp) {
+		ret = btrfs_record_file_extent_comp(trans, root, objectid, btrfs_inode,
+					file_pos, first_block, to_write,
+				        round_up(to_read, sectorsize), g_compression);
+	} else {
+		ret = btrfs_record_file_extent(trans, root, objectid, btrfs_inode,
+					       file_pos, first_block, to_write);
+	}
+
+	if (ret)
+		return ret;
+
+	return to_read;
+}
+
+static int zlib_compress_inline_extent(char *buf, u64 size, char **comp_buf,
+				       u64 *comp_size)
+{
+	int zlib_ret, ret;
+	z_stream strm;
+	char *out = NULL;
+
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	zlib_ret = deflateInit(&strm, g_compression_level);
+	if (zlib_ret != Z_OK) {
+		error("deflateInit failed: %s", strm.msg);
+		return -EINVAL;
+	}
+
+	out = malloc(size);
+	if (!out) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	strm.next_out = (Bytef *)out;
+	strm.avail_out = size;
+	strm.next_in = (Bytef *)buf;
+	strm.avail_in = size;
+
+	zlib_ret = deflate(&strm, Z_FINISH);
+
+	if (zlib_ret != Z_OK && zlib_ret != Z_STREAM_END) {
+		error("deflate failed: %s", strm.msg);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zlib_ret == Z_STREAM_END && strm.avail_out > 0) {
+		ret = 1;
+		*comp_buf = out;
+		*comp_size = size - strm.avail_out;
+	} else {
+		ret = 0;
+	}
+
+out:
+	if (ret != 1)
+		free(out);
+
+	return ret;
+}
+
+static u32 lzo_max_outlen(u32 inlen) {
+	/* Return the worst-case output length for LZO.  Formula comes from
+	 * LZO.FAQ.  */
+	return inlen + (inlen / 16) + 64 + 3;
+}
+
+static int lzo_compress_inline_extent(void *buf, u64 size, char **comp_buf,
+				      u64 *comp_size, char *wrkmem)
+{
+	int ret;
+	size_t out_len, out_size;
+	void *out = NULL;
+
+	out_size = LZO_LEN + LZO_LEN + lzo_max_outlen(size);
+
+	out = malloc(out_size);
+	if (!out) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = lzo1x_1_compress(buf, size, out + LZO_LEN + LZO_LEN, &out_len,
+			       wrkmem);
+	if (ret) {
+		error("lzo1x_1_compress returned %i", ret);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (out_len + LZO_LEN + LZO_LEN >= size) {
+		ret = 0;
+		goto out;
+	}
+
+	put_unaligned_le32(out_len + LZO_LEN + LZO_LEN, out);
+	put_unaligned_le32(out_len, out + LZO_LEN);
+
+	*comp_buf = out;
+	*comp_size = out_len + LZO_LEN + LZO_LEN;
+
+	ret = 1;
+
+out:
+	if (ret != 1)
+		free(out);
+
+	return ret;
+}
+
+#if COMPRESSION_ZSTD
+static int zstd_compress_inline_extent(char *buf, u64 size, char **comp_buf,
+				       u64 *comp_size)
+{
+	ZSTD_CCtx *zstd_ctx;
+	ZSTD_inBuffer input;
+	ZSTD_outBuffer output;
+	size_t zstd_ret;
+	ssize_t ret;
+	char *out = NULL;
+
+	zstd_ctx = ZSTD_createCCtx();
+	if (!zstd_ctx) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return -ENOMEM;
+	}
+
+	zstd_ret = ZSTD_CCtx_setParameter(zstd_ctx, ZSTD_c_compressionLevel,
+					  g_compression_level);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setParameter failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	zstd_ret = ZSTD_CCtx_setPledgedSrcSize(zstd_ctx, size);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setPledgedSrcSize failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	out = malloc(size);
+	if (!out) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	output.dst = out;
+	output.size = size;
+	output.pos = 0;
+
+	input.src = buf;
+	input.pos = 0;
+	input.size = size;
+
+	zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input, ZSTD_e_end);
+
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_compressStream2 failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zstd_ret == 0 && output.pos < size) {
+		ret = 1;
+		*comp_buf = out;
+		*comp_size = output.pos;
+	} else {
+		ret = 0;
+	}
+
+out:
+	if (ret != 1)
+		free(out);
+
+	ZSTD_freeCCtx(zstd_ctx);
+
+	return ret;
+}
+#endif
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
@@ -370,15 +972,9 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int ret = -1;
 	ssize_t ret_read;
-	u64 bytes_read = 0;
-	struct btrfs_key key;
-	int blocks;
 	u32 sectorsize = fs_info->sectorsize;
-	u64 first_block = 0;
 	u64 file_pos = 0;
-	u64 cur_bytes;
-	u64 total_bytes;
-	void *buf = NULL;
+	char *buf = NULL, *comp_buf = NULL, *wrkmem = NULL;
 	int fd;
 
 	if (st->st_size == 0)
@@ -390,101 +986,136 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	blocks = st->st_size / sectorsize;
-	if (st->st_size % sectorsize)
-		blocks += 1;
+	if (g_compression == BTRFS_COMPRESS_LZO) {
+		wrkmem = malloc(LZO1X_1_MEM_COMPRESS);
+		if (!wrkmem) {
+			ret = -ENOMEM;
+			goto end;
+		}
+	}
 
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(fs_info) &&
 	    st->st_size < sectorsize) {
 		char *buffer = malloc(st->st_size);
+		u64 comp_size;
 
 		if (!buffer) {
 			ret = -ENOMEM;
 			goto end;
 		}
 
-		ret_read = pread(fd, buffer, st->st_size, bytes_read);
+		ret_read = pread(fd, buffer, st->st_size, 0);
 		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %llu: %m",
-				path_name, bytes_read, (unsigned long long)st->st_size);
+			error("cannot read %s at offset %u length %llu: %m",
+				path_name, 0, (unsigned long long)st->st_size);
 			free(buffer);
 			goto end;
 		}
 
-		ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
-						 buffer, st->st_size);
+		switch (g_compression) {
+		case BTRFS_COMPRESS_ZLIB:
+			ret = zlib_compress_inline_extent(buffer, st->st_size,
+							  &comp_buf, &comp_size);
+			if (ret < 0)
+				goto end;
+			break;
+		case BTRFS_COMPRESS_LZO:
+			ret = lzo_compress_inline_extent(buffer, st->st_size,
+							 &comp_buf, &comp_size,
+							 wrkmem);
+			if (ret < 0)
+				goto end;
+			break;
+#if COMPRESSION_ZSTD
+		case BTRFS_COMPRESS_ZSTD:
+			ret = zstd_compress_inline_extent(buffer, st->st_size,
+							  &comp_buf, &comp_size);
+			if (ret < 0)
+				goto end;
+			break;
+#endif
+		default:
+			ret = 0;
+			break;
+		}
+
+		if (ret == 1) {
+			ret = btrfs_insert_inline_extent(trans, root, objectid,
+							 0, comp_buf, comp_size,
+							 g_compression,
+							 st->st_size);
+		} else {
+			ret = btrfs_insert_inline_extent(trans, root, objectid,
+							 0, buffer, st->st_size,
+							 0, st->st_size);
+		}
+
 		free(buffer);
 		/* Update the inode nbytes for inline extents. */
 		btrfs_set_stack_inode_nbytes(btrfs_inode, st->st_size);
 		goto end;
 	}
 
-	/* round up our st_size to the FS blocksize */
-	total_bytes = (u64)blocks * sectorsize;
-
-	buf = malloc(sectorsize);
+	buf = malloc(MAX_EXTENT_SIZE);
 	if (!buf) {
 		ret = -ENOMEM;
 		goto end;
 	}
 
-again:
+	if (g_compression == BTRFS_COMPRESS_LZO) {
+		unsigned int sectors;
+		size_t comp_buf_len;
 
-	/*
-	 * keep our extent size at 1MB max, this makes it easier to work inside
-	 * the tiny block groups created during mkfs
-	 */
-	cur_bytes = min(total_bytes, (u64)SZ_1M);
-	ret = btrfs_reserve_extent(trans, root, cur_bytes, 0, 0, (u64)-1,
-				   &key, 1);
-	if (ret)
-		goto end;
+		/* LZO helpfully doesn't provide a way to specify the output
+		 * buffer size, so we need to allocate for the worst-case
+		 * scenario to avoid buffer overruns.
+		 *
+		 * 4 bytes for the total size
+		 * And for each sector:
+		 * - 4 bytes for the compressed sector size
+		 * - the worst-case output size
+		 * - 3 bytes for possible padding
+		 */
 
-	first_block = key.objectid;
-	bytes_read = 0;
+		sectors = BTRFS_MAX_COMPRESSED / sectorsize;
 
-	while (bytes_read < cur_bytes) {
+		comp_buf_len = LZO_LEN;
+		comp_buf_len += (LZO_LEN + lzo_max_outlen(sectorsize) +
+				 LZO_LEN - 1) * sectors;
 
-		memset(buf, 0, sectorsize);
-
-		ret_read = pread(fd, buf, sectorsize, file_pos + bytes_read);
-		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %u: %m",
-				path_name, file_pos + bytes_read, sectorsize);
+		comp_buf = malloc(comp_buf_len);
+		if (!comp_buf) {
+			ret = -ENOMEM;
 			goto end;
 		}
 
-		ret = write_data_to_disk(root->fs_info, buf,
-					 first_block + bytes_read, sectorsize);
+		ret = lzo_init();
 		if (ret) {
-			error("failed to write %s", path_name);
+			error("lzo_init returned %i", ret);
+			ret = -EINVAL;
 			goto end;
 		}
-
-		ret = btrfs_csum_file_block(trans, first_block + bytes_read,
-					    BTRFS_EXTENT_CSUM_OBJECTID,
-					    fs_info->csum_type, buf);
-		if (ret)
+	} else if (g_compression != BTRFS_COMPRESS_NONE) {
+		comp_buf = malloc(BTRFS_MAX_COMPRESSED);
+		if (!comp_buf) {
+			ret = -ENOMEM;
 			goto end;
-
-		bytes_read += sectorsize;
+		}
 	}
 
-	if (bytes_read) {
-		ret = btrfs_record_file_extent(trans, root, objectid,
-				btrfs_inode, file_pos, first_block, cur_bytes);
-		if (ret)
-			goto end;
+	while (file_pos < st->st_size) {
+		ret = read_and_write_extent(trans, root, btrfs_inode, objectid,
+					    fd, file_pos, buf, st->st_size,
+					    path_name, comp_buf, wrkmem);
+		if (ret < 0)
+			break;
 
+		file_pos += ret;
 	}
-
-	file_pos += cur_bytes;
-	total_bytes -= cur_bytes;
-
-	if (total_bytes)
-		goto again;
 
 end:
+	free(wrkmem);
+	free(comp_buf);
 	free(buf);
 	close(fd);
 	return ret;
@@ -889,7 +1520,9 @@ static int set_default_subvolume(struct btrfs_trans_handle *trans)
 }
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
-			struct btrfs_root *root, struct list_head *subvols)
+			struct btrfs_root *root, struct list_head *subvols,
+			enum btrfs_compression_type compression,
+			u64 compression_level)
 {
 	int ret;
 	struct stat root_st;
@@ -900,8 +1533,36 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 		return -errno;
 	}
 
+	switch (compression) {
+	case BTRFS_COMPRESS_NONE:
+	case BTRFS_COMPRESS_LZO:
+		break;
+	case BTRFS_COMPRESS_ZLIB:
+		if (compression_level > ZLIB_BTRFS_MAX_LEVEL)
+			compression_level = ZLIB_BTRFS_MAX_LEVEL;
+		else if (compression_level == 0)
+			compression_level = ZLIB_BTRFS_DEFAULT_LEVEL;
+		break;
+	case BTRFS_COMPRESS_ZSTD:
+#if !COMPRESSION_ZSTD
+		error("zstd support not compiled in");
+		return -EINVAL;
+#else
+		if (compression_level > ZSTD_BTRFS_MAX_LEVEL)
+			compression_level = ZSTD_BTRFS_MAX_LEVEL;
+		else if (compression_level == 0)
+			compression_level = ZSTD_BTRFS_DEFAULT_LEVEL;
+		break;
+#endif
+	default:
+		error("unsupported compression type");
+		return -EINVAL;
+	}
+
 	g_trans = trans;
 	g_subvols = subvols;
+	g_compression = compression;
+	g_compression_level = compression_level;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
 	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
