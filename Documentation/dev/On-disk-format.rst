@@ -268,6 +268,12 @@ Otherwise, the objectid should be considered reserved for internal use.
 
    The object id that refers to the ``ROOT_TREE`` itself.
 
+-  BTRFS_DEV_ITEMS_OBJECTID = 1
+  
+   The object id that refers to the :ref:`DEV_ITEM<DEV_ITEM_CONTENT>`.
+
+   duplicate with BTRFS_ROOT_TREE_OBJECTID for historical reason.
+
 -  BTRFS_EXTENT_TREE_OBJECTID = 2
 
    The objectid that refers to the ``EXTENT_TREE``
@@ -1045,11 +1051,12 @@ Off   Size Type  Description
 0x30
 ===== ==== ===== =======================
 
+.. _DEV_ITEM_CONTENT:
 
-DEV_ITEM (d8)
-^^^^^^^^^^^^^
+DEV_ITEM (0xd8)
+^^^^^^^^^^^^^^^
 
-(1, device id) TODO
+Key format: (1,0xd8,device id)
 
 Contains information about one device.
 
