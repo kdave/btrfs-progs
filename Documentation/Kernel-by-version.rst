@@ -621,7 +621,7 @@ Performance improvements:
 Notable fixes or changes:
 
 - add back mount option *norecovery*, deprecated long time ago and removed in
-  6.8 but stil in use
+  6.8 but still in use
 
 - fix potential infinite loop when doing block group reclaim
 
