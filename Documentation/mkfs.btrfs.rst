@@ -212,6 +212,15 @@ OPTIONS
 
                 $ mkfs.btrfs -O list-all
 
+--compress <algo>:<level>
+        Try to compress files when using *--rootdir*.  Supported values for *algo* are
+        *no* (the default), *zlib*, *lzo*, and *zstd*.  The optional value *level* is a
+        compression level, from 1 to 9 for ZLIB and from 1 to 15 for ZSTD.
+
+        As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
+        they would be larger than the uncompressed versions, and will mark a file as
+        `nocompress` if its beginning is found to be incompressible.
+
 -f|--force
         Forcibly overwrite the block devices when an existing filesystem is detected.
         By default, :command:`mkfs.btrfs` will utilize *libblkid* to check for any known
