@@ -34,7 +34,7 @@ Feature overview:
 *  :doc:`Offline filesystem check<btrfs-check>`
 *  :doc:`In-place conversion<Convert>` of existing ext2/3/4 and reiserfs filesystems
 *  :doc:`Seeding device.<Seeding-device>` Create a (readonly) filesystem that
-   acts as a template to seed other Btrfs filesystems. The original filesystem
+   acts as a template to seed other BTRFS filesystems. The original filesystem
    and devices are included as a readonly starting point for the new filesystem.
    Using copy on write, all modifications are stored on different devices; the
    original is unchanged.
