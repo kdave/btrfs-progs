@@ -32,7 +32,7 @@ default, snapshots are created read-write. File modifications in a snapshot
 do not affect the files in the original subvolume.
 
 Subvolumes can be given capacity limits, through the qgroups/quota facility, but
-otherwise share the single storage pool of the whole btrfs filesystem. They may
+otherwise share the single storage pool of the whole BTRFS filesystem. They may
 even share data between themselves (through deduplication or snapshotting).
 
 .. note::
@@ -61,7 +61,7 @@ from read-only to read-write will break the assumptions and may lead to
 unexpected changes in the resulting incremental stream.
 
 A snapshot that was created by send/receive will be read-only, with different
-last change generation, read-only and with set *received_uuid* which identifies
+last change generation, and with set *received_uuid* which identifies
 the subvolume on the filesystem that produced the stream. The use case relies
 on matching data on both sides. Changing the subvolume to read-write after it
 has been received requires to reset the *received_uuid*. As this is a notable
@@ -85,11 +85,10 @@ organize them, whether to have a flat layout (all subvolumes are direct
 descendants of the toplevel one), or nested.
 
 What should be mentioned early is that a snapshotting is not recursive, so a
-subvolume or a snapshot is effectively a barrier and no files in the nested
-appear in the snapshot. Instead there's a stub subvolume (also sometimes called
-*empty subvolume* with the same name as original subvolume, with inode number
-2).  This can be used intentionally but could be confusing in case of nested
-layouts.
+subvolume or a snapshot is effectively a barrier and no files in the nested subvolumes
+appear in the snapshot. Instead, there's a stub subvolume, also sometimes called
+*empty subvolume*, with the same name as original subvolume and with inode number 2.
+This can be used intentionally but could be confusing in case of nested layouts.
 
 .. code-block:: bash
 
@@ -124,14 +123,14 @@ log files would get rolled back too, or any data that are stored on the root
 filesystem but are not meant to be rolled back either (database files, VM
 images, ...).
 
-Here we could utilize the snapshotting barrier mentioned above, each directory
-that stores data to be preserved across rollbacks is it's own subvolume. This
-could be e.g. :file:`/var`. Further more-fine grained partitioning could be done, e.g.
+Here we could utilize the snapshotting barrier mentioned above, making each directory
+that stores data to be preserved across rollbacks its own subvolume. This
+could be e.g. :file:`/var`. Further more fine-grained partitioning could be done, e.g.
 adding separate subvolumes for :file:`/var/log`, :file:`/var/cache` etc.
 
-That there are separate subvolumes requires separate actions to take the
-snapshots (here it gets disconnected from the system root snapshots). This needs
-to be taken care of by system tools, installers together with selection of which
+The fact that there are separate subvolumes requires separate actions to take the
+snapshots (here, it gets disconnected from the system root snapshots). This needs
+to be taken care of by system tools, installers, together with selection of which
 directories are highly recommended to be separate subvolumes.
 
 Mount options
@@ -142,16 +141,16 @@ specific, handled by the filesystem. The following list shows which are
 applicable to individual subvolume mounts, while there are more options that
 always affect the whole filesystem:
 
-- generic: noatime/relatime/..., nodev, nosuid, ro, rw, dirsync
-- fs-specific: compress, autodefrag, nodatacow, nodatasum
+- Generic: noatime/relatime/..., nodev, nosuid, ro, rw, dirsync
+- Filesystem-specific: compress, autodefrag, nodatacow, nodatasum
 
-An example of whole filesystem options is e.g. *space_cache*, *rescue*, *device*,
+Examples of whole filesystem options are e.g. *space_cache*, *rescue*, *device*,
 *skip_balance*, etc. The exceptional options are *subvol* and *subvolid* that
 are actually used for mounting a given subvolume and can be specified only once
 for the mount.
 
-Subvolumes belong to a single filesystem and as implemented now all share the
-same specific mount options, changes done by remount have immediate effect. This
+Subvolumes belong to a single filesystem and, as implemented now, all share the
+same specific mount options. Also, changes done by remount have immediate effect. This
 may change in the future.
 
 Mounting a read-write snapshot as read-only is possible and will not change the
@@ -189,19 +188,19 @@ original inode numbers.
 
 .. note::
    Inode number is not a filesystem-wide unique identifier, some applications
-   assume that. Please use pair *subvolumeid:inodenumber* for that purpose.
+   assume that. Please use the *subvolumeid:inodenumber* pair for that purpose.
    The subvolume id can be read by :ref:`btrfs inspect-internal rootid<man-inspect-rootid>`
    or by the ioctl :ref:`BTRFS_IOC_INO_LOOKUP`.
 
 Performance
 -----------
 
-Subvolume creation needs to flush dirty data that belong to the subvolume, this
-step may take some time, otherwise once there's nothing else to do, the snapshot
-is instant and in the metadata it only creates a new tree root copy.
+Subvolume creation needs to flush dirty data that belong to the subvolume and this
+step may take some time. Otherwise, once there's nothing else to do, the snapshot
+is instantaneous and only creates a new tree root copy in the metadata.
 
 Snapshot deletion has two phases: first its directory is deleted and the
-subvolume is added to a list, then the list is processed one by one and the
+subvolume is added to a queuing list, then the list is processed one by one and the
 data related to the subvolume get deleted. This is usually called *cleaning* and
 can take some time depending on the amount of shared blocks (can be a lot of
 metadata updates), and the number of currently queued deleted subvolumes.
