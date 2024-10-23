@@ -1,32 +1,32 @@
-Data and metadata are checksummed by default, the checksum is calculated before
-write and verified after reading the blocks from devices. The whole metadata
-block has a checksum stored inline in the b-tree node header, each data block
+Data and metadata are checksummed by default. The checksum is calculated before
+writing and verified after reading the blocks from devices. The whole metadata
+block has an inline checksum stored in the b-tree node header. Each data block
 has a detached checksum stored in the checksum tree.
 
 There are several checksum algorithms supported. The default and backward
-compatible is *crc32c*.  Since kernel 5.5 there are three more with different
+compatible algorithm is *crc32c*. Since kernel 5.5 there are three more with different
 characteristics and trade-offs regarding speed and strength. The following list
 may help you to decide which one to select.
 
-CRC32C (32bit digest)
-        default, best backward compatibility, very fast, modern CPUs have
+CRC32C (32 bits digest)
+        Default, best backward compatibility. Very fast, modern CPUs have
         instruction-level support, not collision-resistant but still good error
-        detection capabilities
+        detection capabilities.
 
-XXHASH (64bit digest)
-        can be used as CRC32C successor, very fast, optimized for modern CPUs utilizing
-        instruction pipelining, good collision resistance and error detection
+XXHASH (64 bits digest)
+        Can be used as CRC32C successor. Very fast, optimized for modern CPUs utilizing
+        instruction pipelining, good collision resistance and error detection.
 
-SHA256 (256bit digest)
-        a cryptographic-strength hash, relatively slow but with possible CPU
-        instruction acceleration or specialized hardware cards, FIPS certified and
-        in wide use
+SHA256 (256 bits digest)
+        Cryptographic-strength hash. Relatively slow but with possible CPU
+        instruction acceleration or specialized hardware cards. FIPS certified and
+        in wide use.
 
-BLAKE2b (256bit digest)
-        a cryptographic-strength hash, relatively fast with possible CPU acceleration
-        using SIMD extensions, not standardized but based on BLAKE which was a SHA3
-        finalist, in wide use, the algorithm used is BLAKE2b-256 that's optimized for
-        64bit platforms
+BLAKE2b (256 bits digest)
+        Cryptographic-strength hash. Relatively fast, with possible CPU acceleration
+        using SIMD extensions. Not standardized but based on BLAKE which was a SHA3
+        finalist, in wide use. The algorithm used is BLAKE2b-256 that's optimized for
+        64-bit platforms.
 
 The *digest size* affects overall size of data block checksums stored in the
 filesystem.  The metadata blocks have a fixed area up to 256 bits (32 bytes), so
@@ -61,8 +61,8 @@ The accelerated versions are however provided by the modules and must be loaded
 explicitly (:command:`modprobe sha256`) before mounting the filesystem to make use of
 them. You can check in :file:`/sys/fs/btrfs/FSID/checksum` which one is used. If you
 see *sha256-generic*, then you may want to unmount and mount the filesystem
-again, changing that on a mounted filesystem is not possible.
-Check the file :file:`/proc/crypto`, when the implementation is built-in, you'd find
+again. Changing that on a mounted filesystem is not possible.
+Check the file :file:`/proc/crypto`, when the implementation is built-in, you'd find:
 
 .. code-block:: none
 
@@ -72,7 +72,7 @@ Check the file :file:`/proc/crypto`, when the implementation is built-in, you'd 
         priority     : 100
         ...
 
-while accelerated implementation is e.g.
+While accelerated implementation is e.g.:
 
 .. code-block:: none
 
