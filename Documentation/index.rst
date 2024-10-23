@@ -7,7 +7,7 @@ BTRFS is a modern copy on write (COW) filesystem for Linux aimed at
 implementing advanced features while also focusing on fault tolerance, repair
 and easy administration. You can read more about the features in the
 :doc:`introduction<Introduction>` or choose from the pages below. Documentation
-for for command line tools :doc:`btrfs`, :doc:`mkfs.btrfs` and others
+for command line tools :doc:`btrfs`, :doc:`mkfs.btrfs` and others
 is in the :doc:`manual pages<man-index>`.
 
 .. raw:: html
