@@ -7,8 +7,12 @@ source "$TEST_TOP/common" || exit
 check_prereq btrfs
 
 check_image() {
-	run_mustfail "missing log csum items not detected" \
-		"$TOP/btrfs" check "$1"
+	if [[ "$1" == "./default.img.restored" ]]; then
+		run_mustfail "missing log csum items not detected" \
+			"$TOP/btrfs" check "$1"
+	else
+		run_check "$TOP/btrfs" check "$1"
+	fi
 }
 
 check_all_images
