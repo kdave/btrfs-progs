@@ -85,8 +85,8 @@ u64 btrfs_file_extent_end(const struct btrfs_path *path);
  */
 int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
-			     u64 objectid, u64 pos, u64 offset,
-			     u64 disk_num_bytes, u64 num_bytes);
+			     u64 ino, u64 file_pos,
+			     struct btrfs_file_extent_item *stack_fi);
 int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 			  u64 csum_objectid, u32 csum_type, const char *data);
 int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
