@@ -27,10 +27,5 @@ struct btrfs_trans_handle;
 
 int btrfs_next_extent_item(struct btrfs_root *root, struct btrfs_path *path,
 			   u64 max_objectid);
-int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root, u64 objectid,
-			     struct btrfs_inode_item *inode,
-			     u64 file_pos, u64 disk_bytenr,
-			     u64 num_bytes);
 
 #endif
