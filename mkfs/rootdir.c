@@ -36,6 +36,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/free-space-tree.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -362,6 +363,98 @@ fail:
 	return ret;
 }
 
+static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
+				       struct btrfs_root *root, u64 ino,
+				       struct btrfs_inode_item *inode,
+				       u64 file_pos, u64 disk_bytenr,
+				       u64 num_bytes)
+{
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, disk_bytenr);
+	struct extent_buffer *leaf;
+	struct btrfs_key ins_key;
+	struct btrfs_path *path;
+	struct btrfs_extent_item *ei;
+	int ret;
+
+	/*
+	 * @ino should be an inode number, thus it must not be smaller
+	 * than BTRFS_FIRST_FREE_OBJECTID.
+	 */
+	UASSERT(ino >= BTRFS_FIRST_FREE_OBJECTID);
+
+	/* The reserved data extent should never exceed the upper limit. */
+	UASSERT(num_bytes <= BTRFS_MAX_EXTENT_SIZE);
+
+	/*
+	 * All supported file system should not use its 0 extent.  As it's for
+	 * hole.  And hole extent has no size limit, no need to loop.
+	 */
+	if (disk_bytenr == 0) {
+		ret = btrfs_insert_file_extent(trans, root, ino,
+					       file_pos, disk_bytenr,
+					       num_bytes, num_bytes);
+		return ret;
+	}
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ins_key.objectid = disk_bytenr;
+	ins_key.type = BTRFS_EXTENT_ITEM_KEY;
+	ins_key.offset = num_bytes;
+
+	/* Update extent tree. */
+	ret = btrfs_insert_empty_item(trans, extent_root, path,
+				      &ins_key, sizeof(*ei));
+	if (ret == 0) {
+		leaf = path->nodes[0];
+		ei = btrfs_item_ptr(leaf, path->slots[0],
+				    struct btrfs_extent_item);
+
+		btrfs_set_extent_refs(leaf, ei, 0);
+		btrfs_set_extent_generation(leaf, ei, trans->transid);
+		btrfs_set_extent_flags(leaf, ei,
+				       BTRFS_EXTENT_FLAG_DATA);
+		btrfs_mark_buffer_dirty(leaf);
+
+		ret = btrfs_update_block_group(trans, disk_bytenr,
+					       num_bytes, 1, 0);
+		if (ret)
+			goto fail;
+	} else if (ret != -EEXIST) {
+		goto fail;
+	}
+	btrfs_release_path(path);
+
+	ret = remove_from_free_space_tree(trans, disk_bytenr, num_bytes);
+	if (ret)
+		goto fail;
+
+	btrfs_run_delayed_refs(trans, -1);
+
+	ins_key.objectid = ino;
+	ins_key.type = BTRFS_EXTENT_DATA_KEY;
+	ins_key.offset = file_pos;
+	ret = btrfs_insert_file_extent(trans, root, ino, file_pos, disk_bytenr,
+				       num_bytes, num_bytes);
+	if (ret)
+		goto fail;
+	btrfs_set_stack_inode_nbytes(inode,
+			btrfs_stack_inode_nbytes(inode) + num_bytes);
+
+	ret = btrfs_inc_extent_ref(trans, disk_bytenr, num_bytes,
+				   0, root->root_key.objectid, ino,
+				   file_pos);
+	if (ret)
+		goto fail;
+	ret = 0;
+fail:
+	btrfs_free_path(path);
+	return ret;
+}
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
@@ -471,7 +564,7 @@ again:
 	}
 
 	if (bytes_read) {
-		ret = btrfs_record_file_extent(trans, root, objectid,
+		ret = insert_reserved_file_extent(trans, root, objectid,
 				btrfs_inode, file_pos, first_block, cur_bytes);
 		if (ret)
 			goto end;
