@@ -987,8 +987,7 @@ static int __btrfs_convert_file_extent(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_root *extent_root = btrfs_extent_root(info, disk_bytenr);
-	struct extent_buffer *leaf;
-	struct btrfs_file_extent_item *fi;
+	struct btrfs_file_extent_item stack_fi = { 0 };
 	struct btrfs_key ins_key;
 	struct btrfs_path *path;
 	struct btrfs_extent_item *ei;
@@ -1009,9 +1008,11 @@ static int __btrfs_convert_file_extent(struct btrfs_trans_handle *trans,
 	 * hole.  And hole extent has no size limit, no need to loop.
 	 */
 	if (disk_bytenr == 0) {
+		btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+		btrfs_set_stack_file_extent_num_bytes(&stack_fi, num_bytes);
+		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, num_bytes);
 		ret = btrfs_insert_file_extent(trans, root, objectid,
-					       file_pos, disk_bytenr,
-					       num_bytes, num_bytes);
+					       file_pos, &stack_fi);
 		return ret;
 	}
 	num_bytes = min_t(u64, num_bytes, BTRFS_MAX_EXTENT_SIZE);
@@ -1052,6 +1053,8 @@ static int __btrfs_convert_file_extent(struct btrfs_trans_handle *trans,
 		ret = btrfs_insert_empty_item(trans, extent_root, path,
 					      &ins_key, sizeof(*ei));
 		if (ret == 0) {
+			struct extent_buffer *leaf;
+
 			leaf = path->nodes[0];
 			ei = btrfs_item_ptr(leaf, path->slots[0],
 					    struct btrfs_extent_item);
@@ -1083,26 +1086,18 @@ static int __btrfs_convert_file_extent(struct btrfs_trans_handle *trans,
 	ins_key.objectid = objectid;
 	ins_key.type = BTRFS_EXTENT_DATA_KEY;
 	ins_key.offset = file_pos;
-	ret = btrfs_insert_empty_item(trans, root, path, &ins_key, sizeof(*fi));
+	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, extent_bytenr);
+	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, extent_num_bytes);
+	btrfs_set_stack_file_extent_offset(&stack_fi, extent_offset);
+	btrfs_set_stack_file_extent_num_bytes(&stack_fi, num_bytes);
+	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, extent_num_bytes);
+	ret = btrfs_insert_file_extent(trans, root, objectid, file_pos, &stack_fi);
 	if (ret)
 		goto fail;
-	leaf = path->nodes[0];
-	fi = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_file_extent_item);
-	btrfs_set_file_extent_generation(leaf, fi, trans->transid);
-	btrfs_set_file_extent_type(leaf, fi, BTRFS_FILE_EXTENT_REG);
-	btrfs_set_file_extent_disk_bytenr(leaf, fi, extent_bytenr);
-	btrfs_set_file_extent_disk_num_bytes(leaf, fi, extent_num_bytes);
-	btrfs_set_file_extent_offset(leaf, fi, extent_offset);
-	btrfs_set_file_extent_num_bytes(leaf, fi, num_bytes);
-	btrfs_set_file_extent_ram_bytes(leaf, fi, extent_num_bytes);
-	btrfs_set_file_extent_compression(leaf, fi, 0);
-	btrfs_set_file_extent_encryption(leaf, fi, 0);
-	btrfs_set_file_extent_other_encoding(leaf, fi, 0);
-	btrfs_mark_buffer_dirty(leaf);
 
 	nbytes = btrfs_stack_inode_nbytes(inode) + num_bytes;
 	btrfs_set_stack_inode_nbytes(inode, nbytes);
-	btrfs_release_path(path);
 
 	ret = btrfs_inc_extent_ref(trans, extent_bytenr, extent_num_bytes,
 				   0, root->root_key.objectid, objectid,

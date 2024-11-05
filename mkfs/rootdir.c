@@ -366,17 +366,21 @@ fail:
 static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 				       struct btrfs_root *root, u64 ino,
 				       struct btrfs_inode_item *inode,
-				       u64 file_pos, u64 disk_bytenr,
-				       u64 num_bytes)
+				       u64 file_pos,
+				       struct btrfs_file_extent_item *stack_fi)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, disk_bytenr);
+	struct btrfs_root *extent_root;
 	struct extent_buffer *leaf;
 	struct btrfs_key ins_key;
 	struct btrfs_path *path;
 	struct btrfs_extent_item *ei;
+	u64 disk_bytenr = btrfs_stack_file_extent_disk_bytenr(stack_fi);
+	u64 disk_num_bytes = btrfs_stack_file_extent_disk_num_bytes(stack_fi);
+	u64 num_bytes = btrfs_stack_file_extent_num_bytes(stack_fi);
 	int ret;
 
+	extent_root = btrfs_extent_root(fs_info, disk_bytenr);
 	/*
 	 * @ino should be an inode number, thus it must not be smaller
 	 * than BTRFS_FIRST_FREE_OBJECTID.
@@ -384,18 +388,15 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 	UASSERT(ino >= BTRFS_FIRST_FREE_OBJECTID);
 
 	/* The reserved data extent should never exceed the upper limit. */
-	UASSERT(num_bytes <= BTRFS_MAX_EXTENT_SIZE);
+	UASSERT(disk_num_bytes <= BTRFS_MAX_EXTENT_SIZE);
 
 	/*
 	 * All supported file system should not use its 0 extent.  As it's for
 	 * hole.  And hole extent has no size limit, no need to loop.
 	 */
-	if (disk_bytenr == 0) {
-		ret = btrfs_insert_file_extent(trans, root, ino,
-					       file_pos, disk_bytenr,
-					       num_bytes, num_bytes);
-		return ret;
-	}
+	if (disk_bytenr == 0)
+		return btrfs_insert_file_extent(trans, root, ino,
+					       file_pos, stack_fi);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -437,8 +438,7 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 	ins_key.objectid = ino;
 	ins_key.type = BTRFS_EXTENT_DATA_KEY;
 	ins_key.offset = file_pos;
-	ret = btrfs_insert_file_extent(trans, root, ino, file_pos, disk_bytenr,
-				       num_bytes, num_bytes);
+	ret = btrfs_insert_file_extent(trans, root, ino, file_pos, stack_fi);
 	if (ret)
 		goto fail;
 	btrfs_set_stack_inode_nbytes(inode,
@@ -564,8 +564,15 @@ again:
 	}
 
 	if (bytes_read) {
+		struct btrfs_file_extent_item stack_fi = { 0 };
+
+		btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+		btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
+		btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, cur_bytes);
+		btrfs_set_stack_file_extent_num_bytes(&stack_fi, cur_bytes);
+		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, cur_bytes);
 		ret = insert_reserved_file_extent(trans, root, objectid,
-				btrfs_inode, file_pos, first_block, cur_bytes);
+				btrfs_inode, file_pos, &stack_fi);
 		if (ret)
 			goto end;
 

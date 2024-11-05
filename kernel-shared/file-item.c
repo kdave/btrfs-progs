@@ -33,55 +33,31 @@
 			       size) - 1))
 int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
-			     u64 objectid, u64 pos, u64 offset,
-			     u64 disk_num_bytes, u64 num_bytes)
+			     u64 ino, u64 file_pos,
+			     struct btrfs_file_extent_item *stack_fi)
 {
 	int ret = 0;
 	int is_hole = 0;
-	struct btrfs_file_extent_item *item;
 	struct btrfs_key file_key;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
 
-	if (offset == 0)
+	if (btrfs_stack_file_extent_disk_bytenr(stack_fi) == 0)
 		is_hole = 1;
+
 	/* For NO_HOLES, we don't insert hole file extent */
 	if (btrfs_fs_incompat(root->fs_info, NO_HOLES) && is_hole)
 		return 0;
 
 	/* For hole, its disk_bytenr and disk_num_bytes must be 0 */
 	if (is_hole)
-		disk_num_bytes = 0;
+		btrfs_set_stack_file_extent_disk_num_bytes(stack_fi, 0);
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	file_key.objectid = objectid;
+	file_key.objectid = ino;
 	file_key.type = BTRFS_EXTENT_DATA_KEY;
-	file_key.offset = pos;
+	file_key.offset = file_pos;
 
-	ret = btrfs_insert_empty_item(trans, root, path, &file_key,
-				      sizeof(*item));
-	if (ret < 0)
-		goto out;
-	BUG_ON(ret);
-	leaf = path->nodes[0];
-	item = btrfs_item_ptr(leaf, path->slots[0],
-			      struct btrfs_file_extent_item);
-	btrfs_set_file_extent_disk_bytenr(leaf, item, offset);
-	btrfs_set_file_extent_disk_num_bytes(leaf, item, disk_num_bytes);
-	btrfs_set_file_extent_offset(leaf, item, 0);
-	btrfs_set_file_extent_num_bytes(leaf, item, num_bytes);
-	btrfs_set_file_extent_ram_bytes(leaf, item, num_bytes);
-	btrfs_set_file_extent_generation(leaf, item, trans->transid);
-	btrfs_set_file_extent_type(leaf, item, BTRFS_FILE_EXTENT_REG);
-	btrfs_set_file_extent_compression(leaf, item, 0);
-	btrfs_set_file_extent_encryption(leaf, item, 0);
-	btrfs_set_file_extent_other_encoding(leaf, item, 0);
-	btrfs_mark_buffer_dirty(leaf);
-out:
-	btrfs_free_path(path);
+	btrfs_set_stack_file_extent_generation(stack_fi, trans->transid);
+	ret = btrfs_insert_item(trans, root, &file_key, stack_fi,
+				sizeof(struct btrfs_file_extent_item));
 	return ret;
 }
 
