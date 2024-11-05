@@ -384,8 +384,7 @@ static int reiserfs_convert_tail(struct btrfs_trans_handle *trans,
 				      length, offset, convert_flags);
 
 	ret = btrfs_insert_inline_extent(trans, root, objectid,
-					 offset, body, length,
-					 0, length);
+					 offset, body, length);
 	if (ret)
 		return ret;
 
@@ -545,7 +544,7 @@ static int reiserfs_copy_symlink(struct btrfs_trans_handle *trans,
 		goto fail;
 	}
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
-					 symlink, len, 0, len);
+					 symlink, len);
 	btrfs_set_stack_inode_nbytes(btrfs_inode, len);
 fail:
 	pathrelse(&path);

@@ -740,11 +740,11 @@ btrfsck.static: btrfs.static
 
 mkfs.btrfs: $(mkfs_objects) $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
-	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
+	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: $(tune_objects) $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"

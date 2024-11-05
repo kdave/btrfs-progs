@@ -19,7 +19,6 @@
 
 #include "kerncompat.h"
 #include "kernel-lib/bitops.h"
-#include "kernel-shared/compression.h"
 
 struct btrfs_inode_item;
 struct btrfs_path;
@@ -33,11 +32,5 @@ int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_inode_item *inode,
 			     u64 file_pos, u64 disk_bytenr,
 			     u64 num_bytes);
-int btrfs_record_file_extent_comp(struct btrfs_trans_handle *trans,
-				  struct btrfs_root *root, u64 objectid,
-				  struct btrfs_inode_item *inode,
-				  u64 file_pos, u64 disk_bytenr,
-				  u64 num_bytes, u64 ram_bytes,
-				  enum btrfs_compression_type comp);
 
 #endif
