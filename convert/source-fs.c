@@ -260,7 +260,7 @@ int record_file_blocks(struct blk_iterate_data *data,
 
 	/* Hole, pass it to record_file_extent directly */
 	if (old_disk_bytenr == 0)
-		return btrfs_record_file_extent(data->trans, root,
+		return btrfs_convert_file_extent(data->trans, root,
 				data->objectid, data->inode, file_pos, 0,
 				num_bytes);
 
@@ -314,7 +314,7 @@ int record_file_blocks(struct blk_iterate_data *data,
 			real_disk_bytenr = 0;
 		cur_len = min(key.offset + extent_num_bytes,
 			      old_disk_bytenr + num_bytes) - cur_off;
-		ret = btrfs_record_file_extent(data->trans, data->root,
+		ret = btrfs_convert_file_extent(data->trans, data->root,
 					data->objectid, data->inode, file_pos,
 					real_disk_bytenr, cur_len);
 		if (ret < 0)

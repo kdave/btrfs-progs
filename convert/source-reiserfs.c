@@ -364,7 +364,7 @@ static int convert_direct(struct btrfs_trans_handle *trans,
 	if (ret)
 		return ret;
 
-	return btrfs_record_file_extent(trans, root, objectid, inode, offset,
+	return btrfs_convert_file_extent(trans, root, objectid, inode, offset,
 					key.objectid, sectorsize);
 }
 

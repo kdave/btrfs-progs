@@ -337,7 +337,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		error("remaining length not sectorsize aligned: %llu", len);
 		return -EINVAL;
 	}
-	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,
+	ret = btrfs_convert_file_extent(trans, root, ino, inode, bytenr,
 				       disk_bytenr, len);
 	if (ret < 0)
 		return ret;
@@ -426,8 +426,8 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 			break;
 
 		/* Now handle extent item and file extent things */
-		ret = btrfs_record_file_extent(trans, root, ino, inode, cur_off,
-					       key.objectid, key.offset);
+		ret = btrfs_convert_file_extent(trans, root, ino, inode, cur_off,
+					        key.objectid, key.offset);
 		if (ret < 0)
 			break;
 		/* Finally, insert csum items */
@@ -438,7 +438,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 		/* Don't forget to insert hole */
 		hole_len = cur_off - hole_start;
 		if (hole_len) {
-			ret = btrfs_record_file_extent(trans, root, ino, inode,
+			ret = btrfs_convert_file_extent(trans, root, ino, inode,
 					hole_start, 0, hole_len);
 			if (ret < 0)
 				break;
@@ -455,7 +455,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 	 *                   | Hole |
 	 */
 	if (range_end(range) - hole_start > 0)
-		ret = btrfs_record_file_extent(trans, root, ino, inode,
+		ret = btrfs_convert_file_extent(trans, root, ino, inode,
 				hole_start, 0, range_end(range) - hole_start);
 	return ret;
 }
