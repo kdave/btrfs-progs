@@ -214,7 +214,7 @@ OPTIONS
 
 --compress <algo>:<level>
         Try to compress files when using *--rootdir*.  Supported values for *algo* are
-        *no* (the default), *zlib*, *lzo*, and *zstd*.  The optional value *level* is a
+        *no* (the default), *zlib*, and *zstd*.  The optional value *level* is a
         compression level, from 1 to 9 for ZLIB and from 1 to 15 for ZSTD.
 
         As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
