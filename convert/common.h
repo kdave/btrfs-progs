@@ -23,6 +23,7 @@
 #define __BTRFS_CONVERT_COMMON_H__
 
 #include "kerncompat.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/extent-cache.h"
 
 struct btrfs_mkfs_config;
@@ -84,4 +85,9 @@ static inline u64 range_end(const struct simple_range *range)
 	return (range->start + range->len);
 }
 
+int btrfs_convert_file_extent(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root, u64 objectid,
+			      struct btrfs_inode_item *inode,
+			      u64 file_pos, u64 disk_bytenr,
+			      u64 num_bytes);
 #endif
