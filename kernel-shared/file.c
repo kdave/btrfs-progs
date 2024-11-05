@@ -152,6 +152,7 @@ int btrfs_punch_hole(struct btrfs_trans_handle *trans,
 		     u64 ino, u64 offset, u64 len)
 {
 	struct btrfs_path *path;
+	struct btrfs_file_extent_item stack_fi = { 0 };
 	int ret = 0;
 
 	path = btrfs_alloc_path();
@@ -166,7 +167,10 @@ int btrfs_punch_hole(struct btrfs_trans_handle *trans,
 		goto out;
 	}
 
-	ret = btrfs_insert_file_extent(trans, root, ino, offset, 0, 0, len);
+	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+	btrfs_set_stack_file_extent_num_bytes(&stack_fi, len);
+	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, len);
+	ret = btrfs_insert_file_extent(trans, root, ino, offset, &stack_fi);
 out:
 	btrfs_free_path(path);
 	return ret;
