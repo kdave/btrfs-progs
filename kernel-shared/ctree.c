@@ -2450,7 +2450,7 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
 	u32 nritems;
 	u32 orig_offset;
 	struct btrfs_disk_key disk_key;
-	char *buf;
+	char *buf = NULL;
 
 	leaf = path->nodes[0];
 	btrfs_item_key_to_cpu(leaf, &orig_key, path->slots[0]);
@@ -2469,11 +2469,13 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
 	/* if our item isn't there or got smaller, return now */
 	if (ret != 0 || item_size != btrfs_item_size(path->nodes[0],
 							path->slots[0])) {
-		return -EAGAIN;
+		ret = -EAGAIN;
+		goto error;
 	}
 
 	ret = split_leaf(trans, root, &orig_key, path, 0, 0);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto error;
 
 	BUG_ON(btrfs_leaf_free_space(leaf) < sizeof(struct btrfs_item));
 	leaf = path->nodes[0];
@@ -2484,7 +2486,10 @@ split:
 
 
 	buf = kmalloc(item_size, GFP_NOFS);
-	BUG_ON(!buf);
+	if (!buf) {
+		ret = -ENOMEM;
+		goto error;
+	}
 	read_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf,
 			    path->slots[0]), item_size);
 	slot = path->slots[0] + 1;
@@ -2529,6 +2534,10 @@ split:
 		BUG();
 	}
 	kfree(buf);
+	return ret;
+error:
+	kfree(buf);
+	btrfs_release_path(path);
 	return ret;
 }
 
