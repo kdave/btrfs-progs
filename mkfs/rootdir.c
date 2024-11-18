@@ -455,6 +455,90 @@ fail:
 	return ret;
 }
 
+/*
+ * keep our extent size at 1MB max, this makes it easier to work
+ * inside the tiny block groups created during mkfs
+ */
+#define MAX_EXTENT_SIZE SZ_1M
+
+struct source_descriptor {
+	int fd;
+	char *buf;
+	u64 size;
+	const char *path_name;
+};
+
+static int add_file_item_extent(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root,
+				struct btrfs_inode_item *btrfs_inode,
+				u64 objectid,
+				const struct source_descriptor *source,
+				u64 file_pos)
+{
+	int ret;
+	u32 sectorsize = root->fs_info->sectorsize;
+	u64 bytes_read, first_block, to_read, to_write;
+	struct btrfs_key key;
+	struct btrfs_file_extent_item stack_fi = { 0 };
+
+	to_read = min(file_pos + MAX_EXTENT_SIZE, source->size) - file_pos;
+
+	bytes_read = 0;
+
+	while (bytes_read < to_read) {
+		ssize_t ret_read;
+
+		ret_read = pread(source->fd, source->buf + bytes_read,
+				 to_read - bytes_read, file_pos + bytes_read);
+		if (ret_read < 0) {
+			error("cannot read %s at offset %llu length %llu: %m",
+			      source->path_name, file_pos + bytes_read,
+			      to_read - bytes_read);
+			return -errno;
+		}
+
+		bytes_read += ret_read;
+	}
+
+	to_write = round_up(to_read, sectorsize);
+	memset(source->buf + to_read, 0, to_write - to_read);
+
+	ret = btrfs_reserve_extent(trans, root, to_write, 0, 0,
+				   (u64)-1, &key, 1);
+	if (ret)
+		return ret;
+
+	first_block = key.objectid;
+
+	ret = write_data_to_disk(root->fs_info, source->buf, first_block,
+				 to_write);
+	if (ret) {
+		error("failed to write %s", source->path_name);
+		return ret;
+	}
+
+	for (unsigned int i = 0; i < to_write / sectorsize; i++) {
+		ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
+					BTRFS_EXTENT_CSUM_OBJECTID,
+					root->fs_info->csum_type,
+					source->buf + (i * sectorsize));
+		if (ret)
+			return ret;
+	}
+
+	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
+	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, to_write);
+	btrfs_set_stack_file_extent_num_bytes(&stack_fi, to_write);
+	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, to_write);
+	ret = insert_reserved_file_extent(trans, root, objectid, btrfs_inode,
+					  file_pos, &stack_fi);
+	if (ret)
+		return ret;
+
+	return to_read;
+}
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
@@ -463,15 +547,10 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int ret = -1;
 	ssize_t ret_read;
-	u64 bytes_read = 0;
-	struct btrfs_key key;
-	int blocks;
 	u32 sectorsize = fs_info->sectorsize;
-	u64 first_block = 0;
 	u64 file_pos = 0;
-	u64 cur_bytes;
-	u64 total_bytes;
-	void *buf = NULL;
+	char *buf = NULL;
+	struct source_descriptor source;
 	int fd;
 
 	if (st->st_size == 0)
@@ -483,10 +562,6 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	blocks = st->st_size / sectorsize;
-	if (st->st_size % sectorsize)
-		blocks += 1;
-
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(fs_info) &&
 	    st->st_size < sectorsize) {
 		char *buffer = malloc(st->st_size);
@@ -496,10 +571,10 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 			goto end;
 		}
 
-		ret_read = pread(fd, buffer, st->st_size, bytes_read);
+		ret_read = pread(fd, buffer, st->st_size, 0);
 		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %llu: %m",
-				path_name, bytes_read, (unsigned long long)st->st_size);
+			error("cannot read %s at offset %u length %zu: %m",
+			      path_name, 0, st->st_size);
 			free(buffer);
 			goto end;
 		}
@@ -512,77 +587,25 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		goto end;
 	}
 
-	/* round up our st_size to the FS blocksize */
-	total_bytes = (u64)blocks * sectorsize;
-
-	buf = malloc(sectorsize);
+	buf = malloc(MAX_EXTENT_SIZE);
 	if (!buf) {
 		ret = -ENOMEM;
 		goto end;
 	}
 
-again:
+	source.fd = fd;
+	source.buf = buf;
+	source.size = st->st_size;
+	source.path_name = path_name;
 
-	/*
-	 * keep our extent size at 1MB max, this makes it easier to work inside
-	 * the tiny block groups created during mkfs
-	 */
-	cur_bytes = min(total_bytes, (u64)SZ_1M);
-	ret = btrfs_reserve_extent(trans, root, cur_bytes, 0, 0, (u64)-1,
-				   &key, 1);
-	if (ret)
-		goto end;
+	while (file_pos < st->st_size) {
+		ret = add_file_item_extent(trans, root, btrfs_inode, objectid,
+					   &source, file_pos);
+		if (ret < 0)
+			break;
 
-	first_block = key.objectid;
-	bytes_read = 0;
-
-	while (bytes_read < cur_bytes) {
-
-		memset(buf, 0, sectorsize);
-
-		ret_read = pread(fd, buf, sectorsize, file_pos + bytes_read);
-		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %u: %m",
-				path_name, file_pos + bytes_read, sectorsize);
-			goto end;
-		}
-
-		ret = write_data_to_disk(root->fs_info, buf,
-					 first_block + bytes_read, sectorsize);
-		if (ret) {
-			error("failed to write %s", path_name);
-			goto end;
-		}
-
-		ret = btrfs_csum_file_block(trans, first_block + bytes_read,
-					    BTRFS_EXTENT_CSUM_OBJECTID,
-					    fs_info->csum_type, buf);
-		if (ret)
-			goto end;
-
-		bytes_read += sectorsize;
+		file_pos += ret;
 	}
-
-	if (bytes_read) {
-		struct btrfs_file_extent_item stack_fi = { 0 };
-
-		btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
-		btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
-		btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, cur_bytes);
-		btrfs_set_stack_file_extent_num_bytes(&stack_fi, cur_bytes);
-		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, cur_bytes);
-		ret = insert_reserved_file_extent(trans, root, objectid,
-				btrfs_inode, file_pos, &stack_fi);
-		if (ret)
-			goto end;
-
-	}
-
-	file_pos += cur_bytes;
-	total_bytes -= cur_bytes;
-
-	if (total_bytes)
-		goto again;
 
 end:
 	free(buf);
