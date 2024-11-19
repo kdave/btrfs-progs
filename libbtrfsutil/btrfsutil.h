@@ -454,7 +454,7 @@ enum btrfs_util_error btrfs_util_subvolume_get_default_fd(int fd, uint64_t *id_r
 LIBBTRFSUTIL_ALIAS(btrfs_util_get_default_subvolume_fd);
 
 /**
- * btrfs_util_set_default_subvolume() - Alias of btrfs_util_set_default_subvolume(), do not use in new code.
+ * btrfs_util_set_default_subvolume() - Alias of btrfs_util_subvolume_set_default(), do not use in new code.
  */
 enum btrfs_util_error btrfs_util_set_default_subvolume(const char *path, uint64_t id);
 
