@@ -558,8 +558,8 @@ Fixes:
 ^^^^^^^^^^^^^^
 
 Pull requests:
-`v6.9-rc1 (1)<https://git.kernel.org/linus/43a7548e28a6df12a6170421d9d016c576010baa>`__,
-`v6.9-rc1 (2)<https://git.kernel.org/linus/7b65c810a1198b91ed6bdc49ddb470978affd122>`__,
+`v6.9-rc1 (1) <https://git.kernel.org/linus/43a7548e28a6df12a6170421d9d016c576010baa>`__,
+`v6.9-rc1 (2) <https://git.kernel.org/linus/7b65c810a1198b91ed6bdc49ddb470978affd122>`__,
 `v6.9-rc2 <https://git.kernel.org/linus/400dd456bda8be0b566f2690c51609ea02f85766>`__,
 `v6.9-rc3 <https://git.kernel.org/linus/20cb38a7af88dc40095da7c2c9094da3873fea23>`__,
 `v6.9-rc5 <https://git.kernel.org/linus/8cd26fd90c1ad7acdcfb9f69ca99d13aa7b24561>`__,
@@ -596,14 +596,14 @@ Other notable changes:
 ^^^^^^^^^^^^^^^
 
 Pull requests:
-`v6.10-rc1 (1)<https://git.kernel.org/linus/a3d1f54d7aa4c3be2c6a10768d4ffa1dcb620da9>`__,
-`v6.10-rc1 (2)<https://git.kernel.org/linus/02c438bbfffeabf8c958108f9cf88cdb1a11a323>`__,
-`v6.10-rc3 (1)<https://git.kernel.org/linus/19ca0d8a433ff37018f9429f7e7739e9f3d3d2b4>`__,
-`v6.10-rc3 (2)<https://git.kernel.org/linus/07978330e63456a75a6d5c1c5053de24bdc9d16f>`__,
+`v6.10-rc1 (1) <https://git.kernel.org/linus/a3d1f54d7aa4c3be2c6a10768d4ffa1dcb620da9>`__,
+`v6.10-rc1 (2) <https://git.kernel.org/linus/02c438bbfffeabf8c958108f9cf88cdb1a11a323>`__,
+`v6.10-rc3 (1) <https://git.kernel.org/linus/19ca0d8a433ff37018f9429f7e7739e9f3d3d2b4>`__,
+`v6.10-rc3 (2) <https://git.kernel.org/linus/07978330e63456a75a6d5c1c5053de24bdc9d16f>`__,
 `v6.10-rc5 <https://git.kernel.org/linus/50736169ecc8387247fe6a00932852ce7b057083>`__,
 `v6.10-rc6 <https://git.kernel.org/linus/66e55ff12e7391549c4a85a7a96471dcf891cb03>`__,
-`v6.10-rc7 (1)<https://git.kernel.org/linus/cfbc0ffea88c764d23f69efe6ecb74918e0f588e>`__,
-`v6.10-rc7 (2)<https://git.kernel.org/linus/661e504db04c6b7278737ee3a9116738536b4ed4>`__,
+`v6.10-rc7 (1) <https://git.kernel.org/linus/cfbc0ffea88c764d23f69efe6ecb74918e0f588e>`__,
+`v6.10-rc7 (2) <https://git.kernel.org/linus/661e504db04c6b7278737ee3a9116738536b4ed4>`__,
 `v6.10-rc8 <https://git.kernel.org/linus/975f3b6da18020f1c8a7667ccb08fa542928ec03>`__,
 
 Performance improvements:
@@ -632,8 +632,8 @@ Notable fixes or changes:
 ^^^^^^^^^^^^^^^
 
 Pull requests:
-`v6.11-rc1 (1)<https://git.kernel.org/linus/a1b547f0f217cfb06af7eb4ce8488b02d83a0370>`__,
-`v6.11-rc1 (2)<https://git.kernel.org/linus/53a5182c8a6805d3096336709ba5790d16f8c369>`__,
+`v6.11-rc1 (1) <https://git.kernel.org/linus/a1b547f0f217cfb06af7eb4ce8488b02d83a0370>`__,
+`v6.11-rc1 (2) <https://git.kernel.org/linus/53a5182c8a6805d3096336709ba5790d16f8c369>`__,
 `v6.11-rc2 <https://git.kernel.org/linus/e4fc196f5ba36eb7b9758cf2c73df49a44199895>`__,
 `v6.11-rc3 <https://git.kernel.org/linus/6a0e38264012809afa24113ee2162dc07f4ed22b>`__,
 `v6.11-rc4 <https://git.kernel.org/linus/1fb918967b56df3262ee984175816f0acb310501>`__,
