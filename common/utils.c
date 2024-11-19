@@ -416,6 +416,7 @@ int ask_user(const char *question)
 	char *answer;
 
 	printf("%s [y/N]: ", question);
+	fflush(stdout);
 
 	return fgets(buf, sizeof(buf) - 1, stdin) &&
 	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
