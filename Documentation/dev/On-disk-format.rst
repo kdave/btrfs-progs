@@ -30,7 +30,7 @@ also contains a logical reference to root nodes in the root and chunk trees,
 which can then be used to locate all the other trees and data stored.
 
 To avoid duplicated suffixes/prefixes, sometimes the macro name will have
-the "BTRFS_" prefix and "_OBJECTID" suffix removed.
+the "BTRFS\_" prefix and "_OBJECTID" suffix removed.
 
 E.g. "BTRFS_DEV_ITEMS_OBJECTID" (0x1) can be shown as "DEV_ITEMS" for short,
 this matches the output of "btrfs inspect-internal dump-tree".
