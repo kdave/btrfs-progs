@@ -22,10 +22,10 @@ btrfs-progs-6.11 (2024-09-17)
 btrfs-progs-6.10 (2024-07-30)
 -----------------------------
    * inspect:
-     * list-chunks: new command to print information about chunks (i.e.
-       the physical chunks as stored on devices), sortable; requires root as
-       it's using SEARCH_TREE ioctl
-     * tree-stats:
+      * list-chunks: new command to print information about chunks (i.e.
+        the physical chunks as stored on devices), sortable; requires root as
+        it's using SEARCH_TREE ioctl
+      * tree-stats:
         * new option -t to print only the given tree
         * add long options for size units
    * filesystem df: with increased verbosity print per-type information from sysfs
@@ -199,13 +199,13 @@ btrfs-progs-6.6 (2023-11-03)
      future)
    * dump-tree: output sequence number for inline refs
    * fixes:
-     * fi resize: fallback to lowest devid when 1 does not exist, previously the
-       command would fail with "No such device"
-     * fi usage: fix "devices 0 != 1" message and broken output on multi-device
-       filesystem
-     * open files in non-blocking mode when reading fsid, this could hang when
-       trying to open fifo files or some special character devices, was observed
-       with 'prop set/get'
+      * fi resize: fallback to lowest devid when 1 does not exist, previously the
+        command would fail with "No such device"
+      * fi usage: fix "devices 0 != 1" message and broken output on multi-device
+        filesystem
+      * open files in non-blocking mode when reading fsid, this could hang when
+        trying to open fifo files or some special character devices, was observed
+        with 'prop set/get'
    * experimental:
       * mkfs: parametric zone size for emulated zoned mode
    * other:

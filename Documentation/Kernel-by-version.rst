@@ -512,20 +512,20 @@ Pull requests:
 Core changes:
 
 -  convert extent buffers to folios:
-   - direct API conversion where possible
-   - performance can drop by a few percent on metadata heavy
-     workloads, the folio sizes are not constant and the calculations
-     add up in the item helpers
-   - both regular and subpage modes
-   - data cannot be converted yet, we need to port that to iomap and
-     there are some other generic changes required
+    - direct API conversion where possible
+    - performance can drop by a few percent on metadata heavy
+      workloads, the folio sizes are not constant and the calculations
+      add up in the item helpers
+    - both regular and subpage modes
+    - data cannot be converted yet, we need to port that to iomap and
+      there are some other generic changes required
 
 -  convert mount to the new API, should not be user visible:
-   - options deprecated long time ago have been removed: inode_cache,
-     recovery
-   - the new logic that splits mount to two phases slightly changes
-     timing of device scanning for multi-device filesystems
-   - LSM options will now work (like for selinux)
+    - options deprecated long time ago have been removed: inode_cache,
+      recovery
+    - the new logic that splits mount to two phases slightly changes
+      timing of device scanning for multi-device filesystems
+    - LSM options will now work (like for selinux)
 
 - convert delayed nodes radix tree to xarray, preserving the
   preload-like logic that still allows to allocate with GFP_NOFS
@@ -576,9 +576,9 @@ Performance improvements:
   delayed allocation bits, applies to several common workload types
 
 - features under CONFIG_BTRFS_DEBUG:
-  - sysfs knob for setting the how checksums are calculated when submitting IO,
-    inline or offloaded to a thread, this affects latency and throughput on some
-    block group profiles
+   - sysfs knob for setting the how checksums are calculated when submitting IO,
+     inline or offloaded to a thread, this affects latency and throughput on some
+     block group profiles
 
 Notable fixes:
 
@@ -644,29 +644,29 @@ Pull requests:
 User visible features:
 
 - dynamic block group reclaim:
-  - tunable framework to avoid situations where eager data allocations prevent
-    creating new metadata chunks due to lack of unallocated space
-  - reuse sysfs knob bg_reclaim_threshold (otherwise used only in zoned mode)
-    for a fixed value threshold
-  - new on/off sysfs knob "dynamic_reclaim" calculating the value based on
-    heuristics, aiming to keep spare working space for relocating chunks but
-    not to needlessly relocate partially utilized block groups or reclaim newly
-    allocated ones
-  - stats are exported in sysfs per block group type, files "reclaim_*"
-  - this may increase IO load at unexpected times but the corner case of no
-    allocatable block groups is known to be worse
+   - tunable framework to avoid situations where eager data allocations prevent
+     creating new metadata chunks due to lack of unallocated space
+   - reuse sysfs knob bg_reclaim_threshold (otherwise used only in zoned mode)
+     for a fixed value threshold
+   - new on/off sysfs knob "dynamic_reclaim" calculating the value based on
+     heuristics, aiming to keep spare working space for relocating chunks but
+     not to needlessly relocate partially utilized block groups or reclaim newly
+     allocated ones
+   - stats are exported in sysfs per block group type, files "reclaim_*"
+   - this may increase IO load at unexpected times but the corner case of no
+     allocatable block groups is known to be worse
 
 - automatically remove qgroup of deleted subvolumes:
-  - adjust qgroup removal conditions, make sure all related subvolume data are
-    already removed, or return EBUSY, also take into account setting of sysfs
-    drop_subtree_threshold
-  - also works in squota mode
+   - adjust qgroup removal conditions, make sure all related subvolume data are
+     already removed, or return EBUSY, also take into account setting of sysfs
+     drop_subtree_threshold
+   - also works in squota mode
 
 -  mount option updates: new modes of 'rescue=' that allow to mount images
-   (read-only) that could have been partially converted by user space tools
-  - ignoremetacsums  - invalid metadata checksums are ignored
-  - ignoresuperflags - super block flags that track conversion in progress
-                       (like UUID or checksums)
+    (read-only) that could have been partially converted by user space tools
+     - ignoremetacsums  - invalid metadata checksums are ignored
+     - ignoresuperflags - super block flags that track conversion in progress
+                          (like UUID or checksums)
 
 Other notable changes or fixes:
 
