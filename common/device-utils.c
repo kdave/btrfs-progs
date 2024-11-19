@@ -22,6 +22,7 @@
 #include <linux/blkzoned.h>
 #endif
 #include <linux/fs.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
