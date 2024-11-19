@@ -19,6 +19,7 @@
 
 #include "kerncompat.h"
 #include "kernel-lib/bitops.h"
+#include "kernel-shared/compression.h"
 
 struct btrfs_inode_item;
 struct btrfs_path;
