@@ -292,6 +292,10 @@ tune_objects = tune/main.o tune/seeding.o tune/change-uuid.o tune/change-metadat
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
+tags_files = $(addsuffix /*.[ch], . check cmds common convert crypto image include mkfs tune \
+	       kernel-lib kernel-shared kernel-shared/uapi \
+	       libbtrfs libbtrfsutil libbtrfsutil/python tests)
+
 udev_rules = 64-btrfs-dm.rules 64-btrfs-zoned.rules
 
 ifeq ("$(origin V)", "command line")
@@ -893,25 +897,15 @@ compile_commands.json: FORCE
 
 tags: FORCE
 	@echo "  TAGS     $(TAGS_CMD)"
-	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
-		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
-		kernel-shared/*/*.[ch] \
-		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
-		libbtrfsutil/*.[ch]
+	$(Q)$(TAGS_CMD) $(tags_files)
 
 etags: FORCE
 	@echo "  ETAGS     $(ETAGS_CMD)"
-	$(Q)$(ETAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
-		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
-		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
-		libbtrfsutil/*.[ch]
+	$(Q)$(ETAGS_CMD) $(tags_files)
 
 cscope: FORCE
 	@echo "  CSCOPE   $(CSCOPE_CMD)"
-	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] check/*.[ch] \
-		kernel-lib/*.[ch] kernel-shared/*.[ch] libbtrfsutil/*.[ch] \
-		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
-		> cscope.files
+	$(Q)ls -1 $(tags_files) > cscope.files
 	$(Q)$(CSCOPE_CMD)
 
 clean-all: clean clean-doc clean-gen
