@@ -143,7 +143,11 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
 
         where *ID* is subvolume's (root)id, *generation* is an internal counter which is
         updated every transaction, *parent_ID* is the same as the parent subvolume's id,
-        and *path* is the relative path of the subvolume to the top level subvolume.
+        and *path* is the path of the subvolume. The exact meaning of *path*
+        depends on the **Path filtering** option used.
+
+        If -O or -A is given, "top level" is replaced by "parent".
+
         The subvolume's ID may be used by the subvolume set-default command,
         or at mount time via the *subvolid=* option.
 
@@ -151,12 +155,35 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
 
         Path filtering:
 
+        -O
+                Print <path> and all subvolumes below it, recursively. <path>
+                must be a subvolume. Paths are printed relative to <path>.
+
+                This may be used by unprivileged users, in which case this only
+                lists subvolumes that the user has access to.
+        -A
+                Print all subvolumes in the filesystem. Paths are printed
+                relative to the root of the filesystem.
+
+        You likely always want either -O or -A. The -o and -a options and the
+        default if no path filtering options are given have very confusing,
+        accidental behavior that is only kept for backwards compatibility.
+
         -o
-                Print only subvolumes below specified <path>. Note that this is not a
-                recursive command, and won't show nested subvolumes under <path>.
+                Print only the immediate children subvolumes of the subvolume
+                containing <path>. Paths are printed relative to the root of
+                the filesystem.
         -a
-                print all the subvolumes in the filesystem and distinguish between
-                absolute and relative path with respect to the given *path*.
+                Print all subvolumes in the filesystem other than the root
+                subvolume. Paths are printed relative to the root of the
+                filesystem, except that subvolumes that are not an immediate
+                child of the subvolume containing <path> are prefixed with
+                "<FS_TREE>/".
+
+        If none of these are given, print all subvolumes in the filesystem
+        other than the root subvolume. Paths below the subvolume containing
+        <path> are printed relative to that subvolume, and other paths are
+        printed relative to the root of the filesystem.
 
         Field selection:
 
