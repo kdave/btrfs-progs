@@ -1,3 +1,23 @@
+btrfs-progs-6.12 (2024-11-29)
+-----------------------------
+   * subvolume delete: add new option to do recursive subvolume deletion (for
+     regular user delete only accessible subvolumes)
+   * mkfs:
+      * new option --subvol to create subvolumes in given paths, read-write,
+        read-only and default
+      * add hard link detection support for --rootdir option
+   * fixes:
+      * receive: message verbosity fixes
+      * check: fix false positive report of missing checksum for extent holes
+      * check: handle compressed extents when checking tree log
+      * when asking Y/N user questions, flush the terminal so the question is
+        displayed (e.g. btrfstune -S)
+   * other
+      * code refactoring, error handling
+      * python packaging fixes
+      * documentation updates
+      * new tests
+
 btrfs-progs-6.11 (2024-09-17)
 -----------------------------
    * check:
