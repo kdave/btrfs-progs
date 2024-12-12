@@ -32,6 +32,9 @@
 #include <zstd_errors.h>
 #endif
 #include <zlib.h>
+#if COMPRESSION_LZO
+#include <lzo/lzo1x.h>
+#endif
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
@@ -56,6 +59,8 @@
 
 #define ZSTD_BTRFS_DEFAULT_LEVEL 3
 #define ZSTD_BTRFS_MAX_LEVEL 15
+
+#define LZO_LEN 4
 
 static u32 fs_block_size;
 
@@ -526,6 +531,67 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 	return -E2BIG;
 }
 
+#if COMPRESSION_LZO
+/*
+ * Returns the size of the compressed data if successful, -E2BIG if it is
+ * incompressible, or an error code.
+ */
+static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
+				   size_t in_size, void *out_buf, char *wrkmem)
+{
+	int ret;
+	unsigned int sectors;
+	u32 total_size, out_pos;
+
+	out_pos = LZO_LEN;
+	total_size = LZO_LEN;
+	sectors = DIV_ROUND_UP(in_size, sectorsize);
+
+	for (unsigned int i = 0; i < sectors; i++) {
+		lzo_uint in_len, out_len;
+		size_t new_pos;
+		u32 padding;
+
+		in_len = min((size_t)sectorsize, in_size - (i * sectorsize));
+
+		ret = lzo1x_1_compress(in_buf + (i * sectorsize), in_len,
+				       out_buf + out_pos + LZO_LEN, &out_len,
+				       wrkmem);
+		if (ret) {
+			error("lzo1x_1_compress returned %i", ret);
+			return -EINVAL;
+		}
+
+		put_unaligned_le32(out_len, out_buf + out_pos);
+
+		new_pos = out_pos + LZO_LEN + out_len;
+
+		/* Make sure that our header doesn't cross a sector boundary. */
+		if (new_pos / sectorsize != (new_pos + LZO_LEN - 1) / sectorsize)
+			padding = round_up(new_pos, LZO_LEN) - new_pos;
+		else
+			padding = 0;
+
+		out_pos += out_len + LZO_LEN + padding;
+		total_size += out_len + LZO_LEN + padding;
+
+		/*
+		 * Follow kernel in trying to compress the first three sectors,
+		 * then giving up if the output isn't any smaller.
+		 */
+		if (i >= 3 && total_size > i * sectorsize)
+			return -E2BIG;
+	}
+
+	if (total_size > in_size)
+		return -E2BIG;
+
+	put_unaligned_le32(total_size, out_buf);
+
+	return total_size;
+}
+#endif
+
 #if COMPRESSION_ZSTD
 /*
  * Returns the size of the compressed data if successful, -E2BIG if it is
@@ -629,6 +695,7 @@ struct source_descriptor {
 	u64 size;
 	const char *path_name;
 	char *comp_buf;
+	char *wrkmem;
 };
 
 static int add_file_item_extent(struct btrfs_trans_handle *trans,
@@ -684,6 +751,14 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 							source->buf, bytes_read,
 							source->comp_buf);
 			break;
+#if COMPRESSION_LZO
+		case BTRFS_COMPRESS_LZO:
+			comp_ret = lzo_compress_extent(sectorsize, source->buf,
+						       bytes_read,
+						       source->comp_buf,
+						       source->wrkmem);
+			break;
+#endif
 #if COMPRESSION_ZSTD
 		case BTRFS_COMPRESS_ZSTD:
 			comp_ret = zstd_compress_extent(first_sector, sectorsize,
@@ -746,6 +821,11 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		if (g_compression == BTRFS_COMPRESS_ZSTD) {
 			features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
 			features |= BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD;
+			btrfs_set_super_incompat_flags(trans->fs_info->super_copy,
+						       features);
+		} else if (g_compression == BTRFS_COMPRESS_LZO) {
+			features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
+			features |= BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO;
 			btrfs_set_super_incompat_flags(trans->fs_info->super_copy,
 						       features);
 		}
@@ -849,6 +929,63 @@ out:
 	return ret;
 }
 
+#if COMPRESSION_LZO
+static u32 lzo_max_outlen(u32 inlen) {
+	/*
+	 * Return the worst-case output length for LZO.  Formula comes from
+	 * LZO.FAQ.
+	 */
+	return inlen + (inlen / 16) + 64 + 3;
+}
+
+/*
+ * Returns the size of the compressed data if successful, -E2BIG if it is
+ * incompressible, or an error code.
+ */
+static ssize_t lzo_compress_inline_extent(void *buf, u64 size, char **comp_buf,
+					  char *wrkmem)
+{
+	ssize_t ret;
+	lzo_uint out_len;
+	size_t out_size;
+	void *out = NULL;
+
+	out_size = LZO_LEN + LZO_LEN + lzo_max_outlen(size);
+
+	out = malloc(out_size);
+	if (!out) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = lzo1x_1_compress(buf, size, out + LZO_LEN + LZO_LEN, &out_len,
+			       wrkmem);
+	if (ret) {
+		error("lzo1x_1_compress returned %zi", ret);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (out_len + LZO_LEN + LZO_LEN >= size) {
+		ret = -E2BIG;
+		goto out;
+	}
+
+	put_unaligned_le32(out_len + LZO_LEN + LZO_LEN, out);
+	put_unaligned_le32(out_len, out + LZO_LEN);
+
+	*comp_buf = out;
+	ret = out_len + LZO_LEN + LZO_LEN;
+
+out:
+	if (ret < 0)
+		free(out);
+
+	return ret;
+}
+#endif
+
 #if COMPRESSION_ZSTD
 /*
  * Returns the size of the compressed data if successful, -E2BIG if it is
@@ -937,7 +1074,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	ssize_t ret_read;
 	u32 sectorsize = fs_info->sectorsize;
 	u64 file_pos = 0;
-	char *buf = NULL, *comp_buf = NULL;
+	char *buf = NULL, *comp_buf = NULL, *wrkmem = NULL;
 	struct source_descriptor source;
 	int fd;
 
@@ -948,6 +1085,20 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	if (fd == -1) {
 		error("cannot open %s: %m", path_name);
 		return ret;
+	}
+
+	if (g_compression == BTRFS_COMPRESS_LZO) {
+#if COMPRESSION_LZO
+		wrkmem = malloc(LZO1X_1_MEM_COMPRESS);
+		if (!wrkmem) {
+			ret = -ENOMEM;
+			goto end;
+		}
+#else
+		error("lzo support not compiled in");
+		ret = -EINVAL;
+		goto end;
+#endif
 	}
 
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(fs_info) &&
@@ -972,6 +1123,12 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 			ret = zlib_compress_inline_extent(buffer, st->st_size,
 							  &comp_buf);
 			break;
+#if COMPRESSION_LZO
+		case BTRFS_COMPRESS_LZO:
+			ret = lzo_compress_inline_extent(buffer, st->st_size,
+							 &comp_buf, wrkmem);
+			break;
+#endif
 #if COMPRESSION_ZSTD
 		case BTRFS_COMPRESS_ZSTD:
 			ret = zstd_compress_inline_extent(buffer, st->st_size,
@@ -1007,7 +1164,47 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		goto end;
 	}
 
-	if (g_compression != BTRFS_COMPRESS_NONE) {
+	if (g_compression == BTRFS_COMPRESS_LZO) {
+#if COMPRESSION_LZO
+		unsigned int sectors;
+		size_t comp_buf_len;
+
+		/*
+		 * LZO helpfully doesn't provide a way to specify the output
+		 * buffer size, so we need to allocate for the worst-case
+		 * scenario to avoid buffer overruns.
+		 *
+		 * 4 bytes for the total size
+		 * And for each sector:
+		 * - 4 bytes for the compressed sector size
+		 * - the worst-case output size
+		 * - 3 bytes for possible padding
+		 */
+
+		sectors = BTRFS_MAX_COMPRESSED / sectorsize;
+
+		comp_buf_len = LZO_LEN;
+		comp_buf_len += (LZO_LEN + lzo_max_outlen(sectorsize) +
+				 LZO_LEN - 1) * sectors;
+
+		comp_buf = malloc(comp_buf_len);
+		if (!comp_buf) {
+			ret = -ENOMEM;
+			goto end;
+		}
+
+		ret = lzo_init();
+		if (ret) {
+			error("lzo_init returned %i", ret);
+			ret = -EINVAL;
+			goto end;
+		}
+#else
+		error("lzo support not compiled in");
+		ret = -EINVAL;
+		goto end;
+#endif
+	} else if (g_compression != BTRFS_COMPRESS_NONE) {
 		comp_buf = malloc(BTRFS_MAX_COMPRESSED);
 		if (!comp_buf) {
 			ret = -ENOMEM;
@@ -1020,6 +1217,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	source.size = st->st_size;
 	source.path_name = path_name;
 	source.comp_buf = comp_buf;
+	source.wrkmem = wrkmem;
 
 	while (file_pos < st->st_size) {
 		ret = add_file_item_extent(trans, root, btrfs_inode, objectid,
@@ -1031,6 +1229,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	}
 
 end:
+	free(wrkmem);
 	free(comp_buf);
 	free(buf);
 	close(fd);
@@ -1451,7 +1650,13 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 
 	switch (compression) {
 	case BTRFS_COMPRESS_NONE:
+	case BTRFS_COMPRESS_LZO:
+#if !COMPRESSION_LZO
+		error("lzo support not compiled in");
+		return -EINVAL;
+#else
 		break;
+#endif
 	case BTRFS_COMPRESS_ZLIB:
 		if (compression_level > ZLIB_BTRFS_MAX_LEVEL)
 			compression_level = ZLIB_BTRFS_MAX_LEVEL;
