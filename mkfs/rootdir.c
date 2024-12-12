@@ -27,6 +27,10 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#if COMPRESSION_ZSTD
+#include <zstd.h>
+#include <zstd_errors.h>
+#endif
 #include <zlib.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/accessors.h"
@@ -49,6 +53,9 @@
 
 #define ZLIB_BTRFS_DEFAULT_LEVEL 3
 #define ZLIB_BTRFS_MAX_LEVEL 9
+
+#define ZSTD_BTRFS_DEFAULT_LEVEL 3
+#define ZSTD_BTRFS_MAX_LEVEL 15
 
 static u32 fs_block_size;
 
@@ -519,6 +526,97 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 	return -E2BIG;
 }
 
+#if COMPRESSION_ZSTD
+/*
+ * Returns the size of the compressed data if successful, -E2BIG if it is
+ * incompressible, or an error code.
+ */
+static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
+				    const void *in_buf, size_t in_size,
+				    void *out_buf)
+{
+	ZSTD_CCtx *zstd_ctx;
+	ZSTD_inBuffer input;
+	ZSTD_outBuffer output;
+	size_t zstd_ret;
+	ssize_t ret;
+
+	zstd_ctx = ZSTD_createCCtx();
+	if (!zstd_ctx) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return -ENOMEM;
+	}
+
+	zstd_ret = ZSTD_CCtx_setParameter(zstd_ctx, ZSTD_c_compressionLevel,
+					  g_compression_level);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setParameter failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	zstd_ret = ZSTD_CCtx_setPledgedSrcSize(zstd_ctx, in_size);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setPledgedSrcSize failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	output.dst = out_buf;
+	output.size = BTRFS_MAX_COMPRESSED;
+	output.pos = 0;
+
+	input.src = in_buf;
+	input.pos = 0;
+
+	/*
+	 * Try to compress the first sector - if it would be larger, return
+	 * -E2BIG so that it gets marked as nocompress.
+	 */
+	if (first_sector) {
+		input.size = sectorsize;
+
+		zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input,
+						ZSTD_e_flush);
+
+		if (ZSTD_isError(zstd_ret)) {
+			error("ZSTD_compressStream2 failed: %s",
+			      ZSTD_getErrorName(zstd_ret));
+			ret = -EINVAL;
+			goto out;
+		}
+
+		if (zstd_ret != 0 || output.pos > sectorsize) {
+			ret = -E2BIG;
+			goto out;
+		}
+	}
+
+	input.size = in_size;
+
+	zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input, ZSTD_e_end);
+
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_compressStream2 failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zstd_ret == 0 && output.pos <= in_size - sectorsize)
+		ret = output.pos;
+	else
+		ret = -E2BIG;
+
+out:
+	ZSTD_freeCCtx(zstd_ctx);
+
+	return ret;
+}
+#endif
+
 /*
  * keep our extent size at 1MB max, this makes it easier to work
  * inside the tiny block groups created during mkfs
@@ -586,6 +684,13 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 							source->buf, bytes_read,
 							source->comp_buf);
 			break;
+#if COMPRESSION_ZSTD
+		case BTRFS_COMPRESS_ZSTD:
+			comp_ret = zstd_compress_extent(first_sector, sectorsize,
+							source->buf, bytes_read,
+							source->comp_buf);
+			break;
+#endif
 		default:
 			comp_ret = -EINVAL;
 			break;
@@ -629,12 +734,21 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	}
 
 	if (do_comp) {
+		u64 features;
+
 		to_write = round_up(comp_ret, sectorsize);
 		write_buf = source->comp_buf;
 		memset(write_buf + comp_ret, 0, to_write - comp_ret);
 
 		flags |= BTRFS_INODE_COMPRESS;
 		btrfs_set_stack_inode_flags(btrfs_inode, flags);
+
+		if (g_compression == BTRFS_COMPRESS_ZSTD) {
+			features = btrfs_super_incompat_flags(trans->fs_info->super_copy);
+			features |= BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD;
+			btrfs_set_super_incompat_flags(trans->fs_info->super_copy,
+						       features);
+		}
 	} else {
 		to_write = round_up(to_read, sectorsize);
 		write_buf = source->buf;
@@ -735,6 +849,84 @@ out:
 	return ret;
 }
 
+#if COMPRESSION_ZSTD
+/*
+ * Returns the size of the compressed data if successful, -E2BIG if it is
+ * incompressible, or an error code.
+ */
+static ssize_t zstd_compress_inline_extent(char *buf, u64 size, char **comp_buf)
+{
+	ZSTD_CCtx *zstd_ctx;
+	ZSTD_inBuffer input;
+	ZSTD_outBuffer output;
+	size_t zstd_ret;
+	ssize_t ret;
+	char *out = NULL;
+
+	zstd_ctx = ZSTD_createCCtx();
+	if (!zstd_ctx) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return -ENOMEM;
+	}
+
+	zstd_ret = ZSTD_CCtx_setParameter(zstd_ctx, ZSTD_c_compressionLevel,
+					  g_compression_level);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setParameter failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	zstd_ret = ZSTD_CCtx_setPledgedSrcSize(zstd_ctx, size);
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_CCtx_setPledgedSrcSize failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	out = malloc(size);
+	if (!out) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	output.dst = out;
+	output.size = size;
+	output.pos = 0;
+
+	input.src = buf;
+	input.pos = 0;
+	input.size = size;
+
+	zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input, ZSTD_e_end);
+
+	if (ZSTD_isError(zstd_ret)) {
+		error("ZSTD_compressStream2 failed: %s",
+		      ZSTD_getErrorName(zstd_ret));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zstd_ret == 0 && output.pos < size) {
+		ret = output.pos;
+		*comp_buf = out;
+	} else {
+		ret = -E2BIG;
+	}
+
+out:
+	if (ret < 0)
+		free(out);
+
+	ZSTD_freeCCtx(zstd_ctx);
+
+	return ret;
+}
+#endif
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
@@ -780,6 +972,12 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 			ret = zlib_compress_inline_extent(buffer, st->st_size,
 							  &comp_buf);
 			break;
+#if COMPRESSION_ZSTD
+		case BTRFS_COMPRESS_ZSTD:
+			ret = zstd_compress_inline_extent(buffer, st->st_size,
+							  &comp_buf);
+			break;
+#endif
 		default:
 			ret = -E2BIG;
 			break;
@@ -1260,6 +1458,17 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 		else if (compression_level == 0)
 			compression_level = ZLIB_BTRFS_DEFAULT_LEVEL;
 		break;
+	case BTRFS_COMPRESS_ZSTD:
+#if !COMPRESSION_ZSTD
+		error("zstd support not compiled in");
+		return -EINVAL;
+#else
+		if (compression_level > ZSTD_BTRFS_MAX_LEVEL)
+			compression_level = ZSTD_BTRFS_MAX_LEVEL;
+		else if (compression_level == 0)
+			compression_level = ZSTD_BTRFS_DEFAULT_LEVEL;
+		break;
+#endif
 	default:
 		error("unsupported compression type");
 		return -EINVAL;
