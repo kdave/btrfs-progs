@@ -443,7 +443,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-u|--subvol TYPE:SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
-	OPTLINE("--compress ALGO[:LEVEL]", "compression algorithm and level to use; ALGO can be no (default), zlib, zstd"),
+	OPTLINE("--compress ALGO[:LEVEL]", "compression algorithm and level to use; ALGO can be no (default), zlib, lzo, zstd"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
 	"General:",
 	OPTLINE("-q|--quiet", "no messages except errors"),
@@ -1296,6 +1296,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 				if (!strncmp(optarg, "zlib", type_size)) {
 					compression = BTRFS_COMPRESS_ZLIB;
+				} else if (!strncmp(optarg, "lzo", type_size)) {
+					compression = BTRFS_COMPRESS_LZO;
 				} else if (!strncmp(optarg, "zstd", type_size)) {
 					compression = BTRFS_COMPRESS_ZSTD;
 				} else {
