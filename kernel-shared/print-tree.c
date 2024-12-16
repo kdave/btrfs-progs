@@ -1270,14 +1270,14 @@ static void print_extent_csum(struct extent_buffer *eb,
 
 	/*
 	 * If we don't have fs_info, only output its start position as we
-	 * don't have sectorsize for the calculation
+	 * don't have blocksize for the calculation
 	 */
 	if (!fs_info) {
 		printf("\t\trange start %llu\n", (unsigned long long)offset);
 		return;
 	}
 	csum_size = fs_info->csum_size;
-	size = (item_size / csum_size) * fs_info->sectorsize;
+	size = (item_size / csum_size) * fs_info->blocksize;
 	printf("\t\trange start %llu end %llu length %u\n",
 			(unsigned long long)offset,
 			(unsigned long long)offset + size, size);
@@ -1308,8 +1308,8 @@ static void print_extent_csum(struct extent_buffer *eb,
 			printf("[%llu] 0x", offset);
 			for (i = 0; i < csum_size; i++)
 				printf("%02x", *csum++);
-			offset += fs_info->sectorsize;
-			size -= fs_info->sectorsize;
+			offset += fs_info->blocksize;
+			size -= fs_info->blocksize;
 			curline--;
 		}
 		putchar('\n');
@@ -2259,8 +2259,8 @@ void btrfs_print_superblock(struct btrfs_super_block *sb, int full)
 	       (unsigned long long)btrfs_super_total_bytes(sb));
 	printf("bytes_used\t\t%llu\n",
 	       (unsigned long long)btrfs_super_bytes_used(sb));
-	printf("sectorsize\t\t%llu\n",
-	       (unsigned long long)btrfs_super_sectorsize(sb));
+	printf("blocksize\t\t%llu\n",
+	       (unsigned long long)btrfs_super_blocksize(sb));
 	printf("nodesize\t\t%llu\n",
 	       (unsigned long long)btrfs_super_nodesize(sb));
 	printf("leafsize (deprecated)\t%u\n",

@@ -351,21 +351,21 @@ static int convert_direct(struct btrfs_trans_handle *trans,
 			  u32 length, u64 offset, u32 convert_flags)
 {
 	struct btrfs_key key;
-	u32 sectorsize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	int ret;
 
-	BUG_ON(length > sectorsize);
-	ret = btrfs_reserve_extent(trans, root, sectorsize,
+	BUG_ON(length > blocksize);
+	ret = btrfs_reserve_extent(trans, root, blocksize,
 				   0, 0, -1ULL, &key, 1);
 	if (ret)
 		return ret;
 
-	ret = write_data_to_disk(root->fs_info, body, key.objectid, sectorsize);
+	ret = write_data_to_disk(root->fs_info, body, key.objectid, blocksize);
 	if (ret)
 		return ret;
 
 	return btrfs_convert_file_extent(trans, root, objectid, inode, offset,
-					key.objectid, sectorsize);
+					key.objectid, blocksize);
 }
 
 static int reiserfs_convert_tail(struct btrfs_trans_handle *trans,
@@ -379,7 +379,7 @@ static int reiserfs_convert_tail(struct btrfs_trans_handle *trans,
 	int ret;
 
 	if (length >= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info) ||
-	    length >= root->fs_info->sectorsize)
+	    length >= root->fs_info->blocksize)
 		return convert_direct(trans, root, objectid, inode, body,
 				      length, offset, convert_flags);
 

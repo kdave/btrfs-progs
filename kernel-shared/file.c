@@ -181,14 +181,14 @@ out:
  *
  * @root:  fs/subvolume root containing the inode
  * @ino:   inode number
- * @start: offset inside the file, aligned to sectorsize
- * @len:   length to read, aligned to sectorisize
+ * @start: offset inside the file, aligned to blocksize
+ * @len:   length to read, aligned to blocksize
  * @dest:  where data will be stored
  *
  * NOTE:
  * 1) compression data is not supported yet
- * 2) @start and @len must be aligned to sectorsize
- * 3) data read out is also aligned to sectorsize, not truncated to inode size
+ * 2) @start and @len must be aligned to blocksize
+ * 3) data read out is also aligned to blocksize, not truncated to inode size
  *
  * Return < 0 for fatal error during read.
  * Otherwise return the number of successfully read data in bytes.
@@ -207,10 +207,10 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 	int read = 0;
 	int ret;
 
-	if (!IS_ALIGNED(start, fs_info->sectorsize) ||
-	    !IS_ALIGNED(len, fs_info->sectorsize)) {
+	if (!IS_ALIGNED(start, fs_info->blocksize) ||
+	    !IS_ALIGNED(len, fs_info->blocksize)) {
 		warning("@start and @len must be aligned to %u for function %s",
-			fs_info->sectorsize, __func__);
+			fs_info->blocksize, __func__);
 		return -EINVAL;
 	}
 
@@ -272,7 +272,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 				goto next;
 			read_extent_buffer(leaf, dest,
 				btrfs_file_extent_inline_start(fi), extent_len);
-			read += round_up(extent_len, fs_info->sectorsize);
+			read += round_up(extent_len, fs_info->blocksize);
 			break;
 		}
 
@@ -333,7 +333,7 @@ next:
 		ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				    struct btrfs_inode_item);
 		isize = round_up(btrfs_inode_size(path.nodes[0], ii),
-				 fs_info->sectorsize);
+				 fs_info->blocksize);
 		read = min_t(u64, isize - start, len);
 	}
 out:

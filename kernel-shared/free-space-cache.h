@@ -45,7 +45,7 @@ struct btrfs_free_space_ctl {
 	int unit;
 	u64 start;
 	void *private;
-	u32 sectorsize;
+	u32 blocksize;
 };
 
 int load_free_space_cache(struct btrfs_fs_info *fs_info,
@@ -57,7 +57,7 @@ void btrfs_dump_free_space(struct btrfs_block_group *block_group, u64 bytes);
 struct btrfs_free_space *
 btrfs_find_free_space(struct btrfs_free_space_ctl *ctl, u64 offset, u64 bytes);
 int btrfs_init_free_space_ctl(struct btrfs_block_group *block_group,
-			      int sectorsize);
+			      int blocksize);
 void unlink_free_space(struct btrfs_free_space_ctl *ctl,
 		       struct btrfs_free_space *info);
 int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,

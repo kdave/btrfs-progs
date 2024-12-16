@@ -112,7 +112,7 @@ read_policy
 sectorsize
         (RO, since: 3.14)
 
-        Shows the sectorsize of the mounted filesystem.
+        Shows the block size (previously called "sector size") of the mounted filesystem.
 
 
 temp_fsid

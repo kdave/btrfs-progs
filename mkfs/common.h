@@ -76,7 +76,7 @@ struct btrfs_mkfs_config {
 	const char *label;
 	/* Block sizes */
 	u32 nodesize;
-	u32 sectorsize;
+	u32 blocksize;
 	u32 stripesize;
 	u32 leaf_data_size;
 	struct btrfs_mkfs_features features;

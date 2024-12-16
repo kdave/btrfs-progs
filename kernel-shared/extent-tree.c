@@ -1845,7 +1845,7 @@ static int update_pinned_extents(struct btrfs_fs_info *fs_info,
 	while (num > 0) {
 		cache = btrfs_lookup_block_group(fs_info, bytenr);
 		if (!cache) {
-			len = min((u64)fs_info->sectorsize, num);
+			len = min((u64)fs_info->blocksize, num);
 			goto next;
 		}
 		WARN_ON(!cache);
@@ -2169,7 +2169,7 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans,
 {
 	int ret;
 
-	WARN_ON(num_bytes < trans->fs_info->sectorsize);
+	WARN_ON(num_bytes < trans->fs_info->blocksize);
 	/*
 	 * tree log blocks never actually go into the extent allocation
 	 * tree, just update pinning info and exit early.
@@ -2223,7 +2223,7 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 	int full_scan = 0;
 	int wrapped = 0;
 
-	WARN_ON(num_bytes < info->sectorsize);
+	WARN_ON(num_bytes < info->blocksize);
 	ins->type = BTRFS_EXTENT_ITEM_KEY;
 
 	search_start = stripe_align(root, search_start);
@@ -2382,7 +2382,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 		BUG_ON(ret);
 	}
 
-	WARN_ON(num_bytes < info->sectorsize);
+	WARN_ON(num_bytes < info->blocksize);
 	ret = find_free_extent(trans, root, num_bytes, empty_size,
 			       search_start, search_end, hint_byte, ins,
 			       trans->alloc_exclude_start,
@@ -3136,7 +3136,7 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	struct btrfs_block_group *cache;
 
 	total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
-	group_align = 64 * fs_info->sectorsize;
+	group_align = 64 * fs_info->blocksize;
 
 	cur_start = 0;
 	while (cur_start < total_bytes) {

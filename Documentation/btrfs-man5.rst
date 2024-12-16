@@ -182,8 +182,8 @@ supported_checksums
 supported_sectorsizes
         (since: 5.13)
 
-        list of values that are accepted as sector sizes (:command:`mkfs.btrfs --sectorsize`) by
-        the running kernel
+        list of values that are accepted as block sizes (previously known as
+	"sector size", :command:`mkfs.btrfs --sectorsize|--blocksize`) by the running kernel
 
 supported_rescue_options
         (since: 5.11)

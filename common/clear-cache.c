@@ -369,7 +369,7 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 		start = cache->start + cache->length;
 		if (!cache->free_space_ctl) {
 			if (btrfs_init_free_space_ctl(cache,
-						fs_info->sectorsize)) {
+						fs_info->blocksize)) {
 				ret = -ENOMEM;
 				break;
 			}

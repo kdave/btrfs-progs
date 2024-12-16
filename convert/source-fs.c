@@ -103,10 +103,10 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 	int do_barrier;
 	struct btrfs_root *root = idata->root;
 	struct btrfs_block_group *cache;
-	u32 sectorsize = root->fs_info->sectorsize;
-	u64 bytenr = disk_block * sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
+	u64 bytenr = disk_block * blocksize;
 
-	reserved = intersect_with_reserved(bytenr, sectorsize);
+	reserved = intersect_with_reserved(bytenr, blocksize);
 	do_barrier = reserved || disk_block >= idata->boundary;
 	if ((idata->num_blocks > 0 && do_barrier) ||
 	    (file_block > idata->first_block + idata->num_blocks) ||
@@ -141,7 +141,7 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 
 		idata->first_block = file_block;
 		idata->disk_block = disk_block;
-		idata->boundary = bytenr / sectorsize;
+		idata->boundary = bytenr / blocksize;
 	}
 	idata->num_blocks++;
 fail:
@@ -252,10 +252,10 @@ int record_file_blocks(struct blk_iterate_data *data,
 	struct btrfs_root *root = data->root;
 	struct btrfs_root *convert_root = data->convert_root;
 	struct btrfs_path path = { 0 };
-	u32 sectorsize = root->fs_info->sectorsize;
-	u64 file_pos = file_block * sectorsize;
-	u64 old_disk_bytenr = disk_block * sectorsize;
-	u64 num_bytes = num_blocks * sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
+	u64 file_pos = file_block * blocksize;
+	u64 old_disk_bytenr = disk_block * blocksize;
+	u64 num_bytes = num_blocks * blocksize;
 	u64 cur_off = old_disk_bytenr;
 
 	/* Hole, pass it to record_file_extent directly */

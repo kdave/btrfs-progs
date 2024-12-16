@@ -365,7 +365,7 @@ static void update_super_old(u8 *buffer)
 	struct btrfs_super_block *super = (struct btrfs_super_block *)buffer;
 	struct btrfs_chunk *chunk;
 	struct btrfs_disk_key *key;
-	u32 sectorsize = btrfs_super_sectorsize(super);
+	u32 blocksize = btrfs_super_blocksize(super);
 	u64 flags = btrfs_super_flags(super);
 
 	if (current_version->extra_sb_flags)
@@ -384,9 +384,9 @@ static void update_super_old(u8 *buffer)
 	btrfs_set_stack_chunk_owner(chunk, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_stack_chunk_stripe_len(chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_stack_chunk_type(chunk, BTRFS_BLOCK_GROUP_SYSTEM);
-	btrfs_set_stack_chunk_io_align(chunk, sectorsize);
-	btrfs_set_stack_chunk_io_width(chunk, sectorsize);
-	btrfs_set_stack_chunk_sector_size(chunk, sectorsize);
+	btrfs_set_stack_chunk_io_align(chunk, blocksize);
+	btrfs_set_stack_chunk_io_width(chunk, blocksize);
+	btrfs_set_stack_chunk_sector_size(chunk, blocksize);
 	btrfs_set_stack_chunk_num_stripes(chunk, 1);
 	btrfs_set_stack_chunk_sub_stripes(chunk, 0);
 	chunk->stripe.devid = super->dev_item.devid;

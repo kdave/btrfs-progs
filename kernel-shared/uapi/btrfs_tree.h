@@ -256,7 +256,7 @@
  * When a block group becomes very fragmented, we convert it to use bitmaps
  * instead of extents. A free space bitmap is keyed on
  * (start, FREE_SPACE_BITMAP, length); the corresponding item is a bitmap with
- * (length / sectorsize) bits.
+ * (length / blocksize) bits.
  */
 #define BTRFS_FREE_SPACE_BITMAP_KEY 200
 
@@ -672,7 +672,7 @@ struct btrfs_super_block {
 	__le64 bytes_used;
 	__le64 root_dir_objectid;
 	__le64 num_devices;
-	__le32 sectorsize;
+	__le32 blocksize;
 	__le32 nodesize;
 	__le32 __unused_leafsize;
 	__le32 stripesize;

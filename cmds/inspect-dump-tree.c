@@ -291,13 +291,13 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 
 		/*
 		 * Please note that here we can't check it against nodesize,
-		 * as it's possible a chunk is just aligned to sectorsize but
+		 * as it's possible a chunk is just aligned to blocksize but
 		 * not aligned to nodesize.
 		 */
-		if (!IS_ALIGNED(bytenr, fs_info->sectorsize)) {
+		if (!IS_ALIGNED(bytenr, fs_info->blocksize)) {
 			error(
-		"tree block bytenr %llu is not aligned to sectorsize %u",
-			      bytenr, fs_info->sectorsize);
+		"tree block bytenr %llu is not aligned to blocksize %u",
+			      bytenr, fs_info->blocksize);
 			ret = -EINVAL;
 			goto next;
 		}

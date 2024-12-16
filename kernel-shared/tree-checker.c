@@ -154,7 +154,7 @@ static u64 file_extent_end(struct extent_buffer *leaf,
 
 	if (btrfs_file_extent_type(leaf, extent) == BTRFS_FILE_EXTENT_INLINE) {
 		len = btrfs_file_extent_ram_bytes(leaf, extent);
-		end = ALIGN(key->offset + len, leaf->fs_info->sectorsize);
+		end = ALIGN(key->offset + len, leaf->fs_info->blocksize);
 	} else {
 		len = btrfs_file_extent_num_bytes(leaf, extent);
 		end = key->offset + len;
@@ -238,14 +238,14 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 {
 	struct btrfs_fs_info *fs_info = leaf->fs_info;
 	struct btrfs_file_extent_item *fi;
-	u32 sectorsize = fs_info->sectorsize;
+	u32 blocksize = fs_info->blocksize;
 	u32 item_size = btrfs_item_size(leaf, slot);
 	u64 extent_end;
 
-	if (unlikely(!IS_ALIGNED(key->offset, sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->offset, blocksize))) {
 		file_extent_err(leaf, slot,
 "unaligned file_offset for file extent, have %llu should be aligned to %u",
-			key->offset, sectorsize);
+			key->offset, blocksize);
 		return -EUCLEAN;
 	}
 
@@ -331,11 +331,11 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 			item_size, sizeof(*fi));
 		return -EUCLEAN;
 	}
-	if (unlikely(CHECK_FE_ALIGNED(leaf, slot, fi, ram_bytes, sectorsize) ||
-		     CHECK_FE_ALIGNED(leaf, slot, fi, disk_bytenr, sectorsize) ||
-		     CHECK_FE_ALIGNED(leaf, slot, fi, disk_num_bytes, sectorsize) ||
-		     CHECK_FE_ALIGNED(leaf, slot, fi, offset, sectorsize) ||
-		     CHECK_FE_ALIGNED(leaf, slot, fi, num_bytes, sectorsize)))
+	if (unlikely(CHECK_FE_ALIGNED(leaf, slot, fi, ram_bytes, blocksize) ||
+		     CHECK_FE_ALIGNED(leaf, slot, fi, disk_bytenr, blocksize) ||
+		     CHECK_FE_ALIGNED(leaf, slot, fi, disk_num_bytes, blocksize) ||
+		     CHECK_FE_ALIGNED(leaf, slot, fi, offset, blocksize) ||
+		     CHECK_FE_ALIGNED(leaf, slot, fi, num_bytes, blocksize)))
 		return -EUCLEAN;
 
 	/* Catch extent end overflow */
@@ -376,7 +376,7 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 			   int slot, struct btrfs_key *prev_key)
 {
 	struct btrfs_fs_info *fs_info = leaf->fs_info;
-	u32 sectorsize = fs_info->sectorsize;
+	u32 blocksize = fs_info->blocksize;
 	const u32 csumsize = fs_info->csum_size;
 
 	/* For fs under csum change, we should not check the regular csum items. */
@@ -390,10 +390,10 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 			key->objectid, BTRFS_EXTENT_CSUM_OBJECTID);
 		return -EUCLEAN;
 	}
-	if (unlikely(!IS_ALIGNED(key->offset, sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->offset, blocksize))) {
 		generic_err(leaf, slot,
 	"unaligned key offset for csum item, have %llu should be aligned to %u",
-			key->offset, sectorsize);
+			key->offset, blocksize);
 		return -EUCLEAN;
 	}
 	if (unlikely(!IS_ALIGNED(btrfs_item_size(leaf, slot), csumsize))) {
@@ -407,7 +407,7 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		u32 prev_item_size;
 
 		prev_item_size = btrfs_item_size(leaf, slot - 1);
-		prev_csum_end = (prev_item_size / csumsize) * sectorsize;
+		prev_csum_end = (prev_item_size / csumsize) * blocksize;
 		prev_csum_end += prev_key->offset;
 		if (unlikely(prev_csum_end > key->offset)) {
 			generic_err(leaf, slot - 1,
@@ -876,20 +876,20 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 			  num_stripes, nparity);
 		return -EUCLEAN;
 	}
-	if (unlikely(!IS_ALIGNED(logical, fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(logical, fs_info->blocksize))) {
 		chunk_err(leaf, chunk, logical,
 		"invalid chunk logical, have %llu should aligned to %u",
-			  logical, fs_info->sectorsize);
+			  logical, fs_info->blocksize);
 		return -EUCLEAN;
 	}
-	if (unlikely(btrfs_chunk_sector_size(leaf, chunk) != fs_info->sectorsize)) {
+	if (unlikely(btrfs_chunk_sector_size(leaf, chunk) != fs_info->blocksize)) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk sectorsize, have %u expect %u",
 			  btrfs_chunk_sector_size(leaf, chunk),
-			  fs_info->sectorsize);
+			  fs_info->blocksize);
 		return -EUCLEAN;
 	}
-	if (unlikely(!length || !IS_ALIGNED(length, fs_info->sectorsize))) {
+	if (unlikely(!length || !IS_ALIGNED(length, fs_info->blocksize))) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk length, have %llu", length);
 		return -EUCLEAN;
@@ -1249,10 +1249,10 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 	}
 
 	/* Alignment and level check */
-	if (unlikely(!IS_ALIGNED(btrfs_root_bytenr(&ri), fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(btrfs_root_bytenr(&ri), fs_info->blocksize))) {
 		generic_err(leaf, slot,
 		"invalid root bytenr, have %llu expect to be aligned to %u",
-			    btrfs_root_bytenr(&ri), fs_info->sectorsize);
+			    btrfs_root_bytenr(&ri), fs_info->blocksize);
 		return -EUCLEAN;
 	}
 	if (unlikely(btrfs_root_level(&ri) >= BTRFS_MAX_LEVEL)) {
@@ -1335,10 +1335,10 @@ static int check_extent_item(struct extent_buffer *leaf,
 		return -EUCLEAN;
 	}
 	/* key->objectid is the bytenr for both key types */
-	if (unlikely(!IS_ALIGNED(key->objectid, fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->objectid, fs_info->blocksize))) {
 		generic_err(leaf, slot,
 		"invalid key objectid, have %llu expect to be aligned to %u",
-			   key->objectid, fs_info->sectorsize);
+			   key->objectid, fs_info->blocksize);
 		return -EUCLEAN;
 	}
 
@@ -1428,10 +1428,10 @@ static int check_extent_item(struct extent_buffer *leaf,
 				   key->type, BTRFS_EXTENT_ITEM_KEY);
 			return -EUCLEAN;
 		}
-		if (unlikely(!IS_ALIGNED(key->offset, fs_info->sectorsize))) {
+		if (unlikely(!IS_ALIGNED(key->offset, fs_info->blocksize))) {
 			extent_err(leaf, slot,
 			"invalid extent length, have %llu expect aligned to %u",
-				   key->offset, fs_info->sectorsize);
+				   key->offset, fs_info->blocksize);
 			return -EUCLEAN;
 		}
 		if (unlikely(flags & BTRFS_BLOCK_FLAG_FULL_BACKREF)) {
@@ -1492,10 +1492,10 @@ static int check_extent_item(struct extent_buffer *leaf,
 		/* Contains parent bytenr */
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			if (unlikely(!IS_ALIGNED(inline_offset,
-						 fs_info->sectorsize))) {
+						 fs_info->blocksize))) {
 				extent_err(leaf, slot,
 		"invalid tree parent bytenr, have %llu expect aligned to %u",
-					   inline_offset, fs_info->sectorsize);
+					   inline_offset, fs_info->blocksize);
 				return -EUCLEAN;
 			}
 			inline_refs++;
@@ -1512,10 +1512,10 @@ static int check_extent_item(struct extent_buffer *leaf,
 					btrfs_extent_data_ref_objectid(leaf, dref),
 					btrfs_extent_data_ref_offset(leaf, dref));
 			if (unlikely(!IS_ALIGNED(dref_offset,
-						 fs_info->sectorsize))) {
+						 fs_info->blocksize))) {
 				extent_err(leaf, slot,
 		"invalid data ref offset, have %llu expect aligned to %u",
-					   dref_offset, fs_info->sectorsize);
+					   dref_offset, fs_info->blocksize);
 				return -EUCLEAN;
 			}
 			inline_refs += btrfs_extent_data_ref_count(leaf, dref);
@@ -1524,10 +1524,10 @@ static int check_extent_item(struct extent_buffer *leaf,
 		case BTRFS_SHARED_DATA_REF_KEY:
 			sref = (struct btrfs_shared_data_ref *)(iref + 1);
 			if (unlikely(!IS_ALIGNED(inline_offset,
-						 fs_info->sectorsize))) {
+						 fs_info->blocksize))) {
 				extent_err(leaf, slot,
 		"invalid data parent bytenr, have %llu expect aligned to %u",
-					   inline_offset, fs_info->sectorsize);
+					   inline_offset, fs_info->blocksize);
 				return -EUCLEAN;
 			}
 			inline_refs += btrfs_shared_data_ref_count(leaf, sref);
@@ -1612,17 +1612,17 @@ static int check_simple_keyed_refs(struct extent_buffer *leaf,
 			    expect_item_size, key->type);
 		return -EUCLEAN;
 	}
-	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->blocksize))) {
 		generic_err(leaf, slot,
 "invalid key objectid for shared block ref, have %llu expect aligned to %u",
-			    key->objectid, leaf->fs_info->sectorsize);
+			    key->objectid, leaf->fs_info->blocksize);
 		return -EUCLEAN;
 	}
 	if (unlikely(key->type != BTRFS_TREE_BLOCK_REF_KEY &&
-		     !IS_ALIGNED(key->offset, leaf->fs_info->sectorsize))) {
+		     !IS_ALIGNED(key->offset, leaf->fs_info->blocksize))) {
 		extent_err(leaf, slot,
 		"invalid tree parent bytenr, have %llu expect aligned to %u",
-			   key->offset, leaf->fs_info->sectorsize);
+			   key->offset, leaf->fs_info->blocksize);
 		return -EUCLEAN;
 	}
 	return 0;
@@ -1642,10 +1642,10 @@ static int check_extent_data_ref(struct extent_buffer *leaf,
 			    sizeof(*dref), key->type);
 		return -EUCLEAN;
 	}
-	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->blocksize))) {
 		generic_err(leaf, slot,
 "invalid key objectid for shared block ref, have %llu expect aligned to %u",
-			    key->objectid, leaf->fs_info->sectorsize);
+			    key->objectid, leaf->fs_info->blocksize);
 		return -EUCLEAN;
 	}
 	for (; ptr < end; ptr += sizeof(*dref)) {
@@ -1657,10 +1657,10 @@ static int check_extent_data_ref(struct extent_buffer *leaf,
 		 */
 		dref = (struct btrfs_extent_data_ref *)ptr;
 		offset = btrfs_extent_data_ref_offset(leaf, dref);
-		if (unlikely(!IS_ALIGNED(offset, leaf->fs_info->sectorsize))) {
+		if (unlikely(!IS_ALIGNED(offset, leaf->fs_info->blocksize))) {
 			extent_err(leaf, slot,
 	"invalid extent data backref offset, have %llu expect aligned to %u",
-				   offset, leaf->fs_info->sectorsize);
+				   offset, leaf->fs_info->blocksize);
 			return -EUCLEAN;
 		}
 	}
@@ -1722,10 +1722,10 @@ static int check_inode_ref(struct extent_buffer *leaf,
 static int check_raid_stripe_extent(const struct extent_buffer *leaf,
 				    const struct btrfs_key *key, int slot)
 {
-	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->objectid, leaf->fs_info->blocksize))) {
 		generic_err(leaf, slot,
 "invalid key objectid for raid stripe extent, have %llu expect aligned to %u",
-			    key->objectid, leaf->fs_info->sectorsize);
+			    key->objectid, leaf->fs_info->blocksize);
 		return -EUCLEAN;
 	}
 
@@ -1744,7 +1744,7 @@ static int check_dev_extent_item(const struct extent_buffer *leaf,
 				 struct btrfs_key *prev_key)
 {
 	struct btrfs_dev_extent *de;
-	const u32 sectorsize = leaf->fs_info->sectorsize;
+	const u32 blocksize = leaf->fs_info->blocksize;
 
 	de = btrfs_item_ptr(leaf, slot, struct btrfs_dev_extent);
 	/* Basic fixed member checks. */
@@ -1765,25 +1765,25 @@ static int check_dev_extent_item(const struct extent_buffer *leaf,
 		return -EUCLEAN;
 	}
 	/* Alignment check. */
-	if (unlikely(!IS_ALIGNED(key->offset, sectorsize))) {
+	if (unlikely(!IS_ALIGNED(key->offset, blocksize))) {
 		generic_err(leaf, slot,
 			    "invalid dev extent key.offset, has %llu not aligned to %u",
-			    key->offset, sectorsize);
+			    key->offset, blocksize);
 		return -EUCLEAN;
 	}
 	if (unlikely(!IS_ALIGNED(btrfs_dev_extent_chunk_offset(leaf, de),
-				 sectorsize))) {
+				 blocksize))) {
 		generic_err(leaf, slot,
 			    "invalid dev extent chunk offset, has %llu not aligned to %u",
 			    btrfs_dev_extent_chunk_objectid(leaf, de),
-			    sectorsize);
+			    blocksize);
 		return -EUCLEAN;
 	}
 	if (unlikely(!IS_ALIGNED(btrfs_dev_extent_length(leaf, de),
-				 sectorsize))) {
+				 blocksize))) {
 		generic_err(leaf, slot,
 			    "invalid dev extent length, has %llu not aligned to %u",
-			    btrfs_dev_extent_length(leaf, de), sectorsize);
+			    btrfs_dev_extent_length(leaf, de), blocksize);
 		return -EUCLEAN;
 	}
 	/* Overlap check with previous dev extent. */
@@ -2087,10 +2087,10 @@ enum btrfs_tree_block_status __btrfs_check_node(struct extent_buffer *node)
 				"invalid NULL node pointer");
 			return BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
 		}
-		if (unlikely(!IS_ALIGNED(bytenr, fs_info->sectorsize))) {
+		if (unlikely(!IS_ALIGNED(bytenr, fs_info->blocksize))) {
 			generic_err(node, slot,
 			"unaligned pointer, have %llu should be aligned to %u",
-				bytenr, fs_info->sectorsize);
+				bytenr, fs_info->blocksize);
 			return BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
 		}
 

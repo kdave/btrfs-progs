@@ -148,7 +148,7 @@ btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 			goto fail;
 
 		csum_offset = (bytenr - found_key.offset) /
-				root->fs_info->sectorsize;
+				root->fs_info->blocksize;
 		csums_in_item = btrfs_item_size(leaf, path->slots[0]);
 		csums_in_item /= csum_size;
 
@@ -181,7 +181,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 	struct extent_buffer *leaf = NULL;
 	u64 csum_offset;
 	u8 csum_result[BTRFS_CSUM_SIZE];
-	u32 sectorsize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	u32 nritems;
 	u32 ins_size;
 	u16 csum_size = btrfs_csum_type_size(csum_type);
@@ -256,7 +256,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 	path->slots[0]--;
 	leaf = path->nodes[0];
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-	csum_offset = (file_key.offset - found_key.offset) / sectorsize;
+	csum_offset = (file_key.offset - found_key.offset) / blocksize;
 	if (found_key.objectid != csum_objectid ||
 	    found_key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    csum_offset >= MAX_CSUM_ITEMS(root, csum_size)) {
@@ -276,9 +276,9 @@ insert:
 	btrfs_release_path(path);
 	csum_offset = 0;
 	if (found_next) {
-		u64 tmp = min(logical + sectorsize, next_offset);
+		u64 tmp = min(logical + blocksize, next_offset);
 		tmp -= file_key.offset;
-		tmp /= sectorsize;
+		tmp /= blocksize;
 		tmp = max((u64)1, tmp);
 		tmp = min(tmp, (u64)MAX_CSUM_ITEMS(root, csum_size));
 		ins_size = csum_size * tmp;
@@ -301,7 +301,7 @@ csum:
 					  csum_offset * csum_size);
 found:
 	btrfs_csum_data(root->fs_info, csum_type, (u8 *)data, csum_result,
-			sectorsize);
+			blocksize);
 	write_extent_buffer(leaf, csum_result, (unsigned long)item,
 			    csum_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
@@ -330,11 +330,11 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 	u16 csum_size = root->fs_info->csum_size;
 	u64 csum_end;
 	u64 end_byte = bytenr + len;
-	u32 blocksize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 
 	leaf = path->nodes[0];
 	csum_end = btrfs_item_size(leaf, path->slots[0]) / csum_size;
-	csum_end *= root->fs_info->sectorsize;
+	csum_end *= root->fs_info->blocksize;
 	csum_end += key->offset;
 
 	if (key->offset < bytenr && csum_end <= end_byte) {
@@ -382,7 +382,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	struct extent_buffer *leaf;
 	int ret;
 	u16 csum_size = trans->fs_info->csum_size;
-	int blocksize = trans->fs_info->sectorsize;
+	int blocksize = trans->fs_info->blocksize;
 
 	path = btrfs_alloc_path();
 	if (!path)

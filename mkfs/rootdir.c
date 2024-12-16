@@ -75,7 +75,7 @@ static u32 fs_block_size;
  * 2) Data space for each (regular) inode
  *    To estimate data chunk size.
  *    Don't care if it can fit as an inline extent.
- *    Always round them up to sectorsize.
+ *    Always round them up to blocksize.
  */
 static u64 ftw_meta_nr_inode;
 static u64 ftw_data_size;
@@ -475,7 +475,7 @@ fail:
  * Returns the size of the compressed data if successful, -E2BIG if it is
  * incompressible, or an error code.
  */
-static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
+static ssize_t zlib_compress_extent(bool first_sector, u32 blocksize,
 				    const void *in_buf, size_t in_size,
 				    void *out_buf)
 {
@@ -501,7 +501,7 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 	 * return -E2BIG.
 	 */
 	if (first_sector) {
-		strm.avail_in = sectorsize;
+		strm.avail_in = blocksize;
 
 		ret = deflate(&strm, Z_SYNC_FLUSH);
 
@@ -510,10 +510,10 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 			return -EINVAL;
 		}
 
-		if (strm.avail_out < BTRFS_MAX_COMPRESSED - sectorsize)
+		if (strm.avail_out < BTRFS_MAX_COMPRESSED - blocksize)
 			return -E2BIG;
 
-		strm.avail_in += in_size - sectorsize;
+		strm.avail_in += in_size - blocksize;
 	}
 
 	ret = deflate(&strm, Z_FINISH);
@@ -525,7 +525,7 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 		return -EINVAL;
 	}
 
-	if (out_buf + BTRFS_MAX_COMPRESSED - (void *)strm.next_out > sectorsize)
+	if (out_buf + BTRFS_MAX_COMPRESSED - (void *)strm.next_out > blocksize)
 		return (void *)strm.next_out - out_buf;
 
 	return -E2BIG;
@@ -536,7 +536,7 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
  * Returns the size of the compressed data if successful, -E2BIG if it is
  * incompressible, or an error code.
  */
-static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
+static ssize_t lzo_compress_extent(u32 blocksize, const void *in_buf,
 				   size_t in_size, void *out_buf, char *wrkmem)
 {
 	int ret;
@@ -545,15 +545,15 @@ static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
 
 	out_pos = LZO_LEN;
 	total_size = LZO_LEN;
-	sectors = DIV_ROUND_UP(in_size, sectorsize);
+	sectors = DIV_ROUND_UP(in_size, blocksize);
 
 	for (unsigned int i = 0; i < sectors; i++) {
 		size_t in_len, out_len, new_pos;
 		u32 padding;
 
-		in_len = min((size_t)sectorsize, in_size - (i * sectorsize));
+		in_len = min((size_t)blocksize, in_size - (i * blocksize));
 
-		ret = lzo1x_1_compress(in_buf + (i * sectorsize), in_len,
+		ret = lzo1x_1_compress(in_buf + (i * blocksize), in_len,
 				       out_buf + out_pos + LZO_LEN, &out_len,
 				       wrkmem);
 		if (ret) {
@@ -566,7 +566,7 @@ static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
 		new_pos = out_pos + LZO_LEN + out_len;
 
 		/* Make sure that our header doesn't cross a sector boundary. */
-		if (new_pos / sectorsize != (new_pos + LZO_LEN - 1) / sectorsize)
+		if (new_pos / blocksize != (new_pos + LZO_LEN - 1) / blocksize)
 			padding = round_up(new_pos, LZO_LEN) - new_pos;
 		else
 			padding = 0;
@@ -578,7 +578,7 @@ static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
 		 * Follow kernel in trying to compress the first three sectors,
 		 * then giving up if the output isn't any smaller.
 		 */
-		if (i >= 3 && total_size > i * sectorsize)
+		if (i >= 3 && total_size > i * blocksize)
 			return -E2BIG;
 	}
 
@@ -596,7 +596,7 @@ static ssize_t lzo_compress_extent(u32 sectorsize, const void *in_buf,
  * Returns the size of the compressed data if successful, -E2BIG if it is
  * incompressible, or an error code.
  */
-static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
+static ssize_t zstd_compress_extent(bool first_sector, u32 blocksize,
 				    const void *in_buf, size_t in_size,
 				    void *out_buf)
 {
@@ -641,7 +641,7 @@ static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
 	 * -E2BIG so that it gets marked as nocompress.
 	 */
 	if (first_sector) {
-		input.size = sectorsize;
+		input.size = blocksize;
 
 		zstd_ret = ZSTD_compressStream2(zstd_ctx, &output, &input,
 						ZSTD_e_flush);
@@ -653,7 +653,7 @@ static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
 			goto out;
 		}
 
-		if (zstd_ret != 0 || output.pos > sectorsize) {
+		if (zstd_ret != 0 || output.pos > blocksize) {
 			ret = -E2BIG;
 			goto out;
 		}
@@ -670,7 +670,7 @@ static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
 		goto out;
 	}
 
-	if (zstd_ret == 0 && output.pos <= in_size - sectorsize)
+	if (zstd_ret == 0 && output.pos <= in_size - blocksize)
 		ret = output.pos;
 	else
 		ret = -E2BIG;
@@ -705,7 +705,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 				u64 file_pos)
 {
 	int ret;
-	u32 sectorsize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	u64 bytes_read, first_block, to_read, to_write;
 	struct btrfs_key key;
 	struct btrfs_file_extent_item stack_fi = { 0 };
@@ -738,7 +738,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		bytes_read += ret_read;
 	}
 
-	if (bytes_read <= sectorsize)
+	if (bytes_read <= blocksize)
 		do_comp = false;
 
 	if (do_comp) {
@@ -746,13 +746,13 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 
 		switch (g_compression) {
 		case BTRFS_COMPRESS_ZLIB:
-			comp_ret = zlib_compress_extent(first_sector, sectorsize,
+			comp_ret = zlib_compress_extent(first_sector, blocksize,
 							source->buf, bytes_read,
 							source->comp_buf);
 			break;
 #if COMPRESSION_LZO
 		case BTRFS_COMPRESS_LZO:
-			comp_ret = lzo_compress_extent(sectorsize, source->buf,
+			comp_ret = lzo_compress_extent(blocksize, source->buf,
 						       bytes_read,
 						       source->comp_buf,
 						       source->wrkmem);
@@ -760,7 +760,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 #endif
 #if COMPRESSION_ZSTD
 		case BTRFS_COMPRESS_ZSTD:
-			comp_ret = zstd_compress_extent(first_sector, sectorsize,
+			comp_ret = zstd_compress_extent(first_sector, blocksize,
 							source->buf, bytes_read,
 							source->comp_buf);
 			break;
@@ -810,7 +810,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	if (do_comp) {
 		u64 features;
 
-		to_write = round_up(comp_ret, sectorsize);
+		to_write = round_up(comp_ret, blocksize);
 		write_buf = source->comp_buf;
 		memset(write_buf + comp_ret, 0, to_write - comp_ret);
 
@@ -829,7 +829,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 						       features);
 		}
 	} else {
-		to_write = round_up(to_read, sectorsize);
+		to_write = round_up(to_read, blocksize);
 		write_buf = source->buf;
 		memset(write_buf + to_read, 0, to_write - to_read);
 	}
@@ -848,11 +848,11 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	for (unsigned int i = 0; i < to_write / sectorsize; i++) {
-		ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
+	for (unsigned int i = 0; i < to_write / blocksize; i++) {
+		ret = btrfs_csum_file_block(trans, first_block + (i * blocksize),
 					BTRFS_EXTENT_CSUM_OBJECTID,
 					root->fs_info->csum_type,
-					write_buf + (i * sectorsize));
+					write_buf + (i * blocksize));
 		if (ret)
 			return ret;
 	}
@@ -860,8 +860,8 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
 	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
 	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, to_write);
-	btrfs_set_stack_file_extent_num_bytes(&stack_fi, round_up(to_read, sectorsize));
-	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, round_up(to_read, sectorsize));
+	btrfs_set_stack_file_extent_num_bytes(&stack_fi, round_up(to_read, blocksize));
+	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, round_up(to_read, blocksize));
 
 	if (do_comp)
 		btrfs_set_stack_file_extent_compression(&stack_fi, g_compression);
@@ -1070,7 +1070,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	int ret = -1;
 	ssize_t ret_read;
-	u32 sectorsize = fs_info->sectorsize;
+	u32 blocksize = fs_info->blocksize;
 	u64 file_pos = 0;
 	char *buf = NULL, *comp_buf = NULL, *wrkmem = NULL;
 	struct source_descriptor source;
@@ -1100,7 +1100,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	}
 
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(fs_info) &&
-	    st->st_size < sectorsize) {
+	    st->st_size < blocksize) {
 		char *buffer = malloc(st->st_size);
 
 		if (!buffer) {
@@ -1179,10 +1179,10 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		 * - 3 bytes for possible padding
 		 */
 
-		sectors = BTRFS_MAX_COMPRESSED / sectorsize;
+		sectors = BTRFS_MAX_COMPRESSED / blocksize;
 
 		comp_buf_len = LZO_LEN;
-		comp_buf_len += (LZO_LEN + lzo_max_outlen(sectorsize) +
+		comp_buf_len += (LZO_LEN + lzo_max_outlen(blocksize) +
 				 LZO_LEN - 1) * sectors;
 
 		comp_buf = malloc(comp_buf_len);
@@ -1721,7 +1721,7 @@ static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 	return 0;
 }
 
-u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
+u64 btrfs_mkfs_size_dir(const char *dir_name, u32 blocksize, u64 min_dev_size,
 			u64 meta_profile, u64 data_profile)
 {
 	u64 total_size = 0;
@@ -1737,7 +1737,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	float data_multiplier = 1;
 	float meta_multiplier = 1;
 
-	fs_block_size = sectorsize;
+	fs_block_size = blocksize;
 	ftw_data_size = 0;
 	ftw_meta_nr_inode = 0;
 
@@ -1759,7 +1759,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	 * 2) DIR_INDEX
 	 * 3) INODE_REF
 	 *
-	 * Plus possible inline extent size, which is sectorsize.
+	 * Plus possible inline extent size, which is blocksize.
 	 *
 	 * And finally, allow metadata usage to increase with data size.
 	 * Follow the old kernel 8:1 data:meta ratio.
@@ -1767,7 +1767,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	 * upper limit is 1M, instead of 128M in kernel.
 	 * This can bump meta usage easily.
 	 */
-	meta_size = ftw_meta_nr_inode * (PATH_MAX * 3 + sectorsize) +
+	meta_size = ftw_meta_nr_inode * (PATH_MAX * 3 + blocksize) +
 		    ftw_data_size / 8;
 
 	/* Minimal chunk size from btrfs_alloc_chunk(). */
@@ -1798,7 +1798,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 
 /*
  * Get the end position of the last device extent for given @devid;
- * @size_ret is exclusive (means it should be aligned to sectorsize)
+ * @size_ret is exclusive (means it should be aligned to blocksize)
  */
 static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 				 u64 devid, u64 *size_ret)
@@ -1942,9 +1942,9 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 		return ret;
 	}
 
-	if (!IS_ALIGNED(new_size, fs_info->sectorsize)) {
+	if (!IS_ALIGNED(new_size, fs_info->blocksize)) {
 		error("shrunk filesystem size %llu not aligned to %u",
-				new_size, fs_info->sectorsize);
+				new_size, fs_info->blocksize);
 		return -EUCLEAN;
 	}
 

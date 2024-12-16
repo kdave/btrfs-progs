@@ -307,12 +307,12 @@ static int ext2_block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 static int iterate_one_file_extent(struct blk_iterate_data *data, u64 filepos,
 				   u64 len, u64 disk_bytenr, bool prealloced)
 {
-	const int sectorsize = data->trans->fs_info->sectorsize;
-	const int sectorbits = ilog2(sectorsize);
+	const int blocksize = data->trans->fs_info->blocksize;
+	const int sectorbits = ilog2(blocksize);
 	int ret;
 
 	UASSERT(len > 0);
-	for (int i = 0; i < len; i += sectorsize) {
+	for (int i = 0; i < len; i += blocksize) {
 		/*
 		 * Just treat preallocated extent as hole.
 		 *
@@ -336,8 +336,8 @@ static int iterate_file_extents(struct blk_iterate_data *data, ext2_filsys ext2f
 {
 	ext2_extent_handle_t handle = NULL;
 	struct ext2fs_extent extent;
-	const int sectorsize = data->trans->fs_info->sectorsize;
-	const int sectorbits = ilog2(sectorsize);
+	const int blocksize = data->trans->fs_info->blocksize;
+	const int sectorbits = ilog2(blocksize);
 	int op = EXT2_EXTENT_ROOT;
 	errcode_t errcode;
 	int ret = 0;
@@ -396,7 +396,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	errcode_t err;
 	struct ext2_inode ext2_inode = { 0 };
 	u32 last_block;
-	u32 sectorsize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
 	bool meet_inline_size_limit;
 	struct blk_iterate_data data;
@@ -444,8 +444,8 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 		goto fail;
 	if ((convert_flags & CONVERT_FLAG_INLINE_DATA) && data.first_block == 0
 	    && data.num_blocks > 0 && meet_inline_size_limit) {
-		u64 num_bytes = data.num_blocks * sectorsize;
-		u64 disk_bytenr = data.disk_block * sectorsize;
+		u64 num_bytes = data.num_blocks * blocksize;
+		u64 disk_bytenr = data.disk_block * blocksize;
 		u64 nbytes;
 
 		buffer = malloc(num_bytes);
@@ -471,7 +471,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 			goto fail;
 	}
 	data.first_block += data.num_blocks;
-	last_block = (inode_size + sectorsize - 1) / sectorsize;
+	last_block = (inode_size + blocksize - 1) / blocksize;
 	if (last_block > data.first_block) {
 		ret = record_file_blocks(&data, data.first_block, 0,
 					 last_block - data.first_block);

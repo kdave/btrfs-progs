@@ -109,7 +109,7 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 	struct btrfs_super_block super = {};
 	int ret;
 
-	cfg->num_bytes = round_down(cfg->num_bytes, cfg->sectorsize);
+	cfg->num_bytes = round_down(cfg->num_bytes, cfg->blocksize);
 
 	if (*cfg->fs_uuid) {
 		if (uuid_parse(cfg->fs_uuid, super.fsid) != 0) {
@@ -143,7 +143,7 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 	 * and csum tree.
 	 */
 	btrfs_set_super_bytes_used(&super, 6 * cfg->nodesize);
-	btrfs_set_super_sectorsize(&super, cfg->sectorsize);
+	btrfs_set_super_blocksize(&super, cfg->blocksize);
 	super.__unused_leafsize = cpu_to_le32(cfg->nodesize);
 	btrfs_set_super_nodesize(&super, cfg->nodesize);
 	btrfs_set_super_stripesize(&super, cfg->stripesize);
@@ -344,9 +344,9 @@ static int insert_temp_dev_item(int fd, struct extent_buffer *buf,
 	btrfs_set_device_bytes_used(buf, dev_item,
 			BTRFS_MKFS_SYSTEM_GROUP_SIZE +
 			BTRFS_CONVERT_META_GROUP_SIZE);
-	btrfs_set_device_io_align(buf, dev_item, cfg->sectorsize);
-	btrfs_set_device_io_width(buf, dev_item, cfg->sectorsize);
-	btrfs_set_device_sector_size(buf, dev_item, cfg->sectorsize);
+	btrfs_set_device_io_align(buf, dev_item, cfg->blocksize);
+	btrfs_set_device_io_width(buf, dev_item, cfg->blocksize);
+	btrfs_set_device_sector_size(buf, dev_item, cfg->blocksize);
 	btrfs_set_device_type(buf, dev_item, 0);
 
 	/* Super dev_item is not complete, copy the complete one to sb */
@@ -388,9 +388,9 @@ static int insert_temp_chunk_item(int fd, struct extent_buffer *buf,
 	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_chunk_stripe_len(buf, chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_chunk_type(buf, chunk, type);
-	btrfs_set_chunk_io_align(buf, chunk, cfg->sectorsize);
-	btrfs_set_chunk_io_width(buf, chunk, cfg->sectorsize);
-	btrfs_set_chunk_sector_size(buf, chunk, cfg->sectorsize);
+	btrfs_set_chunk_io_align(buf, chunk, cfg->blocksize);
+	btrfs_set_chunk_io_width(buf, chunk, cfg->blocksize);
+	btrfs_set_chunk_sector_size(buf, chunk, cfg->blocksize);
 	btrfs_set_chunk_num_stripes(buf, chunk, 1);
 	/* TODO: Support DUP profile for system chunk */
 	btrfs_set_stripe_devid_nr(buf, chunk, 0, 1);

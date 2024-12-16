@@ -98,7 +98,7 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
  * For symlink we allow up to PATH_MAX - 1 (PATH_MAX includes the terminating NUL,
  * but fs doesn't store that terminating NUL).
  *
- * But for inlined data extents, the up limit is sectorsize - 1 (inclusive), or a
+ * But for inlined data extents, the up limit is blocksize - 1 (inclusive), or a
  * regular extent should be created instead.
  */
 static inline u32 btrfs_symlink_max_size(struct btrfs_fs_info *fs_info)
@@ -110,7 +110,7 @@ static inline u32 btrfs_symlink_max_size(struct btrfs_fs_info *fs_info)
 static inline u32 btrfs_data_inline_max_size(struct btrfs_fs_info *fs_info)
 {
 	return min_t(u32, BTRFS_MAX_INLINE_DATA_SIZE(fs_info),
-		     fs_info->sectorsize - 1);
+		     fs_info->blocksize - 1);
 }
 
 #endif

@@ -94,7 +94,7 @@ OPTIONS
         mode may lead to degraded performance on larger filesystems, but is otherwise
         usable, even on multiple devices.
 
-        The *nodesize* and *sectorsize* must be equal, and the block group types must
+        The *nodesize* and *blocksize* must be equal, and the block group types must
         match.
 
         .. note::
@@ -108,7 +108,7 @@ OPTIONS
 -n|--nodesize <size>
         Specify the nodesize, the tree block size in which btrfs stores metadata. The
         default value is 16KiB (16384) or the page size, whichever is bigger. Must be a
-        multiple of the sectorsize and a power of 2, but not larger than 64KiB (65536).
+        multiple of the blocksize and a power of 2, but not larger than 64KiB (65536).
         Leafsize always equals nodesize and the options are aliases.
 
         Smaller node size increases fragmentation but leads to taller b-trees which in
@@ -119,11 +119,17 @@ OPTIONS
         .. note::
                 Versions up to 3.11 set the nodesize to 4KiB.
 
--s|--sectorsize <size>
-        Specify the sectorsize, the minimum data block allocation unit.
+-s|--sectorsize|--blocksize <size>
+        Specify the block size, the minimum data block allocation unit.
 
-        .. note::
-                Versions prior to 6.7 set the sectorsize matching the host CPU
+	.. note::
+		Btrfs-progs versions prior to 6.14 uses the name "sectorsize" to
+		describe the minimum data block allocation unit, which is not
+		following other filesystems' terminology.
+		From version 6.14, documentation and source code will convert
+		to use the name "blocksize" instead.
+
+                Versions prior to 6.7 set the blocksize matching the host CPU
                 page size, starting in 6.7 this is 4KiB for cross-architecture
                 compatibility. Please read more about the :doc:`subpage block size support<Subpage>`
                 and :ref:`its status<status-subpage-block-size>`.
@@ -618,7 +624,7 @@ The combination of small filesystem size and large nodesize is not recommended
 in general and can lead to various ENOSPC-related issues during mount time or runtime.
 
 Since mixed block group creation is optional, we allow small
-filesystem instances with differing values for *sectorsize* and *nodesize*
+filesystem instances with differing values for *blocksize* and *nodesize*
 to be created and could end up in the following situation:
 
 .. code-block:: none

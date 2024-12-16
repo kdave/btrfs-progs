@@ -191,7 +191,7 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 			    u64 disk_bytenr, u64 num_bytes)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
-	u32 blocksize = fs_info->sectorsize;
+	u32 blocksize = fs_info->blocksize;
 	u64 offset;
 	char *buffer;
 	int ret = 0;
@@ -237,12 +237,12 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	int ret;
 	u32 datacsum = convert_flags & CONVERT_FLAG_DATACSUM;
 
-	if (bytenr != round_down(bytenr, root->fs_info->sectorsize)) {
-		error("bytenr not sectorsize aligned: %llu", bytenr);
+	if (bytenr != round_down(bytenr, root->fs_info->blocksize)) {
+		error("bytenr not blocksize aligned: %llu", bytenr);
 		return -EINVAL;
 	}
-	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("length not sectorsize aligned: %llu", len);
+	if (len != round_down(len, root->fs_info->blocksize)) {
+		error("length not blocksize aligned: %llu", len);
 		return -EINVAL;
 	}
 	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
@@ -333,8 +333,8 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 				bytenr);
 	}
 
-	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("remaining length not sectorsize aligned: %llu", len);
+	if (len != round_down(len, root->fs_info->blocksize)) {
+		error("remaining length not blocksize aligned: %llu", len);
 		return -EINVAL;
 	}
 	ret = btrfs_convert_file_extent(trans, root, ino, inode, bytenr,
@@ -395,9 +395,9 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 			break;
 		cur_len = min(cache->start + cache->size, range_end(range)) -
 			  cur_off;
-		if (cur_len < root->fs_info->sectorsize) {
-			error("reserved range cannot be migrated: length %llu < sectorsize %u",
-				cur_len, root->fs_info->sectorsize);
+		if (cur_len < root->fs_info->blocksize) {
+			error("reserved range cannot be migrated: length %llu < blocksize %u",
+				cur_len, root->fs_info->blocksize);
 			ret = -EUCLEAN;
 			break;
 		}
@@ -937,7 +937,7 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
 	 */
 	max_chunk_size = cfg->num_bytes / 10;
 	max_chunk_size = min((u64)(SZ_1G), max_chunk_size);
-	max_chunk_size = round_down(max_chunk_size, fs_info->sectorsize);
+	max_chunk_size = round_down(max_chunk_size, fs_info->blocksize);
 
 	for (cache = first_cache_extent(data_chunks); cache;
 	     cache = next_cache_extent(cache)) {
@@ -1265,7 +1265,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	mkfs_cfg.label = cctx.label;
 	mkfs_cfg.num_bytes = cctx.total_bytes;
 	mkfs_cfg.nodesize = nodesize;
-	mkfs_cfg.sectorsize = blocksize;
+	mkfs_cfg.blocksize = blocksize;
 	mkfs_cfg.stripesize = blocksize;
 	memcpy(&mkfs_cfg.features, features, sizeof(struct btrfs_mkfs_features));
 	mkfs_cfg.leaf_data_size = __BTRFS_LEAF_DATA_SIZE(nodesize);
