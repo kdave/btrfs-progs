@@ -1471,7 +1471,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	}
 
 	UASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
-	fs_info->blocksize = btrfs_super_sectorsize(disk_super);
+	fs_info->blocksize = btrfs_super_blocksize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
 
@@ -1535,7 +1535,7 @@ static int recover_prepare(struct recover_control *rc, const char *path)
 		goto out_close_fd;
 	}
 
-	rc->blocksize = btrfs_super_sectorsize(&sb);
+	rc->blocksize = btrfs_super_blocksize(&sb);
 	rc->nodesize = btrfs_super_nodesize(&sb);
 	rc->generation = btrfs_super_generation(&sb);
 	rc->chunk_root_generation = btrfs_super_chunk_root_generation(&sb);

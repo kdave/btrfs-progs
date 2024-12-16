@@ -2259,8 +2259,8 @@ void btrfs_print_superblock(struct btrfs_super_block *sb, int full)
 	       (unsigned long long)btrfs_super_total_bytes(sb));
 	printf("bytes_used\t\t%llu\n",
 	       (unsigned long long)btrfs_super_bytes_used(sb));
-	printf("sectorsize\t\t%llu\n",
-	       (unsigned long long)btrfs_super_sectorsize(sb));
+	printf("blocksize\t\t%llu\n",
+	       (unsigned long long)btrfs_super_blocksize(sb));
 	printf("nodesize\t\t%llu\n",
 	       (unsigned long long)btrfs_super_nodesize(sb));
 	printf("leafsize (deprecated)\t%u\n",

@@ -1587,7 +1587,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 		ASSERT(!memcmp(disk_super->metadata_uuid,
 			       fs_devices->metadata_uuid, BTRFS_FSID_SIZE));
 
-	fs_info->blocksize = btrfs_super_sectorsize(disk_super);
+	fs_info->blocksize = btrfs_super_blocksize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
 	fs_info->csum_type = btrfs_super_csum_type(disk_super);
@@ -1816,13 +1816,13 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		error("nodesize unaligned: %u", btrfs_super_nodesize(sb));
 		goto error_out;
 	}
-	if (btrfs_super_sectorsize(sb) < 4096) {
+	if (btrfs_super_blocksize(sb) < 4096) {
 		error("blocksize too small: %u < 4096",
-			btrfs_super_sectorsize(sb));
+			btrfs_super_blocksize(sb));
 		goto error_out;
 	}
-	if (!IS_ALIGNED(btrfs_super_sectorsize(sb), 4096)) {
-		error("blocksize unaligned: %u", btrfs_super_sectorsize(sb));
+	if (!IS_ALIGNED(btrfs_super_blocksize(sb), 4096)) {
+		error("blocksize unaligned: %u", btrfs_super_blocksize(sb));
 		goto error_out;
 	}
 	if (btrfs_super_total_bytes(sb) == 0) {
@@ -1834,7 +1834,7 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		goto error_out;
 	}
 	if ((btrfs_super_stripesize(sb) != 4096)
-		&& (btrfs_super_stripesize(sb) != btrfs_super_sectorsize(sb))) {
+		&& (btrfs_super_stripesize(sb) != btrfs_super_blocksize(sb))) {
 		error("invalid stripesize %u", btrfs_super_stripesize(sb));
 		goto error_out;
 	}
