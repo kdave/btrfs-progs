@@ -432,7 +432,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("--csum TYPE", ""),
 	OPTLINE("--checksum TYPE", "checksum algorithm to use, crc32c (default), xxhash, sha256, blake2"),
 	OPTLINE("-n|--nodesize SIZE", "size of btree nodes"),
-	OPTLINE("-s|--sectorsize SIZE", "data block size (may not be mountable by current kernel)"),
+	OPTLINE("-s|--sectorsize|--blocksize SIZE", "data block size (may not be mountable by current kernel)"),
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features (use '-O list-all' to list features)"),
 	OPTLINE("-L|--label LABEL", "set the filesystem label"),
 	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique for a filesystem with multiple devices)"),
@@ -1105,6 +1105,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 			{ "compress", required_argument, NULL,
 				GETOPT_VAL_COMPRESS },
+			{ "blocksize", required_argument, NULL, 's' },
 #if EXPERIMENTAL
 			{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 			{ "num-global-roots", required_argument, NULL, GETOPT_VAL_GLOBAL_ROOTS },
