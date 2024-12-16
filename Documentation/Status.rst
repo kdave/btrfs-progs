@@ -298,9 +298,9 @@ Subpage block size
 ------------------
 
 Most commonly used page sizes are 4KiB, 16KiB and 64KiB. All combinations with
-a 4KiB sector size filesystems are supported. Some features are not compatible
+a 4KiB block size filesystems are supported. Some features are not compatible
 with subpage or require another feature to work. Since btrfs-progs 6.7 the default
-sector size is 4KiB as this allows cross-architecture compatibility.
+block size is 4KiB as this allows cross-architecture compatibility.
 
 .. list-table::
    :header-rows: 1
@@ -317,9 +317,9 @@ sector size is 4KiB as this allows cross-architecture compatibility.
    * - Compression
      - :statusok:`partial support`
      - Only page-aligned ranges can be compressed
-   * - Sectorsize
+   * - Blocksize
      - :statusok:`supported`
-     - The list of supported sector sizes on a given version can be found
+     - The list of supported block sizes on a given version can be found
        in file :file:`/sys/fs/btrfs/features/supported_sectorsizes`
 
 .. _status-zoned:

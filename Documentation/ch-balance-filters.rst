@@ -21,8 +21,8 @@ multiple device.
 
 The main reason why you want to have different profiles for data and metadata
 is to provide additional protection of the filesystem's metadata when devices fail,
-since a single sector of unrecoverable metadata will break the filesystem,
-while a single sector of lost data can be trivially recovered by deleting the broken file.
+since a single block of unrecoverable metadata will break the filesystem,
+while a single block of lost data can be trivially recovered by deleting the broken file.
 
 Before changing profiles, make sure there is enough unallocated space on
 existing drives to create new metadata block groups (for filesystems

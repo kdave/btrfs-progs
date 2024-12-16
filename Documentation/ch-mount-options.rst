@@ -289,10 +289,10 @@ max_inline=<bytes>
         Specify the maximum amount of space, that can be inlined in
         a metadata b-tree leaf.  The value is specified in bytes, optionally
         with a K suffix (case insensitive).  In practice, this value
-        is limited by the filesystem block size (named *sectorsize* at mkfs time),
-        and memory page size of the system. In case of sectorsize limit, there's
+        is limited by the filesystem block size (named *blocksize* at mkfs time),
+        and memory page size of the system. In case of blocksize limit, there's
         some space unavailable due to b-tree leaf headers.  For example, a 4KiB
-        sectorsize, maximum size of inline data is about 3900 bytes.
+        blocksize, maximum size of inline data is about 3900 bytes.
 
         Inlining can be completely turned off by specifying 0. This will increase data
         block slack if file sizes are much smaller than block size but will reduce

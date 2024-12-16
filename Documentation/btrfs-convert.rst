@@ -30,8 +30,8 @@ OPTIONS
 -N|--nodesize <SIZE>
         set filesystem nodesize, the tree block size in which btrfs stores its metadata.
         The default value is 16KiB (16384) or the page size, whichever is bigger.
-        Must be a multiple of the sectorsize, but not larger than 65536. See
-        :doc:`mkfs.btrfs` for more details.
+        Must be a multiple of the block size (previously called "sector size),
+	but not larger than 65536. See :doc:`mkfs.btrfs` for more details.
 -r|--rollback
         rollback to the original ext2/3/4 filesystem if possible
 -l|--label <LABEL>
