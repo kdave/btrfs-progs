@@ -675,7 +675,7 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 			if (rec->extent_end < rec->isize) {
 				start = rec->extent_end;
 				len = round_up(rec->isize,
-					       gfs_info->sectorsize) - start;
+					       gfs_info->blocksize) - start;
 			} else {
 				start = 0;
 				len = rec->extent_start;
@@ -1679,7 +1679,7 @@ static int process_file_extent(struct btrfs_root *root,
 	u64 num_bytes = 0;
 	u64 disk_bytenr = 0;
 	u64 extent_offset = 0;
-	u64 mask = gfs_info->sectorsize - 1;
+	u64 mask = gfs_info->blocksize - 1;
 	u32 max_inline_size = min_t(u32, mask,
 				BTRFS_MAX_INLINE_DATA_SIZE(gfs_info));
 	u8 compression;
@@ -1715,7 +1715,7 @@ static int process_file_extent(struct btrfs_root *root,
 		if (compression) {
 			if (btrfs_file_extent_inline_item_len(eb, slot) >
 			    max_inline_size ||
-			    num_bytes > gfs_info->sectorsize)
+			    num_bytes > gfs_info->blocksize)
 				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
 		} else {
 			if (num_bytes > max_inline_size)
@@ -2740,7 +2740,7 @@ static int repair_inode_discount_extent(struct btrfs_trans_handle *trans,
 	/* special case for a file losing all its file extent */
 	if (!found) {
 		ret = btrfs_punch_hole(trans, root, rec->ino, 0,
-				       round_up(rec->isize, gfs_info->sectorsize));
+				       round_up(rec->isize, gfs_info->blocksize));
 		if (ret < 0)
 			goto out;
 	}
@@ -5613,9 +5613,9 @@ static int process_extent_item(struct btrfs_root *root,
 
 	update_block_group_used(block_group_cache, key.objectid, num_bytes);
 
-	if (!IS_ALIGNED(key.objectid, gfs_info->sectorsize)) {
+	if (!IS_ALIGNED(key.objectid, gfs_info->blocksize)) {
 		error("ignoring invalid extent, bytenr %llu is not aligned to %u",
-		      key.objectid, gfs_info->sectorsize);
+		      key.objectid, gfs_info->blocksize);
 		return -EIO;
 	}
 	if (item_size < sizeof(*ei)) {
@@ -5637,9 +5637,9 @@ static int process_extent_item(struct btrfs_root *root,
 		      num_bytes, gfs_info->nodesize);
 		return -EIO;
 	}
-	if (!metadata && !IS_ALIGNED(num_bytes, gfs_info->sectorsize)) {
+	if (!metadata && !IS_ALIGNED(num_bytes, gfs_info->blocksize)) {
 		error("ignore invalid data extent, length %llu is not aligned to %u",
-		      num_bytes, gfs_info->sectorsize);
+		      num_bytes, gfs_info->blocksize);
 		return -EIO;
 	}
 	if (metadata)
@@ -5804,7 +5804,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	int num_copies;
 	bool csum_mismatch = false;
 
-	if (num_bytes % gfs_info->sectorsize)
+	if (num_bytes % gfs_info->blocksize)
 		return -EINVAL;
 
 	data = malloc(num_bytes);
@@ -5832,10 +5832,10 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 				tmp = offset + data_checked;
 
 				btrfs_csum_data(gfs_info, csum_type, data + tmp,
-						result, gfs_info->sectorsize);
+						result, gfs_info->blocksize);
 
 				csum_offset = leaf_offset +
-					 tmp / gfs_info->sectorsize * csum_size;
+					 tmp / gfs_info->blocksize * csum_size;
 				read_extent_buffer(eb, (char *)&csum_expected,
 						   csum_offset, csum_size);
 				if (memcmp(result, csum_expected, csum_size) != 0) {
@@ -5850,7 +5850,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 				"mirror %d bytenr %llu csum %s expected csum %s\n",
 						mirror, bytenr + tmp, found, want);
 				}
-				data_checked += gfs_info->sectorsize;
+				data_checked += gfs_info->blocksize;
 			}
 		}
 		offset += read_len;
@@ -6079,7 +6079,7 @@ static int check_csum_root(struct btrfs_root *root)
 			errors++;
 		}
 		num_entries = btrfs_item_size(leaf, path.slots[0]) / csum_size;
-		data_len = num_entries * gfs_info->sectorsize;
+		data_len = num_entries * gfs_info->blocksize;
 
 		if (num_entries > max_entries) {
 			error(
@@ -6528,7 +6528,7 @@ static int run_next_block(struct btrfs_root *root,
 								       ref),
 					btrfs_extent_data_ref_offset(buf, ref),
 					btrfs_extent_data_ref_count(buf, ref),
-					0, 0, gfs_info->sectorsize);
+					0, 0, gfs_info->blocksize);
 				continue;
 			}
 			if (key.type == BTRFS_SHARED_DATA_REF_KEY) {
@@ -6539,7 +6539,7 @@ static int run_next_block(struct btrfs_root *root,
 				add_data_backref(extent_cache,
 					key.objectid, key.offset, 0, 0, 0,
 					btrfs_shared_data_ref_count(buf, ref),
-					0, 0, gfs_info->sectorsize);
+					0, 0, gfs_info->blocksize);
 				continue;
 			}
 			if (key.type == BTRFS_ORPHAN_ITEM_KEY) {
@@ -6588,11 +6588,11 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			}
 			/* key.offset (file offset) must be aligned */
-			if (!IS_ALIGNED(key.offset, gfs_info->sectorsize)) {
+			if (!IS_ALIGNED(key.offset, gfs_info->blocksize)) {
 				ret = -EUCLEAN;
 				error(
 			"invalid file offset, have %llu expect aligned to %u",
-					key.offset, gfs_info->sectorsize);
+					key.offset, gfs_info->blocksize);
 				continue;
 			}
 			if (btrfs_file_extent_disk_bytenr(buf, fi) == 0)
@@ -8262,7 +8262,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			cur_err = 1;
 		}
 
-		if (!IS_ALIGNED(rec->start, gfs_info->sectorsize)) {
+		if (!IS_ALIGNED(rec->start, gfs_info->blocksize)) {
 			fprintf(stderr, "unaligned extent rec on [%llu %llu]\n",
 				rec->start, rec->nr);
 			ret = record_unaligned_extent_rec(rec);
@@ -8638,8 +8638,8 @@ static bool is_super_size_valid(void)
 	if (btrfs_super_flags(gfs_info->super_copy) &
 	    (BTRFS_SUPER_FLAG_METADUMP | BTRFS_SUPER_FLAG_METADUMP_V2))
 		return true;
-	if (!IS_ALIGNED(super_bytes, gfs_info->sectorsize) ||
-	    !IS_ALIGNED(total_bytes, gfs_info->sectorsize) ||
+	if (!IS_ALIGNED(super_bytes, gfs_info->blocksize) ||
+	    !IS_ALIGNED(total_bytes, gfs_info->blocksize) ||
 	    super_bytes != total_bytes) {
 		warning("minor unaligned/mismatch device size detected:"
 			"\tsuper block total bytes=%llu found total bytes=%llu",
@@ -8668,7 +8668,7 @@ static int check_devices(struct rb_root *dev_cache,
 			ret = err;
 
 		check_dev_size_alignment(dev_rec->devid, dev_rec->total_byte,
-					 gfs_info->sectorsize);
+					 gfs_info->blocksize);
 		if (dev_rec->bad_block_dev_size && !ret)
 			ret = 1;
 		dev_node = rb_next(dev_node);
@@ -9733,7 +9733,7 @@ static int check_range_csummed(struct btrfs_root *root, u64 addr, u64 length)
 			break;
 
 		num_entries = btrfs_item_size(leaf, path.slots[0]) / gfs_info->csum_size;
-		data_len = num_entries * gfs_info->sectorsize;
+		data_len = num_entries * gfs_info->blocksize;
 
 		if (addr >= key.offset && addr <= key.offset + data_len) {
 			u64 end = min(addr + length, key.offset + data_len);

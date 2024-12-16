@@ -258,8 +258,8 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 			end = start + fs_info->nodesize - 1;
 
 		if (start != end) {
-			if (!IS_ALIGNED(start, fs_info->sectorsize) ||
-			    !IS_ALIGNED(end + 1, fs_info->sectorsize)) {
+			if (!IS_ALIGNED(start, fs_info->blocksize) ||
+			    !IS_ALIGNED(end + 1, fs_info->blocksize)) {
 				fprintf(stderr, "unaligned value in the extent tree start %llu end %llu\n",
 						start, end + 1);
 				ret = -EINVAL;

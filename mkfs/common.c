@@ -420,16 +420,16 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		system_group_size = cfg->zone_size;
 	}
 
-	buf = malloc(sizeof(*buf) + max(cfg->sectorsize, cfg->nodesize));
+	buf = malloc(sizeof(*buf) + max(cfg->blocksize, cfg->nodesize));
 	if (!buf)
 		return -ENOMEM;
 
-	first_free = BTRFS_SUPER_INFO_OFFSET + cfg->sectorsize * 2 - 1;
-	first_free &= ~((u64)cfg->sectorsize - 1);
+	first_free = BTRFS_SUPER_INFO_OFFSET + cfg->blocksize * 2 - 1;
+	first_free &= ~((u64)cfg->blocksize - 1);
 
 	memset(&super, 0, sizeof(super));
 
-	num_bytes = (cfg->num_bytes / cfg->sectorsize) * cfg->sectorsize;
+	num_bytes = (cfg->num_bytes / cfg->blocksize) * cfg->blocksize;
 	if (!*cfg->fs_uuid) {
 		uuid_generate(super.fsid);
 		uuid_unparse(super.fsid, cfg->fs_uuid);
@@ -458,7 +458,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_super_chunk_root(&super, cfg->blocks[MKFS_CHUNK_TREE]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
 	btrfs_set_super_bytes_used(&super, total_used);
-	btrfs_set_super_sectorsize(&super, cfg->sectorsize);
+	btrfs_set_super_sectorsize(&super, cfg->blocksize);
 	super.__unused_leafsize = cpu_to_le32(cfg->nodesize);
 	btrfs_set_super_nodesize(&super, cfg->nodesize);
 	btrfs_set_super_stripesize(&super, cfg->stripesize);
@@ -600,9 +600,9 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_device_generation(buf, dev_item, 0);
 	btrfs_set_device_total_bytes(buf, dev_item, num_bytes);
 	btrfs_set_device_bytes_used(buf, dev_item, system_group_size);
-	btrfs_set_device_io_align(buf, dev_item, cfg->sectorsize);
-	btrfs_set_device_io_width(buf, dev_item, cfg->sectorsize);
-	btrfs_set_device_sector_size(buf, dev_item, cfg->sectorsize);
+	btrfs_set_device_io_align(buf, dev_item, cfg->blocksize);
+	btrfs_set_device_io_width(buf, dev_item, cfg->blocksize);
+	btrfs_set_device_sector_size(buf, dev_item, cfg->blocksize);
 	btrfs_set_device_type(buf, dev_item, 0);
 
 	write_extent_buffer(buf, super.dev_item.uuid,
@@ -631,9 +631,9 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_chunk_stripe_len(buf, chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_chunk_type(buf, chunk, BTRFS_BLOCK_GROUP_SYSTEM);
-	btrfs_set_chunk_io_align(buf, chunk, cfg->sectorsize);
-	btrfs_set_chunk_io_width(buf, chunk, cfg->sectorsize);
-	btrfs_set_chunk_sector_size(buf, chunk, cfg->sectorsize);
+	btrfs_set_chunk_io_align(buf, chunk, cfg->blocksize);
+	btrfs_set_chunk_io_width(buf, chunk, cfg->blocksize);
+	btrfs_set_chunk_sector_size(buf, chunk, cfg->blocksize);
 	btrfs_set_chunk_num_stripes(buf, chunk, 1);
 	btrfs_set_stripe_devid_nr(buf, chunk, 0, 1);
 	btrfs_set_stripe_offset_nr(buf, chunk, 0,

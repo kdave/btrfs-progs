@@ -441,7 +441,7 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 {
 	int ret;
 	struct extent_buffer *eb;
-	u32 sectorsize = fs_info->sectorsize;
+	u32 blocksize = fs_info->blocksize;
 
 	/*
 	 * Don't even try to create tree block for unaligned tree block
@@ -449,9 +449,9 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	 * Such unaligned tree block will free overlapping extent buffer,
 	 * causing use-after-free bugs for fuzzed images.
 	 */
-	if (bytenr < sectorsize || !IS_ALIGNED(bytenr, sectorsize)) {
-		error("tree block bytenr %llu is not aligned to sectorsize %u",
-		      bytenr, sectorsize);
+	if (bytenr < blocksize || !IS_ALIGNED(bytenr, blocksize)) {
+		error("tree block bytenr %llu is not aligned to blocksize %u",
+		      bytenr, blocksize);
 		return ERR_PTR(-EIO);
 	}
 
@@ -1453,9 +1453,9 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	generation = btrfs_super_chunk_root_generation(sb);
 
 	if (chunk_root_bytenr && !IS_ALIGNED(chunk_root_bytenr,
-					    fs_info->sectorsize)) {
+					    fs_info->blocksize)) {
 		warning("chunk_root_bytenr %llu is unaligned to %u, ignore it",
-			chunk_root_bytenr, fs_info->sectorsize);
+			chunk_root_bytenr, fs_info->blocksize);
 		chunk_root_bytenr = 0;
 	}
 
@@ -1587,7 +1587,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 		ASSERT(!memcmp(disk_super->metadata_uuid,
 			       fs_devices->metadata_uuid, BTRFS_FSID_SIZE));
 
-	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
+	fs_info->blocksize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
 	fs_info->csum_type = btrfs_super_csum_type(disk_super);
@@ -1742,7 +1742,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 /*
  * Check if the super is valid:
- * - nodesize/sectorsize - minimum, maximum, alignment
+ * - nodesize/blocksize - minimum, maximum, alignment
  * - tree block starts   - alignment
  * - number of devices   - something sane
  * - sys array size      - maximum
@@ -1817,12 +1817,12 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		goto error_out;
 	}
 	if (btrfs_super_sectorsize(sb) < 4096) {
-		error("sectorsize too small: %u < 4096",
+		error("blocksize too small: %u < 4096",
 			btrfs_super_sectorsize(sb));
 		goto error_out;
 	}
 	if (!IS_ALIGNED(btrfs_super_sectorsize(sb), 4096)) {
-		error("sectorsize unaligned: %u", btrfs_super_sectorsize(sb));
+		error("blocksize unaligned: %u", btrfs_super_sectorsize(sb));
 		goto error_out;
 	}
 	if (btrfs_super_total_bytes(sb) == 0) {

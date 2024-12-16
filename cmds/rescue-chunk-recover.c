@@ -49,7 +49,7 @@ struct recover_control {
 
 	u16 csum_size;
 	u16 csum_type;
-	u32 sectorsize;
+	u32 blocksize;
 	u32 nodesize;
 	u64 generation;
 	u64 chunk_root_generation;
@@ -475,7 +475,7 @@ static void print_scan_result(struct recover_control *rc)
 
 	printf("DEVICE SCAN RESULT:\n");
 	printf("Filesystem Information:\n");
-	printf("\tsectorsize: %d\n", rc->sectorsize);
+	printf("\tblocksize: %d\n", rc->blocksize);
 	printf("\tnodesize: %d\n", rc->nodesize);
 	printf("\ttree root generation: %llu\n", rc->generation);
 	printf("\tchunk root generation: %llu\n", rc->chunk_root_generation);
@@ -770,7 +770,7 @@ static int scan_one_device(void *dev_scan_struct)
 		dev_scan->bytenr = bytenr;
 
 		if (is_super_block_address(bytenr))
-			bytenr += rc->sectorsize;
+			bytenr += rc->blocksize;
 
 		if (pread(fd, buf->data, rc->nodesize, bytenr) <
 		    rc->nodesize)
@@ -779,13 +779,13 @@ static int scan_one_device(void *dev_scan_struct)
 		if (memcmp_extent_buffer(buf, rc->fs_devices->metadata_uuid,
 					 btrfs_header_fsid(),
 					 BTRFS_FSID_SIZE)) {
-			bytenr += rc->sectorsize;
+			bytenr += rc->blocksize;
 			continue;
 		}
 
 		if (verify_tree_block_csum_silent(buf, rc->csum_size,
 						  rc->csum_type)) {
-			bytenr += rc->sectorsize;
+			bytenr += rc->blocksize;
 			continue;
 		}
 
@@ -1086,7 +1086,7 @@ again:
 
 	if (key.objectid < end) {
 		if (key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
-			key.objectid += fs_info->sectorsize;
+			key.objectid += fs_info->blocksize;
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 			key.offset = 0;
 		}
@@ -1471,7 +1471,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	}
 
 	UASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
-	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
+	fs_info->blocksize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
 
@@ -1535,7 +1535,7 @@ static int recover_prepare(struct recover_control *rc, const char *path)
 		goto out_close_fd;
 	}
 
-	rc->sectorsize = btrfs_super_sectorsize(&sb);
+	rc->blocksize = btrfs_super_sectorsize(&sb);
 	rc->nodesize = btrfs_super_nodesize(&sb);
 	rc->generation = btrfs_super_generation(&sb);
 	rc->chunk_root_generation = btrfs_super_chunk_root_generation(&sb);
@@ -1822,7 +1822,7 @@ static int next_csum(struct btrfs_root *csum_root,
 {
 	int ret = 0;
 	struct btrfs_csum_item *csum_item;
-	u32 blocksize = csum_root->fs_info->sectorsize;
+	u32 blocksize = csum_root->fs_info->blocksize;
 	u16 csum_size = csum_root->fs_info->csum_size;
 	int csums_in_item = btrfs_item_size(*leaf, *slot) / csum_size;
 
@@ -1906,7 +1906,7 @@ out:
 
 static u64 item_end_offset(struct btrfs_root *root, struct btrfs_key *key,
 			   struct extent_buffer *leaf, int slot) {
-	u32 blocksize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	u16 csum_size = root->fs_info->csum_size;
 
 	u64 offset = btrfs_item_size(leaf, slot);
@@ -1996,7 +1996,7 @@ static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
 	u64 chunk_end = chunk->offset + chunk->length;
 	u64 csum_offset = 0;
 	u64 data_offset;
-	u32 blocksize = root->fs_info->sectorsize;
+	u32 blocksize = root->fs_info->blocksize;
 	u32 tree_csum;
 	int index = 0;
 	int num_unordered = 0;
@@ -2228,7 +2228,7 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 		chunk->type_flags = bg->flags;
 		chunk->io_width = BTRFS_STRIPE_LEN;
 		chunk->io_align = BTRFS_STRIPE_LEN;
-		chunk->sector_size = rc->sectorsize;
+		chunk->sector_size = rc->blocksize;
 		chunk->sub_stripes = btrfs_bg_type_to_sub_stripes(bg->flags);
 
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);

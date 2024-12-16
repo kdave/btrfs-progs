@@ -132,7 +132,7 @@ static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
 	}
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	*result = key.offset + btrfs_item_size(path.nodes[0], path.slots[0]) /
-			       fs_info->csum_size * fs_info->sectorsize;
+			       fs_info->csum_size * fs_info->blocksize;
 	btrfs_release_path(&path);
 	return 0;
 }
@@ -142,13 +142,13 @@ static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
 				       const void *old_csums, u16 old_csum_type,
 				       bool output_error)
 {
-	const u32 sectorsize = fs_info->sectorsize;
-	int num_copies = btrfs_num_copies(fs_info, logical, sectorsize);
+	const u32 blocksize = fs_info->blocksize;
+	int num_copies = btrfs_num_copies(fs_info, logical, blocksize);
 	bool found_good = false;
 
 	for (int mirror = 1; mirror <= num_copies; mirror++) {
 		u8 csum_has[BTRFS_CSUM_SIZE];
-		u64 readlen = sectorsize;
+		u64 readlen = blocksize;
 		int ret;
 
 		ret = read_data_from_disk(fs_info, data_buf, logical, &readlen,
@@ -159,7 +159,7 @@ static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
 			continue;
 		}
 		btrfs_csum_data(fs_info, fs_info->csum_type, data_buf, csum_has,
-				sectorsize);
+				blocksize);
 		if (memcmp(csum_has, old_csums, fs_info->csum_size) == 0) {
 			found_good = true;
 			break;
@@ -183,17 +183,17 @@ static int generate_new_csum_range(struct btrfs_trans_handle *trans,
 				   const void *old_csums)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
-	const u32 sectorsize = fs_info->sectorsize;
+	const u32 blocksize = fs_info->blocksize;
 	int ret = 0;
 	void *buf;
 
-	buf = malloc(fs_info->sectorsize);
+	buf = malloc(fs_info->blocksize);
 	if (!buf)
 		return -ENOMEM;
 
-	for (u64 cur = logical; cur < logical + length; cur += sectorsize) {
+	for (u64 cur = logical; cur < logical + length; cur += blocksize) {
 		ret = read_verify_one_data_sector(fs_info, cur, buf, old_csums +
-				(cur - logical) / sectorsize * fs_info->csum_size,
+				(cur - logical) / blocksize * fs_info->csum_size,
 				fs_info->csum_type, true);
 
 		if (ret < 0) {
@@ -229,7 +229,7 @@ static unsigned int calc_csum_change_nr_items(struct btrfs_fs_info *fs_info,
 {
 	const u32 new_csum_size = btrfs_csum_type_size(new_csum_type);
 	const u32 csum_item_size = CSUM_CHANGE_BYTES_THRESHOLD /
-				   fs_info->sectorsize * new_csum_size;
+				   fs_info->blocksize * new_csum_size;
 
 	return round_up(csum_item_size, fs_info->nodesize) / fs_info->nodesize * 2;
 }
@@ -296,7 +296,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 		item_size = btrfs_item_size(path.nodes[0], path.slots[0]);
 
 		csum_start = key.offset;
-		len = item_size / fs_info->csum_size * fs_info->sectorsize;
+		len = item_size / fs_info->csum_size * fs_info->blocksize;
 		read_extent_buffer(path.nodes[0], csum_buffer,
 				btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 				item_size);
@@ -869,7 +869,7 @@ static int determine_csum_type(struct btrfs_fs_info *fs_info, u64 logical,
 			   csum_size);
 	btrfs_release_path(&path);
 
-	buf = malloc(fs_info->sectorsize);
+	buf = malloc(fs_info->blocksize);
 	if (!buf)
 		return -ENOMEM;
 	ret = read_verify_one_data_sector(fs_info, logical, buf, csum_expected,
@@ -952,7 +952,7 @@ static int resume_data_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_t
 	    old_csum_last >= new_csum_last) {
 		resume_start = new_csum_last + new_last_size /
 					btrfs_csum_type_size(new_csum_type) *
-					fs_info->sectorsize;
+					fs_info->blocksize;
 		goto new_data_csums;
 	}
 

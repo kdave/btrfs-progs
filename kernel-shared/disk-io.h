@@ -229,7 +229,7 @@ int btrfs_csum_data(struct btrfs_fs_info *fs_info, u16 csum_type, const u8 *data
 		    u8 *out, size_t len);
 
 int btrfs_open_device(struct btrfs_device *dev);
-int csum_tree_block_size(struct extent_buffer *buf, u16 csum_sectorsize,
+int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 			 int verify, u16 csum_type);
 int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size,
 				  u16 csum_type);

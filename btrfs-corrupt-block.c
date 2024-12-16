@@ -45,14 +45,14 @@
 
 static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror)
 {
-	const u32 sectorsize = root->fs_info->sectorsize;
+	const u32 blocksize = root->fs_info->blocksize;
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	int ret;
 	int num_copies;
 	int mirror_num = 1;
 	void *buf;
 
-	buf = malloc(root->fs_info->sectorsize);
+	buf = malloc(root->fs_info->blocksize);
 	if (!buf) {
 		error_msg(ERROR_MSG_MEMORY, "allocating memory for bytenr %llu",
 			  logical);
@@ -61,11 +61,11 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 
 	while (1) {
 		if (!mirror || mirror_num == mirror) {
-			u64 read_len = sectorsize;
+			u64 read_len = blocksize;
 
 			ret = read_data_from_disk(fs_info, buf, logical,
 						  &read_len, mirror_num);
-			if (read_len < sectorsize)
+			if (read_len < blocksize)
 				ret = -EIO;
 			if (ret < 0) {
 				errno = -ret;
@@ -73,8 +73,8 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 				goto out;
 			}
 			printf("corrupting %llu copy %d\n", logical, mirror_num);
-			memset(buf, 0, sectorsize);
-			ret = write_data_to_disk(fs_info, buf, logical, sectorsize);
+			memset(buf, 0, blocksize);
+			ret = write_data_to_disk(fs_info, buf, logical, blocksize);
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot write bytenr %llu: %m", logical);
@@ -82,7 +82,7 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 			}
 		}
 
-		num_copies = btrfs_num_copies(root->fs_info, logical, sectorsize);
+		num_copies = btrfs_num_copies(root->fs_info, logical, blocksize);
 		if (num_copies == 1)
 			break;
 
@@ -122,7 +122,7 @@ static const char * const corrupt_block_usage[] = {
 	OPTLINE("-d|--delete", "delete item corresponding to passed key triplet"),
 	OPTLINE("-r|--root", "operate on this root"),
 	OPTLINE("-C|--csum BYTENR", "delete a csum for the specified bytenr.  When used "
-		"with -b it'll delete that many bytes, otherwise it's just sectorsize"),
+		"with -b it'll delete that many bytes, otherwise it's just blocksize"),
 	OPTLINE("--block-group OFFSET", "corrupt the given block group"),
 	OPTLINE("--value VALUE", "value to use for corrupting item data"),
 	OPTLINE("--offset OFFSET", "offset to use for corrupting item data"),
@@ -1604,9 +1604,9 @@ int main(int argc, char **argv)
 		usage(&corrupt_block_cmd, 1);
 
 	if (bytes == 0)
-		bytes = root->fs_info->sectorsize;
+		bytes = root->fs_info->blocksize;
 
-	bytes = round_up(bytes, root->fs_info->sectorsize);
+	bytes = round_up(bytes, root->fs_info->blocksize);
 
 	while (bytes > 0) {
 		if (corrupt_block_keys) {
@@ -1631,8 +1631,8 @@ int main(int argc, char **argv)
 			}
 			free_extent_buffer(eb);
 		}
-		logical += root->fs_info->sectorsize;
-		bytes -= root->fs_info->sectorsize;
+		logical += root->fs_info->blocksize;
+		bytes -= root->fs_info->blocksize;
 	}
 	return ret;
 out_close:

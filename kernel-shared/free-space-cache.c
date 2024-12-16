@@ -35,11 +35,11 @@
 #include "common/messages.h"
 
 /*
- * Kernel always uses PAGE_CACHE_SIZE for sectorsize, but we don't have
+ * Kernel always uses PAGE_CACHE_SIZE for blocksize, but we don't have
  * anything like that in userspace and have to get the value from the
  * filesystem
  */
-#define BITS_PER_BITMAP(sectorsize)		((sectorsize) * 8)
+#define BITS_PER_BITMAP(blocksize)		((blocksize) * 8)
 #define MAX_CACHE_BYTES_PER_GIG	SZ_32K
 
 static int link_free_space(struct btrfs_free_space_ctl *ctl,
@@ -61,7 +61,7 @@ static int io_ctl_init(struct io_ctl *io_ctl, u64 size, u64 ino,
 		       struct btrfs_root *root)
 {
 	memset(io_ctl, 0, sizeof(struct io_ctl));
-	io_ctl->num_pages = DIV_ROUND_UP(size, root->fs_info->sectorsize);
+	io_ctl->num_pages = DIV_ROUND_UP(size, root->fs_info->blocksize);
 	io_ctl->buffer = kzalloc(size, GFP_NOFS);
 	if (!io_ctl->buffer)
 		return -ENOMEM;
@@ -89,11 +89,11 @@ static void io_ctl_map_page(struct io_ctl *io_ctl, int clear)
 {
 	BUG_ON(io_ctl->index >= io_ctl->num_pages);
 	io_ctl->cur = io_ctl->buffer + (io_ctl->index++ *
-					io_ctl->root->fs_info->sectorsize);
+					io_ctl->root->fs_info->blocksize);
 	io_ctl->orig = io_ctl->cur;
-	io_ctl->size = io_ctl->root->fs_info->sectorsize;
+	io_ctl->size = io_ctl->root->fs_info->blocksize;
 	if (clear)
-		memset(io_ctl->cur, 0, io_ctl->root->fs_info->sectorsize);
+		memset(io_ctl->cur, 0, io_ctl->root->fs_info->blocksize);
 }
 
 static void io_ctl_drop_pages(struct io_ctl *io_ctl)
@@ -229,7 +229,7 @@ static int io_ctl_check_crc(struct io_ctl *io_ctl, int index)
 
 	io_ctl_map_page(io_ctl, 0);
 	crc = crc32c(crc, io_ctl->orig + offset,
-			io_ctl->root->fs_info->sectorsize - offset);
+			io_ctl->root->fs_info->blocksize - offset);
 	put_unaligned_le32(~crc, (u8 *)&crc);
 	if (val != crc) {
 		printk("btrfs: csum mismatch on free space cache\n");
@@ -276,7 +276,7 @@ static int io_ctl_read_bitmap(struct io_ctl *io_ctl,
 	if (ret)
 		return ret;
 
-	memcpy(entry->bitmap, io_ctl->cur, io_ctl->root->fs_info->sectorsize);
+	memcpy(entry->bitmap, io_ctl->cur, io_ctl->root->fs_info->blocksize);
 	io_ctl_unmap_page(io_ctl);
 
 	return 0;
@@ -403,7 +403,7 @@ static int __load_free_space_cache(struct btrfs_root *root,
 		} else {
 			BUG_ON(!num_bitmaps);
 			num_bitmaps--;
-			e->bitmap = kzalloc(ctl->sectorsize, GFP_NOFS);
+			e->bitmap = kzalloc(ctl->blocksize, GFP_NOFS);
 			if (!e->bitmap) {
 				kfree(e);
 				goto free_cache;
@@ -575,7 +575,7 @@ tree_search_offset(struct btrfs_free_space_ctl *ctl,
 {
 	struct rb_node *n = ctl->free_space_offset.rb_node;
 	struct btrfs_free_space *entry, *prev = NULL;
-	u32 sectorsize = ctl->sectorsize;
+	u32 blocksize = ctl->blocksize;
 
 	/* find entry that is closest to the 'offset' */
 	while (1) {
@@ -660,7 +660,7 @@ tree_search_offset(struct btrfs_free_space_ctl *ctl,
 			    prev->offset + prev->bytes > offset)
 				return prev;
 		}
-		if (entry->offset + BITS_PER_BITMAP(sectorsize) * ctl->unit > offset)
+		if (entry->offset + BITS_PER_BITMAP(blocksize) * ctl->unit > offset)
 			return entry;
 	} else if (entry->offset + entry->bytes > offset)
 		return entry;
@@ -670,7 +670,7 @@ tree_search_offset(struct btrfs_free_space_ctl *ctl,
 
 	while (1) {
 		if (entry->bitmap) {
-			if (entry->offset + BITS_PER_BITMAP(sectorsize) *
+			if (entry->offset + BITS_PER_BITMAP(blocksize) *
 			    ctl->unit > offset)
 				break;
 		} else {
@@ -717,15 +717,15 @@ static int search_bitmap(struct btrfs_free_space_ctl *ctl,
 	unsigned long found_bits = 0;
 	unsigned long bits, i;
 	unsigned long next_zero;
-	u32 sectorsize = ctl->sectorsize;
+	u32 blocksize = ctl->blocksize;
 
 	i = offset_to_bit(bitmap_info->offset, ctl->unit,
 			  max_t(u64, *offset, bitmap_info->offset));
 	bits = bytes_to_bits(*bytes, ctl->unit);
 
-	for_each_set_bit_from(i, bitmap_info->bitmap, BITS_PER_BITMAP(sectorsize)) {
+	for_each_set_bit_from(i, bitmap_info->bitmap, BITS_PER_BITMAP(blocksize)) {
 		next_zero = find_next_zero_bit(bitmap_info->bitmap,
-					       BITS_PER_BITMAP(sectorsize), i);
+					       BITS_PER_BITMAP(blocksize), i);
 		if ((next_zero - i) >= bits) {
 			found_bits = next_zero - i;
 			break;
@@ -804,7 +804,7 @@ void btrfs_dump_free_space(struct btrfs_block_group *block_group,
 }
 
 int btrfs_init_free_space_ctl(struct btrfs_block_group *block_group,
-			      int sectorsize)
+			      int blocksize)
 {
 	struct btrfs_free_space_ctl *ctl;
 
@@ -812,8 +812,8 @@ int btrfs_init_free_space_ctl(struct btrfs_block_group *block_group,
 	if (!ctl)
 		return -ENOMEM;
 
-	ctl->sectorsize = sectorsize;
-	ctl->unit = sectorsize;
+	ctl->blocksize = blocksize;
+	ctl->unit = blocksize;
 	ctl->start = block_group->start;
 	ctl->private = block_group;
 	block_group->free_space_ctl = ctl;
@@ -871,7 +871,7 @@ static void merge_space_tree(struct btrfs_free_space_ctl *ctl)
 	struct btrfs_free_space *e, *prev = NULL;
 	struct rb_node *n;
 	int ret;
-	u32 sectorsize = ctl->sectorsize;
+	u32 blocksize = ctl->blocksize;
 
 again:
 	prev = NULL;
@@ -881,7 +881,7 @@ again:
 			u64 offset = e->offset, bytes = ctl->unit;
 			u64 end;
 
-			end = e->offset + (u64)(BITS_PER_BITMAP(sectorsize) * ctl->unit);
+			end = e->offset + (u64)(BITS_PER_BITMAP(blocksize) * ctl->unit);
 
 			unlink_free_space(ctl, e);
 			while (!(search_bitmap(ctl, e, &offset, &bytes))) {

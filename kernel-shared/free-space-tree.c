@@ -57,7 +57,7 @@ void set_free_space_tree_thresholds(struct btrfs_fs_info *fs_info,
 	 * We convert to bitmaps when the disk space required for using extents
 	 * exceeds that required for using bitmaps.
 	 */
-	bitmap_range = fs_info->sectorsize * BTRFS_FREE_SPACE_BITMAP_BITS;
+	bitmap_range = fs_info->blocksize * BTRFS_FREE_SPACE_BITMAP_BITS;
 	num_bitmaps = div_u64(cache->start + bitmap_range - 1, bitmap_range);
 	bitmap_size = sizeof(struct btrfs_item) + BTRFS_FREE_SPACE_BITMAP_SIZE;
 	total_bitmap_size = num_bitmaps * bitmap_size;
@@ -114,7 +114,7 @@ static int free_space_test_bit(struct btrfs_block_group *block_group,
 	ASSERT(offset >= found_start && offset < found_end);
 
 	ptr = btrfs_item_ptr_offset(leaf, path->slots[0]);
-	i = (offset - found_start) / leaf->fs_info->sectorsize;
+	i = (offset - found_start) / leaf->fs_info->blocksize;
 	return !!extent_buffer_test_bit(leaf, ptr, i);
 }
 
@@ -181,7 +181,7 @@ out:
 static inline u32 free_space_bitmap_size(const struct btrfs_fs_info *fs_info,
 					 u64 size)
 {
-	return DIV_ROUND_UP((u32)div_u64(size, fs_info->sectorsize), BITS_PER_BYTE);
+	return DIV_ROUND_UP((u32)div_u64(size, fs_info->blocksize), BITS_PER_BYTE);
 }
 
 static unsigned long *alloc_bitmap(u32 bitmap_size)
@@ -280,9 +280,9 @@ static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 				ASSERT(found_key.objectid + found_key.offset <= end);
 
 				first = div_u64(found_key.objectid - start,
-						fs_info->sectorsize);
+						fs_info->blocksize);
 				last = div_u64(found_key.objectid + found_key.offset - start,
-					       fs_info->sectorsize);
+					       fs_info->blocksize);
 				le_bitmap_set(bitmap, first, last - first);
 
 				extent_count++;
@@ -323,7 +323,7 @@ static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 	}
 
 	bitmap_cursor = (char *)bitmap;
-	bitmap_range = fs_info->sectorsize * BTRFS_FREE_SPACE_BITMAP_BITS;
+	bitmap_range = fs_info->blocksize * BTRFS_FREE_SPACE_BITMAP_BITS;
 	i = start;
 	while (i < end) {
 		unsigned long ptr;
@@ -418,7 +418,7 @@ static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 				ASSERT(found_key.objectid + found_key.offset <= end);
 
 				bitmap_pos = div_u64(found_key.objectid - start,
-						     fs_info->sectorsize *
+						     fs_info->blocksize *
 						     BITS_PER_BYTE);
 				bitmap_cursor = ((char *)bitmap) + bitmap_pos;
 				data_size = free_space_bitmap_size(fs_info,
@@ -454,16 +454,16 @@ static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
 
-	nrbits = div_u64(block_group->length, fs_info->sectorsize);
+	nrbits = div_u64(block_group->length, fs_info->blocksize);
 	start_bit = find_next_bit_le(bitmap, nrbits, 0);
 
 	while (start_bit < nrbits) {
 		end_bit = find_next_zero_bit_le(bitmap, nrbits, start_bit);
 		ASSERT(start_bit < end_bit);
 
-		key.objectid = start + start_bit * fs_info->sectorsize;
+		key.objectid = start + start_bit * fs_info->blocksize;
 		key.type = BTRFS_FREE_SPACE_EXTENT_KEY;
-		key.offset = (end_bit - start_bit) * fs_info->sectorsize;
+		key.offset = (end_bit - start_bit) * fs_info->blocksize;
 
 		ret = btrfs_insert_empty_item(trans, root, path, &key, 0);
 		if (ret)
@@ -557,8 +557,8 @@ static void free_space_set_bits(struct btrfs_block_group *block_group,
 		end = found_end;
 
 	ptr = btrfs_item_ptr_offset(leaf, path->slots[0]);
-	first = (*start - found_start) / fs_info->sectorsize;
-	last = (end - found_start) / fs_info->sectorsize;
+	first = (*start - found_start) / fs_info->blocksize;
+	last = (end - found_start) / fs_info->blocksize;
 	if (bit)
 		extent_buffer_bitmap_set(leaf, ptr, first, last - first);
 	else
@@ -619,7 +619,7 @@ static int modify_free_space_bitmap(struct btrfs_trans_handle *trans,
 	 * that block is within the block group.
 	 */
 	if (start > block_group->start) {
-		u64 prev_block = start - trans->fs_info->sectorsize;
+		u64 prev_block = start - trans->fs_info->blocksize;
 
 		key.objectid = prev_block;
 		key.type = (u8)-1;
@@ -1372,7 +1372,7 @@ static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,
 				extent_count++;
 			}
 			prev_bit = bit;
-			offset += fs_info->sectorsize;
+			offset += fs_info->blocksize;
 		}
 	}
 

@@ -1045,7 +1045,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char dev_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u32 nodesize = 0;
 	bool nodesize_forced = false;
-	u32 sectorsize = 0;
+	u32 blocksize = 0;
 	u32 stripesize = 4096;
 	u64 metadata_profile = 0;
 	bool metadata_profile_set = false;
@@ -1202,7 +1202,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 				}
 			case 's':
-				sectorsize = arg_strtou64_with_suffix(optarg);
+				blocksize = arg_strtou64_with_suffix(optarg);
 				break;
 			case 'b':
 				byte_count = arg_strtou64_with_suffix(optarg);
@@ -1341,17 +1341,17 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		printf("See %s for more information.\n\n", PACKAGE_URL);
 	}
 
-	if (!sectorsize)
-		sectorsize = (u32)SZ_4K;
-	if (btrfs_check_sectorsize(sectorsize)) {
+	if (!blocksize)
+		blocksize = (u32)SZ_4K;
+	if (btrfs_check_blocksize(blocksize)) {
 		ret = 1;
 		goto error;
 	}
 
 	if (!nodesize)
-		nodesize = max_t(u32, sectorsize, BTRFS_MKFS_DEFAULT_NODE_SIZE);
+		nodesize = max_t(u32, blocksize, BTRFS_MKFS_DEFAULT_NODE_SIZE);
 
-	stripesize = sectorsize;
+	stripesize = blocksize;
 	saved_optind = optind;
 	device_count = argc - optind;
 	if (device_count == 0)
@@ -1531,7 +1531,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 
 		if (!nodesize_forced)
-			nodesize = sectorsize;
+			nodesize = blocksize;
 	}
 
 	/*
@@ -1595,14 +1595,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			warning("libblkid < 2.38 does not support zoned mode's superblock location, update recommended");
 	}
 
-	if (btrfs_check_nodesize(nodesize, sectorsize, &features)) {
+	if (btrfs_check_nodesize(nodesize, blocksize, &features)) {
 		ret = 1;
 		goto error;
 	}
 
-	if (sectorsize < sizeof(struct btrfs_super_block)) {
-		error("sectorsize smaller than superblock: %u < %zu",
-				sectorsize, sizeof(struct btrfs_super_block));
+	if (blocksize < sizeof(struct btrfs_super_block)) {
+		error("blocksize smaller than superblock: %u < %zu",
+				blocksize, sizeof(struct btrfs_super_block));
 		ret = 1;
 		goto error;
 	}
@@ -1611,7 +1611,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					  opt_zoned ? zone_size(file) : 0,
 					  metadata_profile, data_profile);
 	if (byte_count) {
-		byte_count = round_down(byte_count, sectorsize);
+		byte_count = round_down(byte_count, blocksize);
 		if (opt_zoned)
 			byte_count = round_down(byte_count,  zone_size(file));
 	}
@@ -1651,10 +1651,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		 */
 		if (!byte_count)
 			byte_count = round_down(device_get_partition_size_fd_stat(fd, &statbuf),
-						sectorsize);
-		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
+						blocksize);
+		source_dir_size = btrfs_mkfs_size_dir(source_dir, blocksize,
 				min_dev_size, metadata_profile, data_profile);
-		UASSERT(IS_ALIGNED(source_dir_size, sectorsize));
+		UASSERT(IS_ALIGNED(source_dir_size, blocksize));
 		if (byte_count < source_dir_size) {
 			if (S_ISREG(statbuf.st_mode)) {
 				byte_count = source_dir_size;
@@ -1808,7 +1808,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	memcpy(mkfs_cfg.dev_uuid, dev_uuid, sizeof(mkfs_cfg.dev_uuid));
 	mkfs_cfg.num_bytes = dev_byte_count;
 	mkfs_cfg.nodesize = nodesize;
-	mkfs_cfg.sectorsize = sectorsize;
+	mkfs_cfg.blocksize = blocksize;
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
 	mkfs_cfg.csum_type = csum_type;
@@ -1916,7 +1916,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 		ret = btrfs_add_to_fsid(trans, root, prepare_ctx[i].fd,
 					prepare_ctx[i].file, dev_byte_count,
-					sectorsize, sectorsize, sectorsize);
+					blocksize, blocksize, blocksize);
 		if (ret) {
 			error("unable to add %s to filesystem: %d",
 			      prepare_ctx[i].file, ret);
@@ -2057,8 +2057,8 @@ raid_groups:
 		if (dev_uuid[0] != 0)
 			printf("Device UUID:        %s\n", mkfs_cfg.dev_uuid);
 		printf("Node size:          %u\n", nodesize);
-		printf("Sector size:        %u\t(CPU page size: %lu)\n",
-		       sectorsize, sysconf(_SC_PAGESIZE));
+		printf("Block size:        %u\t(CPU page size: %lu)\n",
+		       blocksize, sysconf(_SC_PAGESIZE));
 		printf("Filesystem size:    %s\n",
 			pretty_size(btrfs_super_total_bytes(fs_info->super_copy)));
 		printf("Block group profiles:\n");

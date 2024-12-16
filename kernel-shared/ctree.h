@@ -391,7 +391,8 @@ struct btrfs_fs_info {
 
 	/* Cached block sizes */
 	u32 nodesize;
-	u32 sectorsize;
+	/* Minimum data unit size, used to be called "sectorsize". */
+	u32 blocksize;
 	u32 stripesize;
 	u32 leaf_data_size;
 
@@ -653,7 +654,7 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
  * When a block group becomes very fragmented, we convert it to use bitmaps
  * instead of extents. A free space bitmap is keyed on
  * (start, FREE_SPACE_BITMAP, length); the corresponding item is a bitmap with
- * (length / sectorsize) bits.
+ * (length / blocksize) bits.
  */
 #define BTRFS_FREE_SPACE_BITMAP_KEY 200
 

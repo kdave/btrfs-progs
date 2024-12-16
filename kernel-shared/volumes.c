@@ -1620,9 +1620,9 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_chunk_num_stripes(chunk, ctl->num_stripes);
 	btrfs_set_stack_chunk_io_align(chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_stack_chunk_io_width(chunk, BTRFS_STRIPE_LEN);
-	btrfs_set_stack_chunk_sector_size(chunk, info->sectorsize);
+	btrfs_set_stack_chunk_sector_size(chunk, info->blocksize);
 	btrfs_set_stack_chunk_sub_stripes(chunk, ctl->sub_stripes);
-	map->sector_size = info->sectorsize;
+	map->sector_size = info->blocksize;
 	map->stripe_len = BTRFS_STRIPE_LEN;
 	map->io_align = BTRFS_STRIPE_LEN;
 	map->io_width = BTRFS_STRIPE_LEN;
@@ -1777,8 +1777,8 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	struct btrfs_device *device;
 	struct alloc_chunk_ctl ctl;
 
-	if (*start != round_down(*start, info->sectorsize)) {
-		error("DATA chunk start not sectorsize aligned: %llu",
+	if (*start != round_down(*start, info->blocksize)) {
+		error("DATA chunk start not blocksize aligned: %llu",
 				(unsigned long long)*start);
 		return -EINVAL;
 	}
@@ -3004,7 +3004,7 @@ static int reset_device_item_total_bytes(struct btrfs_fs_info *fs_info,
 	u64 old_bytes = device->total_bytes;
 	int ret;
 
-	ASSERT(IS_ALIGNED(new_size, fs_info->sectorsize));
+	ASSERT(IS_ALIGNED(new_size, fs_info->blocksize));
 
 	/* Align the in-memory total_bytes first, and use it as correct size */
 	device->total_bytes = new_size;
@@ -3074,7 +3074,7 @@ static int btrfs_fix_block_device_size(struct btrfs_fs_info *fs_info,
 	}
 
 	block_dev_size = round_down(device_get_partition_size_fd_stat(device->fd, &st),
-				    fs_info->sectorsize);
+				    fs_info->blocksize);
 
 	/*
 	 * Total_bytes in device item is no larger than the device block size,
@@ -3115,11 +3115,11 @@ int btrfs_fix_device_size(struct btrfs_fs_info *fs_info, struct btrfs_device *de
 	 * Our value is already good, then check if it's device item mismatch against
 	 * block device size.
 	 */
-	if (IS_ALIGNED(old_bytes, fs_info->sectorsize))
+	if (IS_ALIGNED(old_bytes, fs_info->blocksize))
 		return btrfs_fix_block_device_size(fs_info, device);
 
 	return reset_device_item_total_bytes(fs_info, device,
-			round_down(old_bytes, fs_info->sectorsize));
+			round_down(old_bytes, fs_info->blocksize));
 }
 
 /*
@@ -3140,10 +3140,10 @@ int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
 		 * Caller should ensure this function is called after aligning
 		 * all devices' total_bytes.
 		 */
-		if (!IS_ALIGNED(device->total_bytes, fs_info->sectorsize)) {
+		if (!IS_ALIGNED(device->total_bytes, fs_info->blocksize)) {
 			error("device %llu total_bytes %llu not aligned to %u",
 				device->devid, device->total_bytes,
-				fs_info->sectorsize);
+				fs_info->blocksize);
 			return -EUCLEAN;
 		}
 		total_bytes += device->total_bytes;

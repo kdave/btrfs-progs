@@ -139,7 +139,7 @@ static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 
 		inbuf += LZO_LEN;
 		tot_in += LZO_LEN;
-		new_len = lzo1x_worst_compress(root->fs_info->sectorsize);
+		new_len = lzo1x_worst_compress(root->fs_info->blocksize);
 		ret = lzo1x_decompress_safe((const unsigned char *)inbuf, in_len,
 					    (unsigned char *)outbuf,
 					    (void *)&new_len, NULL);
@@ -156,8 +156,8 @@ static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 		 * If the 4 byte header does not fit to the rest of the page we
 		 * have to move to the next one, unless we read some garbage
 		 */
-		mod_page = tot_in % root->fs_info->sectorsize;
-		rem_page = root->fs_info->sectorsize - mod_page;
+		mod_page = tot_in % root->fs_info->blocksize;
+		rem_page = root->fs_info->blocksize - mod_page;
 		if (rem_page < LZO_LEN) {
 			inbuf += rem_page;
 			tot_in += rem_page;

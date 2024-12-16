@@ -353,7 +353,7 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 
 		size = btrfs_item_size(leaf, path.slots[0]);
 		csum_end = key.offset + (size / csum_size) *
-			   gfs_info->sectorsize;
+			   gfs_info->blocksize;
 		if (csum_end > start) {
 			size = min(csum_end - start, len);
 			len -= size;
@@ -505,12 +505,12 @@ out:
  * Extra (optional) check for dev_item size to report possible problem on a new
  * kernel.
  */
-void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
+void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 blocksize)
 {
-	if (!IS_ALIGNED(total_bytes, sectorsize)) {
+	if (!IS_ALIGNED(total_bytes, blocksize)) {
 		warning(
 "unaligned total_bytes detected for devid %llu, have %llu should be aligned to %u",
-			devid, total_bytes, sectorsize);
+			devid, total_bytes, blocksize);
 		warning(
 "this is OK for older kernel, but may cause kernel warning for newer kernels");
 		warning("this can be fixed by 'btrfs rescue fix-device-size'");
@@ -1210,12 +1210,12 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	u64 offset = 0;
-	u64 sectorsize = fs_info->sectorsize;
+	u64 blocksize = fs_info->blocksize;
 	int ret = 0;
 
 	while (offset < len) {
 		ret = read_data_from_disk(fs_info, buf, start + offset,
-					  &sectorsize, 0);
+					  &blocksize, 0);
 		if (ret)
 			break;
 		ret = btrfs_csum_file_block(trans, start + offset,
@@ -1223,7 +1223,7 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 					    fs_info->csum_type, buf);
 		if (ret)
 			break;
-		offset += sectorsize;
+		offset += blocksize;
 	}
 	return ret;
 }
@@ -1243,7 +1243,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 	int slot = 0;
 	int ret = 0;
 
-	buf = malloc(gfs_info->sectorsize);
+	buf = malloc(gfs_info->blocksize);
 	if (!buf)
 		return -ENOMEM;
 
@@ -1500,7 +1500,7 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	buf = malloc(gfs_info->sectorsize);
+	buf = malloc(gfs_info->blocksize);
 	if (!buf) {
 		btrfs_release_path(&path);
 		return -ENOMEM;

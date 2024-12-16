@@ -86,9 +86,9 @@ void btrfs_parse_runtime_features_to_string(char *buf,
 		const struct btrfs_mkfs_features *features);
 void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize,
+int btrfs_check_nodesize(u32 nodesize, u32 blocksize,
 			 struct btrfs_mkfs_features *features);
-int btrfs_check_sectorsize(u32 sectorsize);
+int btrfs_check_blocksize(u32 blocksize);
 int btrfs_check_features(const struct btrfs_mkfs_features *features,
 			 const struct btrfs_mkfs_features *allowed);
 int btrfs_tree_search2_ioctl_supported(int fd);

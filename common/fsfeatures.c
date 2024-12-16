@@ -588,10 +588,10 @@ u32 get_running_kernel_version(void)
 /*
  * Check if current kernel supports the given size
  */
-static bool check_supported_sectorsize(u32 sectorsize)
+static bool check_supported_blocksize(u32 blocksize)
 {
 	char supported_buf[SUPPORTED_SECTORSIZE_BUF_SIZE] = { 0 };
-	char sectorsize_buf[SUPPORTED_SECTORSIZE_BUF_SIZE] = { 0 };
+	char blocksize_buf[SUPPORTED_SECTORSIZE_BUF_SIZE] = { 0 };
 	char *this_char;
 	char *save_ptr = NULL;
 	int fd;
@@ -604,7 +604,7 @@ static bool check_supported_sectorsize(u32 sectorsize)
 	close(fd);
 	if (ret < 0)
 		return false;
-	snprintf(sectorsize_buf, SUPPORTED_SECTORSIZE_BUF_SIZE, "%u", sectorsize);
+	snprintf(blocksize_buf, SUPPORTED_SECTORSIZE_BUF_SIZE, "%u", blocksize);
 
 	for (this_char = strtok_r(supported_buf, " ", &save_ptr);
 	     this_char != NULL;
@@ -613,61 +613,61 @@ static bool check_supported_sectorsize(u32 sectorsize)
 		 * Also check the terminal '\0' to handle cases like
 		 * "4096" and "40960".
 		 */
-		if (!strncmp(this_char, sectorsize_buf, strlen(sectorsize_buf) + 1))
+		if (!strncmp(this_char, blocksize_buf, strlen(blocksize_buf) + 1))
 			return true;
 	}
 	return false;
 }
 
-int btrfs_check_sectorsize(u32 sectorsize)
+int btrfs_check_blocksize(u32 blocksize)
 {
-	bool sectorsize_checked = false;
+	bool blocksize_checked = false;
 	u32 page_size = (u32)sysconf(_SC_PAGESIZE);
 
-	if (!is_power_of_2(sectorsize)) {
-		error("invalid sectorsize %u, must be power of 2", sectorsize);
+	if (!is_power_of_2(blocksize)) {
+		error("invalid blocksize %u, must be power of 2", blocksize);
 		return -EINVAL;
 	}
-	if (sectorsize < SZ_4K || sectorsize > SZ_64K) {
-		error("invalid sectorsize %u, expected range is [4K, 64K]",
-		      sectorsize);
+	if (blocksize < SZ_4K || blocksize > SZ_64K) {
+		error("invalid blocksize %u, expected range is [4K, 64K]",
+		      blocksize);
 		return -EINVAL;
 	}
-	if (page_size == sectorsize)
-		sectorsize_checked = true;
+	if (page_size == blocksize)
+		blocksize_checked = true;
 	else
-		sectorsize_checked = check_supported_sectorsize(sectorsize);
+		blocksize_checked = check_supported_blocksize(blocksize);
 
-	if (!sectorsize_checked)
+	if (!blocksize_checked)
 		warning(
-"sectorsize %u does not match host CPU page size %u, with kernels 6.x and up\n"
-"\t the 4KiB sectorsize is supported on all architectures but other combinations\n"
-"\t may fail the filesystem mount, use \"--sectorsize %u\" to override that\n",
-			sectorsize, page_size, page_size);
+"blocksize %u does not match host CPU page size %u, with kernels 6.x and up\n"
+"\t the 4KiB blocksize is supported on all architectures but other combinations\n"
+"\t may fail the filesystem mount, use \"--blocksize %u\" to override that\n",
+			blocksize, page_size, page_size);
 	return 0;
 }
 
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize,
+int btrfs_check_nodesize(u32 nodesize, u32 blocksize,
 			 struct btrfs_mkfs_features *features)
 {
-	if (nodesize < sectorsize) {
+	if (nodesize < blocksize) {
 		error("illegal nodesize %u (smaller than %u)",
-				nodesize, sectorsize);
+				nodesize, blocksize);
 		return -1;
 	} else if (nodesize > BTRFS_MAX_METADATA_BLOCKSIZE) {
 		error("illegal nodesize %u (larger than %u)",
 			nodesize, BTRFS_MAX_METADATA_BLOCKSIZE);
 		return -1;
-	} else if (nodesize & (sectorsize - 1)) {
+	} else if (nodesize & (blocksize - 1)) {
 		error("illegal nodesize %u (not aligned to %u)",
-			nodesize, sectorsize);
+			nodesize, blocksize);
 		return -1;
 	} else if (features->incompat_flags &
 		   BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS &&
-		   nodesize != sectorsize) {
+		   nodesize != blocksize) {
 		error(
 		"illegal nodesize %u (not equal to %u for mixed block group)",
-			nodesize, sectorsize);
+			nodesize, blocksize);
 		return -1;
 	}
 	return 0;

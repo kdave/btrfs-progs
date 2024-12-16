@@ -1949,7 +1949,7 @@ static int check_file_extent_inline(struct btrfs_root *root,
 				    struct btrfs_path *path, u64 *size,
 				    u64 *end)
 {
-	u32 max_inline_extent_size = min_t(u32, gfs_info->sectorsize - 1,
+	u32 max_inline_extent_size = min_t(u32, gfs_info->blocksize - 1,
 				BTRFS_MAX_INLINE_DATA_SIZE(gfs_info));
 	struct extent_buffer *node = path->nodes[0];
 	struct btrfs_file_extent_item *fi;
@@ -1974,11 +1974,11 @@ static int check_file_extent_inline(struct btrfs_root *root,
 	}
 
 	if (compressed) {
-		if (extent_num_bytes > gfs_info->sectorsize) {
+		if (extent_num_bytes > gfs_info->blocksize ) {
 			error(
 "root %llu EXTENT_DATA[%llu %llu] too large inline extent ram size, have %llu, max: %u",
 				root->objectid, fkey.objectid, fkey.offset,
-				extent_num_bytes, gfs_info->sectorsize - 1);
+				extent_num_bytes, gfs_info->blocksize - 1);
 			err |= FILE_EXTENT_ERROR;
 		}
 
@@ -2041,7 +2041,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	u64 disk_num_bytes;
 	u64 extent_num_bytes;
 	u64 extent_offset;
-	u64 csum_found;		/* In byte size, sectorsize aligned */
+	u64 csum_found;		/* In byte size, blocksize aligned */
 	u64 search_start;	/* Logical range start we search for csum */
 	u64 search_len;		/* Logical range len we search for csum */
 	u64 gen;
@@ -2170,7 +2170,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	 * Don't update extent end beyond rounded up isize. As holes
 	 * after isize is not considered as missing holes.
 	 */
-	*end = min(round_up(isize, gfs_info->sectorsize),
+	*end = min(round_up(isize, gfs_info->blocksize),
 		   fkey.offset + extent_num_bytes);
 	if (!is_hole)
 		*size += extent_num_bytes;
@@ -3452,27 +3452,27 @@ static int check_extent_data_item(struct btrfs_root *root,
 	}
 
 	/* Check unaligned disk_bytenr, disk_num_bytes and num_bytes */
-	if (!IS_ALIGNED(disk_bytenr, gfs_info->sectorsize)) {
+	if (!IS_ALIGNED(disk_bytenr, gfs_info->blocksize)) {
 		error(
 "file extent [%llu, %llu] has unaligned disk bytenr: %llu, should be aligned to %u",
 			fi_key.objectid, fi_key.offset, disk_bytenr,
-			gfs_info->sectorsize);
+			gfs_info->blocksize);
 		err |= BYTES_UNALIGNED;
 	}
-	if (!IS_ALIGNED(disk_num_bytes, gfs_info->sectorsize)) {
+	if (!IS_ALIGNED(disk_num_bytes, gfs_info->blocksize)) {
 		error(
 "file extent [%llu, %llu] has unaligned disk num bytes: %llu, should be aligned to %u",
 			fi_key.objectid, fi_key.offset, disk_num_bytes,
-			gfs_info->sectorsize);
+			gfs_info->blocksize);
 		err |= BYTES_UNALIGNED;
 	} else if (account_bytes) {
 		data_bytes_allocated += disk_num_bytes;
 	}
-	if (!IS_ALIGNED(extent_num_bytes, gfs_info->sectorsize)) {
+	if (!IS_ALIGNED(extent_num_bytes, gfs_info->blocksize)) {
 		error(
 "file extent [%llu, %llu] has unaligned num bytes: %llu, should be aligned to %u",
 			fi_key.objectid, fi_key.offset, extent_num_bytes,
-			gfs_info->sectorsize);
+			gfs_info->blocksize);
 		err |= BYTES_UNALIGNED;
 	} else if (account_bytes) {
 		data_bytes_referenced += extent_num_bytes;
@@ -4675,7 +4675,7 @@ next:
 			BTRFS_DEV_EXTENT_KEY, dev_id);
 		return ACCOUNTING_MISMATCH;
 	}
-	check_dev_size_alignment(dev_id, total_bytes, gfs_info->sectorsize);
+	check_dev_size_alignment(dev_id, total_bytes, gfs_info->blocksize);
 
 	dev = btrfs_find_device_by_devid(gfs_info->fs_devices, dev_id, 0);
 	if (!dev || dev->fd < 0)
