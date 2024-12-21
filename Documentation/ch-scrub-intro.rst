@@ -46,6 +46,16 @@ read-write mounted filesystem.
    used, with expert guidance, to rebuild certain corrupted filesystem structures
    in the absence of any good replica.
 
+.. note::
+   Read-only scrub on a read-write filesystem will cause some writes into the
+   filesystem.
+
+   This is due to the design limitation to prevent race between marking block
+   group read-only and writing back block group items.
+
+   To avoid any writes from scrub, one has to run read-only scrub on read-only
+   filesystem.
+
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
 utilization is about 80% on an idle filesystem.
