@@ -89,6 +89,11 @@ start [-BdrRf] <path>|<device>
         -r
                 run in read-only mode, do not attempt to correct anything, can
                 be run on a read-only filesystem
+
+                Note that a read-only scrub on a read-write filesystem can
+                still cause writes into the filesystem due to some internal
+                limitations.  Only a read-only scrub on a read-only filesystem
+                can avoid writes from scrub.
         -R
                 raw print mode, print full data instead of summary
         -f
