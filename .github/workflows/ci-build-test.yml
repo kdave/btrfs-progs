@@ -103,12 +103,11 @@ jobs:
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan
       - name: CI Tumbleweed (Botan) (experimental)
         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=botan --enable-experimental
-#   check-tumbleweed-openssl:
-#     name: CI Tumbleweed (OpenSSL)
-#     runs-on: ubuntu-24.04
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: CI Tumbleweed (OpenSSL)
-#         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl
-#       - name: CI Tumbleweed (OpenSSL) (experimental)
-#         run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl --enable-experimental
+  check-tumbleweed-openssl:
+    name: CI Tumbleweed (OpenSSL)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: CI Tumbleweed (OpenSSL)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl
+      - name: CI Tumbleweed (OpenSSL) (experimental)
+        run: sudo docker run kdave/ci-opensuse-tumbleweed-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --with-crypto=openssl --enable-experimental
