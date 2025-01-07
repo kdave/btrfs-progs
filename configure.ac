@@ -74,14 +74,6 @@ AC_CHECK_TOOL([AR], [ar])
 AC_PATH_PROG([RM], [rm], [rm])
 AC_PATH_PROG([RMDIR], [rmdir], [rmdir])
 
-
-AC_CHECK_FUNCS([openat], [],
-	[AC_MSG_ERROR([cannot find openat() function])])
-
-AC_CHECK_FUNCS([reallocarray])
-
-AC_CHECK_FUNCS([clock_gettime])
-
 AX_CHECK_DEFINE([features.h],[__GLIBC__],[HAVE_GLIBC=1],[HAVE_GLIBC=0])
 AC_SUBST([HAVE_GLIBC])
 
@@ -90,14 +82,95 @@ AX_GCC_BUILTIN([__builtin_sub_overflow])
 AX_GCC_BUILTIN([__builtin_mul_overflow])
 AX_GCC_BUILTIN([__builtin_cpu_supports__pclmul])
 
+AC_CHECK_HEADERS([fcntl.h])
+AC_CHECK_HEADERS([inttypes.h])
+AC_CHECK_HEADERS([malloc.h])
+AC_CHECK_HEADERS([mntent.h])
+AC_CHECK_HEADERS([stdint.h])
+AC_CHECK_HEADERS([strings.h])
+AC_CHECK_HEADERS([sys/file.h])
+AC_CHECK_HEADERS([sys/ioctl.h])
+AC_CHECK_HEADERS([sys/param.h])
+AC_CHECK_HEADERS([sys/socket.h])
+AC_CHECK_HEADERS([sys/statfs.h])
+AC_CHECK_HEADERS([sys/statvfs.h])
+AC_CHECK_HEADERS([sys/time.h])
+AC_CHECK_HEADERS([unistd.h])
+AC_CHECK_HEADER_STDBOOL
+
 AC_CHECK_HEADERS([linux/perf_event.h])
 AC_CHECK_HEADERS([linux/hw_breakpoint.h])
 AC_CHECK_HEADERS([linux/fsverity.h])
-AC_CHECK_HEADERS([printf.h])
+
+AC_CHECK_MEMBERS([struct stat.st_blksize])
+AC_CHECK_MEMBERS([struct stat.st_rdev])
+
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UID_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
+
+dnl Required functions
+AC_FUNC_CHOWN
+AC_FUNC_ERROR_AT_LINE
+AC_FUNC_FORK
+AC_FUNC_GETMNTENT
+AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+AC_FUNC_MALLOC
+AC_FUNC_MMAP
+AC_FUNC_REALLOC
+
+AC_CHECK_FUNCS([fchdir], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([fdatasync], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([ftruncate], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([getcwd], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([getmntent], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([getpagesize], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([gettimeofday], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([lchown], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([localtime_r], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([memchr], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([memmove], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([memset], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([mkdir], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([mkfifo], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([munmap], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([openat], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([realpath], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([regcomp], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([rmdir], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([select], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([socket], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strcasecmp], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strchr], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strdup], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strerror], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strncasecmp], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strndup], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strrchr], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strstr], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strtol], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strtoul], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([strtoull], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([sysinfo], [], [AC_MSG_ERROR([cannot find required function])])
+AC_CHECK_FUNCS([uname], [], [AC_MSG_ERROR([cannot find required function])])
 
 dnl Check for printf.h functions.
+AC_CHECK_HEADERS([printf.h])
 AC_CHECK_FUNCS([register_printf_specifier])
 AC_CHECK_FUNCS([register_printf_modifier])
+
+dnl Optional (tests)
+AC_CHECK_FUNCS([clock_gettime])
 
 if grep -q 'HAVE_LINUX_FSVERITY_H.*1' confdefs.h; then
 	have_fsverity='yes'
