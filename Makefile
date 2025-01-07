@@ -875,6 +875,17 @@ test-build-real:
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
+# Generate database for LSP.  This depends on Bear and clang, gcc can be used
+# for compilation though.
+compile_commands.json: FORCE
+	@if ! type -p bear 2>/dev/null; then echo "ERROR: please install bear (https://github.com/rizsotto/Bear)"; exit 1; fi
+	@if ! test -f config.status; then echo "ERROR: please configure first and build with CC=clang"; exit 1; fi
+	@-rm -- $@
+	@echo "Clean before generating $@"
+	@$(MAKE) clean
+	@echo "Capture build commands and generate $@"
+	@bear -- $(MAKE) CC=clang
+
 tags: FORCE
 	@echo "  TAGS     $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
