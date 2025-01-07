@@ -66,7 +66,7 @@ CSCOPE_CMD := cscope -u -b -c -q
 
 # Print dependency creation
 DEP :=
-DEPMSG = @if [ "$(DEP)" = 1 ]; then echo "    [DEP]   $(DEPNAME)"; fi
+DEPMSG = @if [ "$(DEP)" = 1 ]; then echo "  DEP     $(DEPNAME)"; fi
 
 # Reduce any .o file to the base name, taking box and static targets into account
 # and produce unified file name for dependencies
@@ -477,11 +477,11 @@ else
 endif
 
 .S.o:
-	@echo "    [AS]     $@"
+	@echo "  AS       $@"
 	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
 
 %.static.o: %.S
-	@echo "    [AS]     $@"
+	@echo "  AS       $@"
 	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
 #
 # Pick from per-file variables, btrfs_*_cflags
@@ -490,9 +490,9 @@ endif
 	$(DEPMSG)
 	$(Q)$(DEPMKDIR)
 	$(Q)$(DEPCOMMAND)
-	@$(check_echo) "    [SP]     $<"
+	@$(check_echo) "  SPATCH   $<"
 	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@ $($(subst /,_,$(subst -,_,$(@:%.o=%)-cflags))) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
@@ -500,7 +500,7 @@ endif
 	$(DEPMSG)
 	$(Q)$(DEPMKDIR)
 	$(Q)$(DEPCOMMAND)
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst /,_,$(subst -,_,$(@:%.static.o=%)-cflags))) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
@@ -508,14 +508,14 @@ endif
 	$(DEPMSG)
 	$(Q)$(DEPMKDIR)
 	$(Q)$(DEPCOMMAND)
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) -DENABLE_BOX=1 $(CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
 
 %.box.static.o: %.c
 	$(DEPMSG)
 	$(Q)$(DEPMKDIR)
 	$(Q)$(DEPCOMMAND)
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) -DENABLE_BOX=1 $(STATIC_CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
 
 all: $(progs_build) $(libs_build) $(BUILDDIRS)
@@ -528,35 +528,35 @@ $(BUILDDIRS):
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
 
 test-convert: btrfs btrfs-convert
-	@echo "    [TEST]   convert-tests.sh"
+	@echo "  TEST     convert-tests.sh"
 	$(Q)bash tests/convert-tests.sh
 
 test-check: test-fsck
 test-check-lowmem: test-fsck
 test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune
 ifneq ($(MAKECMDGOALS),test-check-lowmem)
-	@echo "    [TEST]   fsck-tests.sh"
+	@echo "  TEST     fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
 else
-	@echo "    [TEST]   fsck-tests.sh (mode=lowmem)"
+	@echo "  TEST     fsck-tests.sh (mode=lowmem)"
 	$(Q)TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem bash tests/fsck-tests.sh
 endif
 
 test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum fsstress \
 		btrfs-find-root btrfs-select-super btrfs-convert
-	@echo "    [TEST]   misc-tests.sh"
+	@echo "  TEST     misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
 
 test-mkfs: btrfs mkfs.btrfs
-	@echo "    [TEST]   mkfs-tests.sh"
+	@echo "  TEST     mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
 test-fuzz: btrfs btrfs-image
-	@echo "    [TEST]   fuzz-tests.sh"
+	@echo "  TEST     fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
 test-cli: btrfs mkfs.btrfs
-	@echo "    [TEST]   cli-tests.sh"
+	@echo "  TEST     cli-tests.sh"
 	$(Q)bash tests/cli-tests.sh
 
 test-clean:
@@ -570,32 +570,32 @@ test-inst: all
 		$(RM) -rf -- $$tmpdest
 
 test-json: json-formatter-test
-	@echo "    [TEST]   json formatting"
+	@echo "  TEST     json formatting"
 	@echo | jq
 	@{								\
 		max=`./json-formatter-test`;				\
 		for testno in `seq 1 $$max`; do				\
-			echo "    [TEST/json]  $$testno";		\
+			echo "  TEST/json    $$testno";		\
 			./json-formatter-test $$testno | jq >/dev/null; \
 		done							\
 	}
 
 test-string-table: string-table-test
-	@echo "    [TEST]   string-table formatting"
+	@echo "  TEST     string-table formatting"
 	@{								\
 		max=`./string-table-test`;				\
 		for testno in `seq 1 $$max`; do				\
-			echo "    [TEST/s-t]  $$testno";		\
+			echo "  TEST/s-t    $$testno";		\
 			./string-table-test $$testno >/dev/null;	\
 		done							\
 	}
 
 test-array: array-test
-	@echo "    [TEST]   dynamic array"
+	@echo "  TEST     dynamic array"
 	@{								\
 		max=`./array-test`;					\
 		for testno in `seq 1 $$max`; do				\
-			echo "    [TEST/array]  $$testno";		\
+			echo "  TEST/array    $$testno";		\
 			./array-test $$testno >/dev/null;		\
 		done							\
 	}
@@ -625,53 +625,53 @@ endif
 static: $(progs_static) libbtrfs.a libbtrfsutil.a
 
 libbtrfs/version.h: libbtrfs/version.h.in configure.ac
-	@echo "    [SH]     $@"
+	@echo "  SH       $@"
 	$(Q)bash ./config.status --silent $@
 
 mktables: kernel-lib/mktables.c
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(CFLAGS) $< -o $@
 
 # the target can be regenerated manually using mktables, but a local copy is
 # kept so the build process is simpler
 kernel-lib/tables.c:
-	@echo "    [TABLE]  $@"
+	@echo "  TABLE    $@"
 	$(Q)./mktables > $@ || ($(RM) -f $@ && exit 1)
 
 libbtrfs.so.$(libbtrfs_version): $(libbtrfs_objects) libbtrfs/libbtrfs.sym
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) $(filter %.o,$^) $(LDFLAGS) $(LIBBTRFS_LIBS) \
 		-shared -Wl,-soname,libbtrfs.so.0 -Wl,--version-script=libbtrfs/libbtrfs.sym -o $@
 
 libbtrfs.a: $(libbtrfs_objects)
-	@echo "    [AR]     $@"
+	@echo "  AR       $@"
 	$(Q)$(AR) cr $@ $^
 
 libbtrfs.so libbtrfs.so.$(LIBBTRFS_MAJOR) libbtrfs.so.$(LIBBTRFS_MAJOR).$(LIBBTRFS_MINOR): libbtrfs.so.$(libbtrfs_version) libbtrfs/libbtrfs.sym
-	@echo "    [LN]     $@"
+	@echo "  LN       $@"
 	$(Q)$(LN_S) -f $< $@
 
 libbtrfsutil/%.o: libbtrfsutil/%.c
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) -o $@ -c $< -o $@
 
 libbtrfsutil.so.$(libbtrfsutil_version): $(libbtrfsutil_objects) libbtrfsutil/libbtrfsutil.sym
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) $(LIBBTRFSUTIL_LDFLAGS) \
 		-shared -Wl,-soname,libbtrfsutil.so.$(libbtrfsutil_major) \
 		-Wl,--version-script=libbtrfsutil/libbtrfsutil.sym -o $@
 
 libbtrfsutil.a: $(libbtrfsutil_objects)
-	@echo "    [AR]     $@"
+	@echo "  AR       $@"
 	$(Q)$(AR) cr $@ $^
 
 libbtrfsutil.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so.$(libbtrfsutil_major).$(libbtrfsutil_minor): libbtrfsutil.so.$(libbtrfsutil_version)
-	@echo "    [LN]     $@"
+	@echo "  LN       $@"
 	$(Q)$(LN_S) -f $< $@
 
 ifeq ($(PYTHON_BINDINGS),1)
 libbtrfsutil_python: libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so libbtrfsutil/btrfsutil.h
-	@echo "    [PY]     libbtrfsutil"
+	@echo "  PY       libbtrfsutil"
 	$(Q)cd libbtrfsutil/python; \
 		CFLAGS="$(EXTRA_PYTHON_CFLAGS)" LDFLAGS="$(EXTRA_PYTHON_LDFLAGS)" $(PYTHON) setup.py $(SETUP_PY_Q) build_ext -i build
 
@@ -689,174 +689,174 @@ endif
 # from the target name before translating to list of libs
 
 btrfs-%.static: btrfs-%.static.o $(static_objects) $(patsubst %.o,%.static.o,$(standalone_deps)) $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $@.o $(static_objects) \
 		$(patsubst %.o, %.static.o, $($(subst -,_,$(subst .static,,$@)-objects))) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
 		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
 btrfs-%: btrfs-%.o $(objects) $(standalone_deps) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $(objects) $@.o \
 		$($(subst -,_,$@-objects)) \
 		libbtrfsutil.a \
 		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
 btrfs: btrfs.o $(objects) $(cmds_objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(btrfs_convert_libs) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs.box.static: btrfs.box.static.o $(static_objects) $(static_cmds_objects) $(progs_box_static_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(btrfs_convert_libs) \
 		$(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 box-links: btrfs.box
-	@echo "    [LN]     mkfs.btrfs"
+	@echo "  LN       mkfs.btrfs"
 	$(Q)$(LN_S) -sf btrfs.box mkfs.btrfs
-	@echo "    [LN]     btrfs-image"
+	@echo "  LN       btrfs-image"
 	$(Q)$(LN_S) -sf btrfs.box btrfs-image
-	@echo "    [LN]     btrfs-convert"
+	@echo "  LN       btrfs-convert"
 	$(Q)$(LN_S) -sf btrfs.box btrfs-convert
-	@echo "    [LN]     btrfstune"
+	@echo "  LN       btrfstune"
 	$(Q)$(LN_S) -sf btrfs.box btrfstune
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
-	@echo "    [LN]     $@"
+	@echo "  LN       $@"
 	$(Q)$(LN_S) -f btrfs btrfsck
 
 btrfsck.static: btrfs.static
-	@echo "    [LN]     $@"
+	@echo "  LN       $@"
 	$(Q)$(LN_S) -f $^ $@
 
 mkfs.btrfs: $(mkfs_objects) $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfstune: $(tune_objects) $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 btrfstune.static: $(static_tune_objects) $(static_objects) $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfs-image: $(image_objects) $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfs-convert: $(convert_objects) $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
 btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
 btree-test: tests/btree-test.c $(objects) libbtrfsutil.a $(libs_shared)
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 ioctl-test.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
-	@echo "    [CC]     $@"
+	@echo "  CC       $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
 ioctl-test-32.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
-	@echo "    [CC32]   $@"
+	@echo "  CC32     $@"
 	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
 
 ioctl-test-64.o: tests/ioctl-test.c kernel-shared/uapi/btrfs.h include/kerncompat.h kernel-shared/ctree.h
-	@echo "    [CC64]   $@"
+	@echo "  CC64     $@"
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 
 ioctl-test: ioctl-test.o
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
-	@echo "   ?[PAHOLE] $@.pahole"
+	@echo "  ?PAHOLE  $@.pahole"
 	-$(Q)pahole $@ > $@.pahole
 
 ioctl-test-32: ioctl-test-32.o
-	@echo "    [LD32]   $@"
+	@echo "  LD32     $@"
 	$(Q)$(CC) -m32 -o $@ $< $(LDFLAGS)
-	@echo "   ?[PAHOLE] $@.pahole"
+	@echo "  ?PAHOLE  $@.pahole"
 	-$(Q)pahole $@ > $@.pahole
 
 ioctl-test-64: ioctl-test-64.o
-	@echo "    [LD64]   $@"
+	@echo "  LD64     $@"
 	$(Q)$(CC) -m64 -o $@ $< $(LDFLAGS)
-	@echo "   ?[PAHOLE] $@.pahole"
+	@echo "  ?PAHOLE  $@.pahole"
 	-$(Q)pahole $@ > $@.pahole
 
 test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
-	@echo "    [TEST/ioctl]"
+	@echo "  TEST/ioctl"
 	$(Q)./ioctl-test > ioctl-test.log
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
 library-test: tests/library-test.c libbtrfs.so
-	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
+	@echo "  TEST PREP    $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
 	cp libbtrfs.so.$(libbtrfs_version) $(TMPD) && \
 	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) -Wl,-rpath=$(ABSTOPDIR)
-	@echo "    [TEST RUN]   $@"
+	@echo "  TEST RUN     $@"
 	$(Q)cd $(TMPD) && LD_PRELOAD=libbtrfs.so.$(libbtrfs_version) ./$@
-	@echo "    [TEST CLEAN] $@"
+	@echo "  TEST CLEAN   $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
 library-test.static: tests/library-test.c libbtrfs.a libbtrfsutil.a
-	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
+	@echo "  TEST PREP    $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
 	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) $(STATIC_LDFLAGS) $(STATIC_LIBS)
-	@echo "    [TEST RUN]   $@"
+	@echo "  TEST RUN     $@"
 	$(Q)cd $(TMPD) && ./$@
-	@echo "    [TEST CLEAN] $@"
+	@echo "  TEST CLEAN   $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
 fssum: tests/fssum.c crypto/sha224-256.c crypto/sha256-x86.o common/cpu-utils.o
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 fsstress: tests/fsstress.c
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -luring -laio
 
 hash-speedtest: crypto/hash-speedtest.c $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 hash-vectest: crypto/hash-vectest.c $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 json-formatter-test: tests/json-formatter-test.c $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 string-table-test: tests/string-table-test.c $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 array-test: tests/array-test.c $(objects) libbtrfsutil.a
-	@echo "    [LD]     $@"
+	@echo "  LD       $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 test-build: test-build-pre test-build-real
@@ -876,7 +876,7 @@ manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
 tags: FORCE
-	@echo "    [TAGS]   $(TAGS_CMD)"
+	@echo "  TAGS     $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
 		kernel-shared/*/*.[ch] \
@@ -884,14 +884,14 @@ tags: FORCE
 		libbtrfsutil/*.[ch]
 
 etags: FORCE
-	@echo "    [ETAGS]   $(ETAGS_CMD)"
+	@echo "  ETAGS     $(ETAGS_CMD)"
 	$(Q)$(ETAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
 		cmds/*.[ch] common/*.[ch] tune/*.[ch] \
 		libbtrfsutil/*.[ch]
 
 cscope: FORCE
-	@echo "    [CSCOPE] $(CSCOPE_CMD)"
+	@echo "  CSCOPE   $(CSCOPE_CMD)"
 	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] check/*.[ch] \
 		kernel-lib/*.[ch] kernel-shared/*.[ch] libbtrfsutil/*.[ch] \
 		cmds/*.[ch] common/*.[ch] tune/*.[ch] \

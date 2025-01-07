@@ -17,7 +17,7 @@ BTRFS_VERSION = $(shell $(SED) -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p' ../config.
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
 	QUIET_RM	= @
-	QUIET_SPHINX	= @echo "    [SPHINX] $@";
+	QUIET_SPHINX	= @echo "  SPHINX   $@";
 	SPHINXOPTS     += -q
 endif
 endif
