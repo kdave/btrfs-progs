@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
 
 	if (argc - optind >= 1) {
 		iterations = atoi(argv[optind]);
-		if (iterations < 0)
+		if (iterations < 1)
 			iterations = 1;
 	}
 
