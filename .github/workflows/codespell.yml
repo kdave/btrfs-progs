@@ -6,9 +6,15 @@ run-name: Codespell
 
 on:
   push:
-    branches: [devel]
+    branches:
+      - devel
+      - 'ci/**'
+      - 'CI/**'
   pull_request:
-    branches: [devel]
+    branches:
+      - devel
+      - 'ci/**'
+      - 'CI/**'
 
 permissions:
   contents: read
