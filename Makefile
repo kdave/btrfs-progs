@@ -602,6 +602,11 @@ test-array: array-test
 
 test-api: test-json test-string-table test-array
 
+test-hash: hash-speedtest hash-vectest
+	@echo "  TEST     crypto/hash"
+	@./hash-speedtest 1000 >/dev/null
+	@./hash-vectest >/dev/null
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
