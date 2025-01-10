@@ -1288,7 +1288,8 @@ static const char * const cmd_filesystem_resize_usage[] = {
 	NULL
 };
 
-static int check_resize_args(const char *amount, const char *path, u64 *devid_ret) {
+static int check_resize_args(const char *amount, const char *path, u64 *devid_ret)
+{
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
 	int ret, i, dev_idx = -1;
@@ -1421,15 +1422,16 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		}
 		new_size = round_down(new_size, fi_args.sectorsize);
 		res_str = pretty_size_mode(new_size, UNITS_DEFAULT);
+
+		if (new_size < 256 * SZ_1M)
+   warning("the new size %lld (%s) is < 256MiB, this may be rejected by kernel",
+			new_size, pretty_size_mode(new_size, UNITS_DEFAULT));
 	}
 
 	pr_verbose(LOG_DEFAULT, "Resize device id %lld (%s) from %s to %s\n", devid,
 		di_args[dev_idx].path,
 		pretty_size_mode(di_args[dev_idx].total_bytes, UNITS_DEFAULT),
 		res_str);
-	if (new_size < 256 * SZ_1M)
-		warning("the new size %lld (%s) is < 256MiB, this may be rejected by kernel",
-			new_size, pretty_size_mode(new_size, UNITS_DEFAULT));
 
 out:
 	free(di_args);
