@@ -363,8 +363,7 @@ static void print_filesystem_device(struct format_ctx *fctx,
 		fmt_print(fctx, "size", total_bytes);
 		fmt_print(fctx, "used", bytes_used);
 		fmt_print(fctx, "path", path);
-		if (missing)
-			fmt_print(fctx, "missing", 0);
+		fmt_print(fctx, "missing", missing);
 		fmt_print_end_group(fctx, NULL);
 	} else {
 		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s%s\n",
