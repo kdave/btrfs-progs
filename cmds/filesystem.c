@@ -360,8 +360,8 @@ static void print_filesystem_device(struct format_ctx *fctx,
 	if (bconf.output_format == CMD_FORMAT_JSON) {
 		fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
 		fmt_print(fctx, "devid", devid);
-		fmt_print(fctx, "size", 0);
-		fmt_print(fctx, "used", 0);
+		fmt_print(fctx, "size", total_bytes);
+		fmt_print(fctx, "used", bytes_used);
 		fmt_print(fctx, "path", path);
 		if (missing)
 			fmt_print(fctx, "missing", 0);
