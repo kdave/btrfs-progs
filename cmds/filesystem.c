@@ -431,8 +431,16 @@ static void print_one_uuid(struct format_ctx *fctx,
 
 	print_devices(fs_devices, &devs_found, unit_mode, fctx);
 
-	// TODO: global missing option?
 	if (bconf.output_format == CMD_FORMAT_JSON) {
+		if (devs_found < total) {
+			// TODO: Iterate over devs_found to find the missing device ids?
+			print_filesystem_device(fctx, 0,
+						 0, 0,
+						 "",
+						 true,
+						 unit_mode);
+			}
+
 		fmt_print_end_group(fctx, NULL);
 		fmt_print_end_group(fctx, "device-list");
 	} else {
