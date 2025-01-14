@@ -124,7 +124,9 @@ static int is_loop_device(const char *device)
  * the associated file (e.g. /images/my_btrfs.img) using
  * loopdev API
  */
-static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_file)
+static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_file,
+					    unsigned long long *offset,
+					    unsigned long long *sizelimit)
 {
 	int fd;
 	int ret;
@@ -142,6 +144,9 @@ static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_fil
 	memcpy(loop_file, lo64.lo_file_name, sizeof(lo64.lo_file_name));
 	loop_file[sizeof(lo64.lo_file_name)] = 0;
 
+	*offset = lo64.lo_offset;
+	*sizelimit = lo64.lo_sizelimit;
+
 out:
 	close(fd);
 
@@ -153,29 +158,53 @@ out:
  * the associated file (e.g. /images/my_btrfs.img)
  */
 static int resolve_loop_device(const char* loop_dev, char* loop_file,
-		int max_len)
+		int max_len, unsigned long long *offset,
+		unsigned long long *sizelimit)
 {
 	int ret;
 	FILE *f;
 	char fmt[20];
 	char p[PATH_MAX];
 	char real_loop_dev[PATH_MAX];
+	char *name;
 
 	if (!realpath(loop_dev, real_loop_dev))
 		return -errno;
-	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", strrchr(real_loop_dev, '/'));
+
+	name = strrchr(real_loop_dev, '/');
+
+	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", name);
 	if (!(f = fopen(p, "r"))) {
 		if (errno == ENOENT)
 			/*
 			 * It's possibly a partitioned loop device, which is
 			 * resolvable with loopdev API.
 			 */
-			return resolve_loop_device_with_loopdev(loop_dev, loop_file);
+			return resolve_loop_device_with_loopdev(loop_dev, loop_file,
+								offset, sizelimit);
 		return -errno;
 	}
 
 	snprintf(fmt, 20, "%%%i[^\n]", max_len - 1);
 	ret = fscanf(f, fmt, loop_file);
+	fclose(f);
+	if (ret == EOF)
+		return -errno;
+
+	snprintf(p, PATH_MAX, "/sys/block/%s/loop/offset", name);
+	if (!(f = fopen(p, "r")))
+		return -errno;
+
+	ret = fscanf(f, "%llu", offset);
+	fclose(f);
+	if (ret == EOF)
+		return -errno;
+
+	snprintf(p, PATH_MAX, "/sys/block/%s/loop/sizelimit", name);
+	if (!(f = fopen(p, "r")))
+		return -errno;
+
+	ret = fscanf(f, "%llu", sizelimit);
 	fclose(f);
 	if (ret == EOF)
 		return -errno;
@@ -235,6 +264,8 @@ int is_same_loop_file(const char *a, const char *b)
 	const char* final_a = NULL;
 	const char* final_b = NULL;
 	int ret;
+	unsigned long long a_offset, a_sizelimit, b_offset, b_sizelimit;
+	unsigned long long low_offset, low_sizelimit, high_offset;
 
 	/* Resolve a if it is a loop device */
 	if ((ret = is_loop_device(a)) < 0) {
@@ -242,7 +273,8 @@ int is_same_loop_file(const char *a, const char *b)
 			return 0;
 		return ret;
 	} else if (ret) {
-		ret = resolve_loop_device(a, res_a, sizeof(res_a));
+		ret = resolve_loop_device(a, res_a, sizeof(res_a),
+					  &a_offset, &a_sizelimit);
 		if (ret < 0) {
 			if (errno != EPERM)
 				return ret;
@@ -259,7 +291,8 @@ int is_same_loop_file(const char *a, const char *b)
 			return 0;
 		return ret;
 	} else if (ret) {
-		ret = resolve_loop_device(b, res_b, sizeof(res_b));
+		ret = resolve_loop_device(b, res_b, sizeof(res_b),
+					  &b_offset, &b_sizelimit);
 		if (ret < 0) {
 			if (errno != EPERM)
 				return ret;
@@ -270,7 +303,25 @@ int is_same_loop_file(const char *a, const char *b)
 		final_b = b;
 	}
 
-	return is_same_blk_file(final_a, final_b);
+	if (!is_same_blk_file(final_a, final_b))
+		return 0;
+
+	/* If no size limit, this is the base block device.  */
+	if (a_sizelimit == 0 || b_sizelimit == 0)
+		return 1;
+
+	/* If the loop devices don't overlap, there's no problem.  */
+	if (a_offset < b_offset) {
+		low_offset = a_offset;
+		low_sizelimit = a_sizelimit;
+		high_offset = b_offset;
+	} else {
+		low_offset = b_offset;
+		low_sizelimit = b_sizelimit;
+		high_offset = a_offset;
+	}
+
+	return low_offset + low_sizelimit > high_offset ? 1 : 0;
 }
 
 /* Checks if a file exists and is a block or regular file*/
