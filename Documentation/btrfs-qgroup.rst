@@ -31,6 +31,12 @@ ownership. For example a fresh snapshot shares almost all the blocks with the
 original subvolume, new writes to either subvolume will raise towards the
 exclusive limit.
 
+.. note::
+   Qgroup limit only works when qgroup is in a consistent state.
+   If some workload marks qgroup inconsistent (like assigning a qgroup to another
+   qgroup), the limit will no longer work until the inconsistent flag is cleared
+   by :command:`btrfs quota rescan`.
+
 The qgroup identifiers conform to *level/id* where level 0 is reserved to the
 qgroups associated with subvolumes. Such qgroups are created automatically.
 
