@@ -21,7 +21,6 @@
 #include "kerncompat.h"
 #include <sys/types.h>
 #include <stdbool.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"

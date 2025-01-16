@@ -17,6 +17,8 @@
 #ifndef __BTRFS_PROPS_H__
 #define __BTRFS_PROPS_H__
 
+#include <stdbool.h>
+
 enum prop_object_type {
 	prop_object_dev		= (1U << 0),
 	prop_object_root	= (1U << 1),

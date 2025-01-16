@@ -16,10 +16,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-
 #include "blake2.h"
 #include "blake2-impl.h"
-
 #include "common/cpu-utils.h"
 
 static const uint64_t blake2b_IV[8] =

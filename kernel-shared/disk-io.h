@@ -21,10 +21,8 @@
 
 #include "kerncompat.h"
 #include <stddef.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
-#include "kernel-shared/uapi/btrfs.h"
 
 struct btrfs_tree_parent_check;
 struct btrfs_fs_devices;

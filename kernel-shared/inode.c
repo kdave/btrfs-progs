@@ -33,7 +33,6 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
-#include "common/messages.h"
 #include "common/internal.h"
 
 /*

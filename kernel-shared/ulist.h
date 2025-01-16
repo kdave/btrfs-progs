@@ -23,7 +23,6 @@
 
 #include "kerncompat.h"
 #include <stddef.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/rbtree_types.h"
 #include "kernel-lib/list.h"
 

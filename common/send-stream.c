@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "kernel-shared/accessors.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/send.h"

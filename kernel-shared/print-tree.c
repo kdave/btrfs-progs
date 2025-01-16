@@ -26,6 +26,7 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
@@ -37,7 +38,6 @@
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/string-utils.h"
-#include "uapi/btrfs.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)

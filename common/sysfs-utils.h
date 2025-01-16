@@ -17,6 +17,7 @@
 #ifndef __COMMON_SYSFS_UTILS__
 #define __COMMON_SYSFS_UTILS__
 
+#include "kerncompat.h"
 #include <stddef.h>
 
 int sysfs_open_file(const char *name);

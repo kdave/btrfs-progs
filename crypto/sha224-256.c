@@ -42,7 +42,6 @@
 
 #include "crypto/sha.h"
 #include "crypto/sha-private.h"
-
 #include "common/cpu-utils.h"
 
 /* Define the SHA shift, rotate left, and rotate right macros */

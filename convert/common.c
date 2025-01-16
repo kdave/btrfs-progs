@@ -30,7 +30,6 @@
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/free-space-tree.h"
-#include "common/path-utils.h"
 #include "common/messages.h"
 #include "common/string-utils.h"
 #include "common/extent-tree-utils.h"

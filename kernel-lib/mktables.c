@@ -22,10 +22,7 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
-#include <stdlib.h>
-#include <time.h>
 
 static uint8_t gfmul(uint8_t a, uint8_t b)
 {

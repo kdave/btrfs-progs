@@ -21,7 +21,6 @@
 
 #include "kerncompat.h"
 #include <stdio.h>
-#include "kernel-lib/bitops.h"
 
 struct btrfs_chunk;
 struct btrfs_disk_key;

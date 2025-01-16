@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/uapi/btrfs.h"
@@ -32,7 +31,6 @@
 #include "kernel-shared/uuid-tree.h"
 #include "kernel-shared/disk-io.h"
 #include "common/messages.h"
-#include "common/utils.h"
 
 void btrfs_uuid_to_key(const u8 *uuid, u8 type, struct btrfs_key *key)
 {

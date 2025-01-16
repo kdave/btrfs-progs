@@ -20,7 +20,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <errno.h>
 #include "kernel-lib/list.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/extent_io.h"

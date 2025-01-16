@@ -1,6 +1,8 @@
 #ifndef __PROGS_TRACE_H__
 #define __PROGS_TRACE_H__
 
+#include "kerncompat.h"
+
 struct btrfs_work;
 struct btrfs_fs_info;
 struct extent_state;

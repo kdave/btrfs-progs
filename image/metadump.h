@@ -19,7 +19,6 @@
 
 #include "kerncompat.h"
 #include <pthread.h>
-#include "kernel-lib/rbtree.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"

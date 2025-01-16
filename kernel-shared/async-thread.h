@@ -10,7 +10,6 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include "kernel-lib/list.h"
-#include "kernel-lib/bitops.h"
 
 struct btrfs_fs_info;
 struct btrfs_workqueue;

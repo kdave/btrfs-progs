@@ -20,6 +20,7 @@
 #include "kerncompat.h"
 #include <stdio.h>
 #include "kernel-lib/sizes.h"
+#include "kernel-shared/uapi/btrfs.h"
 
 #define BTRFS_MKFS_DEFAULT_NODE_SIZE SZ_16K
 

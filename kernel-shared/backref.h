@@ -20,7 +20,6 @@
 #define __BTRFS_BACKREF_H__
 
 #include "kerncompat.h"
-#include "kernel-lib/bitops.h"
 
 struct btrfs_extent_item;
 struct btrfs_fs_info;

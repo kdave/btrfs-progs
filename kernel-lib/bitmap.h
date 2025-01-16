@@ -10,8 +10,8 @@
 #ifndef _BTRFS_PROGS_LINUX_BITMAP_H_
 #define _BTRFS_PROGS_LINUX_BITMAP_H_
 
-#include <stdlib.h>
 #include "kerncompat.h"
+#include <stdlib.h>
 #include "kernel-lib/bitops.h"
 
 static inline unsigned long *bitmap_zalloc(unsigned int nbits)

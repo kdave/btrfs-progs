@@ -3,6 +3,8 @@
 #ifndef BTRFS_TREE_MOD_LOG_H
 #define BTRFS_TREE_MOD_LOG_H
 
+#include "kerncompat.h"
+#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 
 /* Represents a tree mod log user. */

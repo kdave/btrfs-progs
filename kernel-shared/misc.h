@@ -4,6 +4,8 @@
 #define BTRFS_MISC_H
 
 #include "kerncompat.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/bitops.h"
 
 #define in_range(b, first, len) ((b) >= (first) && (b) < (first) + (len))
 

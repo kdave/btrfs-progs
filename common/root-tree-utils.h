@@ -17,7 +17,11 @@
 #ifndef __ROOT_TREE_UTILS_H__
 #define __ROOT_TREE_UTILS_H__
 
-#include "kernel-shared/transaction.h"
+#include "kerncompat.h"
+
+struct btrfs_root;
+struct btrfs_fs_info;
+struct btrfs_trans_handle;
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);

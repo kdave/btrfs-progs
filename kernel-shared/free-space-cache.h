@@ -20,7 +20,6 @@
 #define __BTRFS_FREE_SPACE_CACHE_H__
 
 #include "kerncompat.h"
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree_types.h"
 

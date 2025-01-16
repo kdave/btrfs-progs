@@ -3,6 +3,8 @@
 #define __LINUX_OVERFLOW_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*
  * We need to compute the minimum and maximum values representable in a given

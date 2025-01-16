@@ -1,7 +1,8 @@
 #ifndef __COMMON_TREE_SEARCH_H__
 #define __COMMON_TREE_SEARCH_H__
 
-#include "kernel-shared/uapi/btrfs_tree.h"
+#include "kerncompat.h"
+#include <stdbool.h>
 #include "kernel-shared/uapi/btrfs.h"
 
 #define BTRFS_TREE_SEARCH_V2_BUF_SIZE		65536

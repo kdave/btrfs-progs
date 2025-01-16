@@ -18,7 +18,9 @@
 #define __BTRFS_UUID_TREE_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/uapi/btrfs_tree.h"
+
+struct btrfs_key;
+struct btrfs_trans_handle;
 
 /* uuid-tree.c, interface for mounted mounted filesystem */
 int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);

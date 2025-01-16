@@ -20,7 +20,6 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include <unistd.h>
-#include "kernel-lib/bitops.h"
 
 struct btrfs_ioctl_dev_info_args;
 struct stat;

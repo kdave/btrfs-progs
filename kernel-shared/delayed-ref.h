@@ -24,7 +24,6 @@
 #include <stdbool.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree_types.h"
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 

@@ -6,7 +6,6 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include <stddef.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/accessors.h"

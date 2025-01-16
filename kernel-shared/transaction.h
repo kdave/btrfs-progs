@@ -21,10 +21,8 @@
 
 #include "kerncompat.h"
 #include <sys/stat.h>
-#include <errno.h>
 #include <stdbool.h>
 #include "kernel-lib/list.h"
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/delayed-ref.h"
 #include "kernel-shared/extent-io-tree.h"
 #include "kernel-shared/misc.h"

@@ -26,9 +26,6 @@
 #define HAVE_PERF
 #endif
 #include "crypto/hash.h"
-#include "crypto/crc32c.h"
-#include "crypto/sha.h"
-#include "crypto/blake2.h"
 #include "common/messages.h"
 #include "common/cpu-utils.h"
 

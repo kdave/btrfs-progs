@@ -3,7 +3,6 @@
 #include "kerncompat.h"
 #include <errno.h>
 #include <stdarg.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/messages.h"
 

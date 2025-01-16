@@ -21,7 +21,7 @@
 #define __BTRFS_SEND_H__
 
 #include "kernel-lib/sizes.h"
-#include "kernel-shared/ctree.h"
+#include "kernel-shared/accessors.h"
 
 #define BTRFS_SEND_STREAM_MAGIC "btrfs-stream"
 /* Conditional support for the upcoming protocol version. */

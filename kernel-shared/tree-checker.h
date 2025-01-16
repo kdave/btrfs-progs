@@ -8,7 +8,6 @@
 
 #include "kerncompat.h"
 #include <stdbool.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 
 struct extent_buffer;

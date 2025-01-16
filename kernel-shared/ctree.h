@@ -23,7 +23,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "kernel-lib/list.h"
-#include "kernel-lib/bitops.h"
 #include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"

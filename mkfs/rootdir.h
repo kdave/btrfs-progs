@@ -22,9 +22,11 @@
 #define __BTRFS_MKFS_ROOTDIR_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/compression.h"
 #include <sys/types.h>
 #include <stdbool.h>
+#include <limits.h>
+#include "kernel-lib/list.h"
+#include "kernel-shared/compression.h"
 
 struct btrfs_fs_info;
 struct btrfs_root;

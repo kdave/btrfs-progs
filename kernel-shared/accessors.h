@@ -6,7 +6,6 @@
 #include "kerncompat.h"
 #include <stddef.h>
 #include <string.h>
-#include "kernel-lib/bitops.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/uapi/btrfs_tree.h"

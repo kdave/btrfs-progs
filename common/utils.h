@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 #include "kernel-lib/list.h"
 #include "kernel-shared/volumes.h"
-#include "common/fsfeatures.h"
 
 struct list_head;
 

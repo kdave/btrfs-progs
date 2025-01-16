@@ -21,11 +21,11 @@
  *
  * This file was postprocessed using unroll.pl and then ported to userspace
  */
+#include "kerncompat.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "kerncompat.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-lib/raid56.h"

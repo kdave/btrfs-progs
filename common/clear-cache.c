@@ -31,9 +31,9 @@
 #include "kernel-shared/file-item.h"
 #include "common/internal.h"
 #include "common/messages.h"
+#include "common/clear-cache.h"
 #include "check/repair.h"
 #include "check/mode-common.h"
-#include "common/clear-cache.h"
 
 /*
  * Number of free space cache inodes to delete in one transaction.

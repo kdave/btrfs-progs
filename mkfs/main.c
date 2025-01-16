@@ -41,7 +41,6 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/zoned.h"
-#include "kernel-shared/uuid-tree.h"
 #include "crypto/hash.h"
 #include "common/defs.h"
 #include "common/internal.h"

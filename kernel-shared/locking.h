@@ -5,7 +5,6 @@
 
 #include "kerncompat.h"
 #include <stdbool.h>
-#include "kernel-lib/bitops.h"
 
 struct extent_buffer;
 

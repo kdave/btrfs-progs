@@ -14,12 +14,14 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <time.h>
 #include <uuid/uuid.h>
-#include "common/root-tree-utils.h"
-#include "common/messages.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/uuid-tree.h"
+#include "kernel-shared/transaction.h"
+#include "common/root-tree-utils.h"
+#include "common/messages.h"
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid)
