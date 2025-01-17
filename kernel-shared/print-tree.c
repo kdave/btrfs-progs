@@ -1343,7 +1343,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	u64 flags;
 	u32 nr;
 	u8 backref_rev;
-	char csum_str[2 * BTRFS_CSUM_SIZE + strlen(" csum 0x") + 1];
+	char csum_str[2 * BTRFS_CSUM_SIZE + 8 /* strlen(" csum 0x") */ + 1];
 	int i;
 	int csum_size = fs_info->csum_size;
 
