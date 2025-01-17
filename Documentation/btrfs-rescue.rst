@@ -65,14 +65,17 @@ clear-space-cache <v1|v2> <device>
 	remove the cache for updated block groups, the remaining would not be removed.
 	Thus this command is provided to manually clear the free space cache.
 
+.. _man-rescue-clear-uuid-tree:
+
 clear-uuid-tree <device>
-        Clear UUID tree, so that kernel can re-generate it at next read-write
+        Clear the UUID tree, so that kernel can regenerate it at next read-write
         mount.
 
         Since kernel v4.16 there are more sanity check performed, and sometimes
         non-critical trees like UUID tree can cause problems and reject the mount.
         In such case, clearing UUID tree may make the filesystem to be mountable again
         without much risk as it's built from other trees.
+        See also :docref:`mount option rescan_uuid_tree <btrfs-man5:mount-option-rescan-uuid-tree>`.
 
 super-recover [options] <device>
         Recover bad superblocks from good copies.
