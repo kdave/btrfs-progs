@@ -106,6 +106,95 @@ features see :doc:`Status<Status>` page.
 6.8 - new mount API
         Use new mount API (https://lwn.net/Articles/753473/)
 
+6.9 - statx can read the subvolume id
+        The extendable syscall *statx* also returns the subvolume id and
+        sets the *result_mask* bit *STATX_SUBVOL*.
+
+6.9 - reflinked file range and concurrent read
+        An optimization for concurrent access to a range that is reflinked
+        and read at the same time, the read latency is decreased due to reduced
+        locking.
+
+6.10 - automatic stale subvolume group removal
+        This applies to 0 level qgroups (the one automatically created for a
+        subvolume), once the subvolume is deleted the respective qgroup is
+        also deleted. This may take some time until the qgroup accounting is
+        correct and consistent again as the subvolume deletion is delayed.
+
+        This is also affected by presence of the subvolume qgroup in higher
+        level qgroups or the sysfs setting of *drop_subtree_threshold* that will
+        need a quota rescan.
+
+6.10 - sysfs reports reclaim status
+        A per-filesystem report of background reclaim status, file names
+        matching *reclaim_* in the space info directory.
+
+6.10 - tunable dynamic background reclaim threshold
+        Run background block group reclaim (using the relocation/balance mechanism)
+        if the used size is above the configured value and the dynamic reclaim
+        is enabled (not by default). When enabled, there's a heuristic that ties to
+        avoid increasing system load if there's enough unallocated space but will
+        try hard (but cannot be perfect) to avoid a situation when there's last
+        chunk remaining to make the relocation possible.
+
+6.10 - new mount option rescue= mode *ignoremetacsums*
+        When enabled, any metadata checksum mismatch is ignored (in read-only mount),
+        this may be useful in an interrupted checksum type conversion (:doc:`btrfstune`).
+
+6.10 - new mount option rescue= mode *ignoresuperflags*
+        An option to ignore unknown super block flags, at this point applies
+        only to the interrupted checksum conversion, but can be useful for
+        similar operations in the future.
+
+6.10 - tree-checker updates
+        Properly verify all types of directory items and reject unknown ones.
+        Do relevant device item checks.
+
+6.10 - allow to clone/reflink the tail extent
+        Check if the last inode extent (not a full block length) can be cloned
+        and do it, this fixes a problem in send/receive.
+
+6.10 - unlink updates ctime
+        Mandated by POSIX (https://pubs.opengroup.org/onlinepubs/9699919799/functions/unlink.html),
+        the link count is changed.
+
+6.11 - unconditionally wake up cleaner thread on SYNC ioctl
+        Avoid indirection when the BTRFS_IOC_SYNC ioctl is called and wake
+        up the cleaner thread which is among other things responsible to
+        clean deleted subvolumes.
+
+6.11 - reduced locking around buffered reads
+        Improve concurrency by reducing scope of locking around buffered
+        reads. The direct io is still locked but this should not be mixed with
+        buffered writes.
+
+6.12 - cancellable discard/TRIM
+        Add more points where the discard can be interrupted by signals before
+        it finishes the whole operation.
+
+6.13 - new config option CONFIG_BTRFS_EXPERIMENTAL
+        Add separate config option to distinguish purely debugging features
+        (like extended safety checks) and features that still need some
+        refinements (and were hidden under the debugging config option not to
+        expose them to users). When enabled this namely covers extent tree v2,
+        raid stripe tree, send protocol version 3 and checksum offloading strategy.
+
+6.13 - encoded read integration with io_uring
+        The io_uring subsystem understands a command that is directed to
+        Btrfs encoded read ioctl.
+
+6.13 - new ioctl to wait for cleaned subvolumes
+        Add specialized ioctl to wait for deleted (and maybe not yet cleaned)
+        subvolumes, available to any user. The related command :command:`btrfs subvolume sync`
+        uses the privileged SEARCH_TREE ioctl otherwise.
+
+6.13 - seeding device use case change
+        The sprout device (the writable one added to the seeding device) does
+        not touch the superblock read-only status, preventing removal of
+        accumulated deleted snapshots to be cleaned.
+
+6.13 - update tree-checker to detect more wrong inline extent references
+
 5.x
 ---
 
