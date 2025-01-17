@@ -45,6 +45,7 @@
  * MODIFIED:
  *  - Declared these here since this is the only place they're used currently.
  */
+__maybe_unused
 static inline u64 btrfs_inode_combine_flags(u32 flags, u32 ro_flags)
 {
 	return (flags | ((u64)ro_flags << 32));

@@ -54,6 +54,10 @@
 
 #endif
 
+#ifndef __maybe_unused
+#define __maybe_unused __attribute__((__unused__))
+#endif
+
 #ifndef BTRFS_DISABLE_BACKTRACE
 #include <execinfo.h>
 #endif

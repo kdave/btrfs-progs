@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <errno.h>
 #include <string.h>
 #include "kernel-lib/bitops.h"
@@ -79,6 +80,7 @@ static unsigned int leaf_data_end(const struct extent_buffer *leaf)
  * have to adjust any offsets to account for the header in the leaf.  This
  * handles that math to simplify the callers.
  */
+__maybe_unused
 static inline void memmove_leaf_data(struct extent_buffer *leaf,
 				     unsigned long dst_offset,
 				     unsigned long src_offset,
@@ -102,6 +104,7 @@ static inline void memmove_leaf_data(struct extent_buffer *leaf,
  * have to adjust any offsets to account for the header in the leaf.  This
  * handles that math to simplify the callers.
  */
+__maybe_unused
 static inline void copy_leaf_data(struct extent_buffer *dst,
 				  const struct extent_buffer *src,
 				  unsigned long dst_offset,
@@ -122,6 +125,7 @@ static inline void copy_leaf_data(struct extent_buffer *dst,
  * Wrapper around memmove_extent_buffer() that does the math to get the
  * appropriate offsets into the leaf from the item numbers.
  */
+__maybe_unused
 static inline void memmove_leaf_items(struct extent_buffer *leaf,
 				      int dst_item, int src_item, int nr_items)
 {
@@ -142,6 +146,7 @@ static inline void memmove_leaf_items(struct extent_buffer *leaf,
  * Wrapper around copy_extent_buffer() that does the math to get the
  * appropriate offsets into the leaf from the item numbers.
  */
+__maybe_unused
 static inline void copy_leaf_items(struct extent_buffer *dst,
 				   const struct extent_buffer *src,
 				   int dst_item, int src_item, int nr_items)
