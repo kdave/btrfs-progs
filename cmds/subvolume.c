@@ -507,6 +507,35 @@ again:
 		goto out;
 	}
 
+	if (flags & BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE) {
+		struct btrfs_util_subvolume_iterator *iter;
+
+		err = btrfs_util_subvolume_iter_create_fd(fd, target_subvol_id,
+				  BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER,
+				  &iter);
+		if (!err) {
+			char *nested_path;
+			struct btrfs_util_subvolume_info subvol_info;
+
+			while (!(err = btrfs_util_subvolume_iter_next_info(iter, &nested_path, &subvol_info))) {
+				pr_verbose(LOG_DEFAULT, "Delete subvolume %" PRIu64 " (%s): ",
+					   subvol_info.id,
+					   commit_mode == COMMIT_EACH ||
+					   (commit_mode == COMMIT_AFTER && cnt + 1 == argc) ?
+					   "commit" : "no-commit");
+				pr_verbose(LOG_DEFAULT, "'%s/%s/%s'\n", dname, vname, nested_path);
+
+				free(nested_path);
+			}
+			if (err != BTRFS_UTIL_ERROR_STOP_ITERATION)
+				warning("failed to iterate subvolumes, nested subvolumes will not be printed: %s", btrfs_util_strerror(err));
+
+			btrfs_util_destroy_subvolume_iterator(iter);
+		} else {
+			warning("failed to create subvolume iterator, nested subvolumes will not be printed: %s", btrfs_util_strerror(err));
+		}
+	}
+
 	pr_verbose(LOG_DEFAULT, "Delete subvolume %" PRIu64 " (%s): ",
 		target_subvol_id,
 		commit_mode == COMMIT_EACH ||
