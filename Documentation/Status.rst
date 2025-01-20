@@ -4,16 +4,21 @@ Status
 Overview
 --------
 
-For a list of features by their introduction, please see :doc:`/Feature-by-version`.
+For a list of features by the kernel version of their introduction, please see
+:doc:`/Feature-by-version`.
 
-The table below aims to serve as an overview for the stability status of
-the features BTRFS supports. While a feature may be functionally safe
-and reliable, it does not necessarily mean that its useful, for example
-in meeting your performance expectations for your specific workload.
+The table below is an overview of the stability status of
+the features that BTRFS supports. While a feature may be functionally safe
+and reliable, it does not necessarily mean that it is meeting
+suitable for all use cases or workloads, for example performance.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.11**
+**The table is based on the latest released linux kernel: 6.13**
+
+Since kernel version 6.12 there's a config option *CONFIG_BTRFS_EXPERIMENTAL*
+that enables features that are in development and do not have stabilized
+interface or have known problems. See the :ref:`list below<status-experimental-features>`.
 
 The columns for each feature reflect the status of the implementation
 in following ways:
@@ -107,6 +112,10 @@ in following ways:
      - :statusok:`OK`
      - OK
      - balance + qgroups can be slow when there are many snapshots
+   * - Dynamic block group reclaim
+     - TBD
+     - TBD
+     - Tunable thresholds for automatic background block group reclaim.
    * - :doc:`Send<Send-receive>`
      - :statusok:`OK`
      - OK
@@ -147,6 +156,11 @@ in following ways:
      - :statusok:`OK`
      - OK
      -
+   * - Encoded io read/write
+     - :statusok:`OK`
+     - OK
+     - Special *ioctls* to read or write file extent data directly, the raw
+       compressed bytes in particular.
    * - :doc:`Subpage block size<Subpage>`
      - :statusok:`OK`
      - OK
@@ -241,7 +255,8 @@ converted later).
    * - :ref:`Raid stripe tree<mkfs-feature-raid-stripe-tree>`
      - :statusmok:`mostly OK`
      - OK
-     - not all profiles are supported and RST is behind CONFIG_BTRFS_DEBUG build option
+     - not all profiles are supported and RST is behind
+       CONFIG_BTRFS_DEBUG/CONFIG_BTRFS_EXPERIMENTAL build option
    * - :doc:`Squota<Qgroups>`
      - :statusok:`OK`
      - OK
@@ -271,7 +286,7 @@ Integration with other Linux features or external systems.
    * - :ref:`io_uring<interop-io-uring>`
      - :statusok:`OK`
      - OK
-     -
+     - Can be combined with *Encoded read/write ioctls*.
    * - :ref:`fsverity<interop-fsverity>`
      - :statusok:`OK`
      - OK
@@ -456,3 +471,43 @@ Newly introduced features build on top of the above and could add
 specific structures. If a backward compatibility is not possible to
 maintain, a bit in the filesystem superblock denotes that and the level
 of incompatibility (full, read-only mount possible).
+
+.. _status-experimental-features:
+
+Experimental features
+---------------------
+
+Until kernel 6.12 the *CONFIG_OPTION_DEBUG* was used to hide features that
+still need some work and should not be exposed to users in general. With
+the increasing number of such features or functionality this started to conflict
+with regular debugging features. Currently there the following is behind
+the experimental option. Use with caution and if you find problems or have
+feedback please report that to the mailing list.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Feature
+     - Version
+     - Description
+   * - Raid stripe tree
+     - ...
+     - The RIAD5/6 block group is still not implemented and on-disk format
+       is not finalized (last change was in 6.12).
+   * - Send stream protocol v3
+     - ...
+     - The fs-verity stream command is implemented. More updates to the
+       protocol specification are pending.
+   * - Checksum offload mode
+     - ...
+     - Fast devices with a combination of block group profiles benefits from
+       calculating checksums at the time of IO submission, while other
+       combinations benefit from offloading that to the worker threads.
+       A sysfs tunable is exported to switch that.
+   * - Read balancing
+     - 6.13
+     - Spread IO read requests across available devices. A tunable is provided
+       in sysfs.
+   * - Extent tree v2
+     - ...
+     - Incomplete implementation.

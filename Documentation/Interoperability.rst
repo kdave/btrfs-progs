@@ -66,10 +66,17 @@ for overlayfs (supporting the rename modes of *exchange* and *whiteout*).
 SELinux
 -------
 
+The SELinux labels can be defined via mount option *context* and since
+version 6.8 there are no limitations. Until that version some cases
+were not supported.
+
 .. _interop-io-uring:
 
 io_uring
 --------
+
+Basic file operations are supported. Since 6.12 the *Encoded IO read/write ioctls* the
+*read* is supported and write since 6.13.
 
 .. _interop-nfs:
 
