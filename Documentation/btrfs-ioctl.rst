@@ -189,6 +189,30 @@ DATA STRUCTURES AND DEFINITIONS
                 char name[BTRFS_INO_LOOKUP_PATH_MAX];
         };
 
+.. _struct_btrfs_ioctl_subvol_wait:
+
+.. code-block:: c
+
+        /* Specify the subvolid. */
+        #define BTRFS_SUBVOL_SYNC_WAIT_FOR_ONE         (0)
+        /* Wait for all currently queued. */
+        #define BTRFS_SUBVOL_SYNC_WAIT_FOR_QUEUED      (1)
+        /* Count number of queued subvolumes. */
+        #define BTRFS_SUBVOL_SYNC_COUNT                (2)
+        /*
+         * Read which is the first in the queue (to be cleaned or being cleaned already),
+         * or 0 if the queue is empty.
+         */
+        #define BTRFS_SUBVOL_SYNC_PEEK_FIRST           (3)
+        /* Read the last subvolid in the queue, or 0 if the queue is empty. */
+        #define BTRFS_SUBVOL_SYNC_PEEK_LAST            (4)
+
+        struct btrfs_ioctl_subvol_wait {
+               __u64 subvolid;
+               __u32 mode;
+               __u32 count;
+        };
+
 .. _constants-table:
 
 .. list-table::
@@ -442,6 +466,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_ENCODED_WRITE
      -
      -
+   * - :ref:`BTRFS_IOC_SUBVOL_SYNC_WAIT<BTRFS_IOC_SUBVOL_SYNC_WAIT>`
+     - Wait until a deleted subvolume is cleaned or query the state.
+     - :ref:`struct btrfs_ioctl_subvol_wait<struct_btrfs_ioctl_subvol_wait>`
 
 DETAILED DESCRIPTION
 --------------------
@@ -894,6 +921,59 @@ Destroy a subvolume, which may or may not be a snapshot.
    * - args.subvolid
      - only if `flags` contains `BTRFS_SUBVOL_SPEC_BY_ID`, the subvolume ID of
        the subvolume to delete
+
+.. _BTRFS_IOC_SUBVOL_SYNC_WAIT:
+
+BTRFS_IOC_SUBVOL_SYNC_WAIT
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*(since: 6.13)* Wait until a deleted subvolume is cleaned or query the state.
+
+There are several modes of operation, where the most common ones are to
+wait on a specific subvolume or all currently queued for cleaning. This
+is utilized e.g. in backup applications that delete subvolumes and wait
+until they're cleaned to check for remaining space.
+
+The other modes are for flexibility, e.g. for monitoring or checkpoints in the
+queue of deleted subvolumes, again without the need to use SEARCH_TREE.
+
+Notes:
+
+- waiting is interruptible, the timeout is set to 1 second and is not
+  configurable
+
+- repeated calls to the ioctl see a different state, so this is inherently racy
+  when using e.g. the count or peek next/last
+
+Use cases (:ref:`definition of constants<struct_btrfs_ioctl_subvol_wait>`):
+
+- a subvolume A was deleted, wait for cleaning (WAIT_FOR_ONE)
+
+- a bunch of subvolumes were deleted, wait for all (WAIT_FOR_QUEUED or
+  PEEK_LAST + WAIT_FOR_ONE)
+
+- count how many are queued (not blocking), for monitoring purposes
+
+- report progress (PEEK_NEXT), may miss some if cleaning is quick
+
+- own waiting in user space (PEEK_LAST until it's 0)
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file or directory in the filesystem
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_subvol_wait<struct_btrfs_ioctl_subvol_wait>`
+   * - args.subvolid
+     - Depending on the mode, the numeric id of subolume to wait for, or
+       the one queried by *PEEK* modes
+   * - args.mode
+     - mode of operation described above
+   * - args.count
+     - if *mode* is set to *COUNT* the number of subvolumes queued for cleaning
 
 AVAILABILITY
 ------------
