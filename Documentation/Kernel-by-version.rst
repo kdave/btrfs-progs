@@ -688,6 +688,33 @@ Other notable changes or fixes:
 
 - in zoned mode, detect unexpected zone write pointer change
 
+6.12 (Nov 2024)
+^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.12-rc1 <https://git.kernel.org/linus/7a40974fd0efa3698de4c6d1d0ee0436bcc4445d>`__,
+`v6.12-rc1 <https://git.kernel.org/linus/a1fb2fcbb60650621a7e3238629a8bfb94147b8e>`__,
+`v6.12-rc2 <https://git.kernel.org/linus/79eb2c07afbe4d165734ea61a258dd8410ec6624>`__,
+`v6.12-rc3 <https://git.kernel.org/linus/eb952c47d154ba2aac794b99c66c3c45eb4cc4ec>`__,
+`v6.12-rc4 <https://git.kernel.org/linus/667b1d41b25b9b6b19c8af9d673ccb93b451b527>`__,
+`v6.12-rc5 <https://git.kernel.org/linus/4e46774408d942efe4eb35dc62e5af3af71b9a30>`__,
+`v6.12-rc6 <https://git.kernel.org/linus/6b4926494ed872803bb0b3c59440ac25c35c9869>`__,
+`v6.12-rc7 <https://git.kernel.org/linus/9183e033ec4f8bdac778070ebccdd41727da2305>`__,
+`v6.12 <https://git.kernel.org/linus/c9dd4571ad38654f26c07ff2b7c7dba03301fc76>`__
+
+6.13 (Jan 2025)
+^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.13-rc1 <https://git.kernel.org/linus/c14a8a4c04c5859322eb5801db662b56b2294f67>`__,
+`v6.13-rc2 <https://git.kernel.org/linus/feffde684ac29a3b7aec82d2df850fbdbdee55e4>`__,
+`v6.13-rc3 <https://git.kernel.org/linus/5a087a6b17eeb64893b81d08d38e6f6300419ee5>`__,
+`v6.13-rc4 <https://git.kernel.org/linus/eabcdba3ad4098460a376538df2ae36500223c1e>`__,
+`v6.13-rc5 <https://git.kernel.org/linus/c059361673e487fe33bb736fb944f313024ad726>`__,
+`v6.13-rc7 <https://git.kernel.org/linus/643e2e259c2b25a2af0ae4c23c6e16586d9fd19c>`__,
+`v6.13 <https://git.kernel.org/linus/ed8fd8d5dd4aa250e18152b80cbac24de7335488>`__
+
+
 5.x
 ---
 
