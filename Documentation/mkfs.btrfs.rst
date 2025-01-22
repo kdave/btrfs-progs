@@ -155,6 +155,15 @@ OPTIONS
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
                 not minimized. Please see option *--shrink* if you need that functionality.
 
+--compress <algo>[:<level>]
+        Try to compress files when using *--rootdir*.  Supported values for *algo* are
+        *no* (the default), *zstd*, *lzo* or *zlib*.  The optional value *level* is a
+        compression level, 1..15 for *zstd*, 1..9 for *zlib*.
+
+        As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
+        they would be larger than the uncompressed versions, and will set file attribute
+        *NOCOMPRESS* if its beginning is found to be incompressible.
+
 -u|--subvol <type>:<subdir>
         Specify that *subdir* is to be created as a subvolume rather than a regular
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
@@ -211,15 +220,6 @@ OPTIONS
         .. code-block:: bash
 
                 $ mkfs.btrfs -O list-all
-
---compress <algo>[:<level>]
-        Try to compress files when using *--rootdir*.  Supported values for *algo* are
-        *no* (the default), *zlib*, *lzo*, and *zstd*.  The optional value *level* is a
-        compression level, from 1 to 9 for ZLIB and from 1 to 15 for ZSTD.
-
-        As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
-        they would be larger than the uncompressed versions, and will mark a file as
-        `nocompress` if its beginning is found to be incompressible.
 
 -f|--force
         Forcibly overwrite the block devices when an existing filesystem is detected.
