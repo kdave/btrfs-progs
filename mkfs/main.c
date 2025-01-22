@@ -442,6 +442,18 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory"),
 	OPTLINE("--compress ALGO[:LEVEL]", "compress files by algorithm and level, ALGO can be 'no' (default), zstd, lzo, zlib"),
+	OPTLINE("", "Built-in:"),
+#if COMPRESSION_ZSTD
+	OPTLINE("", "- ZSTD: yes"),
+#else
+	OPTLINE("", "- ZSTD: no"),
+#endif
+#if COMPRESSION_LZO
+	OPTLINE("", "- LZO: yes"),
+#else
+	OPTLINE("", "- LZO: no"),
+#endif
+	OPTLINE("", "- ZLIB: yes"),
 	OPTLINE("-u|--subvol TYPE:SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
