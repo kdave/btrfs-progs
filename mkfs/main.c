@@ -1031,7 +1031,8 @@ static void *prepare_one_device(void *ctx)
 	return NULL;
 }
 
-static int parse_compression(const char *str, enum btrfs_compression_type *type, u64 *level)
+static int parse_compression(const char *str, enum btrfs_compression_type *type,
+			     unsigned int *level)
 {
 	const char *colon;
 	size_t type_size;
@@ -1059,8 +1060,12 @@ static int parse_compression(const char *str, enum btrfs_compression_type *type,
 		return 1;
 	}
 
-	if (colon)
-		*level = arg_strtou64(colon + 1);
+	if (colon) {
+		u64 tmplevel = arg_strtou64(colon + 1);
+
+		if (tmplevel > UINT_MAX)
+			return 1;
+	}
 
 	return 0;
 }
@@ -1109,7 +1114,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	struct rootdir_subvol *rds;
 	bool has_default_subvol = false;
 	enum btrfs_compression_type compression = BTRFS_COMPRESS_NONE;
-	u64 compression_level = 0;
+	unsigned int compression_level = 0;
 	LIST_HEAD(subvols);
 
 	cpu_detect_flags();
