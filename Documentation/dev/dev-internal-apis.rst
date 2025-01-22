@@ -45,16 +45,27 @@ and for concatenation helpers :code:`path_cat_out()` or
 :code:`path_cat_out3()` and check the error values for overflows. There are
 helpers to check file type :code:`path_is_*()`.
 
+Dynamic array of pointers
+-------------------------
+
+Files: :file:`common/array.h`
+
+Extensible array containing pointers to objects, is reallocated when the
+new elements don't fit current capacity. For iteration the array is accessible
+as *array->datai[i]* of type *void\** and needs be cast to user type.
+
 TODO
 ----
 
 Undocumented or incomplete APIs:
 
-* common/array.h
 * common/cpu-utils.h
 * common/device-utils.h
+* common/format-output.h
 * common/messages.h
 * common/open-utils.h
+* common/rbtree-utils.h
 * common/sort-utils.h
 * common/string-table.h
+* common/sysfs-utils.h
 * common/task-utils.h

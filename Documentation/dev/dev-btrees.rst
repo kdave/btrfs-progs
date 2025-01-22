@@ -1,8 +1,8 @@
 Btrees
 ======
 
-Btrees Introduction
--------------------
+B-trees Introduction
+--------------------
 
 Btrfs uses a single set of btree manipulation code for all metadata in
 the filesystem. For performance or organizational purposes, the trees
@@ -109,3 +109,40 @@ Data Relocation Tree
 
 Log Root Tree
 -------------
+
+
+UUID Tree
+---------
+
+The tree storesc correspondence between UUIDs and subvolumes. Used for
+quick lookup during send.
+
+
+Quota Tree
+----------
+
+The qgroup information about status and qgroup relations are stored in this tree.
+The tree exists only when quotas are enabled.
+
+
+Free Space Tree
+---------------
+
+This tree implements *space_cache=v2*, which is a tree-based tracking of free
+space. Successor of the v1 code which used inodes to store the space information.
+
+
+Block Group Tree
+----------------
+
+Separate tree (and feature) that stores only block group items and allows quick lookup
+during mount. Otherwise the block group items are scattered in the Extent tree
+and cause slow mount due to excessive seeking.
+
+
+Raid Stripe Tree
+----------------
+
+A separate tracking of file extents and block groups that allows more flexible
+location of physical offsets while keeping the logical offsets the same. This
+is used by zoned mode and raid56.

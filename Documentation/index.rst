@@ -113,5 +113,4 @@ for missing contents.
    :maxdepth: 1
    :caption: TODO
 
-   Quick-start
    trouble-index

@@ -24,14 +24,16 @@ Quotes, reference, element formatting:
 
 -  exact syntax: monotype ````usage=0````
 -  reference to arguments: italics ``*italics*``
--  command reference: bold text by directive ``:command:`btrfs filesystem show```
+-  command reference:
 
+   -  any system command, example, bold text by directive ``:command:`btrfs filesystem show```
+   -  subcommands with their own manual page ``:doc:`btrfs-filesystem```
    -  subcommand names should be spelled in full, i.e. *filesystem* instead of *fi*
 
 -  file, directory or path references: by directive ``:file:`/path```
 
 -  section references without a label: italics ``*EXAMPLES*``
--  section references with a target label: reference by directive ``:ref:<visible text`target-label`>``
+-  section references with a target label: reference by directive ``:ref:`visible text <target-label>```
 
 -  argument name in option description: caps in angle brackets ``<NAME>``
 
@@ -53,17 +55,31 @@ Referencing:
 
 -  NOTE: we have either full doc reference by ``:doc:`docname``` or
    inter-document reference to an **unambiguous** label
-   ``:ref:`target-label```, i.e. we can't reference a label that may appear in
+   ``:ref:`target-label```, i.e. this can't reference a label that may appear in
    more files due to including, this will lead to the document itself that may
-   not be the full page (may be solvable by own directive, TBD)
+   not be the full page
 
--  generic links can use the free form link syntax with description ```Link text <https://example.com>`_``
+-  **ambiguous** or duplicate labels (that exist in a file that is included from other documents)
+   need to be
+
+   -  defined as ``.. duplabel:: labelname``
+   -  referenced as ``:docref:`visible text <document:label>```
+
+-  generic links can use the free form link syntax with description ```Link text <https://example.com>`__``
+   (note the double underscore, this is *anonymous* link and does not create a reference)
    or plain link that will auto-render to a clikable link https://example.com
 
 -  in manual pages: always use full link as it's meant to be read in terminal
    output and must allow copy&paste
 
+-  own manual page references:
+
+   - ``:doc:`btrfs-filesystem```, i.e. it's the document name, it will render the section automatically
+   - other manual pages ``:manref:page(1)``, the exact name and section number
+
 -  add more clickable references rather than less
+
+-  custom rules and directives are implemented in :file:`Documentation/conf.py`
 
 Conventions:
 
