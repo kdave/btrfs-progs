@@ -1036,6 +1036,7 @@ static int parse_compression(const char *str, enum btrfs_compression_type *type,
 {
 	const char *colon;
 	size_t type_size;
+	unsigned int default_level, max_level;
 
 	*level = 0;
 	if (strcmp(str, "no") == 0) {
@@ -1052,10 +1053,26 @@ static int parse_compression(const char *str, enum btrfs_compression_type *type,
 
 	if (strncmp(str, "zlib", type_size) == 0) {
 		*type = BTRFS_COMPRESS_ZLIB;
+		max_level = ZLIB_BTRFS_MAX_LEVEL;
+		default_level = ZLIB_BTRFS_DEFAULT_LEVEL;
 	} else if (strncmp(str, "lzo", type_size) == 0) {
+#if COMPRESSION_LZO
 		*type = BTRFS_COMPRESS_LZO;
+		max_level = 1;
+		default_level = 1;
+#else
+		error("lzo support not compiled in");
+		return 1;
+#endif
 	} else if (strncmp(str, "zstd", type_size) == 0) {
+#if COMPRESSION_ZSTD
 		*type = BTRFS_COMPRESS_ZSTD;
+		max_level = ZSTD_BTRFS_MAX_LEVEL;
+		default_level = ZSTD_BTRFS_DEFAULT_LEVEL;
+#else
+		error("zstd support not compiled in");
+		return 1;
+#endif
 	} else {
 		return 1;
 	}
@@ -1065,6 +1082,16 @@ static int parse_compression(const char *str, enum btrfs_compression_type *type,
 
 		if (tmplevel > UINT_MAX)
 			return 1;
+
+		if (tmplevel == 0)
+			*level = default_level;
+		else if (tmplevel > max_level) {
+			error("compression level %llu out of range [1..%u]",
+			      tmplevel, max_level);
+			return 1;
+		} else {
+			*level = tmplevel;
+		}
 	}
 
 	return 0;
@@ -1334,7 +1361,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 			case GETOPT_VAL_COMPRESS:
 				if (parse_compression(optarg, &compression, &compression_level)) {
-					error("invalid compression specification: %s", optarg);
 					ret = 1;
 					goto error;
 				}
