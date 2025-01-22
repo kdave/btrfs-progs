@@ -54,12 +54,6 @@
 #include "common/rbtree-utils.h"
 #include "mkfs/rootdir.h"
 
-#define ZLIB_BTRFS_DEFAULT_LEVEL 3
-#define ZLIB_BTRFS_MAX_LEVEL 9
-
-#define ZSTD_BTRFS_DEFAULT_LEVEL 3
-#define ZSTD_BTRFS_MAX_LEVEL 15
-
 #define LZO_LEN 4
 
 static u32 fs_block_size;

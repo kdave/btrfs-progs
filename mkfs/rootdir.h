@@ -28,6 +28,12 @@
 #include "kernel-lib/list.h"
 #include "kernel-shared/compression.h"
 
+#define ZLIB_BTRFS_DEFAULT_LEVEL		3
+#define ZLIB_BTRFS_MAX_LEVEL			9
+
+#define ZSTD_BTRFS_DEFAULT_LEVEL		3
+#define ZSTD_BTRFS_MAX_LEVEL			15
+
 struct btrfs_fs_info;
 struct btrfs_root;
 
