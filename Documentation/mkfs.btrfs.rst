@@ -164,6 +164,10 @@ OPTIONS
         they would be larger than the uncompressed versions, and will set file attribute
         *NOCOMPRESS* if its beginning is found to be incompressible.
 
+        .. note::
+                The support for ZSTD and LZO is a compile-time option, please check
+                the output of :command:`mkfs.btrfs --help` for the actual support.
+
 -u|--subvol <type>:<subdir>
         Specify that *subdir* is to be created as a subvolume rather than a regular
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
