@@ -1637,7 +1637,7 @@ static int set_default_subvolume(struct btrfs_trans_handle *trans)
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
 			enum btrfs_compression_type compression,
-			u64 compression_level)
+			unsigned int compression_level)
 {
 	int ret;
 	struct stat root_st;
