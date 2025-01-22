@@ -1031,6 +1031,40 @@ static void *prepare_one_device(void *ctx)
 	return NULL;
 }
 
+static int parse_compression(const char *str, enum btrfs_compression_type *type, u64 *level)
+{
+	const char *colon;
+	size_t type_size;
+
+	*level = 0;
+	if (strcmp(str, "no") == 0) {
+		*type = BTRFS_COMPRESS_NONE;
+		return 0;
+	}
+
+	colon = strstr(str, ":");
+
+	if (colon)
+		type_size = colon - str;
+	else
+		type_size = strlen(str);
+
+	if (strncmp(str, "zlib", type_size) == 0) {
+		*type = BTRFS_COMPRESS_ZLIB;
+	} else if (strncmp(str, "lzo", type_size) == 0) {
+		*type = BTRFS_COMPRESS_LZO;
+	} else if (strncmp(str, "zstd", type_size) == 0) {
+		*type = BTRFS_COMPRESS_ZSTD;
+	} else {
+		return 1;
+	}
+
+	if (colon)
+		*level = arg_strtou64(colon + 1);
+
+	return 0;
+}
+
 int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
@@ -1293,42 +1327,13 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'q':
 				bconf_be_quiet();
 				break;
-			case GETOPT_VAL_COMPRESS: {
-				char *colon;
-				size_t type_size;
-
-				if (!strcmp(optarg, "no")) {
-					compression = BTRFS_COMPRESS_NONE;
-					break;
-				}
-
-				colon = strstr(optarg, ":");
-
-				if (colon)
-					type_size = colon - optarg;
-				else
-					type_size = strlen(optarg);
-
-				if (!strncmp(optarg, "zlib", type_size)) {
-					compression = BTRFS_COMPRESS_ZLIB;
-				} else if (!strncmp(optarg, "lzo", type_size)) {
-					compression = BTRFS_COMPRESS_LZO;
-				} else if (!strncmp(optarg, "zstd", type_size)) {
-					compression = BTRFS_COMPRESS_ZSTD;
-				} else {
-					error("unrecognized compression type %s",
-					      optarg);
+			case GETOPT_VAL_COMPRESS:
+				if (parse_compression(optarg, &compression, &compression_level)) {
+					error("invalid compression specification: %s", optarg);
 					ret = 1;
 					goto error;
 				}
-
-				if (colon)
-					compression_level = arg_strtou64(colon + 1);
-				else
-					compression_level = 0;
-
 				break;
-			}
 			case GETOPT_VAL_DEVICE_UUID:
 				strncpy_null(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
