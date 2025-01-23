@@ -444,7 +444,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("--compress ALGO[:LEVEL]", "compress files by algorithm and level, ALGO can be 'no' (default), zstd, lzo, zlib"),
 	OPTLINE("", "Built-in:"),
 #if COMPRESSION_ZSTD
-	OPTLINE("", "- ZSTD: yes"),
+	OPTLINE("", "- ZSTD: yes (levels 1..15)"),
 #else
 	OPTLINE("", "- ZSTD: no"),
 #endif
@@ -453,7 +453,7 @@ static const char * const mkfs_usage[] = {
 #else
 	OPTLINE("", "- LZO: no"),
 #endif
-	OPTLINE("", "- ZLIB: yes"),
+	OPTLINE("", "- ZLIB: yes (levels 1..9)"),
 	OPTLINE("-u|--subvol TYPE:SUBDIR", "create SUBDIR as subvolume rather than normal directory, can be specified multiple times"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
