@@ -56,6 +56,10 @@ static const char * const image_usage[] = {
 	OPTLINE("-m", "restore for multiple devices"),
 	OPTLINE("-d", "also dump data, conflicts with -w"),
 	"",
+	"General:",
+	OPTLINE("--version", "print the btrfs-image version and exit"),
+	OPTLINE("--help", "print this help and exit"),
+	"",
 	"In the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).",
 	"In the restore mode, source is the dumped image and target is the btrfs device/file.",
 	NULL
@@ -86,8 +90,10 @@ int BOX_MAIN(image)(int argc, char *argv[])
 	hash_init_accel();
 
 	while (1) {
+		enum { GETOPT_VAL_VERSION = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ "version", no_argument, NULL, GETOPT_VAL_VERSION },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "rc:t:oswmd", long_options, NULL);
@@ -133,6 +139,10 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			btrfs_warn_experimental("Feature: dump image with data");
 			dump_data = true;
 			break;
+		case GETOPT_VAL_VERSION:
+			printf("btrfs-image, part of %s\n", PACKAGE_STRING);
+			ret = 0;
+			goto success;
 		case GETOPT_VAL_HELP:
 		default:
 			usage(&image_cmd, c != GETOPT_VAL_HELP);
@@ -293,5 +303,6 @@ out:
 
 	btrfs_close_all_devices();
 
+success:
 	return !!ret;
 }
