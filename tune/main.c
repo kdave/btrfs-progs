@@ -123,7 +123,8 @@ static const char * const tune_usage[] = {
 	"",
 	"General:",
 	OPTLINE("-f", "allow dangerous operations, make sure that you are aware of the dangers"),
-	OPTLINE("--help", "print this help"),
+	OPTLINE("--version", "print the btrfstune version and exit"),
+	OPTLINE("--help", "print this help and exit"),
 #if EXPERIMENTAL
 	"",
 	"EXPERIMENTAL FEATURES:",
@@ -212,9 +213,11 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		       GETOPT_VAL_ENABLE_FREE_SPACE_TREE,
 		       GETOPT_VAL_ENABLE_SIMPLE_QUOTA,
 		       GETOPT_VAL_REMOVE_SIMPLE_QUOTA,
+		       GETOPT_VAL_VERSION,
 		};
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ "version", no_argument, NULL, GETOPT_VAL_VERSION },
 			{ "convert-to-block-group-tree", no_argument, NULL,
 				GETOPT_VAL_ENABLE_BLOCK_GROUP_TREE},
 			{ "convert-from-block-group-tree", no_argument, NULL,
@@ -305,6 +308,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			btrfstune_cmd_groups[CSUM_CHANGE] = true;
 			break;
 #endif
+		case GETOPT_VAL_VERSION:
+			printf("btrfstune, part of %s\n", PACKAGE_STRING);
+			ret = 0;
+			goto free_out;
 		case GETOPT_VAL_HELP:
 		default:
 			usage(&tune_cmd, c != GETOPT_VAL_HELP);
