@@ -1868,6 +1868,10 @@ static const char * const convert_usage[] = {
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features"),
 	OPTLINE("--no-progress", "show only overview, not the detailed progress"),
 	"",
+	"General:",
+	OPTLINE("--version", "print the btrfs-convert version and exit"),
+	OPTLINE("--help", "print this help and exit"),
+	"",
 	"Supported filesystems:",
 	"\text2/3/4: "
 #if BTRFSCONVERT_EXT2
@@ -1910,11 +1914,10 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	cpu_detect_flags();
 	hash_init_accel();
 	btrfs_assert_feature_buf_size();
-	printf("btrfs-convert from %s\n\n", PACKAGE_STRING);
 
 	while(1) {
 		enum { GETOPT_VAL_NO_PROGRESS = GETOPT_VAL_FIRST, GETOPT_VAL_CHECKSUM,
-			GETOPT_VAL_UUID };
+			GETOPT_VAL_UUID, GETOPT_VAL_VERSION };
 		static const struct option long_options[] = {
 			{ "no-progress", no_argument, NULL,
 				GETOPT_VAL_NO_PROGRESS },
@@ -1932,7 +1935,8 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 			{ "copy-label", no_argument, NULL, 'L' },
 			{ "uuid", required_argument, NULL, GETOPT_VAL_UUID },
 			{ "nodesize", required_argument, NULL, 'N' },
-			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP },
+			{ "version", no_argument, NULL, GETOPT_VAL_VERSION },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "dinN:rl:LpO:", long_options, NULL);
@@ -2024,11 +2028,18 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 					strncpy_null(fsid, optarg, sizeof(fsid));
 				}
 				break;
+			case GETOPT_VAL_VERSION:
+				printf("btrfs-convert, part of %s\n", PACKAGE_STRING);
+				ret = 0;
+				goto success;
 			case GETOPT_VAL_HELP:
 			default:
 				usage(&convert_cmd, c != GETOPT_VAL_HELP);
 		}
 	}
+
+	printf("btrfs-convert from %s\n\n", PACKAGE_STRING);
+
 	set_argv0(argv);
 	if (check_argc_exact(argc - optind, 1)) {
 		usage(&convert_cmd, 1);
@@ -2072,5 +2083,6 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	}
 	if (ret)
 		return 1;
+success:
 	return 0;
 }
