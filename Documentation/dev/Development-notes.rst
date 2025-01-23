@@ -413,6 +413,7 @@ Please refer to the option documentation for further details.
 
    -  **CONFIG_BTRFS_DEBUG**
    -  **CONFIG_BTRFS_ASSERT**
+   -  **CONFIG_BTRFS_EXPERIMENTAL**
    -  **CONFIG_BTRFS_FS_RUN_SANITY_TESTS** -- basic tests on module load
    -  **CONFIG_BTRFS_FS_CHECK_INTEGRITY** -- block integrity checker
       enabled by mount options

@@ -393,7 +393,7 @@ block-group-tree
 .. _mkfs-feature-raid-stripe-tree:
 
 raid-stripe-tree
-        (kernel support since 6.7, CONFIG_BTRFS_DEBUG)
+        (kernel support since 6.7, CONFIG_BTRFS_DEBUG/CONFIG_BTRFS_EXPERIMENTAL)
 
         Separate tree for logical file extent mapping where the physical mapping
         may not match on multiple devices. This is now used in zoned mode to
@@ -404,8 +404,9 @@ raid-stripe-tree
 
         .. note::
                 Due to the status of implementation it is enabled only in
-                builds with CONFIG_BTRFS_DEBUG. Support by the kernel module
-                can be found in the sysfs feature list.
+                builds with CONFIG_BTRFS_DEBUG/CONFIG_BTRFS_EXPERIMENTAL.
+                Support by the kernel module can be found in the sysfs feature
+                list.
 
 squota
 	(kernel support since 6.7)
