@@ -454,7 +454,7 @@ PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
 AC_ARG_ENABLE([zstd],
-	AS_HELP_STRING([--disable-zstd], [build without zstd support for restore and receive (default: enabled)]),
+	AS_HELP_STRING([--disable-zstd], [build without zstd compression support (btrfs-restore, btrfs-receive, mkfs.btrfs) (default: enabled)]),
 	[], [enable_zstd=yes]
 )
 
@@ -465,6 +465,27 @@ fi
 
 AS_IF([test "x$enable_zstd" = xyes], [COMPRESSION_ZSTD=1], [COMPRESSION_ZSTD=0])
 AC_SUBST(COMPRESSION_ZSTD)
+
+AC_ARG_ENABLE([lzo],
+	AS_HELP_STRING([--disable-lzo], [build without lzo compression support (btrfs-restore, btrfs-receive, mkfs.btrfs) (default: enabled)]),
+	[], [enable_lzo=yes]
+)
+
+if test "x$enable_lzo" = xyes; then
+	dnl lzo library does not provide pkg-config, use classic way
+	AC_CHECK_LIB([lzo2], [lzo_version], [
+		LZO2_LIBS="-llzo2"
+		LZO2_CFLAGS=""
+		LZO2_LIBS_STATIC="-llzo2"],[
+		AC_MSG_ERROR([cannot find lzo2 library])
+	])
+	AC_SUBST([LZO2_LIBS])
+	AC_SUBST([LZO2_LIBS_STATIC])
+	AC_SUBST([LZO2_CFLAGS])
+fi
+
+AS_IF([test "x$enable_lzo" = xyes], [COMPRESSION_LZO=1], [COMPRESSION_LZO=0])
+AC_SUBST(COMPRESSION_LZO)
 
 AC_ARG_ENABLE([libudev],
       AS_HELP_STRING([--disable-libudev], [build without libudev support (for multipath)]),
@@ -512,27 +533,6 @@ if ${PKG_CONFIG} udev --atleast-version 190; then
 	UDEVDIR="$(${PKG_CONFIG} udev --variable=udevdir)"
 fi
 AC_SUBST(UDEVDIR)
-
-AC_ARG_ENABLE([lzo],
-	AS_HELP_STRING([--disable-lzo], [build without lzo support for restore and receive (default: enabled)]),
-	[], [enable_lzo=yes]
-)
-
-if test "x$enable_lzo" = xyes; then
-	dnl lzo library does not provide pkg-config, use classic way
-	AC_CHECK_LIB([lzo2], [lzo_version], [
-		LZO2_LIBS="-llzo2"
-		LZO2_CFLAGS=""
-		LZO2_LIBS_STATIC="-llzo2"],[
-		AC_MSG_ERROR([cannot find lzo2 library])
-	])
-	AC_SUBST([LZO2_LIBS])
-	AC_SUBST([LZO2_LIBS_STATIC])
-	AC_SUBST([LZO2_CFLAGS])
-fi
-
-AS_IF([test "x$enable_lzo" = xyes], [COMPRESSION_LZO=1], [COMPRESSION_LZO=0])
-AC_SUBST(COMPRESSION_LZO)
 
 dnl call PKG_INSTALLDIR from pkg.m4 to set pkgconfigdir
 m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], [AC_MSG_ERROR([please install pkgconf])])
