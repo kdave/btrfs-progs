@@ -1437,6 +1437,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 		free(source_dir);
 		source_dir = canonical;
+	} else {
+		if (compression != BTRFS_COMPRESS_NONE) {
+			error("--compression must be used with --rootdir");
+			ret = 1;
+			goto error;
+		}
 	}
 
 	list_for_each_entry(rds, &subvols, list) {
