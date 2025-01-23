@@ -2051,6 +2051,15 @@ raid_groups:
 			goto out;
 		}
 
+		pr_verbose(LOG_DEFAULT, "  Compress:         %s%s%s\n",
+			   compression == BTRFS_COMPRESS_ZSTD ? "zstd" :
+			   compression == BTRFS_COMPRESS_LZO ? "lzo" :
+			   compression == BTRFS_COMPRESS_ZLIB ? "zlib" : "no",
+			   compression_level > 0 ? ":" : "",
+			   compression_level > 0 ?
+				   pretty_size_mode(compression_level, UNITS_RAW) :
+				   "");
+
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
 					  &subvols, compression,
 					  compression_level);
