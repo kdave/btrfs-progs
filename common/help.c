@@ -87,13 +87,14 @@ int check_argc_max(int nargs, int expected)
 /*
  * Preprocess @argv with getopt_long to reorder options and consume the "--"
  * option separator.
- * Unknown short and long options are reported, optionally the @usage is printed
- * before exit.
+ * Unknown short and long options are reported. Also consume the --help
+ * option in case it's for a command without any options.
  */
 void clean_args_no_options(const struct cmd_struct *cmd, int argc, char *argv[])
 {
 	static const struct option long_options[] = {
-		{NULL, 0, NULL, 0}
+		{ "help", no_argument, NULL, GETOPT_VAL_HELP },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	while (1) {
@@ -103,9 +104,13 @@ void clean_args_no_options(const struct cmd_struct *cmd, int argc, char *argv[])
 			break;
 
 		switch (c) {
-		default:
+		case GETOPT_VAL_HELP:
 			if (cmd->usagestr)
 				usage(cmd, 1);
+			break;
+		default:
+			if (cmd->usagestr)
+				usage_unknown_option(cmd, argv);
 		}
 	}
 }
