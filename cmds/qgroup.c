@@ -1317,6 +1317,26 @@ static bool key_in_range(const struct btrfs_key *key,
 	return true;
 }
 
+static int quota_enabled(int fd) {
+	struct btrfs_tree_search_args args = { 0 };
+	struct btrfs_ioctl_search_key *sk;
+	int ret;
+
+	sk = btrfs_tree_search_sk(&args);
+	sk->tree_id = BTRFS_QUOTA_TREE_OBJECTID;
+	sk->min_type = 0;
+	sk->max_type = (u8)-1;
+	sk->max_objectid = (u64)-1;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+
+	ret = btrfs_tree_search_ioctl(fd, &args);
+	if (ret < 0)
+		ret = -errno;
+	return ret;
+}
+
 static int __qgroups_search(int fd, struct btrfs_tree_search_args *args,
 			    struct qgroup_lookup *qgroup_lookup)
 {
@@ -2209,6 +2229,18 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 	if (fd < 0)
 		return 1;
 
+	/* Do the check first so the sync is not done if quotas are not enabled. */
+	ret = quota_enabled(fd);
+	if (ret == -ENOENT) {
+		warning("qgroups not enabled");
+		ret = 0;
+		goto out_close;
+	} else if (ret < 0) {
+		errno = -ret;
+		error("cannot check qgroup status: %m");
+		goto out_close;
+	}
+
 	/* Sync the fs so that the qgroup numbers are uptodate. */
 	err = btrfs_util_sync_fd(fd);
 	if (err)
@@ -2217,11 +2249,11 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 	ret = qgroups_search_all(fd, &qgroup_lookup);
 	if (ret == -ENOTTY) {
 		error("can't list qgroups: quotas not enabled");
-		goto out;
+		goto out_close;
 	} else if (ret < 0) {
 		errno = -ret;
 		error("can't list qgroups: %m");
-		goto out;
+		goto out_close;
 	}
 
 	node = rb_first(&qgroup_lookup.root);
@@ -2235,9 +2267,9 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 		node = rb_next(node);
 	}
 
-out:
-	close(fd);
 	__free_all_qgroups(&qgroup_lookup);
+out_close:
+	close(fd);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_clear_stale, "clear-stale");
