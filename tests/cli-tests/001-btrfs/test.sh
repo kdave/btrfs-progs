@@ -28,3 +28,17 @@ run_check "$TOP/btrfs" -vvvv help
 run_check "$TOP/btrfs" --log=quiet help
 run_check "$TOP/btrfs" -q help
 run_mustfail "invalid log level accepted" "$TOP/btrfs" --log=invalid help
+
+# Combine help with other options
+run_mustfail "unrecognized option accepted" "$TOP/btrfs" filesystem df -v
+run_mustfail "unrecognized option accepted" "$TOP/btrfs" filesystem df -v /
+run_mustfail "unrecognized option accepted" "$TOP/btrfs" filesystem df -v --help /
+if ! run_check_stdout "$TOP/btrfs" filesystem df --help / | grep -q 'usage.*filesystem df'; then
+	_fail "standalone option --help"
+fi
+if ! run_check_stdout "$TOP/btrfs" filesystem df -H --help / | grep -q 'usage.*filesystem df'; then
+	_fail "option --help with valid option (1)"
+fi
+if ! run_check_stdout "$TOP/btrfs" filesystem df --help -H / | grep -q 'usage.*filesystem df'; then
+	_fail "option --help with valid option (2)"
+fi
