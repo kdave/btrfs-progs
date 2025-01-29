@@ -1,4 +1,5 @@
-# Command line, formatting, UI guidelines
+Command line, formatting, UI guidelines
+=======================================
 
 ## Command line options
 

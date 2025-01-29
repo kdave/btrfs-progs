@@ -84,6 +84,7 @@ is in the :doc:`manual pages<man-index>`.
    dev/dev-internal-apis
    dev/ReleaseChecklist
    dev/GithubReviewWorkflow
+   dev/CmdLineConventions
    btrfs-ioctl
 
 
