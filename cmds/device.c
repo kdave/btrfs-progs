@@ -73,7 +73,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 		int c;
 		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
-			{ "nodiscard", optional_argument, NULL, 'K'},
+			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "force", no_argument, NULL, 'f'},
 			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
 			{ NULL, 0, NULL, 0}
