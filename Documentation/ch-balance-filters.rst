@@ -79,9 +79,23 @@ convert=<profile>
                 Starting with kernel 4.5, the ``data`` chunks can be converted to/from the
                 ``DUP`` profile on a single device.
 
-        .. note::
                 Starting with kernel 4.6, all profiles can be converted to/from ``DUP`` on
                 multi-device filesystems.
+
+	.. warning::
+		Btrfs doesn't detect bad/missing devices at runtime, thus if
+		there is a known failing device, or a device is deleted by
+		``/sys/block/<dev>/device/delete`` sysfs interface, btrfs will still
+		access and try to write into that failing/removed device.
+
+		In such case, one should not convert to a profile with lower
+		duplication (e.g. from ``RAID1`` to ``SINGLE``), as btrfs can
+		create new chunks on that failing/removed device, and cause
+		various problems.
+
+		And the proper action is to use ``btrfs replace`` or
+		``btrfs device remove`` to handle the failing/missing
+		device first. Then convert with all devices working correctly.
 
 limit=<number>, limit=<range>
         Process only given number of chunks, after all filters are applied. This can be
