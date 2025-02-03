@@ -376,6 +376,45 @@ static const char * const cmd_balance_start_usage[] = {
 	NULL
 };
 
+/*
+ * Return 0 if no missing device found for the fs at @mnt.
+ * Return >0 if there is any missing device for the fs at @mnt.
+ * Return <0 if we hit other errors during the check.
+ */
+static int check_missing_devices(const char *mnt)
+{
+	struct btrfs_ioctl_fs_info_args fs_info_arg = { 0 };
+	struct btrfs_ioctl_dev_info_args *dev_info_args = NULL;
+	bool found_missing = false;
+	int ret;
+
+	ret = get_fs_info(mnt, &fs_info_arg, &dev_info_args);
+	if (ret < 0)
+		return ret;
+
+	for (int i = 0; i < fs_info_arg.num_devices; i++) {
+		struct btrfs_ioctl_dev_info_args *cur_dev_info;
+		int fd;
+
+		cur_dev_info = (struct btrfs_ioctl_dev_info_args *)&dev_info_args[i];
+
+		/*
+		 * Kernel will report the device path even if we can no
+		 * longer access it anymore. So we have to manually check it.
+		 */
+		fd = open((char *)cur_dev_info->path, O_RDONLY);
+		if (fd < 0) {
+			found_missing = true;
+			break;
+		}
+		close(fd);
+	}
+	free(dev_info_args);
+	if (found_missing)
+		return 1;
+	return 0;
+}
+
 static int cmd_balance_start(const struct cmd_struct *cmd,
 			     int argc, char **argv)
 {
@@ -387,6 +426,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 	bool enqueue = false;
 	unsigned start_flags = 0;
 	bool raid56_warned = false;
+	bool convert_warned  = false;
 	int i;
 
 	memset(&args, 0, sizeof(args));
@@ -479,6 +519,53 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 	if (!(start_flags & BALANCE_START_FILTERS)) {
 		/* relocate everything - no filters */
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
+	}
+
+	/*
+	 * If we are using convert, and there is a missing/failed device at
+	 * runtime (e.g. mounted then remove a device using sysfs interface),
+	 * btrfs has no way to avoid using that failing/removed device.
+	 *
+	 * In that case converting the profile is very dangerous, e.g.
+	 * converting RAID1 to SINGLE/DUP, and new SINGLE/DUP chunks can
+	 * be allocated to that failing/removed device, and cause the
+	 * fs to flip RO due to failed metadata writes.
+	 *
+	 * Meanwhile the fs may work completely fine due to the extra
+	 * duplication (e.g. all RAID1 profiles).
+	 *
+	 * So here warn if one is trying to convert with missing devices.
+	 */
+	for (i = 0; ptrs[i]; i++) {
+		int delay = 10;
+		int ret;
+
+		if (!(ptrs[i]->flags & BTRFS_BALANCE_ARGS_CONVERT) || convert_warned)
+			continue;
+
+		ret = check_missing_devices(argv[optind]);
+		if (ret < 0) {
+			errno = -ret;
+			warning("skipping missing devices check due to failure: %m");
+			break;
+		}
+		if (ret == 0)
+			continue;
+		convert_warned = true;
+		printf("WARNING:\n\n");
+		printf("\tConversion with missing device(s) can be dangerous.\n");
+		printf("\tPlease use 'btrfs replace' or 'btrfs device remove' instead.\n");
+		if (force) {
+			printf("\tSafety timeout skipped due to --force\n\n");
+			continue;
+		}
+		printf("\tThe operation will continue in %d seconds.\n", delay);
+		printf("\tUse Ctrl-C to stop.\n");
+		while (delay) {
+			printf("%2d", delay--);
+			fflush(stdout);
+			sleep(1);
+		}
 	}
 
 	/* drange makes sense only when devid is set */
