@@ -79,9 +79,25 @@ convert=<profile>
                 Starting with kernel 4.5, the ``data`` chunks can be converted to/from the
                 ``DUP`` profile on a single device.
 
-        .. note::
                 Starting with kernel 4.6, all profiles can be converted to/from ``DUP`` on
                 multi-device filesystems.
+
+	.. warning::
+                Bad or missing device are not detected immediately during
+                runtime and this depends on some later event like failed write
+                or failed transaction commit. If there's a known failing
+                device, or a device deleted by :file:`/sys/block/<dev>/device/delete` interface,
+                the device will be still accessed and written to.
+
+                In such case, one should not convert to a profile with lower
+                redundancy (e.g. from *RAID1* to *SINGLE*),
+                as attempts to create new chunks on the new devices will cause
+                various problems.
+
+                The proper action is to use :command:`btrfs replace` or
+                :command:`btrfs device remove` to handle the failing/missing
+                device first. Then convert will work with all devices
+                correctly.
 
 limit=<number>, limit=<range>
         Process only given number of chunks, after all filters are applied. This can be
