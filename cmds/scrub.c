@@ -97,6 +97,7 @@ struct scrub_progress {
 	pthread_mutex_t progress_mutex;
 	int ioprio_class;
 	int ioprio_classdata;
+	u64 old_limit;
 	u64 limit;
 };
 
@@ -1230,7 +1231,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	int fdres = -1;
 	int ret;
 	pid_t pid;
-	int c;
 	int i;
 	int err = 0;
 	int e_uncorrectable = 0;
@@ -1265,11 +1265,22 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	struct scrub_progress_cycle spc;
 	pthread_mutex_t spc_write_mutex = PTHREAD_MUTEX_INITIALIZER;
 	void *terr;
+	u64 throughput_limit = 0;
 	u64 devid;
 	bool force = false;
 	bool nothing_to_resume = false;
 
-	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_LIMIT = GETOPT_VAL_FIRST };
+		static const struct option long_options[] = {
+			{"limit", required_argument, NULL, GETOPT_VAL_LIMIT},
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "BdqrRc:n:f", long_options, NULL);
+		if (c < 0)
+			break;
 		switch (c) {
 		case 'B':
 			do_background = false;
@@ -1296,6 +1307,9 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			break;
 		case 'f':
 			force = true;
+			break;
+		case GETOPT_VAL_LIMIT:
+			throughput_limit = arg_strtou64_with_suffix(optarg);
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1389,6 +1403,13 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	for (i = 0; i < fi_args.num_devices; ++i) {
 		devid = di_args[i].devid;
+		sp[i].old_limit = read_scrub_device_limit(fdmnt, devid);
+		ret = write_scrub_device_limit(fdmnt, devid, throughput_limit);
+		if (ret < 0) {
+			errno = -ret;
+			warning("failed to set scrub throughput limit on devid %llu: %m",
+				devid);
+		}
 		ret = pthread_mutex_init(&sp[i].progress_mutex, NULL);
 		if (ret) {
 			errno = ret;
@@ -1568,6 +1589,14 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	err = 0;
 	for (i = 0; i < fi_args.num_devices; ++i) {
+		/* Revert to the older scrub limit. */
+		ret = write_scrub_device_limit(fdmnt, di_args[i].devid, sp[i].old_limit);
+		if (ret < 0) {
+			errno = -ret;
+			warning("failed to reset scrub throughput limit on devid %llu: %m",
+				di_args[i].devid);
+		}
+
 		if (sp[i].skip)
 			continue;
 		devid = di_args[i].devid;
@@ -1713,6 +1742,7 @@ static const char * const cmd_scrub_start_usage[] = {
 	OPTLINE("-c", "set ioprio class (see ionice(1) manpage)"),
 	OPTLINE("-n", "set ioprio classdata (see ionice(1) manpage)"),
 	OPTLINE("-f", "force starting new scrub even if a scrub is already running this is useful when scrub stats record file is damaged"),
+	OPTLINE("--limit", "set the throughput limit for each device"),
 	OPTLINE("-q", "deprecated, alias for global -q option"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
