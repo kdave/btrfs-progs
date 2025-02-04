@@ -69,7 +69,7 @@ resume [-BdqrR] <path>|<device>
 
 .. _man-scrub-start:
 
-start [-BdrRf] <path>|<device>
+start [options] <path>|<device>
         Start a scrub on all devices of the mounted filesystem identified by
         *path* or on a single *device*. If a scrub is already running, the new
         one will not start. A device of an unmounted filesystem cannot be
@@ -96,6 +96,17 @@ start [-BdrRf] <path>|<device>
                 can avoid writes from scrub.
         -R
                 raw print mode, print full data instead of summary
+	--limit <limit>
+		set the scrub throughput limit for each device.
+
+		If the scrub is for the whole fs, it's the same as
+		:command:`btrfs scrub limit -a -l <value>`.
+		If the scrub is for a single device, it's the same as
+		:command:`btrfs scrub limit -d <devid> -l <value>`.
+
+		The value is bytes per second, and accepts the usual KMGT prefixes.
+		After the scrub is finished, the throughput limit will be reset to
+		the old value of each device.
         -f
                 force starting new scrub even if a scrub is already running,
                 this can useful when scrub status file is damaged and reports a
