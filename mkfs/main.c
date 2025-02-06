@@ -1665,6 +1665,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
+	/* This is also fixed in kernel, but the flag has no real meaning anymore. */
+	if (nodesize > sysconf(_SC_PAGE_SIZE))
+		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_BIG_METADATA;
+
 	if (sectorsize < sizeof(struct btrfs_super_block)) {
 		error("sectorsize smaller than superblock: %u < %zu",
 				sectorsize, sizeof(struct btrfs_super_block));
