@@ -369,6 +369,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	struct btrfs_chunk *chunk;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_extent;
+	struct btrfs_dev_stats_item *dev_stats;
 	enum btrfs_mkfs_block blocks[MKFS_BLOCK_COUNT];
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	u8 *ptr;
@@ -673,8 +674,25 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
 	nritems = 0;
-	itemoff = cfg->leaf_data_size - sizeof(struct btrfs_dev_extent);
+	itemoff = cfg->leaf_data_size;
 
+	/* Add a DEV_STATS item for device 1. */
+	itemoff -= sizeof(struct btrfs_dev_stats_item);
+	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_STATS_OBJECTID);
+	btrfs_set_disk_key_type(&disk_key, BTRFS_PERSISTENT_ITEM_KEY);
+	btrfs_set_disk_key_offset(&disk_key, 1);
+	btrfs_set_item_key(buf, &disk_key, nritems);
+	btrfs_set_item_offset(buf, nritems, itemoff);
+	btrfs_set_item_size(buf, nritems, sizeof(struct btrfs_dev_stats_item));
+	dev_stats = btrfs_item_ptr(buf, nritems, struct btrfs_dev_stats_item);
+
+	for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+		btrfs_set_dev_stats_value(buf, dev_stats, i, 0);
+
+	nritems++;
+
+	/* Add the DEV_EXTENT item for the system chunk. */
+	itemoff -= sizeof(struct btrfs_dev_extent);
 	btrfs_set_disk_key_objectid(&disk_key, 1);
 	btrfs_set_disk_key_offset(&disk_key, system_group_offset);
 	btrfs_set_disk_key_type(&disk_key, BTRFS_DEV_EXTENT_KEY);

@@ -1135,6 +1135,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_path *path;
 	struct btrfs_dev_item *dev_item;
+	struct btrfs_dev_stats_item *dev_stats;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	struct btrfs_root *root = fs_info->chunk_root;
@@ -1149,6 +1150,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto out;
 
+	/* Add DEV_ITEM. */
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = free_devid;
@@ -1182,6 +1184,27 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 			    BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	fs_info->fs_devices->total_rw_bytes += device->total_bytes;
+
+	btrfs_release_path(path);
+
+	/* Add DEV STATS item. */
+	key.objectid = BTRFS_DEV_STATS_OBJECTID;
+	key.type = BTRFS_PERSISTENT_ITEM_KEY;
+	key.offset = free_devid;
+
+	ret = btrfs_insert_empty_item(trans, fs_info->dev_root, path, &key,
+				      sizeof(*dev_stats));
+	if (ret)
+		goto out;
+
+	leaf = path->nodes[0];
+	dev_stats = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dev_stats_item);
+
+	for (int i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+		btrfs_set_dev_stats_value(leaf, dev_stats, i, 0);
+
+	btrfs_mark_buffer_dirty(leaf);
+
 	ret = 0;
 
 out:
