@@ -127,11 +127,13 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
 			btrfs_set_stack_timespec_sec(&root_item.otime, now);
 			btrfs_set_stack_timespec_sec(&root_item.ctime, now);
+			btrfs_set_stack_inode_flags(inode_item, BTRFS_INODE_ROOT_ITEM_INIT);
 		} else {
 			memset(uuid, 0, BTRFS_UUID_SIZE);
 			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
 			btrfs_set_stack_timespec_sec(&root_item.otime, 0);
 			btrfs_set_stack_timespec_sec(&root_item.ctime, 0);
+			btrfs_set_stack_inode_flags(inode_item, 0);
 		}
 		write_extent_buffer(buf, &root_item,
 			btrfs_item_ptr_offset(buf, nritems),
