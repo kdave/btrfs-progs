@@ -1101,6 +1101,59 @@ static int parse_compression(const char *str, enum btrfs_compression_type *type,
 	return 0;
 }
 
+static int parse_subvolume(const char *path, struct list_head *subvols,
+			   bool *has_default_subvol)
+{
+	struct rootdir_subvol *subvol;
+	char *colon;
+	bool valid_prefix = false;
+
+	subvol = calloc(1, sizeof(struct rootdir_subvol));
+	if (!subvol) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return 1;
+	}
+
+	colon = strstr(optarg, ":");
+
+	if (colon) {
+		if (!string_has_prefix(optarg, "default:")) {
+			subvol->is_default = true;
+			valid_prefix = true;
+		} else if (!string_has_prefix(optarg, "ro:")) {
+			subvol->readonly = true;
+			valid_prefix = true;
+		} else if (!string_has_prefix(optarg, "rw:")) {
+			subvol->readonly = false;
+			valid_prefix = true;
+		} else if (!string_has_prefix(optarg, "default-ro:")) {
+			subvol->is_default = true;
+			subvol->readonly = true;
+			valid_prefix = true;
+		}
+	}
+
+	if (arg_copy_path(subvol->dir, valid_prefix ? colon + 1 : optarg,
+			  sizeof(subvol->dir))) {
+		error("--subvol path too long");
+		free(subvol);
+		return 1;
+	}
+
+	if (subvol->is_default) {
+		if (*has_default_subvol) {
+			error("default subvol can only be specified once");
+			free(subvol);
+			return 1;
+		}
+		*has_default_subvol = true;
+	}
+
+	list_add_tail(&subvol->list, subvols);
+
+	return 0;
+}
+
 int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
@@ -1297,56 +1350,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				free(source_dir);
 				source_dir = strdup(optarg);
 				break;
-			case 'u': {
-				struct rootdir_subvol *subvol;
-				char *colon;
-				bool valid_prefix = false;
-
-				subvol = calloc(1, sizeof(struct rootdir_subvol));
-				if (!subvol) {
-					error_msg(ERROR_MSG_MEMORY, NULL);
-					ret = 1;
-					goto error;
-				}
-
-				colon = strstr(optarg, ":");
-
-				if (colon) {
-					if (!string_has_prefix(optarg, "default:")) {
-						subvol->is_default = true;
-						valid_prefix = true;
-					} else if (!string_has_prefix(optarg, "ro:")) {
-						subvol->readonly = true;
-						valid_prefix = true;
-					} else if (!string_has_prefix(optarg, "rw:")) {
-						subvol->readonly = false;
-						valid_prefix = true;
-					} else if (!string_has_prefix(optarg, "default-ro:")) {
-						subvol->is_default = true;
-						subvol->readonly = true;
-						valid_prefix = true;
-					}
-				}
-
-				if (arg_copy_path(subvol->dir, valid_prefix ? colon + 1 : optarg,
-						  sizeof(subvol->dir))) {
-					error("--subvol path too long");
-					ret = 1;
-					goto error;
-				}
-
-				if (subvol->is_default) {
-					if (has_default_subvol) {
-						error("default subvol can only be specified once");
-						ret = 1;
-						goto error;
-					}
-					has_default_subvol = true;
-				}
-
-				list_add_tail(&subvol->list, &subvols);
+			case 'u':
+				ret = parse_subvolume(optarg, &subvols, &has_default_subvol);
+				if (ret)
+					exit(1);
 				break;
-				}
 			case 'U':
 				strncpy_null(fs_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
