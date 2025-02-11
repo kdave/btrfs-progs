@@ -1869,7 +1869,7 @@ static const char * const convert_usage[] = {
 	OPTLINE("--no-progress", "show only overview, not the detailed progress"),
 	"",
 	"General:",
-	OPTLINE("--version", "print the btrfs-convert version and exit"),
+	OPTLINE("--version", "print the btrfs-convert version, builtin features and exit"),
 	OPTLINE("--help", "print this help and exit"),
 	"",
 	"Supported filesystems:",
@@ -2029,7 +2029,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				}
 				break;
 			case GETOPT_VAL_VERSION:
-				printf("btrfs-convert, part of %s\n", PACKAGE_STRING);
+				help_builtin_features("btrfs-convert, part of ");
 				ret = 0;
 				goto success;
 			case GETOPT_VAL_HELP:

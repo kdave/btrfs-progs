@@ -64,6 +64,9 @@ OPTIONS
         * *copy* - copy UUID from the source filesystem
         * *UUID* - a conforming UUID value, the 36 byte string representation
 
+--version
+        Print the :command:`btrfs-convert` version, builtin features and exit.
+
 EXIT STATUS
 -----------
 
