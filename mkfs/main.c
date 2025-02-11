@@ -467,7 +467,7 @@ static const char * const mkfs_usage[] = {
 	"General:",
 	OPTLINE("-q|--quiet", "no messages except errors"),
 	OPTLINE("-v|--verbose", "increase verbosity level, default is 1"),
-	OPTLINE("-V|--version", "print the mkfs.btrfs version and exit"),
+	OPTLINE("-V|--version", "print the mkfs.btrfs version, builtin features and exit"),
 	OPTLINE("--help", "print this help and exit"),
 	"",
 	"Deprecated:",
@@ -1291,8 +1291,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				bconf_be_verbose();
 				break;
 			case 'V':
-				printf("mkfs.btrfs, part of %s\n",
-						PACKAGE_STRING);
+				help_builtin_features("mkfs.btrfs, part of ");
 				goto success;
 			case 'r':
 				free(source_dir);

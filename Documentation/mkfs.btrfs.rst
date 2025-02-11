@@ -166,7 +166,7 @@ OPTIONS
 
         .. note::
                 The support for ZSTD and LZO is a compile-time option, please check
-                the output of :command:`mkfs.btrfs --help` for the actual support.
+                the output of :command:`mkfs.btrfs --version` for the actual support.
 
 -u|--subvol <type>:<subdir>
         Specify that *subdir* is to be created as a subvolume rather than a regular
@@ -250,7 +250,7 @@ OPTIONS
         Increase verbosity level, default is 1.
 
 -V|--version
-        Print the :command:`mkfs.btrfs` version and exit.
+        Print the :command:`mkfs.btrfs` version, builtin features and exit.
 
 --help
         Print help.
