@@ -123,7 +123,7 @@ static const char * const tune_usage[] = {
 	"",
 	"General:",
 	OPTLINE("-f", "allow dangerous operations, make sure that you are aware of the dangers"),
-	OPTLINE("--version", "print the btrfstune version and exit"),
+	OPTLINE("--version", "print the btrfstune version, builtin features and exit"),
 	OPTLINE("--help", "print this help and exit"),
 #if EXPERIMENTAL
 	"",
@@ -309,7 +309,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			break;
 #endif
 		case GETOPT_VAL_VERSION:
-			printf("btrfstune, part of %s\n", PACKAGE_STRING);
+			help_builtin_features("btrfstune, part of ");
 			ret = 0;
 			goto free_out;
 		case GETOPT_VAL_HELP:

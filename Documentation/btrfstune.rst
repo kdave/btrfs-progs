@@ -138,6 +138,9 @@ OPTIONS
         completely switch the entire filesystem, run a full balance of the
         metadata. Please refer to :doc:`btrfs-balance`.
 
+--version
+        Print the :command:`btrfstune` version, builtin features and exit.
+
 
 EXIT STATUS
 -----------
