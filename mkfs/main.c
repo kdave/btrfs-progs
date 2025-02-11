@@ -902,7 +902,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	}
 	ret = btrfs_create_root(trans, fs_info, BTRFS_QUOTA_TREE_OBJECTID);
 	if (ret < 0) {
-		error("failed to create quota root: %d (%m)", ret);
+		errno = -ret;
+		error("failed to create quota root: %m");
 		goto fail;
 	}
 	quota_root = fs_info->quota_root;
@@ -914,7 +915,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(*qsi));
 	if (ret < 0) {
-		error("failed to insert qgroup status item: %d (%m)", ret);
+		errno = -ret;
+		error("failed to insert qgroup status item: %m");
 		goto fail;
 	}
 
@@ -938,7 +940,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	/* Currently mkfs will only create one subvolume */
 	ret = insert_qgroup_items(trans, fs_info, BTRFS_FS_TREE_OBJECTID);
 	if (ret < 0) {
-		error("failed to insert qgroup items: %d (%m)", ret);
+		errno = -ret;
+		error("failed to insert qgroup items: %m");
 		goto fail;
 	}
 
@@ -953,7 +956,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	if (simple) {
 		ret = touch_root_subvol(fs_info);
 		if (ret) {
-			error("failed to touch root dir for simple quota accounting %d (%m)", ret);
+			errno = -ret;
+			error("failed to touch root dir for simple quota accounting: %m");
 			goto fail;
 		}
 	}
@@ -964,12 +968,15 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	 */
 	ret = qgroup_verify_all(fs_info);
 	if (ret < 0) {
-		error("qgroup rescan failed: %d (%m)", ret);
+		errno = -ret;
+		error("qgroup rescan failed: %m");
 		return ret;
 	}
 	ret = repair_qgroups(fs_info, &qgroup_repaired, true);
-	if (ret < 0)
-		error("failed to fill qgroup info: %d (%m)", ret);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to fill qgroup info: %m");
+	}
 	return ret;
 fail:
 	btrfs_abort_transaction(trans, ret);
@@ -1897,14 +1904,16 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	ret = create_metadata_block_groups(root, mixed, &allocation);
 	if (ret) {
-		error("failed to create default block groups: %d", ret);
+		errno = -ret;
+		error("failed to create default block groups: %m");
 		goto error;
 	}
 
 	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE) {
 		ret = setup_raid_stripe_tree_root(fs_info);
 		if (ret < 0) {
-			error("failed to initialize raid-stripe-tree: %d (%m)", ret);
+			errno = -ret;
+			error("failed to initialize raid-stripe-tree: %m");
 			goto out;
 		}
 	}
@@ -1919,21 +1928,24 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	ret = create_data_block_groups(trans, root, mixed, &allocation);
 	if (ret) {
-		error("failed to create default data block groups: %d", ret);
+		errno = -ret;
+		error("failed to create default data block groups: %m");
 		goto error;
 	}
 
 	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
 		ret = create_global_roots(trans, nr_global_roots);
 		if (ret) {
-			error("failed to create global roots: %d", ret);
+			errno = -ret;
+			error("failed to create global roots: %m");
 			goto error;
 		}
 	}
 
 	ret = make_root_dir(trans, root);
 	if (ret) {
-		error("failed to setup the root directory: %d", ret);
+		errno = -ret;
+		error("failed to setup the root directory: %m");
 		goto error;
 	}
 
@@ -1976,8 +1988,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					prepare_ctx[i].file, dev_byte_count,
 					sectorsize, sectorsize, sectorsize);
 		if (ret) {
-			error("unable to add %s to filesystem: %d",
-			      prepare_ctx[i].file, ret);
+			errno = -ret;
+			error("unable to add %s to filesystem: %m",
+			      prepare_ctx[i].file);
 			goto error;
 		}
 		if (bconf.verbose >= LOG_INFO) {
@@ -1996,7 +2009,8 @@ raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
 			 metadata_profile, mixed, &allocation);
 	if (ret) {
-		error("unable to create raid groups: %d", ret);
+		errno = -ret;
+		error("unable to create raid groups: %m");
 		goto out;
 	}
 
@@ -2031,7 +2045,8 @@ raid_groups:
 	ret = btrfs_make_subvolume(trans, BTRFS_DATA_RELOC_TREE_OBJECTID,
 				   false);
 	if (ret) {
-		error("unable to create data reloc tree: %d", ret);
+		errno = -ret;
+		error("unable to create data reloc tree: %m");
 		goto out;
 	}
 
@@ -2065,7 +2080,8 @@ raid_groups:
 					  &subvols, compression,
 					  compression_level);
 		if (ret) {
-			error("error while filling filesystem: %d", ret);
+			errno = -ret;
+			error("error while filling filesystem: %m");
 			btrfs_abort_transaction(trans, ret);
 			goto out;
 		}
@@ -2087,8 +2103,8 @@ raid_groups:
 			ret = btrfs_mkfs_shrink_fs(fs_info, &shrink_size,
 						   shrink_rootdir);
 			if (ret < 0) {
-				error("error while shrinking filesystem: %d",
-					ret);
+				errno = -ret;
+				error("error while shrinking filesystem: %m");
 				goto out;
 			}
 		} else {
@@ -2103,7 +2119,8 @@ raid_groups:
 	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
 				  metadata_profile, metadata_profile);
 	if (ret < 0) {
-		error("failed to cleanup temporary chunks: %d", ret);
+		errno = -ret;
+		error("failed to cleanup temporary chunks: %m");
 		goto out;
 	}
 
@@ -2111,7 +2128,8 @@ raid_groups:
 	    features.incompat_flags & BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA) {
 		ret = setup_quota_root(fs_info);
 		if (ret < 0) {
-			error("failed to initialize quota: %d (%m)", ret);
+			errno = -ret;
+			error("failed to initialize quota: %m");
 			goto out;
 		}
 	}
@@ -2184,8 +2202,8 @@ out:
 
 	if (!ret && close_ret) {
 		ret = close_ret;
-		error("failed to close ctree, the filesystem may be inconsistent: %d",
-		      ret);
+		errno = -ret;
+		error("failed to close ctree, filesystem may be inconsistent: %m");
 	}
 
 	btrfs_close_all_devices();
