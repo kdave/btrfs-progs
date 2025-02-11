@@ -471,7 +471,6 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("--help", "print this help and exit"),
 	"",
 	"Deprecated:",
-	OPTLINE("-l|--leafsize SIZE", "removed in 6.0, use --nodesize"),
 	OPTLINE("-R|--runtime-features LIST", "removed in 6.3, use -O|--features"),
 	NULL
 };
@@ -1170,7 +1169,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "checksum", required_argument, NULL,
 				GETOPT_VAL_CHECKSUM },
 			{ "force", no_argument, NULL, 'f' },
-			{ "leafsize", required_argument, NULL, 'l' },
 			{ "label", required_argument, NULL, 'L'},
 			{ "metadata", required_argument, NULL, 'm' },
 			{ "mixed", no_argument, NULL, 'M' },
@@ -1199,7 +1197,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VvMKqu:",
+		c = getopt_long(argc, argv, "A:b:fn:s:m:d:L:R:O:r:U:VvMKqu:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1215,11 +1213,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				}
 				data_profile_set = true;
 				break;
-			case 'l':
-				/* Deprecated in 4.0 */
-				error("--leafsize has been removed in 6.0, use --nodesize");
-				ret = 1;
-				goto error;
 			case 'n':
 				nodesize = arg_strtou64_with_suffix(optarg);
 				nodesize_forced = true;

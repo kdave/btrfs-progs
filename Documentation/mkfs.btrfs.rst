@@ -255,8 +255,8 @@ OPTIONS
 --help
         Print help.
 
--l|--leafsize <size>
-        Removed in 6.0, used to be alias for *--nodesize*.
+DEPRECATED OPTIONS
+------------------
 
 -R|--runtime-features <feature1>[,<feature2>...]
         Removed in 6.3, was used to specify features not affecting on-disk format.
