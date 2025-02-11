@@ -26,7 +26,7 @@ COPY ./run-tests .
 COPY ./devel.tar.gz .
 
 # The blkzoned.h exists but blk_zone.capacity is missing, disable zoned mode explicitly
-CMD ./test-build devel --disable-documentation --disable-zoned
+CMD ["./test-build", "devel", "--disable-documentation", "--disable-zoned"]
 
 # Continue with:
 # cd /tmp
