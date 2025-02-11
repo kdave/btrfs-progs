@@ -2076,6 +2076,12 @@ raid_groups:
 				   pretty_size_mode(compression_level, UNITS_RAW) :
 				   "");
 
+		/* Print subvolumes now as btrfs_mkfs_fill_dir() deletes the list. */
+		list_for_each_entry(rds, &subvols, list) {
+			pr_verbose(LOG_DEFAULT, "  Subvolume:        %s\n",
+				   rds->full_path);
+		}
+
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
 					  &subvols, compression,
 					  compression_level);
@@ -2091,11 +2097,6 @@ raid_groups:
 			errno = -ret;
 			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 			goto out;
-		}
-
-		list_for_each_entry(rds, &subvols, list) {
-			pr_verbose(LOG_DEFAULT, "  Subvolume:        %s\n",
-				   rds->full_path);
 		}
 
 		if (shrink_rootdir) {
