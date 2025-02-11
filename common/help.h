@@ -115,6 +115,7 @@ __attribute__((noreturn))
 void help_ambiguous_token(const char *arg, const struct cmd_group *grp);
 
 void help_command_group(const struct cmd_group *grp, int argc, char **argv);
+void help_builtin_features(const char *prefix);
 
 int check_argc_exact(int nargs, int expected);
 int check_argc_min(int nargs, int expected);

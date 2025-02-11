@@ -540,3 +540,62 @@ void help_command_group(const struct cmd_group *grp, int argc, char **argv)
 	usage_command_group(grp, full, false);
 }
 
+void help_builtin_features(const char *prefix)
+{
+	static const char *features[] = {
+#if EXPERIMENTAL
+		"+"
+#else
+		"-"
+#endif
+		"EXPERIMENTAL",
+#ifdef INJECT
+		"+"
+#else
+		"-"
+#endif
+		"INJECT",
+#ifdef STATIC_BUILD
+		"+"
+#else
+		"-"
+#endif
+		"STATIC",
+#if defined(COMPRESSION_LZO) && COMPRESSION_LZO == 1
+		"+"
+#else
+		"-"
+#endif
+		"LZO",
+#if defined(COMPRESSION_ZSTD) && COMPRESSION_ZSTD == 1
+		"+"
+#else
+		"-"
+#endif
+		"ZSTD",
+#if defined(HAVE_LIBUDEV) && HAVE_LIBUDEV == 1
+		"+"
+#else
+		"-"
+#endif
+		"UDEV",
+#if defined(HAVE_LINUX_FSVERITY_H) && HAVE_LINUX_FSVERITY_H == 1
+		"+"
+#else
+		"-"
+#endif
+		"FSVERITY",
+#if defined(BTRFS_ZONED) && BTRFS_ZONED == 1
+		"+"
+#else
+		"-"
+#endif
+		"ZONED",
+		"CRYPTO=" CRYPTOPROVIDER,
+	};
+
+	printf("%s%s\n", prefix, PACKAGE_STRING);
+	for (int i = 0; i < ARRAY_SIZE(features); i++)
+		printf("%s%s", (i == 0 ? "" : " "), features[i]);
+	putchar('\n');
+}
