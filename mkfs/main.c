@@ -2078,8 +2078,11 @@ raid_groups:
 
 		/* Print subvolumes now as btrfs_mkfs_fill_dir() deletes the list. */
 		list_for_each_entry(rds, &subvols, list) {
-			pr_verbose(LOG_DEFAULT, "  Subvolume:        %s\n",
-				   rds->full_path);
+			pr_verbose(LOG_DEFAULT, "  Subvolume (%s%s):  %s%s\n",
+				   rds->is_default ? "d" : "",
+				   rds->readonly ? "ro" : "rw",
+				   rds->is_default ? "" : " ",
+				   rds->dir);
 		}
 
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
