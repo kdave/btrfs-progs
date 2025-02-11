@@ -6,6 +6,7 @@ Btrfs-progs
 [![codecov](https://codecov.io/gh/kdave/btrfs-progs/branch/coverage-test/graph/badge.svg?token=fhLI8V9s0k)](https://codecov.io/gh/kdave/btrfs-progs)
 [![static](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/artifacts-static-build.yml)
 [![release](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/ci-build-test.yml)
+[![codeql](https://github.com/kdave/btrfs-progs/actions/workflows/codeql.yml/badge.svg)](https://github.com/kdave/btrfs-progs/actions/workflows/codeql.yml)
 
 Userspace utilities to manage btrfs filesystems.
 License: GPLv2.
