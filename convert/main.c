@@ -121,6 +121,7 @@
 #include "common/extent-tree-utils.h"
 #include "common/root-tree-utils.h"
 #include "common/clear-cache.h"
+#include "common/utils.h"
 #include "cmds/commands.h"
 #include "check/repair.h"
 #include "mkfs/common.h"
@@ -1913,6 +1914,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 
 	cpu_detect_flags();
 	hash_init_accel();
+	btrfs_config_init();
 	btrfs_assert_feature_buf_size();
 
 	while(1) {

@@ -30,6 +30,8 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/zoned.h"
+#include "crypto/hash.h"
+#include "common/cpu-utils.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/device-scan.h"
@@ -204,6 +206,8 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	int fd = -1;
 	int oflags = O_RDWR;
 
+	cpu_detect_flags();
+	hash_init_accel();
 	btrfs_config_init();
 
 	while(1) {

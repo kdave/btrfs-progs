@@ -88,6 +88,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 
 	cpu_detect_flags();
 	hash_init_accel();
+	btrfs_config_init();
 
 	while (1) {
 		enum { GETOPT_VAL_VERSION = GETOPT_VAL_FIRST };
