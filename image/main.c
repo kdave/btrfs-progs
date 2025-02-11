@@ -57,7 +57,7 @@ static const char * const image_usage[] = {
 	OPTLINE("-d", "also dump data, conflicts with -w"),
 	"",
 	"General:",
-	OPTLINE("--version", "print the btrfs-image version and exit"),
+	OPTLINE("--version", "print the btrfs-image version, builtin featurues and exit"),
 	OPTLINE("--help", "print this help and exit"),
 	"",
 	"In the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).",
@@ -140,7 +140,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			dump_data = true;
 			break;
 		case GETOPT_VAL_VERSION:
-			printf("btrfs-image, part of %s\n", PACKAGE_STRING);
+			help_builtin_features("btrfs-image, part of ");
 			ret = 0;
 			goto success;
 		case GETOPT_VAL_HELP:

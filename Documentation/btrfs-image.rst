@@ -57,6 +57,9 @@ OPTIONS
 -m
         Restore for multiple devices, more than 1 device should be provided.
 
+--version
+        Print the :command:`btrfs-image` version, builtin features and exit.
+
 EXIT STATUS
 -----------
 
