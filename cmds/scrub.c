@@ -204,9 +204,10 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		pr_verbose(LOG_DEFAULT, "Total to scrub:   %s\n",
 			pretty_size_mode(bytes_total, unit_mode));
 	}
+
 	/*
 	 * Rate and size units are disproportionate so they are affected only
-	 * by --raw, otherwise it's human readable
+	 * by --raw, otherwise it's human readable (respecting the SI or IEC mode).
 	 */
 	if (unit_mode == UNITS_RAW) {
 		pr_verbose(LOG_DEFAULT, "Rate:             %s/s",
@@ -218,11 +219,16 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 			pr_verbose(LOG_DEFAULT, " (some device limits set)");
 		pr_verbose(LOG_DEFAULT, "\n");
 	} else {
+		unsigned int mode = UNITS_HUMAN_DECIMAL;
+
+		if (unit_mode & UNITS_BINARY)
+			mode = UNITS_HUMAN_BINARY;
+
 		pr_verbose(LOG_DEFAULT, "Rate:             %s/s",
-			pretty_size_mode(bytes_per_sec, unit_mode));
+			pretty_size_mode(bytes_per_sec, mode));
 		if (limit > 1)
 			pr_verbose(LOG_DEFAULT, " (limit %s/s)",
-				   pretty_size_mode(limit, unit_mode));
+				   pretty_size_mode(limit, mode));
 		else if (limit == 1)
 			pr_verbose(LOG_DEFAULT, " (some device limits set)");
 		pr_verbose(LOG_DEFAULT, "\n");
