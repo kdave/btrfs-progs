@@ -380,6 +380,17 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		} else {
 			putchar('-');
 		}
+	} else if (strcmp(row->fmt, "duration") == 0) {
+		const u64 seconds = va_arg(args, u64);
+		unsigned int days = seconds / (24 * 60 * 60);
+		unsigned int hours = (seconds % (24 * 60 * 60)) / (60 * 60);
+		unsigned int minutes = (seconds % (60 * 60)) / 60;
+		unsigned int sec = seconds % 60;
+
+		if (days > 0)
+			printf("%u days %02u:%02u:%02u", days, hours, minutes, sec);
+		else
+			printf("%02u:%02u:%02u", hours, minutes, sec);
 	} else if (strcmp(row->fmt, "list") == 0) {
 	} else if (strcmp(row->fmt, "map") == 0) {
 	} else if (strcmp(row->fmt, "qgroupid") == 0) {

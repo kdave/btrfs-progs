@@ -14,6 +14,7 @@ Supported types:
 * size: ``size-or-none`` - same as *size* but for 0 it's *none*
 * UUID: ``uuid`` - if all zeros then *null* (native json), or properly formatted UUID string
 * date + time: ``date-time`` - timestamp formatted as *YYYY-MM-DD HH:MM:SS TIMEZONE*
+* duration: ``duration`` - difference of two timestamps, like *D days HH:MM:SS* (days not show of 0)
 
 Commands that support json output
 ---------------------------------
