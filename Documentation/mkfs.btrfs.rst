@@ -150,6 +150,9 @@ OPTIONS
         Populate the toplevel subvolume with files from *rootdir*.  This does not
         require root permissions to write the new files or to mount the filesystem.
 
+        Directories can be created as subvolumes, see also option *--subvol*.
+        Hardlinks are detected and created in the filesystem image.
+
         .. note::
                 This option may enlarge the image or file to ensure it's big enough to
                 contain the files from *rootdir*. Since version 4.14.1 the filesystem size is
@@ -159,6 +162,10 @@ OPTIONS
         Try to compress files when using *--rootdir*.  Supported values for *algo* are
         *no* (the default), *zstd*, *lzo* or *zlib*.  The optional value *level* is a
         compression level, 1..15 for *zstd*, 1..9 for *zlib*.
+
+        It is recommended to use the highest level to achieve maximum space savings.
+        Compression at mkfs time is not as constrained as in kernel where it's
+        desirable to use the less CPU load. Otherwise the default level is 3.
 
         As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
         they would be larger than the uncompressed versions, and will set file attribute
@@ -173,7 +180,7 @@ OPTIONS
         directory.  The option *--rootdir* must also be specified, and *subdir* must be an
         existing subdirectory within it.  This option can be specified multiple times.
 
-        *type* is an optional additional modifier. Valid choices are:
+        The *type* is an optional additional modifier. Valid choices are:
 
         * *default*: create as default subvolume
         * *ro*: create as read-only subvolume
@@ -183,14 +190,16 @@ OPTIONS
         Only one of *default* and *default-ro* may be specified.
 
         If you wish to create a subvolume with a name containing a colon and you don't
-        want this to be parsed as containing a modifier, you can prefix the path with `./`:
+        want this to be parsed as containing a modifier, you can prefix the path with :file:`./`:
 
         .. code-block:: bash
 
                 $ mkfs.btrfs --rootdir dir --subvol ./ro:subdir /dev/loop0
 
-	If there are hard links inside *rootdir* and *subdir* will split the
-	subvolumes, like the following case::
+        If there are hardlinks inside *rootdir* and *subdir* will split the
+        subvolumes, like the following case:
+
+        .. code-block:: none
 
 		rootdir/
 		|- hardlink1
@@ -198,9 +207,9 @@ OPTIONS
 		|- subdir/  <- will be a subvolume
 		   |- hardlink3
 
-	In that case we cannot create `hardlink3` as hardlinks of
-	`hardlink1` and `hardlink2` because hardlink3 will be inside a new
-	subvolume.
+        In that case we cannot create :file:`hardlink3` as hardlinks of
+        :file:`hardlink1` and :file:`hardlink2` because :file:`hardlink3` will
+        be inside a new subvolume.
 
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
