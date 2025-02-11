@@ -1385,10 +1385,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	if (bconf.verbose) {
-		printf("%s\n", PACKAGE_STRING);
-		printf("See %s for more information.\n\n", PACKAGE_URL);
-	}
+	pr_verbose(LOG_DEFAULT, "%s\n", PACKAGE_STRING);
+	pr_verbose(LOG_DEFAULT, "See %s for more information.\n\n", PACKAGE_URL);
 
 	if (!sectorsize)
 		sectorsize = (u32)SZ_4K;
@@ -1546,10 +1544,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			exit(1);
 		}
 	} else if (zoned_model(file) == ZONED_HOST_MANAGED) {
-		if (bconf.verbose)
-			printf(
-	"Zoned: %s: host-managed device detected, setting zoned feature\n",
-			       file);
+		pr_verbose(LOG_DEFAULT, "zoned: %s: host-managed device detected, setting zoned feature\n",
+			   file);
 		opt_zoned = true;
 		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_ZONED;
 	}
@@ -1977,7 +1973,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			      prepare_ctx[i].file, ret);
 			goto error;
 		}
-		if (bconf.verbose >= 2) {
+		if (bconf.verbose >= LOG_INFO) {
 			struct btrfs_device *device;
 
 			device = container_of(fs_info->fs_devices->devices.next,
