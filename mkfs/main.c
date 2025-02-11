@@ -1142,7 +1142,7 @@ static int parse_subvolume(const char *path, struct list_head *subvols,
 
 	if (subvol->is_default) {
 		if (*has_default_subvol) {
-			error("default subvol can only be specified once");
+			error("default subvolume can only be specified once");
 			free(subvol);
 			return 1;
 		}
@@ -1453,25 +1453,25 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		struct rootdir_subvol *rds2;
 
 		if (path_cat_out(path, source_dir, rds->dir)) {
-			error("path invalid");
+			error("path invalid: %s", path);
 			ret = 1;
 			goto error;
 		}
 
 		if (!realpath(path, rds->full_path)) {
-			error("could not get canonical path to %s", rds->dir);
+			error("could not get canonical path: %s", rds->dir);
 			ret = 1;
 			goto error;
 		}
 
 		if (!path_exists(rds->full_path)) {
-			error("subvolume %s does not exist", rds->dir);
+			error("subvolume path does not exist: %s", rds->dir);
 			ret = 1;
 			goto error;
 		}
 
 		if (!path_is_dir(rds->full_path)) {
-			error("subvolume %s is not a directory", rds->dir);
+			error("subvolume is not a directory: %s", rds->dir);
 			ret = 1;
 			goto error;
 		}
@@ -1486,7 +1486,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		     rds2 != rds;
 		     rds2 = list_next_entry(rds2, list)) {
 			if (strcmp(rds2->full_path, rds->full_path) == 0) {
-				error("subvolume %s specified more than once", rds->dir);
+				error("subvolume specified more than once: %s", rds->dir);
 				ret = 1;
 				goto error;
 			}
