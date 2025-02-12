@@ -58,7 +58,7 @@ or change descriptions.
 
 *  brief but descriptive
 *  long and descriptive can be used in justified cases (e.g. conversion options
-   in :doc:`btrfstune` because of the single command without subcommands)
+   in :doc:`../btrfstune` because of the single command without subcommands)
 
 Option parameters
 ^^^^^^^^^^^^^^^^^
