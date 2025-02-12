@@ -114,7 +114,7 @@ Log Root Tree
 UUID Tree
 ---------
 
-The tree storesc correspondence between UUIDs and subvolumes. Used for
+The tree stores correspondence between UUIDs and subvolumes. Used for
 quick lookup during send.
 
 

@@ -67,7 +67,7 @@ Referencing:
 
 -  generic links can use the free form link syntax with description ```Link text <https://example.com>`__``
    (note the double underscore, this is *anonymous* link and does not create a reference)
-   or plain link that will auto-render to a clikable link https://example.com
+   or plain link that will auto-render to a clickable link https://example.com
 
 -  in manual pages: always use full link as it's meant to be read in terminal
    output and must allow copy&paste
