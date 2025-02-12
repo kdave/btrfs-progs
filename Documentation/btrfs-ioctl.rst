@@ -550,7 +550,7 @@ BTRFS_IOC_ADD_DEV
 
 Add a given block device to the filesystem. Unlike the command :command:`btrfs device add`
 there's are no safety checks (like existence of another filesystem on the
-device), device preparataion (like TRIM or zone reset), so use it with care.
+device), device preparation (like TRIM or zone reset), so use it with care.
 
 This is a filesystem-exclusive operation and it will fail if there's another
 one already running, with one exception, when there's a paused balance.
@@ -968,7 +968,7 @@ Use cases (:ref:`definition of constants<struct_btrfs_ioctl_subvol_wait>`):
    * - ioctl args
      - :ref:`struct btrfs_ioctl_subvol_wait<struct_btrfs_ioctl_subvol_wait>`
    * - args.subvolid
-     - Depending on the mode, the numeric id of subolume to wait for, or
+     - Depending on the mode, the numeric id of subvolume to wait for, or
        the one queried by *PEEK* modes
    * - args.mode
      - mode of operation described above

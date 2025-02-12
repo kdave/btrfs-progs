@@ -614,7 +614,7 @@ hopefully not destroying both copies of particular data in case of DUP.
 
 The wear levelling techniques can also lead to reduced redundancy, even if the
 device does not do any deduplication. The controllers may put data written in
-a short timespan into the same physical storage unit (cell, block etc). In case
+a short time span into the same physical storage unit (cell, block etc). In case
 this unit dies, both copies are lost. BTRFS does not add any artificial delay
 between metadata writes.
 

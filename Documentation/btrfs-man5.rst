@@ -220,7 +220,7 @@ SYSFS INTERFACE
 
 .. include:: ch-sysfs.rst
 
-.. _man-btrfs5-fileysstem-exclusive-operations:
+.. _man-btrfs5-filesystem-exclusive-operations:
 
 FILESYSTEM EXCLUSIVE OPERATIONS
 -------------------------------

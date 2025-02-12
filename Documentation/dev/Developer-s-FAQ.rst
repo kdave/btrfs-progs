@@ -64,7 +64,7 @@ candidate for a CC: of the bugreport.
 
 **Do**: talk to the maintainer if he forgot to add this tag to the final patch.
 Reviews do take time and the patches land in various branches early after
-they're sent to the mailingslist for testing, but the reviews are always
+they're sent to the mailinglist for testing, but the reviews are always
 welcome.
 
 **Do**: collect the Reviewed-by tags for patches that get resent unchanged e.g.
@@ -236,7 +236,7 @@ Good practices, contribution hints
 -  be patient if your patch is not accepted immediately, try to send a gentle
    ping if there's a significant time without any action
 -  if you want to start contributing but are not sure about how to do that,
-   lurk in the mailingist or on the IRC channel
+   lurk in the mailinglist or on the IRC channel
 -  every patch should implement one thing -- this is vaguely defined, you may
    receive comments about patch splitting or merging with other
 -  every patch must be compilable when applied, possibly with all related
@@ -451,7 +451,7 @@ copyright holders of changes in a given file. The code is usually heavily
 changed over time in smaller portions, slowly morphing into something that does
 not resemble the original code anymore though it shares a lot of the core ideas
 and implemented logic.  A copyright notice by a company that does not exist
-anymore from 10 years ago is a clear example of uselesness for the developers.
+anymore from 10 years ago is a clear example of uselessness for the developers.
 
 When code is moved verbatim from a file to another file, in the new file it
 appears to be contributed by a single author while it is in most cases code

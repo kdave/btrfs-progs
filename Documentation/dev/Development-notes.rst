@@ -120,7 +120,7 @@ There are several ways how to react to the unexpected conditions:
    This would cause the filesystem to be flipped read-only to prevent further
    corruption.
 
-   Additionally call trace would be dumpped for the first btrfs_abort_transaction()
+   Additionally call trace would be dumped for the first btrfs_abort_transaction()
    call site.
 
 -  ASSERT()

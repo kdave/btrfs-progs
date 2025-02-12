@@ -72,7 +72,7 @@ exclusive_operation
 
         Shows the running exclusive operation.
         Check section
-        :ref:`FILESYSTEM EXCLUSIVE OPERATIONS<man-btrfs5-fileysstem-exclusive-operations>`
+        :ref:`FILESYSTEM EXCLUSIVE OPERATIONS<man-btrfs5-filesystem-exclusive-operations>`
         for details.
 
 generation
@@ -216,7 +216,7 @@ scrub_speed_max
         (RW, since: 5.14)
 
         Shows the scrub speed limit for this device. The unit is Bytes/s.
-        0 means no limit. The value can be set but is not persisent.
+        0 means no limit. The value can be set but is not persistent.
 
 writeable
         (RO, since: 5.6)

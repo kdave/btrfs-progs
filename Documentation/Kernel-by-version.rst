@@ -853,7 +853,7 @@ Pull requests:
 `v5.4-rc7 <https://git.kernel.org/linus/00aff6836241ae5654895dcea10e6d4fc5878ca6>`__,
 `v5.4-rc8 <https://git.kernel.org/linus/afd7a71872f14062cc12cac126bb8e219e7dacf6>`__
 
-- tree checker: adde sanity checks for tree items, extent items, and references
+- tree checker: added sanity checks for tree items, extent items, and references
 - deprecated subvolume creation mode BTRFS_SUBVOL_CREATE_ASYNC
 - qgroup relation deletion tries harder, orphan entries are removed too
 - space handling improvements (ticket reservations, flushing, overcommit logic)
@@ -1023,7 +1023,7 @@ Pull requests:
 Highlights:
 
 - performance improvements in fsync (dbench workload: higher throughput, lower latency)
-- sysfs exports current exclusive operataion (balance, resize, device add/del/...)
+- sysfs exports current exclusive operation (balance, resize, device add/del/...)
 - sysfs exports supported send stream version
 
 Core:
@@ -1083,7 +1083,7 @@ Features:
 
 Core changes:
 
-- subpage block size support peparations
+- subpage block size support preparations
 
 Fixes:
 
@@ -1434,7 +1434,7 @@ Qgroup:
 - limits are shared upon snapshot
 - allow to remove qgroup which has parent but no child
 - fix status of qgroup consistency after rescan
-- fix quota status bits after dsiabling
+- fix quota status bits after disabling
 - mark qgroups inconsistent after assign/delete actions
 - code cleanups
 
@@ -1475,7 +1475,7 @@ Fixes:
 ^^^^^^^^^^^^^^
 
 - send fixes: cloning, sending with parent
-- improved handling of framgented space using bitmaps
+- improved handling of fragmented space using bitmaps
 - new mount option for debugging: fragment=data|metadata|all
 - updated balance filters: limit, stripes, usage
 - more bugfixes and cleanups
@@ -1501,7 +1501,7 @@ Fixes:
     writes (now does: nologreplay)
 
 - default inline limit is now 2048 (instead of page size, usually 4096)
-- /dev/btrfs-control now understands the GET_SUPPORTE_FEATURES ioctl
+- /dev/btrfs-control now understands the GET_SUPPORTED_FEATURES ioctl
 - get rid of harmless message "''could not find root %llu''"
 - preparatory work for subpage-blocksize patchset
 - fix bug when using overlayfs
@@ -1574,7 +1574,7 @@ Fixes:
 ^^^^^^^^^^^^^^^
 
 - new tracepoints: file item
-- fix qgoup accounting when inode_cache is in use
+- fix qgroup accounting when inode_cache is in use
 - fix incorrect number report in stat::t_blocks under certain conditions
 - raid56 fixes:
 
@@ -1877,7 +1877,7 @@ Fixes:
 ^^^^^^^^^^^^^^^
 
 * ''fiemap'' exports information about shared extents
-* bugfix and stability foucsed release
+* bugfix and stability focused release
 
 3.14 (Mar 2014)
 ^^^^^^^^^^^^^^^
