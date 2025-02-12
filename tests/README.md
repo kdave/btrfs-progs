@@ -8,6 +8,12 @@ management. In some cases optional features are turned on by mkfs and the
 filesystem image could be mounted, such tests might fail if there's lack of
 support.
 
+The testsuite follows the principles:
+
+- gather all output to logs
+- stop on first failure (do not clean up until the problem is investigated)
+- detect available capabilities in the system, skip if missing
+
 ## Quick start
 
 Run the tests from the top directory:
@@ -199,7 +205,7 @@ command `losetup` and eventually delete all existing loop devices with `losetup
 ### Prototyping tests, quick tests
 
 There's a script `test-console.sh` that will run shell commands in a loop and
-logs the output with the testing environment set up. It sources the common
+log the output with the testing environment set up. It sources the common
 helper scripts so the shell functions are available.
 
 ### Runtime dependencies
@@ -213,7 +219,8 @@ specific tests need the following packages installed: `acl`, `attr`,
 
 1. Pick the category for the new test or fallback to `misc-tests` if not sure. For
 an easy start copy an existing `test.sh` script from some test that might be
-close to the purpose of your new test. The environment setup includes the
+close to the purpose of your new test, or use one of the templates in the
+[tests/template/](template/) directory. The environment setup includes the
 common scripts and/or prepares the test devices. Other scripts contain examples
 how to do mkfs, mount, unmount, check, loop device management etc.
 
@@ -229,22 +236,23 @@ infrastructure.
 
 5. **Test your test.** Use the `TEST` variable to jump right to your test:
 ```shell
-$ make TEST=012\* tests-misc           # from top directory
-$ TEST=012\* ./misc-tests.sh           # from tests/
+$ make TEST=012\* tests-misc           # from the top or tests/ directory
+$ TEST=012\* ./misc-tests.sh           # alternatively from tests/
 ```
 
 6. The commit changelog should reference a commit that either introduced or
-  fixed the bug (or both). Subject line of the shall mention the name of the
-  new directory for ease of search, e.g. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
+  fixed the bug (or both). Subject line of the could mention the name of the
+  new directory for ease of search (e.g. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`)
+  or a brief description of the test case (e.g. `btrfs-progs: tests: add case for waiting on subvolume sync after deletion`)
 
-7. A commit that fixes a bug should be applied before the test that verifies
+7. A commit that fixes a bug should be applied *before* the test that verifies
   the fix. This is to keep the git history bisectable.
 
 
 ### Test images
 
 Most tests should be able to create the test images from scratch, using regular
-commands and file operation. The commands also document the test case and use
+commands and file operations. The commands also document the test case and use
 the test code and kernel of the environment.
 
 In other cases, a pre-created image may be the right way if the above does not
@@ -295,7 +303,8 @@ There are some utilities that are not distributed but are necessary for the
 tests. They are in the top level directory of the testsuite and their path
 cannot be set.
 
-The tests assume write access to their directories.
+The tests assume write access to their directories and an existing `/tmp`
+directory.
 
 
 # Coding style, best practices
@@ -305,9 +314,10 @@ The tests assume write access to their directories.
 * quote all variables by default, any path, even the TOP could need that, and
   we use it everywhere
   * even if the variable is safe, use quotes for consistency and to ease
-    reading the code
+    reading the code (syntax highlighting in editors)
   * there are exceptions:
     * `$SUDO_HELPER` as it might be intentionally unset
+    * conditionally set options that are stored in a variable
 * use `#!/bin/bash` explicitly
 * check for all external dependencies (`check_global_prereq`)
 * check for internal dependencies (`check_prereq`), though the basic set is
