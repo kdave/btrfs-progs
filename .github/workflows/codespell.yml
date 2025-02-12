@@ -1,5 +1,7 @@
 # Check for typos on devel and pull rquests
 # - codespell configuration is within .codespellrc
+# - the workflow can be run separately from other workflows that trigger on
+#   ci/* branches, use codespell/* as the prefix
 
 name: Codespell
 run-name: Codespell
@@ -9,12 +11,11 @@ on:
     branches:
       - devel
       - 'ci/**'
-      - 'CI/**'
+      - 'codespell/**'
   pull_request:
     branches:
       - devel
       - 'ci/**'
-      - 'CI/**'
 
 permissions:
   contents: read
