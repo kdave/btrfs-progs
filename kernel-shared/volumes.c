@@ -2077,7 +2077,7 @@ static int btrfs_stripe_tree_logical_to_physical(struct btrfs_fs_info *fs_info,
 			if (stripe->dev->devid !=
 			    btrfs_raid_stride_devid_nr(leaf, extent, i))
 				continue;
-			stripe->physical = btrfs_raid_stride_offset_nr(leaf, extent, i);
+			stripe->physical = btrfs_raid_stride_physical_nr(leaf, extent, i);
 			btrfs_release_path(&path);
 			return 0;
 		}

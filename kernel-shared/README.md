@@ -58,3 +58,4 @@ Status and progress of kernel/userspace synchronization.
 UAPI
 
 - uapi/btrfs.h
+- uapi/btrfs\_tree.h
