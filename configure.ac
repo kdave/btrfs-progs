@@ -558,6 +558,7 @@ Makefile.inc
 Documentation/Makefile
 libbtrfs/version.h
 libbtrfsutil/libbtrfsutil.pc
+libbtrfsutil/python/version.py
 ])
 
 AC_OUTPUT
