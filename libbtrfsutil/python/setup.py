@@ -20,16 +20,24 @@
 import re
 import os
 import os.path
+import sys
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import subprocess
 
 
 def get_version():
-    f = open('../../VERSION', 'r')
-    version = f.readline().strip()
-    f.close()
-    return ".".join(version[1:].split('.'))
+    version = 0
+    try:
+        import version
+        version = version.btrfs_util_py_version
+    except:
+        # Don't fail if this is only the 'clean' target or no command
+        if 'clean' in sys.argv or len(sys.argv) == 1:
+            version = '0.0'
+        else:
+            raise Exception("No generated version.py found, please configure")
+    return version
 
 
 def out_of_date(dependencies, target):
@@ -104,9 +112,7 @@ module = Extension(
 
 setup(
     name='btrfsutil',
-    # FIXME: version file is not present when building outside of git
-    #version=get_version(),
-    version='6.12',
+    version=get_version(),
     description='Library for managing Btrfs filesystems',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
