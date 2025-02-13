@@ -719,7 +719,7 @@ static void print_raid_stripe_key(struct extent_buffer *eb,
 	for (int i = 0; i < num_stripes; i++)
 		printf("\t\t\tstripe %d devid %llu physical %llu\n", i,
 		       (unsigned long long)btrfs_raid_stride_devid_nr(eb, stripe, i),
-		       (unsigned long long)btrfs_raid_stride_offset_nr(eb, stripe, i));
+		       (unsigned long long)btrfs_raid_stride_physical_nr(eb, stripe, i));
 }
 
 void print_key_type(FILE *stream, u64 objectid, u8 type)

@@ -325,8 +325,9 @@ BTRFS_SETGET_STACK_FUNCS(stack_timespec_sec, struct btrfs_timespec, sec, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_timespec_nsec, struct btrfs_timespec, nsec, 32);
 
 BTRFS_SETGET_FUNCS(raid_stride_devid, struct btrfs_raid_stride, devid, 64);
-BTRFS_SETGET_FUNCS(raid_stride_offset, struct btrfs_raid_stride, offset, 64);
+BTRFS_SETGET_FUNCS(raid_stride_physical, struct btrfs_raid_stride, physical, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_raid_stride_devid, struct btrfs_raid_stride, devid, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_raid_stride_physical, struct btrfs_raid_stride, physical, 64);
 
 static inline struct btrfs_raid_stride *btrfs_raid_stride_nr(
 						 struct btrfs_stripe_extent *dps,
@@ -346,11 +347,11 @@ static inline u64 btrfs_raid_stride_devid_nr(struct extent_buffer *eb,
 	return btrfs_raid_stride_devid(eb, btrfs_raid_stride_nr(dps, nr));
 }
 
-static inline u64 btrfs_raid_stride_offset_nr(struct extent_buffer *eb,
+static inline u64 btrfs_raid_stride_physical_nr(struct extent_buffer *eb,
 					      struct btrfs_stripe_extent *dps,
 					      int nr)
 {
-	return btrfs_raid_stride_offset(eb, btrfs_raid_stride_nr(dps, nr));
+	return btrfs_raid_stride_physical(eb, btrfs_raid_stride_nr(dps, nr));
 }
 
 /* struct btrfs_dev_extent */

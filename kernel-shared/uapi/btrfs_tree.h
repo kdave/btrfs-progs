@@ -73,7 +73,7 @@
 /* Holds the block group items for extent tree v2. */
 #define BTRFS_BLOCK_GROUP_TREE_OBJECTID 11ULL
 
-/* Holds raid stripe entries */
+/* Tracks RAID stripes in block groups. */
 #define BTRFS_RAID_STRIPE_TREE_OBJECTID 12ULL
 
 /* device stats in the device tree */
@@ -220,14 +220,31 @@
  */
 #define BTRFS_METADATA_ITEM_KEY	169
 
-/* Extent owner, used by squota. */
+/*
+ * Special inline ref key which stores the id of the subvolume which originally
+ * created the extent. This subvolume owns the extent permanently from the
+ * perspective of simple quotas. Needed to know which subvolume to free quota
+ * usage from when the extent is deleted.
+ *
+ * Stored as an inline ref rather to avoid wasting space on a separate item on
+ * top of the existing extent item. However, unlike the other inline refs,
+ * there is one one owner ref per extent rather than one per extent.
+ *
+ * Because of this, it goes at the front of the list of inline refs, and thus
+ * must have a lower type value than any other inline ref type (to satisfy the
+ * disk format rule that inline refs have non-decreasing type).
+ */
 #define BTRFS_EXTENT_OWNER_REF_KEY	172
 
 #define BTRFS_TREE_BLOCK_REF_KEY	176
 
 #define BTRFS_EXTENT_DATA_REF_KEY	178
 
-#define BTRFS_EXTENT_REF_V0_KEY		180
+/*
+ * Obsolete key. Definition removed in 6.6, value may be reused in the future.
+ *
+ * #define BTRFS_EXTENT_REF_V0_KEY	180
+ */
 
 #define BTRFS_SHARED_BLOCK_REF_KEY	182
 
@@ -263,6 +280,8 @@
 #define BTRFS_DEV_EXTENT_KEY	204
 #define BTRFS_DEV_ITEM_KEY	216
 #define BTRFS_CHUNK_ITEM_KEY	228
+
+#define BTRFS_RAID_STRIPE_KEY	230
 
 /*
  * Records the overall state of the qgroups.
@@ -697,6 +716,7 @@ struct btrfs_super_block {
 
 	__u64 nr_global_roots;
 
+	/* Future expansion */
 	__le64 reserved[27];
 	__u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
 	struct btrfs_root_backup super_roots[BTRFS_NUM_BACKUP_ROOTS];
@@ -706,14 +726,14 @@ struct btrfs_super_block {
 } __attribute__ ((__packed__));
 
 struct btrfs_raid_stride {
-	/* btrfs device-id this raid extent lives on */
+	/* The id of device this raid extent lives on. */
 	__le64 devid;
-	/* offset from  the devextent start */
-	__le64 offset;
+	/* The physical location on disk. */
+	__le64 physical;
 } __attribute__ ((__packed__));
 
 struct btrfs_stripe_extent {
-	/* Array of raid strides this stripe is comprised of. */
+	/* An array of raid strides this stripe is composed of. */
 	__DECLARE_FLEX_ARRAY(struct btrfs_raid_stride, strides);
 } __attribute__ ((__packed__));
 
@@ -1239,7 +1259,7 @@ static inline __u16 btrfs_qgroup_level(__u64 qgroupid)
 
 #define BTRFS_QGROUP_STATUS_FLAGS_MASK	(BTRFS_QGROUP_STATUS_FLAG_ON |		\
 					 BTRFS_QGROUP_STATUS_FLAG_RESCAN |	\
-					 BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT |	\
+					 BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT | \
 					 BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE)
 
 #define BTRFS_QGROUP_STATUS_VERSION        1
@@ -1264,8 +1284,13 @@ struct btrfs_qgroup_status_item {
 	__le64 rescan;
 
 	/*
-	 * (Added in 6.7.) Used by simple quotas to ignore old extent
-	 * deletions. Present when incompat flag SIMPLE_QUOTA is set.
+	 * (Added in 6.7.)
+	 *
+	 * The generation when quotas were last enabled. Used by simple quotas to
+	 * avoid decrementing when freeing an extent that was written before
+	 * enable.
+	 *
+	 * Set only if flags contain BTRFS_QGROUP_STATUS_FLAG_SIMPLE_MODE.
 	 */
 	__le64 enable_gen;
 } __attribute__ ((__packed__));
