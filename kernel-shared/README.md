@@ -54,3 +54,7 @@ Status and progress of kernel/userspace synchronization.
 - volumes.h - todo, local changes
 - zoned.c - todo
 - zoned.h - todo
+
+UAPI
+
+- uapi/btrfs.h
