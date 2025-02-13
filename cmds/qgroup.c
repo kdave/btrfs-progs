@@ -36,6 +36,7 @@
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/ctree.h"
 #include "common/open-utils.h"
+#include "common/sysfs-utils.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/units.h"
@@ -1610,6 +1611,31 @@ static void print_all_qgroups_json(struct qgroup_lookup *qgroup_lookup)
 	fmt_end(&fctx);
 }
 
+/*
+ * Tree search based 'inconsistent' flag is only updated at transaction commit
+ * time.  Thus even if the qgroup_status flag shows consistent, the qgroup may
+ * already be in an inconsistent state.
+ */
+static void check_qgroup_sysfs_inconsistent(int fd, const struct qgroup_lookup *qgroup_lookup)
+{
+	u64 value;
+	int sysfs_fd;
+	int ret;
+
+	if (qgroup_lookup->flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT)
+		return;
+	sysfs_fd = sysfs_open_fsid_file(fd, "qgroups/inconsistent");
+	if (fd < 0)
+		return;
+	ret = sysfs_read_fsid_file_u64(fd, "qgroups/inconsistent", &value);
+	if (ret < 0)
+		goto out;
+	if (value)
+		warning("qgroup data inconsistent, rescan recommended");
+out:
+	close(sysfs_fd);
+}
+
 static int show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
 		       struct btrfs_qgroup_comparer_set *comp_set)
@@ -1622,6 +1648,8 @@ static int show_qgroups(int fd,
 	ret = qgroups_search_all(fd, &qgroup_lookup);
 	if (ret)
 		return ret;
+
+	check_qgroup_sysfs_inconsistent(fd, &qgroup_lookup);
 	__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
 				  filter_set, comp_set);
 	if (bconf.output_format == CMD_FORMAT_JSON)
