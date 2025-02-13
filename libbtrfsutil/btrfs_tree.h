@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _BTRFS_CTREE_H_
-#define _BTRFS_CTREE_H_
+#ifndef _LIBBTRFSUTIL_TREE_H_
+#define _LIBBTRFSUTIL_TREE_H_
 
 #include "btrfs.h"
 #include <linux/types.h>
@@ -51,7 +51,7 @@
 /* Holds the block group items for extent tree v2. */
 #define BTRFS_BLOCK_GROUP_TREE_OBJECTID 11ULL
 
-/* Holds raid stripe entries */
+/* Tracks RAID stripes in block groups. */
 #define BTRFS_RAID_STRIPE_TREE_OBJECTID 12ULL
 
 /* device stats in the device tree */
@@ -198,14 +198,31 @@
  */
 #define BTRFS_METADATA_ITEM_KEY	169
 
-/* Extent owner, used by squota. */
+/*
+ * Special inline ref key which stores the id of the subvolume which originally
+ * created the extent. This subvolume owns the extent permanently from the
+ * perspective of simple quotas. Needed to know which subvolume to free quota
+ * usage from when the extent is deleted.
+ *
+ * Stored as an inline ref rather to avoid wasting space on a separate item on
+ * top of the existing extent item. However, unlike the other inline refs,
+ * there is one one owner ref per extent rather than one per extent.
+ *
+ * Because of this, it goes at the front of the list of inline refs, and thus
+ * must have a lower type value than any other inline ref type (to satisfy the
+ * disk format rule that inline refs have non-decreasing type).
+ */
 #define BTRFS_EXTENT_OWNER_REF_KEY	172
 
 #define BTRFS_TREE_BLOCK_REF_KEY	176
 
 #define BTRFS_EXTENT_DATA_REF_KEY	178
 
-#define BTRFS_EXTENT_REF_V0_KEY		180
+/*
+ * Obsolete key. Definition removed in 6.6, value may be reused in the future.
+ *
+ * #define BTRFS_EXTENT_REF_V0_KEY	180
+ */
 
 #define BTRFS_SHARED_BLOCK_REF_KEY	182
 
@@ -241,6 +258,8 @@
 #define BTRFS_DEV_EXTENT_KEY	204
 #define BTRFS_DEV_ITEM_KEY	216
 #define BTRFS_CHUNK_ITEM_KEY	228
+
+#define BTRFS_RAID_STRIPE_KEY	230
 
 /*
  * Records the overall state of the qgroups.
@@ -336,6 +355,9 @@
 
 /* csum types */
 #define BTRFS_CSUM_TYPE_CRC32	0
+#define BTRFS_CSUM_TYPE_XXHASH	1
+#define BTRFS_CSUM_TYPE_SHA256	2
+#define BTRFS_CSUM_TYPE_BLAKE2	3
 
 /*
  * flags definitions for directory entry item type
@@ -357,6 +379,48 @@
 #define BTRFS_FT_MAX		9
 /* Directory contains encrypted data */
 #define BTRFS_FT_ENCRYPTED	0x80
+
+static inline __u8 btrfs_dir_flags_to_ftype(__u8 flags)
+{
+	return flags & ~BTRFS_FT_ENCRYPTED;
+}
+
+/*
+ * Inode flags
+ */
+#define BTRFS_INODE_NODATASUM		(1U << 0)
+#define BTRFS_INODE_NODATACOW		(1U << 1)
+#define BTRFS_INODE_READONLY		(1U << 2)
+#define BTRFS_INODE_NOCOMPRESS		(1U << 3)
+#define BTRFS_INODE_PREALLOC		(1U << 4)
+#define BTRFS_INODE_SYNC		(1U << 5)
+#define BTRFS_INODE_IMMUTABLE		(1U << 6)
+#define BTRFS_INODE_APPEND		(1U << 7)
+#define BTRFS_INODE_NODUMP		(1U << 8)
+#define BTRFS_INODE_NOATIME		(1U << 9)
+#define BTRFS_INODE_DIRSYNC		(1U << 10)
+#define BTRFS_INODE_COMPRESS		(1U << 11)
+
+#define BTRFS_INODE_ROOT_ITEM_INIT	(1U << 31)
+
+#define BTRFS_INODE_FLAG_MASK						\
+	(BTRFS_INODE_NODATASUM |					\
+	 BTRFS_INODE_NODATACOW |					\
+	 BTRFS_INODE_READONLY |						\
+	 BTRFS_INODE_NOCOMPRESS |					\
+	 BTRFS_INODE_PREALLOC |						\
+	 BTRFS_INODE_SYNC |						\
+	 BTRFS_INODE_IMMUTABLE |					\
+	 BTRFS_INODE_APPEND |						\
+	 BTRFS_INODE_NODUMP |						\
+	 BTRFS_INODE_NOATIME |						\
+	 BTRFS_INODE_DIRSYNC |						\
+	 BTRFS_INODE_COMPRESS |						\
+	 BTRFS_INODE_ROOT_ITEM_INIT)
+
+#define BTRFS_INODE_RO_VERITY		(1U << 0)
+
+#define BTRFS_INODE_RO_FLAG_MASK	(BTRFS_INODE_RO_VERITY)
 
 /*
  * The key defines the order in the tree, and so it also defines (optimal)
@@ -1040,4 +1104,4 @@ struct btrfs_verity_descriptor_item {
 	__u8 encryption;
 } __attribute__ ((__packed__));
 
-#endif /* _BTRFS_CTREE_H_ */
+#endif /* _LIBBTRFSUTIL_TREE_H_ */
