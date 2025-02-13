@@ -17,8 +17,8 @@
  * along with libbtrfsutil.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BTRFS_UTIL_INTERNAL_H
-#define BTRFS_UTIL_INTERNAL_H
+#ifndef _LIBBTRFSUTIL_BTRFSUTIL_INTERNAL_H_
+#define _LIBBTRFSUTIL_BTRFSUTIL_INTERNAL_H_
 
 #include <asm/byteorder.h>
 #include <string.h>
@@ -91,4 +91,4 @@ static inline __u32 btrfs_search_header_len(const struct btrfs_ioctl_search_head
 	return ((const struct __unagligned_u32 *)(const void *)(&sh->len))->x;
 }
 
-#endif /* BTRFS_UTIL_INTERNAL_H */
+#endif /* _LIBBTRFSUTIL_BTRFSUTIL_INTERNAL_H_ */

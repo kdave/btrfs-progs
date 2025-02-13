@@ -17,8 +17,8 @@
  * along with libbtrfsutil.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BTRFS_UTIL_H
-#define BTRFS_UTIL_H
+#ifndef _LIBBTRFSUTIL_BTRFSUTIL_H_
+#define _LIBBTRFSUTIL_BTRFSUTIL_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -930,4 +930,4 @@ void btrfs_util_qgroup_inherit_get_groups(const struct btrfs_util_qgroup_inherit
 }
 #endif
 
-#endif /* BTRFS_UTIL_H */
+#endif /* _LIBBTRFSUTIL_BTRFSUTIL_H_ */
