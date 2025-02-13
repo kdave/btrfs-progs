@@ -953,6 +953,7 @@ clean-gen:
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags TAGS \
 		libbtrfsutil/libbtrfsutil.pc \
+		libbtrfsutil/python/version.py \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log include/config.h include/config.h.in~ aclocal.m4 \
 		configure configure~ autom4te.cache/
