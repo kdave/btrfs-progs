@@ -3,6 +3,24 @@ writing and verified after reading the blocks from devices. The whole metadata
 block has an inline checksum stored in the b-tree node header. Each data block
 has a detached checksum stored in the checksum tree.
 
+.. note::
+   Since data checksum is calculated just before submitting to the block device,
+   btrfs has a strong requirement that those data can not be modified until the
+   writeback is finished.
+
+   This requirement is met for buffered IO as btrfs has full control on the
+   page cache, but direct IOs (``O_DIRECT``) bypass the page cache, and btrfs
+   can not control the direct IO buffer (can be user space memory), thus it's
+   possible that user space programs modify the buffer before it's fully written
+   back, and lead to data checksum mismatch.
+
+   To avoid such checksum mismatch, since v6.14 btrfs will force direct IOs to
+   fall back to buffered IOs, if the inode requires data checksum.
+   This will bring a small performance penalty, if the end user requires true
+   zero-copy direct IOs, they should set the ``NODATASUM`` flag for the inode
+   and make sure the direct IO buffer is fully aligned to btrfs block size.
+
+
 There are several checksum algorithms supported. The default and backward
 compatible algorithm is *crc32c*. Since kernel 5.5 there are three more with different
 characteristics and trade-offs regarding speed and strength. The following list
