@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Look for some frequent error message templates in test logs
 #
 # Usage: $0 [test-log.txt]

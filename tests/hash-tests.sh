@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Test all supported hash algorithms on all backends on the sample test vectors
 # This requires all crypto backends available for full coverage.
 
