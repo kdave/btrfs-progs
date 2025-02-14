@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Usage: $0 [--ccache] [make options]
 #
 # Test various compilation options:
