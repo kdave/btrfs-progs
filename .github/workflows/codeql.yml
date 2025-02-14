@@ -52,12 +52,11 @@ jobs:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
         # (Custom queries)
-        # queries: security-extended,security-and-quality
+        queries: security-extended,security-and-quality
     - name: Update package cache
       run: sudo apt-get update -qqq
     - name: Add more build dependencies
       run: sudo apt-get install -y liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev
-
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
