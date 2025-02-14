@@ -498,14 +498,16 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 		strm.avail_in = sectorsize;
 
 		ret = deflate(&strm, Z_SYNC_FLUSH);
-
 		if (ret != Z_OK) {
 			error("deflate failed: %s", strm.msg);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto out;
 		}
 
-		if (strm.avail_out < BTRFS_MAX_COMPRESSED - sectorsize)
-			return -E2BIG;
+		if (strm.avail_out < BTRFS_MAX_COMPRESSED - sectorsize) {
+			ret = -E2BIG;
+			goto out;
+		}
 
 		strm.avail_in += in_size - sectorsize;
 	}
@@ -513,16 +515,23 @@ static ssize_t zlib_compress_extent(bool first_sector, u32 sectorsize,
 	ret = deflate(&strm, Z_FINISH);
 
 	if (ret == Z_OK) {
-		return -E2BIG;
+		ret = -E2BIG;
+		goto out;
 	} else if (ret != Z_STREAM_END) {
 		error("deflate failed: %s", strm.msg);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	if (out_buf + BTRFS_MAX_COMPRESSED - (void *)strm.next_out > sectorsize)
-		return (void *)strm.next_out - out_buf;
+		ret = (void *)strm.next_out - out_buf;
+	else
+		ret = -E2BIG;
 
-	return -E2BIG;
+out:
+	deflateEnd(&strm);
+
+	return ret;
 }
 
 #if COMPRESSION_LZO
@@ -902,7 +911,6 @@ static ssize_t zlib_compress_inline_extent(char *buf, u64 size, char **comp_buf)
 	strm.avail_in = size;
 
 	zlib_ret = deflate(&strm, Z_FINISH);
-
 	if (zlib_ret != Z_OK && zlib_ret != Z_STREAM_END) {
 		error("deflate failed: %s", strm.msg);
 		ret = -EINVAL;
@@ -912,11 +920,13 @@ static ssize_t zlib_compress_inline_extent(char *buf, u64 size, char **comp_buf)
 	if (zlib_ret == Z_STREAM_END && strm.avail_out > 0) {
 		*comp_buf = out;
 		ret = size - strm.avail_out;
+		UASSERT(ret >= 0);
 	} else {
 		ret = -E2BIG;
 	}
 
 out:
+	deflateEnd(&strm);
 	if (ret < 0)
 		free(out);
 
