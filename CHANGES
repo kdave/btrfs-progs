@@ -1,3 +1,28 @@
+btrfs-progs-6.13 (2025-02-15)
+-----------------------------
+   * mkfs:
+      * new option to enable compression
+      * updated summary (subvolumes, compression)
+      * completely remove option --leafsize, deprecated long ago
+   * btrfstune: add option to remove squota
+   * scrub:
+      * start: new option --limit to set the bandwidth limit for the duration of the run
+      * status: fix printing of Rate unit suffix (SI/IEC)
+   * qgroup clean-stale: check if quotas are enabled before starting filesystem sync()
+   * print builtin features and options in --version output (mkfs, convert, image, btrfstune)
+   * build:
+      * Botan minimum version is now 3.x
+      * target to build compile_commands.json (for LSP)
+   * other:
+      * a bit more optimized crc32c code
+      * sync some headers from kernel code
+      * command help updates and fixes
+      * build warning fixes
+      * error message updates
+      * cleanups and refactoring
+      * updated tests
+      * lots of documentation updates
+
 btrfs-progs-6.12 (2024-11-29)
 -----------------------------
    * subvolume delete: add new option to do recursive subvolume deletion (for
