@@ -459,7 +459,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("", "- rw - (default) create a writeable subvolume in SUBDIR"),
 	OPTLINE("", "- ro - create the subvolume as read-only"),
 	OPTLINE("", "- default - the SUBDIR will be a subvolume and also set as default (can be specified only once)"),
-	OPTLINE("", "- defalut-ro - like 'default' and is created as read-only subvolume (can be specified only once)"),
+	OPTLINE("", "- default-ro - like 'default' and is created as read-only subvolume (can be specified only once)"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
