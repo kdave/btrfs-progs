@@ -891,10 +891,76 @@ struct zone_info {
 	u64 alloc_offset;
 };
 
+static int btrfs_load_zone_info(struct btrfs_fs_info *fs_info, int zone_idx,
+				struct zone_info *info, unsigned long *active,
+				struct map_lookup *map)
+{
+	struct btrfs_device *device;
+	struct blk_zone zone;
+
+	info->physical = map->stripes[zone_idx].physical;
+
+	device = map->stripes[zone_idx].dev;
+
+	if (device->fd == -1) {
+		info->alloc_offset = WP_MISSING_DEV;
+		return 0;
+	}
+
+	/* Consider a zone as active if we can allow any number of active zones. */
+	if (!device->zone_info->max_active_zones)
+		set_bit(zone_idx, active);
+
+	if (!btrfs_dev_is_sequential(device, info->physical)) {
+		info->alloc_offset = WP_CONVENTIONAL;
+		info->capacity = device->zone_info->zone_size;
+		return 0;
+	}
+
+	/*
+	 * The group is mapped to a sequential zone. Get the zone write
+	 * pointer to determine the allocation offset within the zone.
+	 */
+	WARN_ON(!IS_ALIGNED(info->physical, fs_info->zone_size));
+	zone = device->zone_info->zones[info->physical / fs_info->zone_size];
+
+	if (zone.type == BLK_ZONE_TYPE_CONVENTIONAL) {
+		error("zoned: unexpected conventional zone %llu on device %s (devid %llu)",
+		      zone.start << SECTOR_SHIFT, device->name,
+		      device->devid);
+		return -EIO;
+	}
+
+	info->capacity = (zone.capacity << SECTOR_SHIFT);
+
+	switch (zone.cond) {
+	case BLK_ZONE_COND_OFFLINE:
+	case BLK_ZONE_COND_READONLY:
+		error(
+	"zoned: offline/readonly zone %llu on device %s (devid %llu)",
+		      info->physical / fs_info->zone_size, device->name,
+		      device->devid);
+		info->alloc_offset = WP_MISSING_DEV;
+		break;
+	case BLK_ZONE_COND_EMPTY:
+		info->alloc_offset = 0;
+		break;
+	case BLK_ZONE_COND_FULL:
+		info->alloc_offset = fs_info->zone_size;
+		break;
+	default:
+		/* Partially used zone */
+		info->alloc_offset = ((zone.wp - zone.start) << SECTOR_SHIFT);
+		set_bit(zone_idx, active);
+		break;
+	}
+
+	return 0;
+}
+
 int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 				     struct btrfs_block_group *cache)
 {
-	struct btrfs_device *device;
 	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
 	struct cache_extent *ce;
 	struct map_lookup *map;
@@ -944,60 +1010,12 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	}
 
 	for (i = 0; i < map->num_stripes; i++) {
-		struct zone_info *info = &zone_info[i];
-		bool is_sequential;
-		struct blk_zone zone;
+		ret = btrfs_load_zone_info(fs_info, i, &zone_info[i], active, map);
+		if (ret)
+			goto out;
 
-		device = map->stripes[i].dev;
-		info->physical = map->stripes[i].physical;
-
-		if (device->fd == -1) {
-			info->alloc_offset = WP_MISSING_DEV;
-			continue;
-		}
-
-		/* Consider a zone as active if we can allow any number of active zones. */
-		if (!device->zone_info->max_active_zones)
-			set_bit(i, active);
-
-		is_sequential = btrfs_dev_is_sequential(device, info->physical);
-		if (!is_sequential) {
+		if (zone_info[i].alloc_offset == WP_CONVENTIONAL)
 			num_conventional++;
-			info->alloc_offset = WP_CONVENTIONAL;
-			info->capacity = device->zone_info->zone_size;
-			continue;
-		}
-
-		/*
-		 * The group is mapped to a sequential zone. Get the zone write
-		 * pointer to determine the allocation offset within the zone.
-		 */
-		WARN_ON(!IS_ALIGNED(info->physical, fs_info->zone_size));
-		zone = device->zone_info->zones[info->physical / fs_info->zone_size];
-
-		info->capacity = (zone.capacity << SECTOR_SHIFT);
-
-		switch (zone.cond) {
-		case BLK_ZONE_COND_OFFLINE:
-		case BLK_ZONE_COND_READONLY:
-			error(
-		"zoned: offline/readonly zone %llu on device %s (devid %llu)",
-			      info->physical / fs_info->zone_size, device->name,
-			      device->devid);
-			info->alloc_offset = WP_MISSING_DEV;
-			break;
-		case BLK_ZONE_COND_EMPTY:
-			info->alloc_offset = 0;
-			break;
-		case BLK_ZONE_COND_FULL:
-			info->alloc_offset = fs_info->zone_size;
-			break;
-		default:
-			/* Partially used zone */
-			info->alloc_offset = ((zone.wp - zone.start) << SECTOR_SHIFT);
-			set_bit(i, active);
-			break;
-		}
 	}
 
 	if (num_conventional > 0) {
