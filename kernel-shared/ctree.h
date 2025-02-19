@@ -368,6 +368,7 @@ struct btrfs_fs_info {
 	unsigned int allow_transid_mismatch:1;
 	unsigned int skip_leaf_item_checks:1;
 	unsigned int rebuilding_extent_tree:1;
+	unsigned int active_zone_tracking:1;
 
 	int transaction_aborted;
 
