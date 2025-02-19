@@ -981,7 +981,7 @@ static int btrfs_load_block_group_dup(struct btrfs_fs_info *fs_info,
 				      struct btrfs_block_group *bg,
 				      struct map_lookup *map,
 				      struct zone_info *zone_info,
-				      unsigned long *active)
+				      unsigned long *active, u64 last_alloc)
 {
 	if ((map->type & BTRFS_BLOCK_GROUP_DATA) && !fs_info->stripe_root) {
 		btrfs_err(fs_info, "zoned: data DUP profile needs raid-stripe-tree");
@@ -1002,6 +1002,12 @@ static int btrfs_load_block_group_dup(struct btrfs_fs_info *fs_info,
 			  zone_info[1].physical);
 		return -EIO;
 	}
+
+	if (zone_info[0].alloc_offset == WP_CONVENTIONAL)
+		zone_info[0].alloc_offset = last_alloc;
+	if (zone_info[1].alloc_offset == WP_CONVENTIONAL)
+		zone_info[1].alloc_offset = last_alloc;
+
 	if (zone_info[0].alloc_offset != zone_info[1].alloc_offset) {
 		btrfs_err(fs_info,
 			  "zoned: write pointer offset mismatch of zones in DUP profile");
@@ -1022,7 +1028,7 @@ static int btrfs_load_block_group_raid1(struct btrfs_fs_info *fs_info,
 					struct btrfs_block_group *bg,
 					struct map_lookup *map,
 					struct zone_info *zone_info,
-					unsigned long *active)
+					unsigned long *active, u64 last_alloc)
 {
 	int i;
 
@@ -1036,9 +1042,10 @@ static int btrfs_load_block_group_raid1(struct btrfs_fs_info *fs_info,
 	bg->zone_capacity = min_not_zero(zone_info[0].capacity, zone_info[1].capacity);
 
 	for (i = 0; i < map->num_stripes; i++) {
-		if (zone_info[i].alloc_offset == WP_MISSING_DEV ||
-		    zone_info[i].alloc_offset == WP_CONVENTIONAL)
+		if (zone_info[i].alloc_offset == WP_MISSING_DEV)
 			continue;
+		if (zone_info[i].alloc_offset == WP_CONVENTIONAL)
+			zone_info[i].alloc_offset = last_alloc;
 
 		if (zone_info[0].alloc_offset != zone_info[i].alloc_offset) {
 			btrfs_err(fs_info,
@@ -1066,7 +1073,7 @@ static int btrfs_load_block_group_raid0(struct btrfs_fs_info *fs_info,
 					struct btrfs_block_group *bg,
 					struct map_lookup *map,
 					struct zone_info *zone_info,
-					unsigned long *active)
+					unsigned long *active, u64 last_alloc)
 {
 	if ((map->type & BTRFS_BLOCK_GROUP_DATA) && !fs_info->stripe_root) {
 		btrfs_err(fs_info, "zoned: data %s needs raid-stripe-tree",
@@ -1075,9 +1082,24 @@ static int btrfs_load_block_group_raid0(struct btrfs_fs_info *fs_info,
 	}
 
 	for (int i = 0; i < map->num_stripes; i++) {
-		if (zone_info[i].alloc_offset == WP_MISSING_DEV ||
-		    zone_info[i].alloc_offset == WP_CONVENTIONAL)
+		if (zone_info[i].alloc_offset == WP_MISSING_DEV)
 			continue;
+		if (zone_info[i].alloc_offset == WP_CONVENTIONAL) {
+			u64 stripe_nr, full_stripe_nr;
+			u64 stripe_offset;
+			int stripe_index;
+
+			stripe_nr = last_alloc / map->stripe_len;
+			stripe_offset = stripe_nr * map->stripe_len;
+			full_stripe_nr = stripe_nr / map->num_stripes;
+			stripe_index = stripe_nr % map->num_stripes;
+
+			zone_info[i].alloc_offset = full_stripe_nr * map->stripe_len;
+			if (stripe_index > i)
+				zone_info[i].alloc_offset += map->stripe_len;
+			else if (stripe_index == i)
+				zone_info[i].alloc_offset += (last_alloc - stripe_offset);
+		}
 
 		if (test_bit(0, active) != test_bit(i, active)) {
 			return -EIO;
@@ -1096,7 +1118,7 @@ static int btrfs_load_block_group_raid10(struct btrfs_fs_info *fs_info,
 					 struct btrfs_block_group *bg,
 					 struct map_lookup *map,
 					 struct zone_info *zone_info,
-					 unsigned long *active)
+					 unsigned long *active, u64 last_alloc)
 {
 	if ((map->type & BTRFS_BLOCK_GROUP_DATA) && !fs_info->stripe_root) {
 		btrfs_err(fs_info, "zoned: data %s needs raid-stripe-tree",
@@ -1105,9 +1127,24 @@ static int btrfs_load_block_group_raid10(struct btrfs_fs_info *fs_info,
 	}
 
 	for (int i = 0; i < map->num_stripes; i++) {
-		if (zone_info[i].alloc_offset == WP_MISSING_DEV ||
-		    zone_info[i].alloc_offset == WP_CONVENTIONAL)
+		if (zone_info[i].alloc_offset == WP_MISSING_DEV)
 			continue;
+		if (zone_info[i].alloc_offset == WP_CONVENTIONAL) {
+			u64 stripe_nr, full_stripe_nr;
+			u64 stripe_offset;
+			int stripe_index;
+
+			stripe_nr = last_alloc / map->stripe_len;
+			stripe_offset = stripe_nr * map->stripe_len;
+			full_stripe_nr = stripe_nr / (map->num_stripes / map->sub_stripes);
+			stripe_index = stripe_nr % (map->num_stripes / map->sub_stripes);
+
+			zone_info[i].alloc_offset = full_stripe_nr * map->stripe_len;
+			if (stripe_index > (i / map->sub_stripes))
+				zone_info[i].alloc_offset += map->stripe_len;
+			else if (stripe_index == (i / map->sub_stripes))
+				zone_info[i].alloc_offset += (last_alloc - stripe_offset);
+		}
 
 		if (test_bit(0, active) != test_bit(i, active)) {
 			return -EIO;
@@ -1214,18 +1251,18 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		ret = btrfs_load_block_group_single(fs_info, cache, &zone_info[0], active);
 		break;
 	case BTRFS_BLOCK_GROUP_DUP:
-		ret = btrfs_load_block_group_dup(fs_info, cache, map, zone_info, active);
+		ret = btrfs_load_block_group_dup(fs_info, cache, map, zone_info, active, last_alloc);
 		break;
 	case BTRFS_BLOCK_GROUP_RAID1:
 	case BTRFS_BLOCK_GROUP_RAID1C3:
 	case BTRFS_BLOCK_GROUP_RAID1C4:
-		ret = btrfs_load_block_group_raid1(fs_info, cache, map, zone_info, active);
+		ret = btrfs_load_block_group_raid1(fs_info, cache, map, zone_info, active, last_alloc);
 		break;
 	case BTRFS_BLOCK_GROUP_RAID0:
-		ret = btrfs_load_block_group_raid0(fs_info, cache, map, zone_info, active);
+		ret = btrfs_load_block_group_raid0(fs_info, cache, map, zone_info, active, last_alloc);
 		break;
 	case BTRFS_BLOCK_GROUP_RAID10:
-		ret = btrfs_load_block_group_raid10(fs_info, cache, map, zone_info, active);
+		ret = btrfs_load_block_group_raid10(fs_info, cache, map, zone_info, active, last_alloc);
 		break;
 	case BTRFS_BLOCK_GROUP_RAID5:
 	case BTRFS_BLOCK_GROUP_RAID6:
