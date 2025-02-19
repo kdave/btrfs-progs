@@ -828,6 +828,11 @@ bool zoned_profile_supported(u64 map_type, bool rst)
 	return false;
 }
 
+struct zone_info {
+	u64 physical;
+	u64 alloc_offset;
+};
+
 int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 				     struct btrfs_block_group *cache)
 {
@@ -837,10 +842,9 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	struct map_lookup *map;
 	u64 logical = cache->start;
 	u64 length = cache->length;
-	u64 physical = 0;
+	struct zone_info *zone_info = NULL;
 	int ret = 0;
 	int i;
-	u64 *alloc_offsets = NULL;
 	u64 last_alloc = 0;
 	u32 num_conventional = 0;
 
@@ -867,30 +871,29 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	}
 	map = container_of(ce, struct map_lookup, ce);
 
-	alloc_offsets = calloc(map->num_stripes, sizeof(*alloc_offsets));
-	if (!alloc_offsets) {
-		error_msg(ERROR_MSG_MEMORY, "zone offsets");
+	zone_info = calloc(map->num_stripes, sizeof(*zone_info));
+	if (!zone_info) {
+		error_msg(ERROR_MSG_MEMORY, "zone info");
 		return -ENOMEM;
 	}
 
 	for (i = 0; i < map->num_stripes; i++) {
+		struct zone_info *info = &zone_info[i];
 		bool is_sequential;
 		struct blk_zone zone;
 
 		device = map->stripes[i].dev;
-		physical = map->stripes[i].physical;
+		info->physical = map->stripes[i].physical;
 
 		if (device->fd == -1) {
-			alloc_offsets[i] = WP_MISSING_DEV;
+			info->alloc_offset = WP_MISSING_DEV;
 			continue;
 		}
 
-		is_sequential = btrfs_dev_is_sequential(device, physical);
-		if (!is_sequential)
-			num_conventional++;
-
+		is_sequential = btrfs_dev_is_sequential(device, info->physical);
 		if (!is_sequential) {
-			alloc_offsets[i] = WP_CONVENTIONAL;
+			num_conventional++;
+			info->alloc_offset = WP_CONVENTIONAL;
 			continue;
 		}
 
@@ -898,28 +901,27 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		 * The group is mapped to a sequential zone. Get the zone write
 		 * pointer to determine the allocation offset within the zone.
 		 */
-		WARN_ON(!IS_ALIGNED(physical, fs_info->zone_size));
-		zone = device->zone_info->zones[physical / fs_info->zone_size];
+		WARN_ON(!IS_ALIGNED(info->physical, fs_info->zone_size));
+		zone = device->zone_info->zones[info->physical / fs_info->zone_size];
 
 		switch (zone.cond) {
 		case BLK_ZONE_COND_OFFLINE:
 		case BLK_ZONE_COND_READONLY:
 			error(
 		"zoned: offline/readonly zone %llu on device %s (devid %llu)",
-			      physical / fs_info->zone_size, device->name,
+			      info->physical / fs_info->zone_size, device->name,
 			      device->devid);
-			alloc_offsets[i] = WP_MISSING_DEV;
+			info->alloc_offset = WP_MISSING_DEV;
 			break;
 		case BLK_ZONE_COND_EMPTY:
-			alloc_offsets[i] = 0;
+			info->alloc_offset = 0;
 			break;
 		case BLK_ZONE_COND_FULL:
-			alloc_offsets[i] = fs_info->zone_size;
+			info->alloc_offset = fs_info->zone_size;
 			break;
 		default:
 			/* Partially used zone */
-			alloc_offsets[i] =
-					((zone.wp - zone.start) << SECTOR_SHIFT);
+			info->alloc_offset = ((zone.wp - zone.start) << SECTOR_SHIFT);
 			break;
 		}
 	}
@@ -943,7 +945,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		ret = -EINVAL;
 		goto out;
 	}
-	cache->alloc_offset = alloc_offsets[0];
+	cache->alloc_offset = zone_info[0].alloc_offset;
 
 out:
 	/* An extent is allocated after the write pointer */
@@ -957,7 +959,7 @@ out:
 	if (!ret)
 		cache->write_offset = cache->alloc_offset;
 
-	kfree(alloc_offsets);
+	kfree(zone_info);
 	return ret;
 }
 
