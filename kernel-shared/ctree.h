@@ -286,6 +286,7 @@ struct btrfs_block_group {
 	u64 alloc_offset;
 	u64 write_offset;
 	u64 zone_capacity;
+	bool zone_is_active;
 
 	u64 global_root_id;
 };
