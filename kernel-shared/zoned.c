@@ -901,6 +901,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	u64 logical = cache->start;
 	u64 length = cache->length;
 	struct zone_info *zone_info = NULL;
+	unsigned long *active = NULL;
 	int ret = 0;
 	int i;
 	u64 last_alloc = 0;
@@ -935,6 +936,13 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		return -ENOMEM;
 	}
 
+	active = bitmap_zalloc(map->num_stripes);
+	if (!active) {
+		free(zone_info);
+		error_msg(ERROR_MSG_MEMORY, "active bitmap");
+		return -ENOMEM;
+	}
+
 	for (i = 0; i < map->num_stripes; i++) {
 		struct zone_info *info = &zone_info[i];
 		bool is_sequential;
@@ -947,6 +955,10 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 			info->alloc_offset = WP_MISSING_DEV;
 			continue;
 		}
+
+		/* Consider a zone as active if we can allow any number of active zones. */
+		if (!device->zone_info->max_active_zones)
+			set_bit(i, active);
 
 		is_sequential = btrfs_dev_is_sequential(device, info->physical);
 		if (!is_sequential) {
@@ -983,6 +995,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		default:
 			/* Partially used zone */
 			info->alloc_offset = ((zone.wp - zone.start) << SECTOR_SHIFT);
+			set_bit(i, active);
 			break;
 		}
 	}
@@ -1008,8 +1021,10 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		ret = -EINVAL;
 		goto out;
 	}
+	/* SINGLE profile case. */
 	cache->alloc_offset = zone_info[0].alloc_offset;
 	cache->zone_capacity = zone_info[0].capacity;
+	cache->zone_is_active = test_bit(0, active);
 
 out:
 	/* An extent is allocated after the write pointer */
