@@ -776,7 +776,7 @@ static int calculate_alloc_pointer(struct btrfs_fs_info *fs_info,
 		length = fs_info->nodesize;
 
 	if (!(found_key.objectid >= cache->start &&
-	       found_key.objectid + length <= cache->start + cache->length)) {
+	       found_key.objectid + length <= cache->start + cache->zone_capacity)) {
 		ret = -EUCLEAN;
 		goto out;
 	}
@@ -830,6 +830,7 @@ bool zoned_profile_supported(u64 map_type, bool rst)
 
 struct zone_info {
 	u64 physical;
+	u64 capacity;
 	u64 alloc_offset;
 };
 
@@ -894,6 +895,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		if (!is_sequential) {
 			num_conventional++;
 			info->alloc_offset = WP_CONVENTIONAL;
+			info->capacity = device->zone_info->zone_size;
 			continue;
 		}
 
@@ -903,6 +905,8 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		 */
 		WARN_ON(!IS_ALIGNED(info->physical, fs_info->zone_size));
 		zone = device->zone_info->zones[info->physical / fs_info->zone_size];
+
+		info->capacity = (zone.capacity << SECTOR_SHIFT);
 
 		switch (zone.cond) {
 		case BLK_ZONE_COND_OFFLINE:
@@ -927,6 +931,8 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	}
 
 	if (num_conventional > 0) {
+		/* Zone capacity is always zone size in emulation */
+		cache->zone_capacity = cache->length;
 		ret = calculate_alloc_pointer(fs_info, cache, &last_alloc);
 		if (ret || map->num_stripes == num_conventional) {
 			if (!ret)
@@ -946,6 +952,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		goto out;
 	}
 	cache->alloc_offset = zone_info[0].alloc_offset;
+	cache->zone_capacity = zone_info[0].capacity;
 
 out:
 	/* An extent is allocated after the write pointer */
