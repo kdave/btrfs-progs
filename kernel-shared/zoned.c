@@ -1018,6 +1018,50 @@ static int btrfs_load_block_group_dup(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
+static int btrfs_load_block_group_raid1(struct btrfs_fs_info *fs_info,
+					struct btrfs_block_group *bg,
+					struct map_lookup *map,
+					struct zone_info *zone_info,
+					unsigned long *active)
+{
+	int i;
+
+	if ((map->type & BTRFS_BLOCK_GROUP_DATA) && !fs_info->stripe_root) {
+		btrfs_err(fs_info, "zoned: data %s needs raid-stripe-tree",
+			  btrfs_bg_type_to_raid_name(map->type));
+		return -EINVAL;
+	}
+
+	/* In case a device is missing we have a cap of 0, so don't use it. */
+	bg->zone_capacity = min_not_zero(zone_info[0].capacity, zone_info[1].capacity);
+
+	for (i = 0; i < map->num_stripes; i++) {
+		if (zone_info[i].alloc_offset == WP_MISSING_DEV ||
+		    zone_info[i].alloc_offset == WP_CONVENTIONAL)
+			continue;
+
+		if (zone_info[0].alloc_offset != zone_info[i].alloc_offset) {
+			btrfs_err(fs_info,
+			"zoned: write pointer offset mismatch of zones in %s profile",
+				  btrfs_bg_type_to_raid_name(map->type));
+			return -EIO;
+		}
+		if (test_bit(0, active) != test_bit(i, active)) {
+			return -EIO;
+		} else {
+			if (test_bit(0, active))
+				bg->zone_is_active = 1;
+		}
+	}
+
+	if (zone_info[0].alloc_offset != WP_MISSING_DEV)
+		bg->alloc_offset = zone_info[0].alloc_offset;
+	else
+		bg->alloc_offset = zone_info[i - 1].alloc_offset;
+
+	return 0;
+}
+
 int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 				     struct btrfs_block_group *cache)
 {
@@ -1112,6 +1156,8 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 	case BTRFS_BLOCK_GROUP_RAID1:
 	case BTRFS_BLOCK_GROUP_RAID1C3:
 	case BTRFS_BLOCK_GROUP_RAID1C4:
+		ret = btrfs_load_block_group_raid1(fs_info, cache, map, zone_info, active);
+		break;
 	case BTRFS_BLOCK_GROUP_RAID0:
 	case BTRFS_BLOCK_GROUP_RAID10:
 		/* Temporarily fails these case, until following commits. */
