@@ -300,7 +300,7 @@ again:
 		goto new_group;
 
 	if (btrfs_is_zoned(root->fs_info)) {
-		if (cache->length - cache->alloc_offset < num)
+		if (cache->zone_capacity - cache->alloc_offset < num)
 			goto new_group;
 		*start_ret = cache->start + cache->alloc_offset;
 		cache->alloc_offset += num;
