@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "kernel-lib/list.h"
+#include "kernel-lib/bitmap.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/zoned.h"
 #include "kernel-shared/accessors.h"
@@ -56,6 +57,16 @@ static u64 emulated_zone_size = DEFAULT_EMULATED_ZONE_SIZE;
  */
 #define BTRFS_MAX_ZONE_SIZE		(8ULL * SZ_1G)
 #define BTRFS_MIN_ZONE_SIZE		(SZ_4M)
+
+/*
+ * Minimum of active zones we need:
+ *
+ * - BTRFS_SUPER_MIRROR_MAX zones for superblock mirrors
+ * - 3 zones to ensure at least one zone per SYSTEM, META and DATA block group
+ * - 1 zone for tree-log dedicated block group
+ * - 1 zone for relocation
+ */
+#define BTRFS_MIN_ACTIVE_ZONES		(BTRFS_SUPER_MIRROR_MAX + 5)
 
 static int btrfs_get_dev_zone_info(struct btrfs_device *device);
 
@@ -130,6 +141,18 @@ static u64 max_zone_append_size(const char *file)
 		return 0;
 
 	return strtoull((const char *)chunk, NULL, 10);
+}
+
+static unsigned int max_active_zone_count(const char *file)
+{
+	char buf[32];
+	int ret;
+
+	ret = device_get_queue_param(file, "max_active_zones", buf, sizeof(buf));
+	if (ret <= 0)
+		return 0;
+
+	return strtoul((const char *)buf, NULL, 10);
 }
 
 #ifdef BTRFS_ZONED
@@ -273,7 +296,8 @@ static int report_zones(int fd, const char *file,
 	struct stat st;
 	struct blk_zone_report *rep;
 	struct blk_zone *zone;
-	unsigned int i, n = 0;
+	unsigned int i, nreported = 0, nactive = 0;
+	unsigned int max_active_zones;
 	int ret;
 
 	/*
@@ -336,6 +360,20 @@ static int report_zones(int fd, const char *file,
 		exit(1);
 	}
 
+	zinfo->active_zones = bitmap_zalloc(zinfo->nr_zones);
+	if (!zinfo->active_zones) {
+		error_msg(ERROR_MSG_MEMORY, "active zone bitmap");
+		exit(1);
+	}
+
+	max_active_zones = max_active_zone_count(file);
+	if (max_active_zones && max_active_zones < BTRFS_MIN_ACTIVE_ZONES) {
+		error("zoned: %s: max active zones %u is too small, need at least %u active zones",
+		      file, max_active_zones, BTRFS_MIN_ACTIVE_ZONES);
+		exit(1);
+	}
+	zinfo->max_active_zones = max_active_zones;
+
 	/* Allocate a zone report */
 	rep_size = sizeof(struct blk_zone_report) +
 		   sizeof(struct blk_zone) * BTRFS_REPORT_NR_ZONES;
@@ -347,7 +385,7 @@ static int report_zones(int fd, const char *file,
 
 	/* Get zone information */
 	zone = (struct blk_zone *)(rep + 1);
-	while (n < zinfo->nr_zones) {
+	while (nreported < zinfo->nr_zones) {
 		memset(rep, 0, rep_size);
 		rep->sector = sector;
 		rep->nr_zones = BTRFS_REPORT_NR_ZONES;
@@ -374,15 +412,34 @@ static int report_zones(int fd, const char *file,
 			break;
 
 		for (i = 0; i < rep->nr_zones; i++) {
-			if (n >= zinfo->nr_zones)
+			if (nreported >= zinfo->nr_zones)
 				break;
-			memcpy(&zinfo->zones[n], &zone[i],
+			memcpy(&zinfo->zones[nreported], &zone[i],
 			       sizeof(struct blk_zone));
-			n++;
+			switch (zone[i].cond) {
+			case BLK_ZONE_COND_EMPTY:
+				break;
+			case BLK_ZONE_COND_IMP_OPEN:
+			case BLK_ZONE_COND_EXP_OPEN:
+			case BLK_ZONE_COND_CLOSED:
+				set_bit(nreported, zinfo->active_zones);
+				nactive++;
+				break;
+			}
+			nreported++;
 		}
 
 		sector = zone[rep->nr_zones - 1].start +
 			 zone[rep->nr_zones - 1].len;
+	}
+
+	if (max_active_zones) {
+		if (nactive > max_active_zones) {
+			error("zoned: %u active zones on %s exceeds max_active_zones %u",
+			      nactive, file, max_active_zones);
+			exit(1);
+		}
+		zinfo->active_zones_left = max_active_zones - nactive;
 	}
 
 	kfree(rep);
@@ -1080,6 +1137,7 @@ int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info)
 static int btrfs_get_dev_zone_info(struct btrfs_device *device)
 {
 	struct btrfs_fs_info *fs_info = device->fs_info;
+	int ret;
 
 	/*
 	 * Cannot use btrfs_is_zoned here, since fs_info::zone_size might not
@@ -1091,7 +1149,14 @@ static int btrfs_get_dev_zone_info(struct btrfs_device *device)
 	if (device->zone_info)
 		return 0;
 
-	return btrfs_get_zone_info(device->fd, device->name, &device->zone_info);
+	ret = btrfs_get_zone_info(device->fd, device->name, &device->zone_info);
+	if (ret)
+		return ret;
+
+	if (device->zone_info->max_active_zones)
+		fs_info->active_zone_tracking = 1;
+
+	return 0;
 }
 
 int btrfs_get_zone_info(int fd, const char *file,

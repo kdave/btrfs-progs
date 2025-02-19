@@ -72,7 +72,10 @@ struct btrfs_zoned_device_info {
 	enum btrfs_zoned_model	model;
 	u64			zone_size;
 	u32			nr_zones;
+	unsigned int            max_active_zones;
 	struct blk_zone		*zones;
+	atomic_t                active_zones_left;
+	unsigned long           *active_zones;
 	bool			emulated;
 };
 
