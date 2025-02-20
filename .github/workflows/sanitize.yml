@@ -21,7 +21,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1 D=ubsan
       - name: Tests cli
@@ -62,7 +62,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1 D=asan
       - name: Tests cli
@@ -104,7 +104,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1 D=tsan
       - name: Tests cli
