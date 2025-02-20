@@ -26,7 +26,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx sphinx-rtd-theme-common python3-sphinx-rtd-theme
       - name: Configure
-        run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure
+        run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure --enable-experimental
       - name: Documentation
         run: make V=1 -C Documentation
       - name: Generate manual pages preview (html)
@@ -70,7 +70,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure --disable-documentation
+        run: ./autogen.sh && CC=${{ matrix.compiler }} ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Test internal APIs
@@ -96,7 +96,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Tests mkfs
@@ -117,7 +117,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Tests check
@@ -140,7 +140,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Tests misc
@@ -161,7 +161,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Tests convert
@@ -182,7 +182,7 @@ jobs:
       - run: sudo apt-get update -qqq
       - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev libaio-dev liburing-dev attr jq
       - name: Configure
-        run: ./autogen.sh && ./configure --disable-documentation
+        run: ./autogen.sh && ./configure --disable-documentation --enable-experimental
       - name: Make
         run: make V=1
       - name: Tests cli
