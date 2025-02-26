@@ -1201,7 +1201,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	UASSERT(cctx.total_bytes != 0);
 	blocksize = cctx.blocksize;
-	if (blocksize < 4096) {
+	if (blocksize < BTRFS_MIN_BLOCKSIZE) {
 		error("block size is too small: %u < 4096", blocksize);
 		goto fail;
 	}
