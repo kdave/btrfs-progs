@@ -17,6 +17,8 @@
  */
 
 #include "kerncompat.h"
+#include <linux/fs.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
 #include <dirent.h>
@@ -52,6 +54,7 @@
 #include "common/root-tree-utils.h"
 #include "common/path-utils.h"
 #include "common/rbtree-utils.h"
+#include "common/units.h"
 #include "mkfs/rootdir.h"
 
 #define LZO_LEN 4
@@ -1925,9 +1928,10 @@ err:
 }
 
 int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
-			 bool shrink_file_size)
+			 bool shrink_file_size, u64 slack_size)
 {
 	u64 new_size;
+	u64 blk_device_size;
 	struct btrfs_device *device;
 	struct list_head *cur;
 	struct stat file_stat;
@@ -1955,6 +1959,14 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 		return -EUCLEAN;
 	}
 
+	if (!IS_ALIGNED(slack_size, fs_info->sectorsize)) {
+		error("slack size %llu not aligned to %u",
+				slack_size, fs_info->sectorsize);
+		return -EUCLEAN;
+	}
+
+	new_size += slack_size;
+
 	device = list_entry(fs_info->fs_devices->devices.next,
 			   struct btrfs_device, dev_list);
 	ret = set_device_size(fs_info, device, new_size);
@@ -1968,6 +1980,15 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 		if (ret < 0) {
 			error("failed to stat devid %llu: %m", device->devid);
 			return ret;
+		}
+		if (S_ISBLK(file_stat.st_mode)) {
+			ioctl(device->fd, BLKGETSIZE64, &blk_device_size);
+			if (blk_device_size < new_size) {
+				warning("blkdev size %llu (%s) is smaller than fs size %llu (%s)",
+					blk_device_size,
+					pretty_size(blk_device_size), new_size,
+					pretty_size(new_size));
+			}
 		}
 		if (!S_ISREG(file_stat.st_mode))
 			return ret;

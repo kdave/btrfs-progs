@@ -464,6 +464,8 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("", "- default - the SUBDIR will be a subvolume and also set as default (can be specified only once)"),
 	OPTLINE("", "- default-ro - like 'default' and is created as read-only subvolume (can be specified only once)"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
+	OPTLINE("--shrink-slack-size SIZE",
+		"(with --shrink) include extra slack space after shrinking (default 0)"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
 	"",
@@ -1176,6 +1178,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int i;
 	bool ssd = false;
 	bool shrink_rootdir = false;
+	u64 shrink_slack_size = 0;
 	u64 source_dir_size = 0;
 	u64 min_dev_size;
 	u64 shrink_size;
@@ -1220,6 +1223,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		int c;
 		enum {
 			GETOPT_VAL_SHRINK = GETOPT_VAL_FIRST,
+			GETOPT_VAL_SHRINK_SLACK_SIZE,
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
 			GETOPT_VAL_DEVICE_UUID,
@@ -1250,6 +1254,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "quiet", 0, NULL, 'q' },
 			{ "verbose", 0, NULL, 'v' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
+			{ "shrink-slack-size", required_argument, NULL,
+			  GETOPT_VAL_SHRINK_SLACK_SIZE },
 			{ "compress", required_argument, NULL,
 				GETOPT_VAL_COMPRESS },
 #if EXPERIMENTAL
@@ -1386,6 +1392,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;
 				break;
+			case GETOPT_VAL_SHRINK_SLACK_SIZE:
+				shrink_slack_size = arg_strtou64_with_suffix(optarg);
+				break;
 			case GETOPT_VAL_CHECKSUM:
 				csum_type = parse_csum_type(optarg);
 				break;
@@ -1432,6 +1441,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		error("the option --shrink must be used with --rootdir");
 		ret = 1;
 		goto error;
+	}
+	if (shrink_slack_size > 0 && !shrink_rootdir) {
+		error("the option --shrink-slack-size must be used with --shrink");
+		ret = 1;
+		goto error;
+
 	}
 	if (!list_empty(&subvols) && source_dir == NULL) {
 		error("option --subvol must be used with --rootdir");
@@ -2104,8 +2119,17 @@ raid_groups:
 
 		if (shrink_rootdir) {
 			pr_verbose(LOG_DEFAULT, "  Shrink:           yes\n");
+			if (shrink_slack_size > 0) {
+				pr_verbose(
+					LOG_DEFAULT,
+					"  Shrink slack:           %llu (%s)\n",
+					shrink_slack_size,
+					pretty_size(shrink_slack_size));
+			}
 			ret = btrfs_mkfs_shrink_fs(fs_info, &shrink_size,
-						   shrink_rootdir);
+						   shrink_rootdir,
+						   shrink_slack_size);
+
 			if (ret < 0) {
 				errno = -ret;
 				error("error while shrinking filesystem: %m");
