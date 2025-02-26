@@ -63,6 +63,12 @@ static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
 	return nodesize - sizeof(struct btrfs_header);
 }
 
+#if EXPERIMENTAL
+#define BTRFS_MIN_BLOCKSIZE	(SZ_2K)
+#else
+#define BTRFS_MIN_BLOCKSIZE	(SZ_4K)
+#endif
+
 #define BTRFS_LEAF_DATA_SIZE(fs_info) (fs_info->leaf_data_size)
 
 #define BTRFS_SUPER_INFO_OFFSET			(65536)

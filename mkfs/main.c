@@ -1669,13 +1669,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (nodesize > sysconf(_SC_PAGE_SIZE))
 		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_BIG_METADATA;
 
-	if (sectorsize < sizeof(struct btrfs_super_block)) {
-		error("sectorsize smaller than superblock: %u < %zu",
-				sectorsize, sizeof(struct btrfs_super_block));
-		ret = 1;
-		goto error;
-	}
-
 	min_dev_size = btrfs_min_dev_size(nodesize, mixed,
 					  opt_zoned ? zone_size(file) : 0,
 					  metadata_profile, data_profile);

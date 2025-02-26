@@ -1816,13 +1816,10 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		error("nodesize unaligned: %u", btrfs_super_nodesize(sb));
 		goto error_out;
 	}
-	if (btrfs_super_sectorsize(sb) < 4096) {
-		error("sectorsize too small: %u < 4096",
-			btrfs_super_sectorsize(sb));
-		goto error_out;
-	}
-	if (!IS_ALIGNED(btrfs_super_sectorsize(sb), 4096)) {
-		error("sectorsize unaligned: %u", btrfs_super_sectorsize(sb));
+	if (!is_power_of_2(btrfs_super_sectorsize(sb)) ||
+	    btrfs_super_sectorsize(sb) < BTRFS_MIN_BLOCKSIZE ||
+	    btrfs_super_sectorsize(sb) > BTRFS_MAX_METADATA_BLOCKSIZE) {
+		error("invalid sectorsize: %u", btrfs_super_sectorsize(sb));
 		goto error_out;
 	}
 	if (btrfs_super_total_bytes(sb) == 0) {
