@@ -25,8 +25,10 @@ LZO
         * good backward compatibility
 ZSTD
         * compression comparable to ZLIB with higher compression/decompression speeds and different ratio
-        * levels: 1 to 15, mapped directly (higher levels are not available)
-        * since 4.14, levels since 5.1
+        * levels: -15..15, mapped directly, default is 3
+        * support since 4.14
+        * levels 1..15 supported since 5.1
+        * levels -15..-1 supported since 6.15
 
 The differences depend on the actual data set and cannot be expressed by a
 single number or recommendation. Higher levels consume more CPU time and may
@@ -78,7 +80,7 @@ Compression levels
 
 The level support of ZLIB has been added in v4.14, LZO does not support levels
 (the kernel implementation provides only one), ZSTD level support has been added
-in v5.1.
+in v5.1 and the negative levels in v6.15.
 
 There are 9 levels of ZLIB supported (1 to 9), mapping 1:1 from the mount option
 to the algorithm defined level. The default is level 3, which provides the
@@ -86,9 +88,12 @@ reasonably good compression ratio and is still reasonably fast. The difference
 in compression gain of levels 7, 8 and 9 is comparable but the higher levels
 take longer.
 
-The ZSTD support includes levels 1 to 15, a subset of full range of what ZSTD
-provides. Levels 1-3 are real-time, 4-8 slower with improved compression and
-9-15 try even harder though the resulting size may not be significantly improved.
+The ZSTD support includes levels -15..15, a subset of full range of what ZSTD
+provides. Levels -15..-1 are real-time with worse compression ratio, levels
+1..3 are near real-time with good compression, 4..8 are slower with improved
+compression and 9..15 try even harder though the resulting size may not be
+significantly improved. Higher levels also require more memory and as they need
+more CPU the system performance is affected.
 
 Level 0 always maps to the default. The compression level does not affect
 compatibility.

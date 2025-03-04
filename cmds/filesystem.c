@@ -962,6 +962,7 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	"",
 	OPTLINE("-r", "defragment files recursively"),
 	OPTLINE("-c[zlib,lzo,zstd]", "compress the file while defragmenting, optional parameter (no space in between)"),
+	OPTLINE("-L|--level level", "use given compression level if enabled (zlib: 1..9, zstd: -15..15, and 0 selects the default level)"),
 	OPTLINE("-f", "flush data to disk immediately after defragmenting"),
 	OPTLINE("-s start", "defragment only from byte onward"),
 	OPTLINE("-l len", "defragment only up to len bytes"),
@@ -1066,6 +1067,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	bool recursive = false;
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
+	int compress_level = 0;
 
 	/*
 	 * Kernel 4.19+ supports defragmention of files open read-only,
@@ -1096,17 +1098,17 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		bconf.verbose++;
 
 	defrag_global_errors = 0;
-	defrag_global_errors = 0;
 	optind = 0;
 	while(1) {
 		enum { GETOPT_VAL_STEP = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
+			{ "level", required_argument, NULL, 'L' },
 			{ "step", required_argument, NULL, GETOPT_VAL_STEP },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c;
 
-		c = getopt_long(argc, argv, "vrc::fs:l:t:", long_options, NULL);
+		c = getopt_long(argc, argv, "vrc::L:fs:l:t:", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -1115,6 +1117,18 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			compress_type = BTRFS_COMPRESS_ZLIB;
 			if (optarg)
 				compress_type = parse_compress_type_arg(optarg);
+			break;
+		case 'L':
+			/*
+			 * Do not enforce any limits here, kernel will do itself
+			 * based on what's supported by the running version.
+			 * Just clip to the s8 type of the API.
+			 */
+			compress_level = atoi(optarg);
+			if (compress_level < -128)
+				compress_level = -128;
+			else if (compress_level > 127)
+				compress_level = 127;
 			break;
 		case 'f':
 			flush = true;
@@ -1165,7 +1179,12 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	defrag_global_range.extent_thresh = (u32)thresh;
 	if (compress_type) {
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
-		defrag_global_range.compress_type = compress_type;
+		if (compress_level) {
+			defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS_LEVEL;
+			defrag_global_range.compress.type = compress_type;
+			defrag_global_range.compress.level= compress_level;
+		} else
+			defrag_global_range.compress_type = compress_type;
 	}
 	if (flush)
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
