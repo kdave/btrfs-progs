@@ -1052,7 +1052,7 @@ static int simple_quota_account_extent(struct btrfs_fs_info *info,
 	u64 generation;
 	int type;
 	u64 root;
-	struct ulist *roots = ulist_alloc(0);
+	struct ulist roots;
 	int ret;
 	struct extent_buffer *node_eb;
 
@@ -1084,9 +1084,10 @@ static int simple_quota_account_extent(struct btrfs_fs_info *info,
 	if (!is_fstree(root))
 		return 0;
 
-	ulist_add(roots, root, 0, 0);
-	ret = account_one_extent(roots, bytenr, num_bytes);
-	ulist_free(roots);
+	ulist_init(&roots);
+	ulist_add(&roots, root, 0, 0);
+	ret = account_one_extent(&roots, bytenr, num_bytes);
+	ulist_release(&roots);
 	return ret;
 }
 
