@@ -1867,9 +1867,8 @@ static int leaf_space_used(const struct extent_buffer *l, int start, int nr)
 }
 
 /*
- * The space between the end of the leaf items and
- * the start of the leaf data.  IOW, how much room
- * the leaf has left for both items and data
+ * The space between the end of the leaf items and the start of the leaf data.
+ * In other words, how much room the leaf has left for both items and data
  */
 int btrfs_leaf_free_space(const struct extent_buffer *leaf)
 {

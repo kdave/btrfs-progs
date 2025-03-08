@@ -84,9 +84,9 @@ What changed:
 * available data space decreased by 3GiB, usable roughly (50 - 3) + (100 - 3) = 144 GiB
 * metadata redundancy increased
 
-IOW, the unequal device sizes allow for combined space for data yet improved
-redundancy for metadata. If we decide to increase redundancy of data as well,
-we're going to lose 50GiB of the second device for obvious reasons.
+In other words, the unequal device sizes allow for combined space for data yet
+improved redundancy for metadata. If we decide to increase redundancy of data as
+well, we're going to lose 50GiB of the second device for obvious reasons.
 
 .. code-block:: bash
 
