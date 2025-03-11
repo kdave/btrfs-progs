@@ -145,26 +145,15 @@ static int create_one_subvolume(const char *dst, struct btrfs_util_qgroup_inheri
 				bool create_parents)
 {
 	int ret;
-	char	*dupname = NULL;
-	char	*dupdir = NULL;
+	char dupname[PATH_MAX];
+	char dupdir[PATH_MAX];
 	const char *newname;
-	char	*dstdir;
+	char *dstdir;
 	enum btrfs_util_error err;
 
-	dupname = strdup(dst);
-	if (!dupname) {
-		error_mem("duplicating %s", dst);
-		ret = -ENOMEM;
-		goto out;
-	}
+	strncpy_null(dupname, dst, PATH_MAX);
 	newname = path_basename(dupname);
-
-	dupdir = strdup(dst);
-	if (!dupdir) {
-		error_mem("duplicating %s", dst);
-		ret = -ENOMEM;
-		goto out;
-	}
+	strncpy_null(dupdir, dst, PATH_MAX);
 	dstdir = path_dirname(dupdir);
 
 	if (create_parents) {
@@ -210,8 +199,6 @@ static int create_one_subvolume(const char *dst, struct btrfs_util_qgroup_inheri
 	ret = 0;
 
 out:
-	free(dupname);
-	free(dupdir);
 
 	return ret;
 }
