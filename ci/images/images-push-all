@@ -2,8 +2,7 @@
 # After pull and build push all images to the hub
 # Run after: images-build-all
 
-echo "You are not supposed to run this"
-exit 1
+echo "WARNING: You are not supposed to run this"
 
 hubname=kdave
 tag=latest
