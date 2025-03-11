@@ -9,7 +9,7 @@ For a list of features by the kernel version of their introduction, please see
 
 The table below is an overview of the stability status of
 the features that BTRFS supports. While a feature may be functionally safe
-and reliable, it does not necessarily mean that it is meeting
+and reliable, it does not necessarily mean that it is
 suitable for all use cases or workloads, for example performance.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
@@ -480,7 +480,7 @@ Experimental features
 Until kernel 6.12 the *CONFIG_OPTION_DEBUG* was used to hide features that
 still need some work and should not be exposed to users in general. With
 the increasing number of such features or functionality this started to conflict
-with regular debugging features. Currently there the following is behind
+with regular debugging features. Currently the following is behind
 the experimental option. Use with caution and if you find problems or have
 feedback please report that to the mailing list.
 

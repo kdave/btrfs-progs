@@ -7,7 +7,7 @@ of other block device types. On real hardware, there's a different lifetime
 span of the memory cells and the driver firmware usually tries to optimize for
 that. The trim operation issued by user provides hints about what data are
 unused and allow to reclaim the memory cells. On thin-provisioned or emulated
-this is could simply free the space.
+this could simply free the space.
 
 There are three main uses of trim that BTRFS supports:
 

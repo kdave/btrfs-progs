@@ -22,7 +22,7 @@ by other parts of the system or hardware errors (namely faulty RAM).
 
 Once a block does not pass the checks, the filesystem refuses to write more data
 and turns itself to read-only mode to prevent further damage. At this point some
-the recent metadata updates are held *only* in memory so it's best to not panic
+of the recent metadata updates are held *only* in memory so it's best to not panic
 and try to remember what files could be affected and copy them elsewhere. Once
 the filesystem gets unmounted, the most recent changes are unfortunately lost.
 The filesystem that is stored on the device is still consistent and should mount

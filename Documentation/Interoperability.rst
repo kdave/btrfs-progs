@@ -53,7 +53,7 @@ automatically in any way, must be resolved either in btrfs or on the DM/MD
 layer.
 
 The functionality of DM/MD may duplicate the one provided by btrfs (like
-mirroring), it's possible to use it that way but is probably wasteful and may
+mirroring), it's possible to use it that way but it's probably wasteful and may
 degrade performance. Creating a filesystem on top of the multiplexed device is
 likely the desired way.
 

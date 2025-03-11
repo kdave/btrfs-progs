@@ -29,7 +29,7 @@ OPTIONS
 
 -b|--byte-count <size>
         Specify the size of each device as seen by the filesystem. If not set,
-        the entire device size is used. The total filesystem size will be sum
+        the entire device size is used. The total filesystem size will be the sum
         of all device sizes, for a single device filesystem the option
         effectively specifies the size of the filesystem.
 
@@ -165,7 +165,7 @@ OPTIONS
 
         It is recommended to use the highest level to achieve maximum space savings.
         Compression at mkfs time is not as constrained as in kernel where it's
-        desirable to use the less CPU load. Otherwise the default level is 3.
+        desirable to use less CPU load. Otherwise the default level is 3.
 
         As with the kernel, :command:`mkfs.btrfs` won't write compressed extents when
         they would be larger than the uncompressed versions, and will set file attribute
