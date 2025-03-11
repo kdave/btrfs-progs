@@ -118,7 +118,7 @@ DUP
 
 ENOSPC
 	Error code returned by the OS to a user program when the filesystem
-	cannot allocate enough data to fulfill the user requested. In most
+	cannot allocate enough data to fulfill the user request. In most
 	filesystems, it indicates there is no free space available in the
 	filesystem. Due to the additional space requirements from btrfs's
 	*COW* behaviour, btrfs can sometimes return ENOSPC when there is
