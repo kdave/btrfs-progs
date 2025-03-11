@@ -1654,6 +1654,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 
 	switch (compression) {
 	case BTRFS_COMPRESS_NONE:
+                break;
 	case BTRFS_COMPRESS_LZO:
 #if !COMPRESSION_LZO
 		error("lzo support not compiled in");
