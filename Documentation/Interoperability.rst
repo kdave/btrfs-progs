@@ -28,6 +28,7 @@ The ioctls supported by btrfs:
 
 * `FS_IOC_ENABLE_VERITY <https://www.kernel.org/doc/html/latest/filesystems/fsverity.html#fs-ioc-enable-verity>`__
 * `FS_IOC_MEASURE_VERITY <https://www.kernel.org/doc/html/latest/filesystems/fsverity.html#fs-ioc-measure-verity>`__
+* `FS_IOC_READ_VERITY_METADATA <https://www.kernel.org/doc/html/latest/filesystems/fsverity.html#fs-ioc-read-verity-metadata>`__
 
 See also:
 https://www.kernel.org/doc/html/latest/filesystems/fsverity.html
