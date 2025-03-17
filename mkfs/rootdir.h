@@ -47,7 +47,7 @@ struct rootdir_subvol {
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
-			enum btrfs_compression_type compression,
+			bool fsverity, enum btrfs_compression_type compression,
 			unsigned int compression_level);
 u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 			u64 meta_profile, u64 data_profile);
