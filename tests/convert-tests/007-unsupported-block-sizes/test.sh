@@ -19,5 +19,9 @@ for bs in 1024 2048; do
 		count=1 seek=1024 > /dev/null 2>&1
 
 	run_check_umount_test_dev
+	if _test_config "EXPERIMENTAL" && [ "$bs" == '2048' ]; then
+		# Experimental support for mkfs.btrfs --sectorsize 2048
+		continue
+	fi
 	run_mustfail "$bs block converted" "$TOP/btrfs-convert" "$TEST_DEV"
 done
