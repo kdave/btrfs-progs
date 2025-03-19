@@ -136,6 +136,8 @@ OPTIONS
         advised unless you intend to mount it on a system with the suitable
         page size.
 
+        In experimental build the size 2K (2048) is also allowed and needs
+        kernel that also allows that value, then it works in the subpage mode.
 
 -L|--label <string>
         Specify a label for the filesystem. The *string* should be less than 256

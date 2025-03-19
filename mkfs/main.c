@@ -431,8 +431,11 @@ static const char * const mkfs_usage[] = {
 	"Features:",
 	OPTLINE("--csum TYPE", ""),
 	OPTLINE("--checksum TYPE", "checksum algorithm to use, crc32c (default), xxhash, sha256, blake2"),
-	OPTLINE("-n|--nodesize SIZE", "size of btree nodes (default 16K)"),
+	OPTLINE("-n|--nodesize SIZE", "size of btree nodes, 16K (default), 4K, 8K, 32K, 64K"),
 	OPTLINE("-s|--sectorsize SIZE", "data block size (default 4K, may not be mountable by current kernel if CPU page size is different)"),
+#if EXPERIMENTAL
+	OPTLINE("","experimental: 2K (needs experimental subpage support for 2K on x86_64)"),
+#endif
 	OPTLINE("-O|--features LIST", "comma separated list of filesystem features (use '-O list-all' to list features)"),
 	OPTLINE("-L|--label LABEL", "set the filesystem label (maximum length 255)"),
 	OPTLINE("-U|--uuid UUID", "specify the filesystem UUID (must be unique for a filesystem with multiple devices)"),
