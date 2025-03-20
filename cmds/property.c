@@ -90,7 +90,7 @@ static int prop_read_only(enum prop_object_type type,
 			error("invalid value for property: %s", value);
 			return -EINVAL;
 		}
-		err = btrfs_util_get_subvolume_read_only(object, &is_ro);
+		err = btrfs_util_subvolume_get_read_only(object, &is_ro);
 		if (err) {
 			error_btrfs_util(err);
 			return -errno;
@@ -99,7 +99,7 @@ static int prop_read_only(enum prop_object_type type,
 		if (is_ro && read_only)
 			return 0;
 
-		err = btrfs_util_subvolume_info(object, 0, &info);
+		err = btrfs_util_subvolume_get_info(object, 0, &info);
 		if (err)
 			warning("cannot read subvolume info");
 		if (is_ro && !uuid_is_null(info.received_uuid)) {
@@ -118,7 +118,7 @@ static int prop_read_only(enum prop_object_type type,
 		if (!is_ro && !uuid_is_null(info.received_uuid))
 			warning("read-write subvolume with received_uuid, this is bad");
 
-		err = btrfs_util_set_subvolume_read_only(object, read_only);
+		err = btrfs_util_subvolume_set_read_only(object, read_only);
 		if (err) {
 			error_btrfs_util(err);
 			return -errno;
@@ -135,7 +135,7 @@ static int prop_read_only(enum prop_object_type type,
 				warning("failed to clear received_uuid: %m");
 		}
 	} else {
-		err = btrfs_util_get_subvolume_read_only(object, &read_only);
+		err = btrfs_util_subvolume_get_read_only(object, &read_only);
 		if (err) {
 			error_btrfs_util(err);
 			return -errno;

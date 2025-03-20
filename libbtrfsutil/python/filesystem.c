@@ -30,9 +30,9 @@ PyObject *filesystem_sync(PyObject *self, PyObject *args, PyObject *kwds)
 		return NULL;
 
 	if (path.path)
-		err = btrfs_util_sync(path.path);
+		err = btrfs_util_fs_sync(path.path);
 	else
-		err = btrfs_util_sync_fd(path.fd);
+		err = btrfs_util_fs_sync_fd(path.fd);
 	if (err) {
 		SetFromBtrfsUtilErrorWithPath(err, &path);
 		path_cleanup(&path);
@@ -55,9 +55,9 @@ PyObject *start_sync(PyObject *self, PyObject *args, PyObject *kwds)
 		return NULL;
 
 	if (path.path)
-		err = btrfs_util_start_sync(path.path, &transid);
+		err = btrfs_util_fs_start_sync(path.path, &transid);
 	else
-		err = btrfs_util_start_sync_fd(path.fd, &transid);
+		err = btrfs_util_fs_start_sync_fd(path.fd, &transid);
 	if (err) {
 		SetFromBtrfsUtilErrorWithPath(err, &path);
 		path_cleanup(&path);
@@ -80,9 +80,9 @@ PyObject *wait_sync(PyObject *self, PyObject *args, PyObject *kwds)
 		return NULL;
 
 	if (path.path)
-		err = btrfs_util_wait_sync(path.path, transid);
+		err = btrfs_util_fs_wait_sync(path.path, transid);
 	else
-		err = btrfs_util_wait_sync_fd(path.fd, transid);
+		err = btrfs_util_fs_wait_sync_fd(path.fd, transid);
 	if (err) {
 		SetFromBtrfsUtilErrorWithPath(err, &path);
 		path_cleanup(&path);

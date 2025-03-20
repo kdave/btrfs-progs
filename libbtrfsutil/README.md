@@ -37,7 +37,7 @@ description suitable for human-friendly error reporting.
 ```c
 enum btrfs_util_err err;
 
-err = btrfs_util_sync("/");
+err = btrfs_util_fs_sync("/");
 if (err)
 	fprintf(stderr, "%s: %m\n", btrfs_util_strerror(err));
 ```
@@ -61,7 +61,7 @@ There are several operations which act on the entire filesystem.
 
 Btrfs can commit all caches for a specific filesystem to disk.
 
-`btrfs_util_sync()` forces a sync on the filesystem containing the given file
+`btrfs_util_fs_sync()` forces a sync on the filesystem containing the given file
 and waits for it to complete.
 
 `btrfs_wait_sync()` waits for a previously started transaction to complete. The
@@ -73,10 +73,10 @@ which can then be passed to `btrfs_wait_sync()`.
 
 ```c
 uint64_t transid;
-btrfs_util_sync("/");
-btrfs_util_start_sync("/", &transid);
-btrfs_util_wait_sync("/", &transid);
-btrfs_util_wait_sync("/", 0);
+btrfs_util_fs_sync("/");
+btrfs_util_fs_start_sync("/", &transid);
+btrfs_util_fs_wait_sync("/", &transid);
+btrfs_util_fs_wait_sync("/", 0);
 ```
 
 ```python
@@ -99,20 +99,20 @@ with the given ID is used.
 
 #### Subvolume Information
 
-`btrfs_util_is_subvolume()` returns whether a given file is a subvolume.
+`btrfs_util_subvolume_is_valid()` returns whether a given file is a subvolume.
 
-`btrfs_util_subvolume_id()` returns the ID of the subvolume containing the
+`btrfs_util_subvolume_get_id()` returns the ID of the subvolume containing the
 given file.
 
 ```c
 enum btrfs_util_error err;
-err = btrfs_util_is_subvolume("/subvol");
+err = btrfs_util_subvolume_is_valid("/subvol");
 if (!err)
 	printf("Subvolume\n");
 else if (err == BTRFS_UTIL_ERROR_NOT_BTRFS || err == BTRFS_UTIL_ERROR_NOT_SUBVOLUME)
 	printf("Not subvolume\n");
 uint64_t id;
-btrfs_util_subvolume_id("/subvol", &id);
+btrfs_util_subvolume_get_id("/subvol", &id);
 ```
 
 ```python
@@ -123,15 +123,15 @@ else:
 id_ = btrfsutil.subvolume_id('/subvol')
 ```
 
-`btrfs_util_subvolume_path()` returns the path of the subvolume with the given
+`btrfs_util_subvolume_get_path()` returns the path of the subvolume with the given
 ID relative to the filesystem root. This requires `CAP_SYS_ADMIN`. The path
 must be freed with `free()`.
 
 ```c
 char *path;
-btrfs_util_subvolume_path("/", 256, &path);
+btrfs_util_subvolume_get_path("/", 256, &path);
 free(path);
-btrfs_util_subvolume_path("/subvol", 0, &path);
+btrfs_util_subvolume_get_path("/subvol", 0, &path);
 free(path);
 ```
 
@@ -140,9 +140,9 @@ path = btrfsutil.subvolume_path('/', 256)
 path = btrfsutil.subvolume_path('/subvol')  # equivalent to subvolume_path('/subvol', 0)
 ```
 
-`btrfs_util_subvolume_info()` returns information (including ID, parent ID,
+`btrfs_util_subvolume_get_info()` returns information (including ID, parent ID,
 UUID) about a subvolume. In the C API, this is returned as a `struct
-btrfs_util_subvolume_info`. The Python bindings use a `SubvolumeInfo` object.
+btrfs_util_subvolume_get_info`. The Python bindings use a `SubvolumeInfo` object.
 
 This requires `CAP_SYS_ADMIN` unless the given subvolume ID is zero and the
 kernel supports the `BTRFS_IOC_GET_SUBVOL_INFO` ioctl (added in 4.18).
@@ -151,8 +151,8 @@ The equivalent `btrfs-progs` command is `btrfs subvolume show`.
 
 ```c
 struct btrfs_util_subvolume_info info;
-btrfs_util_subvolume_info("/", 256, &info);
-btrfs_util_subvolume_info("/subvol", 0, &info);
+btrfs_util_subvolume_get_info("/", 256, &info);
+btrfs_util_subvolume_get_info("/subvol", 0, &info);
 ```
 
 ```python
@@ -166,22 +166,22 @@ All of these functions have `_fd` variants.
 
 An iterator interface is provided for enumerating subvolumes on a filesystem.
 In the C API, a `struct btrfs_util_subvolume_iterator` is initialized by
-`btrfs_util_create_subvolume_iterator()`, which takes a top subvolume to
+`btrfs_util_subvolume_iter_create()`, which takes a top subvolume to
 enumerate under and flags. Currently, the only flag is to specify post-order
 traversal instead of the default pre-order. This function has an `_fd` variant.
 
-`btrfs_util_destroy_subvolume_iterator()` must be called to free a previously
+`btrfs_util_subvolume_iter_destroy()` must be called to free a previously
 created `struct btrfs_util_subvolume_iterator`.
 
-`btrfs_util_subvolume_iterator_fd()` returns the file descriptor opened by
-`btrfs_util_create_subvolume_iterator()` which can be used for other functions.
+`btrfs_util_subvolume_iterator_get_fd()` returns the file descriptor opened by
+`btrfs_util_subvolume_iter_create()` which can be used for other functions.
 
-`btrfs_util_subvolume_iterator_next()` returns the path (relative to the top
+`btrfs_util_subvolume_iter_next()` returns the path (relative to the top
 subvolume that the iterator was created with) and ID of the next subvolume.
-`btrfs_util_subvolume_iterator_next_info()` returns a `struct
+`btrfs_util_subvolume_iter_next_info()` returns a `struct
 btrfs_subvolume_info` instead of the ID. It is slightly more efficient than
-doing separate `btrfs_util_subvolume_iterator_next()` and
-`btrfs_util_subvolume_info()` calls if the subvolume information is needed. The
+doing separate `btrfs_util_subvolume_iter_next()` and
+`btrfs_util_subvolume_get_info()` calls if the subvolume information is needed. The
 path returned by these functions must be freed with `free()`. When there are no
 more subvolumes, they return `BTRFS_UTIL_ERROR_STOP_ITERATION`.
 
@@ -192,26 +192,26 @@ char *path;
 uint64_t id;
 struct btrfs_util_subvolume_info info;
 
-btrfs_util_create_subvolume_iterator("/", 256, 0, &iter);
+btrfs_util_subvolume_iter_create("/", 256, 0, &iter);
 /*
- * This is just an example use-case for btrfs_util_subvolume_iterator_fd(). It
+ * This is just an example use-case for btrfs_util_subvolume_iterator_get_fd(). It
  * is not necessary.
  */
-btrfs_util_sync_fd(btrfs_util_subvolume_iterator_fd(iter));
-while (!(err = btrfs_util_subvolume_iterator_next(iter, &path, &id))) {
+btrfs_util_fs_sync_fd(btrfs_util_subvolume_iterator_get_fd(iter));
+while (!(err = btrfs_util_subvolume_iter_next(iter, &path, &id))) {
 	printf("%" PRIu64 " %s\n", id, path);
 	free(path);
 }
-btrfs_util_destroy_subvolume_iterator(iter);
+btrfs_util_subvolume_iter_destroy(iter);
 
-btrfs_util_create_subvolume_iterator("/subvol", 0,
+btrfs_util_subvolume_iter_create("/subvol", 0,
 				     BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER,
 				     &iter);
-while (!(err = btrfs_util_subvolume_iterator_next_info(iter, &path, &info))) {
+while (!(err = btrfs_util_subvolume_iter_next_info(iter, &path, &info))) {
 	printf("%" PRIu64 " %" PRIu64 " %s\n", info.id, info.parent_id, path);
 	free(path);
 }
-btrfs_util_destroy_subvolume_iterator(iter);
+btrfs_util_subvolume_iter_destroy(iter);
 ```
 
 The Python bindings provide this interface as an iterable `SubvolumeIterator`
@@ -244,12 +244,12 @@ The equivalent `btrfs-progs` command is `btrfs subvolume list`.
 
 #### Creation
 
-`btrfs_util_create_subvolume()` creates a new subvolume at the given path. The
+`btrfs_util_subvolume_create()` creates a new subvolume at the given path. The
 subvolume can inherit from quota groups (qgroups).
 
 Qgroups to inherit are specified with a `struct btrfs_util_qgroup_inherit`,
-which is created by `btrfs_util_create_qgroup_inherit()` and freed by
-`btrfs_util_destroy_qgroup_inherit()`. Qgroups are added with
+which is created by `btrfs_util_qgroup_inherit_create()` and freed by
+`btrfs_util_qgroup_inherit_destroy()`. Qgroups are added with
 `btrfs_util_qgroup_inherit_add_group()`. The list of added groups can be
 retrieved with `btrfs_util_qgroup_inherit_get_groups()`; note that the returned
 array does not need to be freed and is no longer valid when the `struct
@@ -259,13 +259,13 @@ The Python bindings provide a `QgroupInherit` class. It has an `add_group()`
 method and a `groups` member, which is a list of ints.
 
 ```c
-btrfs_util_create_subvolume("/subvol2", 0, NULL, NULL);
+btrfs_util_subvolume_create("/subvol2", 0, NULL, NULL);
 
 struct btrfs_util_qgroup_inherit *qgroups;
-btrfs_util_create_qgroup_inherit(0, &qgroups);
+btrfs_util_qgroup_inherit_create_(0, &qgroups);
 btrfs_util_qgroup_inherit_add_group(&qgroups, 256);
-btrfs_util_create_subvolume("/subvol2", 0, NULL, qgroups);
-btrfs_util_destroy_qgroup_inherit(qgroups);
+btrfs_util_subvolume_create("/subvol2", 0, NULL, qgroups);
+btrfs_util_qgroup_inherit_destroy(qgroups);
 ```
 
 ```python
@@ -283,7 +283,7 @@ The equivalent `btrfs-progs` command is `btrfs subvolume create`.
 
 #### Snapshotting
 
-Snapshots are created with `btrfs_util_create_snapshot()`, which takes a source
+Snapshots are created with `btrfs_util_subvolume_snapshot()`, which takes a source
 path, a destination path, and flags. It can also inherit from quota groups;
 see [subvolume creation](#Creation).
 
@@ -295,10 +295,10 @@ The newly created snapshot can also be read-only, but not if doing a recursive
 snapshot.
 
 ```c
-btrfs_util_create_snapshot("/subvol", "/snapshot", 0, NULL, NULL);
-btrfs_util_create_snapshot("/nested_subvol", "/nested_snapshot",
+btrfs_util_subvolume_snapshot("/subvol", "/snapshot", 0, NULL, NULL);
+btrfs_util_subvolume_snapshot("/nested_subvol", "/nested_snapshot",
 			   BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE, NULL, NULL);
-btrfs_util_create_snapshot("/subvol", "/rosnapshot",
+btrfs_util_subvolume_snapshot("/subvol", "/rosnapshot",
 			   BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY, NULL, NULL);
 ```
 
@@ -308,8 +308,8 @@ btrfsutil.create_snapshot('/nested_subvol', '/nested_snapshot', recursive=True)
 btrfsutil.create_snapshot('/subvol', '/rosnapshot', read_only=True)
 ```
 
-The C API has two `_fd` variants. `btrfs_util_create_snapshot_fd()` takes the
-source subvolume as a file descriptor. `btrfs_util_create_snapshot_fd2()` takes
+The C API has two `_fd` variants. `btrfs_util_subvolume_snapshot_fd()` takes the
+source subvolume as a file descriptor. `btrfs_util_subvolume_snapshot_fd2()` takes
 the source subvolume as a file descriptor and the destination as a name and
 parent file descriptor.
 
@@ -317,7 +317,7 @@ The equivalent `btrfs-progs` command is `btrfs subvolume snapshot`.
 
 #### Deletion
 
-`btrfs_util_delete_subvolume()` takes a subvolume to delete and flags. This
+`btrfs_util_subvolume_delete()` takes a subvolume to delete and flags. This
 requires `CAP_SYS_ADMIN` if the filesystem was not mounted with
 `user_subvol_rm_allowed`. Deletion may be recursive, in which case all
 subvolumes beneath the given subvolume are deleted before the given subvolume
@@ -325,8 +325,8 @@ is deleted. This is implemented in user-space non-atomically and has the same
 capability requirements as a [subvolume iterator](#Enumeration).
 
 ```c
-btrfs_util_delete_subvolume("/subvol", 0);
-btrfs_util_delete_subvolume("/nested_subvol",
+btrfs_util_subvolume_delete("/subvol", 0);
+btrfs_util_subvolume_delete("/nested_subvol",
 			    BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE);
 ```
 
@@ -342,13 +342,13 @@ The equivalent `btrfs-progs` command is `btrfs subvolume delete`.
 
 #### Deleted Subvolumes
 
-Btrfs lazily cleans up deleted subvolumes. `btrfs_util_deleted_subvolumes()`
+Btrfs lazily cleans up deleted subvolumes. `btrfs_util_subvolume_list_deleted()`
 returns an array of subvolume IDs which have been deleted but not yet cleaned
 up. The returned array should be freed with `free()`.
 ```c
 uint64_t *ids;
 size_t n; /* Number of returned IDs. */
-btrfs_util_deleted_subvolumes("/", &ids, &n);
+btrfs_util_subvolume_list_deleted("/", &ids, &n);
 free(ids);
 ```
 
@@ -365,16 +365,16 @@ deleted subvolumes to be cleaned up.
 
 #### Read-Only Flag
 
-Subvolumes can be set to read-only. `btrfs_util_get_subvolume_read_only()`
+Subvolumes can be set to read-only. `btrfs_util_subvolume_get_read_only()`
 returns whether a subvolume is read-only.
-`btrfs_util_set_subvolume_read_only()` sets the read-only flag to the desired
+`btrfs_util_subvolume_set_read_only()` sets the read-only flag to the desired
 value.
 
 ```c
 bool read_only;
-btrfs_util_get_subvolume_read_only("/subvol", &read_only);
-btrfs_util_set_subvolume_read_only("/subvol", true);
-btrfs_util_set_subvolume_read_only("/subvol", false);
+btrfs_util_subvolume_get_read_only("/subvol", &read_only);
+btrfs_util_subvolume_set_read_only("/subvol", true);
+btrfs_util_subvolume_set_read_only("/subvol", false);
 ```
 
 ```python
@@ -393,16 +393,16 @@ property set` with the `ro` property.
 The default subvolume of a filesystem is the subvolume which is mounted when no
 `subvol` or `subvolid` mount option is passed.
 
-`btrfs_util_get_default_subvolume()` gets the ID of the default subvolume for
+`btrfs_util_subvolume_get_default()` gets the ID of the default subvolume for
 the filesystem containing the given file.
 
-`btrfs_util_set_default_subvolume()` sets the default subvolume.
+`btrfs_util_subvolume_set_default()` sets the default subvolume.
 
 ```c
 uint64_t id;
-btrfs_util_get_default_subvolume("/", &id);
-btrfs_util_set_default_subvolume("/", 256);
-btrfs_util_set_default_subvolume("/subvol", 0);
+btrfs_util_subvolume_get_default("/", &id);
+btrfs_util_subvolume_set_default("/", 256);
+btrfs_util_subvolume_set_default("/subvol", 0);
 ```
 
 ```python

@@ -934,7 +934,7 @@ static int cmd_filesystem_sync(const struct cmd_struct *cmd,
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
-	err = btrfs_util_sync(argv[optind]);
+	err = btrfs_util_fs_sync(argv[optind]);
 	if (err) {
 		error_btrfs_util(err);
 		return 1;

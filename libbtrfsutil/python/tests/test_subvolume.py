@@ -72,7 +72,7 @@ class TestSubvolume(BtrfsTestCase):
         except Exception:
             pass
         finally:
-            # btrfs_util_subvolume_id_fd() had a bug that would erroneously
+            # btrfs_util_subvolume_get_id_fd() had a bug that would erroneously
             # close the provided file descriptor. In that case, this will fail
             # with EBADF.
             os.close(fd)

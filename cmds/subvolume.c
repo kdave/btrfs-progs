@@ -92,7 +92,7 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 		for (i = 0; i < count; i++) {
 			if (!ids[i])
 				continue;
-			err = btrfs_util_subvolume_info_fd(fd, ids[i], NULL);
+			err = btrfs_util_subvolume_get_info_fd(fd, ids[i], NULL);
 			if (err == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
 				done++;
 				pr_verbose(LOG_DEFAULT, "Subvolume id %" PRIu64 " is gone (%zu/%zu)\n",
@@ -306,11 +306,11 @@ static int wait_for_commit(int fd)
 	enum btrfs_util_error err;
 	uint64_t transid;
 
-	err = btrfs_util_start_sync_fd(fd, &transid);
+	err = btrfs_util_fs_start_sync_fd(fd, &transid);
 	if (err)
 		return -1;
 
-	err = btrfs_util_wait_sync_fd(fd, transid);
+	err = btrfs_util_fs_wait_sync_fd(fd, transid);
 	if (err)
 		return -1;
 
@@ -424,7 +424,7 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 		char *subvol;
 
 		path = argv[cnt];
-		err = btrfs_util_subvolume_path(path, subvolid, &subvol);
+		err = btrfs_util_subvolume_get_path(path, subvolid, &subvol);
 		/*
 		 * If the subvolume is really not referred by anyone, and refs
 		 * is 0, newer kernel can handle it by just adding an orphan
@@ -451,7 +451,7 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 again:
 	path = argv[cnt];
 
-	err = btrfs_util_is_subvolume(path);
+	err = btrfs_util_subvolume_is_valid(path);
 	if (err) {
 		error_btrfs_util(err);
 		ret = 1;
@@ -481,7 +481,7 @@ again:
 	}
 
 	default_subvol_id = 0;
-	err = btrfs_util_get_default_subvolume_fd(fd, &default_subvol_id);
+	err = btrfs_util_subvolume_get_default_fd(fd, &default_subvol_id);
 	if (err == BTRFS_UTIL_ERROR_SEARCH_FAILED) {
 		if (geteuid() != 0)
 			warning("cannot read default subvolume id: %m");
@@ -490,7 +490,7 @@ again:
 	if (subvolid > 0) {
 		target_subvol_id = subvolid;
 	} else {
-		err = btrfs_util_subvolume_id(path, &target_subvol_id);
+		err = btrfs_util_subvolume_get_id(path, &target_subvol_id);
 		if (err) {
 			ret = 1;
 			goto out;
@@ -530,7 +530,7 @@ again:
 			if (err != BTRFS_UTIL_ERROR_STOP_ITERATION)
 				warning("failed to iterate subvolumes, nested subvolumes will not be printed: %s", btrfs_util_strerror(err));
 
-			btrfs_util_destroy_subvolume_iterator(iter);
+			btrfs_util_subvolume_iter_destroy(iter);
 		} else {
 			warning("failed to create subvolume iterator, nested subvolumes will not be printed: %s", btrfs_util_strerror(err));
 		}
@@ -554,9 +554,9 @@ again:
 
 	/* Start deleting. */
 	if (subvolid == 0)
-		err = btrfs_util_delete_subvolume_fd(fd, vname, flags);
+		err = btrfs_util_subvolume_delete_fd(fd, vname, flags);
 	else
-		err = btrfs_util_delete_subvolume_by_id_fd(fd, subvolid);
+		err = btrfs_util_subvolume_delete_by_id_fd(fd, subvolid);
 	if (err) {
 		int saved_errno = errno;
 
@@ -700,7 +700,7 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	dst = argv[optind + 1];
 
 	retval = 1;	/* failure */
-	err = btrfs_util_is_subvolume(subvol);
+	err = btrfs_util_subvolume_is_valid(subvol);
 	if (err) {
 		error_btrfs_util(err);
 		goto out;
@@ -795,7 +795,7 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 	if (fd < 0)
 		return 1;
 
-	err = btrfs_util_get_default_subvolume_fd(fd, &default_id);
+	err = btrfs_util_subvolume_get_default_fd(fd, &default_id);
 	if (err) {
 		error_btrfs_util(err);
 		goto out;
@@ -815,13 +815,13 @@ static int cmd_subvolume_get_default(const struct cmd_struct *cmd, int argc, cha
 		goto out;
 	}
 
-	err = btrfs_util_subvolume_info_fd(fd, default_id, &subvol);
+	err = btrfs_util_subvolume_get_info_fd(fd, default_id, &subvol);
 	if (err) {
 		error_btrfs_util(err);
 		goto out;
 	}
 
-	err = btrfs_util_subvolume_path_fd(fd, default_id, &path);
+	err = btrfs_util_subvolume_get_path_fd(fd, default_id, &path);
 	if (err) {
 		error_btrfs_util(err);
 		goto out;
@@ -890,7 +890,7 @@ static int cmd_subvolume_set_default(const struct cmd_struct *cmd, int argc, cha
 		path = argv[optind + 1];
 	}
 
-	err = btrfs_util_set_default_subvolume(path, objectid);
+	err = btrfs_util_subvolume_set_default(path, objectid);
 	if (err) {
 		error_btrfs_util(err);
 		return 1;
@@ -1327,7 +1327,7 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 	subvol = argv[optind];
 	last_gen = arg_strtou64(argv[optind + 1]);
 
-	err = btrfs_util_is_subvolume(subvol);
+	err = btrfs_util_subvolume_is_valid(subvol);
 	if (err) {
 		error_btrfs_util(err);
 		return 1;
@@ -1337,7 +1337,7 @@ static int cmd_subvolume_find_new(const struct cmd_struct *cmd, int argc, char *
 	if (fd < 0)
 		return 1;
 
-	err = btrfs_util_sync_fd(fd);
+	err = btrfs_util_fs_sync_fd(fd);
 	if (err) {
 		error_btrfs_util(err);
 		close(fd);
@@ -1583,27 +1583,24 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	}
 
 	if (by_uuid) {
-		err = btrfs_util_create_subvolume_iterator_fd(fd,
-							      BTRFS_FS_TREE_OBJECTID,
-							      0, &iter);
+		err = btrfs_util_subvolume_iter_create_fd(fd, BTRFS_FS_TREE_OBJECTID,
+							  0, &iter);
 		if (err) {
 			error_btrfs_util(err);
 			goto out;
 		}
 
 		for (;;) {
-			err = btrfs_util_subvolume_iterator_next_info(iter,
-								      &subvol_path,
-								      &subvol);
+			err = btrfs_util_subvolume_iter_next_info(iter, &subvol_path, &subvol);
 			if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
 				uuid_unparse(uuid_arg, uuidparse);
 				error("can't find uuid '%s' on '%s'", uuidparse,
 				      fullpath);
-				btrfs_util_destroy_subvolume_iterator(iter);
+				btrfs_util_subvolume_iter_destroy(iter);
 				goto out;
 			} else if (err) {
 				error_btrfs_util(err);
-				btrfs_util_destroy_subvolume_iterator(iter);
+				btrfs_util_subvolume_iter_destroy(iter);
 				goto out;
 			}
 
@@ -1613,19 +1610,19 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 			free(subvol_path);
 			subvol_path = NULL;
 		}
-		btrfs_util_destroy_subvolume_iterator(iter);
+		btrfs_util_subvolume_iter_destroy(iter);
 	} else {
 		/*
 		 * If !by_rootid, rootid_arg = 0, which means find the
 		 * subvolume ID of the fd and use that.
 		 */
-		err = btrfs_util_subvolume_info_fd(fd, rootid_arg, &subvol);
+		err = btrfs_util_subvolume_get_info_fd(fd, rootid_arg, &subvol);
 		if (err) {
 			error_btrfs_util(err);
 			goto out;
 		}
 
-		err = btrfs_util_subvolume_path_fd(fd, subvol.id, &subvol_path);
+		err = btrfs_util_subvolume_get_path_fd(fd, subvol.id, &subvol_path);
 		if (err) {
 			error_btrfs_util(err);
 			goto out;
@@ -1655,20 +1652,18 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	else
 		pr_verbose(LOG_DEFAULT, "\tSnapshot(s):\n");
 
-	err = btrfs_util_create_subvolume_iterator_fd(fd,
-						      BTRFS_FS_TREE_OBJECTID, 0,
-						      &iter);
+	err = btrfs_util_subvolume_iter_create_fd(fd, BTRFS_FS_TREE_OBJECTID, 0, &iter);
 
 	for (;;) {
 		struct btrfs_util_subvolume_info subvol2;
 		char *path;
 
-		err = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvol2);
+		err = btrfs_util_subvolume_iter_next_info(iter, &path, &subvol2);
 		if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
 			break;
 		} else if (err) {
 			error_btrfs_util(err);
-			btrfs_util_destroy_subvolume_iterator(iter);
+			btrfs_util_subvolume_iter_destroy(iter);
 			goto out2;
 		}
 
@@ -1685,7 +1680,7 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	if (bconf.output_format == CMD_FORMAT_JSON)
 		fmt_print_end_group(&fctx, "snapshots");
 
-	btrfs_util_destroy_subvolume_iterator(iter);
+	btrfs_util_subvolume_iter_destroy(iter);
 
 	ret = btrfs_qgroup_query(fd, subvol.id, &stats);
 	if (ret == -ENOTTY) {
@@ -1779,7 +1774,7 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 
 	id_count = argc - optind;
 	if (!id_count) {
-		err = btrfs_util_deleted_subvolumes_fd(fd, &ids, &id_count);
+		err = btrfs_util_subvolume_list_deleted_fd(fd, &ids, &id_count);
 		if (err) {
 			error_btrfs_util(err);
 			ret = 1;

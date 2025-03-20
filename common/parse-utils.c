@@ -360,7 +360,7 @@ u64 parse_qgroupid_or_path(const char *p)
 
 path:
 	/* Path format like subv at 'my_subvol' is the fallback case */
-	err = btrfs_util_is_subvolume(p);
+	err = btrfs_util_subvolume_is_valid(p);
 	if (err)
 		goto err;
 	fd = open(p, O_RDONLY);

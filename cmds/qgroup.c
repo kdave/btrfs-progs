@@ -835,7 +835,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 		enum btrfs_util_error uret;
 		char *path;
 
-		uret = btrfs_util_subvolume_path_fd(fd, qgroupid, &path);
+		uret = btrfs_util_subvolume_get_path_fd(fd, qgroupid, &path);
 		if (uret == BTRFS_UTIL_OK)
 			bq->path = path;
 		else if (uret != BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
@@ -852,7 +852,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 		 * Passing @subvol as NULL will force the search to only search
 		 * for the ROOT_ITEM.
 		 */
-		uret = btrfs_util_subvolume_info_fd(fd, qgroupid, NULL);
+		uret = btrfs_util_subvolume_get_info_fd(fd, qgroupid, NULL);
 		if (uret == BTRFS_UTIL_OK) {
 			bq->stale = false;
 		} else if (uret == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
@@ -2044,7 +2044,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (sync) {
-		err = btrfs_util_sync_fd(fd);
+		err = btrfs_util_fs_sync_fd(fd);
 		if (err)
 			warning("sync ioctl failed on '%s': %m", path);
 	}
@@ -2136,7 +2136,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	if (argc - optind == 2) {
 		args.qgroupid = 0;
 		path = argv[optind + 1];
-		err = btrfs_util_is_subvolume(path);
+		err = btrfs_util_subvolume_is_valid(path);
 		if (err) {
 			error_btrfs_util(err);
 			return 1;
@@ -2270,7 +2270,7 @@ static int cmd_qgroup_clear_stale(const struct cmd_struct *cmd, int argc, char *
 	}
 
 	/* Sync the fs so that the qgroup numbers are uptodate. */
-	err = btrfs_util_sync_fd(fd);
+	err = btrfs_util_fs_sync_fd(fd);
 	if (err)
 		warning("syncing filesystem failed: %m");
 

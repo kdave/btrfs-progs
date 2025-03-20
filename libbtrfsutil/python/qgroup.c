@@ -21,7 +21,7 @@
 
 static void QgroupInherit_dealloc(QgroupInherit *self)
 {
-	btrfs_util_destroy_qgroup_inherit(self->inherit);
+	btrfs_util_qgroup_inherit_destroy(self->inherit);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -35,7 +35,7 @@ static int QgroupInherit_init(QgroupInherit *self, PyObject *args,
 					 keywords))
 		return -1;
 
-	err = btrfs_util_create_qgroup_inherit(0, &self->inherit);
+	err = btrfs_util_qgroup_inherit_create(0, &self->inherit);
 	if (err) {
 		SetFromBtrfsUtilError(err);
 		return -1;

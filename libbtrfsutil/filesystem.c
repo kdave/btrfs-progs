@@ -33,7 +33,7 @@ PUBLIC enum btrfs_util_error btrfs_util_sync(const char *path)
 	if (fd == -1)
 		return BTRFS_UTIL_ERROR_OPEN_FAILED;
 
-	err = btrfs_util_sync_fd(fd);
+	err = btrfs_util_fs_sync_fd(fd);
 	SAVE_ERRNO_AND_CLOSE(fd);
 	return err;
 }
@@ -63,7 +63,7 @@ PUBLIC enum btrfs_util_error btrfs_util_start_sync(const char *path,
 	if (fd == -1)
 		return BTRFS_UTIL_ERROR_OPEN_FAILED;
 
-	err = btrfs_util_start_sync_fd(fd, transid);
+	err = btrfs_util_fs_start_sync_fd(fd, transid);
 	SAVE_ERRNO_AND_CLOSE(fd);
 	return err;
 }
@@ -93,7 +93,7 @@ PUBLIC enum btrfs_util_error btrfs_util_wait_sync(const char *path,
 	if (fd == -1)
 		return BTRFS_UTIL_ERROR_OPEN_FAILED;
 
-	err = btrfs_util_wait_sync_fd(fd, transid);
+	err = btrfs_util_fs_wait_sync_fd(fd, transid);
 	SAVE_ERRNO_AND_CLOSE(fd);
 	return err;
 }

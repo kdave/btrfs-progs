@@ -2206,7 +2206,7 @@ non_btrfs_freq(const char *path)
 #ifdef HAVE_BTRFSUTIL_H
 	enum btrfs_util_error	e;
 
-	e = btrfs_util_is_subvolume(path);
+	e = btrfs_util_subvolume_is_valid(path);
 	if (e != BTRFS_UTIL_ERROR_NOT_BTRFS)
 		return;
 #endif
@@ -5190,7 +5190,7 @@ snapshot_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	e = btrfs_util_create_snapshot(f.path, newf.path, 0, NULL, NULL);
+	e = btrfs_util_subvolume_snapshot(f.path, newf.path, 0, NULL, NULL);
 	if (e == BTRFS_UTIL_OK)
 		add_to_flist(FT_SUBVOL, id, parid, 0);
 	if (v) {
@@ -5255,7 +5255,7 @@ subvol_create_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	e = btrfs_util_create_subvolume(f.path, 0, NULL, NULL);
+	e = btrfs_util_subvolume_create(f.path, 0, NULL, NULL);
 	if (e == BTRFS_UTIL_OK)
 		add_to_flist(FT_SUBVOL, id, parid, 0);
 	if (v) {
@@ -5287,7 +5287,7 @@ subvol_delete_f(opnum_t opno, long r)
 		free_pathname(&f);
 		return;
 	}
-	e = btrfs_util_delete_subvolume(f.path, 0);
+	e = btrfs_util_subvolume_delete(f.path, 0);
 	check_cwd();
 	if (e == BTRFS_UTIL_OK) {
 		oldid = fep->id;
