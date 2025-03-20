@@ -164,7 +164,7 @@ logical-resolve [-Pvo] [-s <bufsize>] <logical> <path>
                 to be obtained by other means.
         -s <bufsize>
                 set internal buffer for storing the file names to *bufsize*, default is 64KiB,
-                maximum 16MiB.  Buffer sizes over 64Kib require kernel support for the V2 ioctl
+                maximum 16MiB.  Buffer sizes over 64KiB require kernel support for the V2 ioctl
                 (added in 4.15).
         -v
                 (deprecated) alias for global *-v* option
@@ -225,7 +225,7 @@ list-chunks [options] <path>
         --sort MODE
                 sort by a column (ascending):
 
-                MODE is a coma separated list of:
+                MODE is a comma separated list of:
 
                         *devid* - by device id (default, with pstart)
 
@@ -272,7 +272,7 @@ map-swapfile [options] <file>
         ``Options``
 
         -r|--resume-offset
-                print only the value suitable as resume offset for file */sys/power/resume_offset*
+                print only the value suitable as resume offset for file :file:`/sys/power/resume_offset`
 
 min-dev-size [options] <path>
         (needs root privileges)

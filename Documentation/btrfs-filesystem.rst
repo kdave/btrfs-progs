@@ -12,7 +12,7 @@ DESCRIPTION
 :command:`btrfs filesystem` is used to perform several whole filesystem level tasks,
 including all the regular filesystem operations like resizing, space stats,
 label setting/getting, and defragmentation. There are other whole filesystem
-tasks like scrub or balance that are grouped in separate commands.
+tasks like scrub or balance that are grouped in separate commands (:doc:`btrfs-scrub`, :doc:`btrfs-balance`).
 
 SUBCOMMAND
 ----------
@@ -83,7 +83,7 @@ df [options] <path>
 defragment [options] <file>|<dir> [<file>|<dir>...]
         Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 
-        If *-r* is passed, files in dir will be defragmented recursively (not
+        If *-r* is passed, files in *dir* will be defragmented recursively (not
         descending to subvolumes, mount points and directory symlinks).
         The start position and the number of bytes to defragment can be specified by
         start and length using *-s* and *-l* options below.
@@ -117,6 +117,13 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 algorithm, *zlib* (default), *lzo* or *zstd*. Currently it's not possible to select no
                 compression. See also section *EXAMPLES*.
 
+        -L|--level <level>
+                Since kernel 6.14 the compresison can also take the level parameter which will be used
+                only for the defragmentation and overrides the eventual mount option compression level.
+                Valid levels depend on the compression algorithms: *zlib*
+                1..9, *lzo* does not have any levels, *zstd* the standard levels 1..15 and also the
+                realtime -1..-15.
+
         -r
                 defragment files recursively in given directories, does not descend to
                 subvolumes or mount points
@@ -143,6 +150,7 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 Perform defragmentation in the range in SIZE steps and flush (*-f*) after each one.
                 The range is default (the whole file) or given by *-s* and *-l*, split into
                 the steps or done in one go if the step is larger. Minimum range size is 256KiB.
+                With verbosity options the progress of defragmentation will be also printed.
 
         -v
                 (deprecated) alias for global *-v* option
