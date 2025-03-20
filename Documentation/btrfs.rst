@@ -4,7 +4,7 @@ btrfs(8)
 SYNOPSIS
 --------
 
-**btrfs** [global] <group> [<group>...] <command> [<args>]
+**btrfs** [global options] <group> [<group>...] <command> [options] [<args>]
 
 DESCRIPTION
 -----------
@@ -43,11 +43,17 @@ All numbers will be formatted according to the rules of the `C` locale
 (ignoring the shell locale, see :manref:`locale(7)`).
 
 For an overview of a given command use :command:`btrfs command --help`
-or :command:`btrfs [command...] --help --full` to print all available options.
+or :command:`btrfs [command...] help --full` to print all available options
+for all commands.
 
 There are global options that are passed between *btrfs* and the *group* name
 and affect behaviour not specific to the command, e.g. verbosity or the type
-of the output.
+of the output:
+
+.. code-block:: bash
+
+        btrfs -q subvolume create ...
+        btrfs --dry-run subvolume create ...
 
 --format <format>
         if supported by the command, print subcommand output in that format (text, json)

@@ -37,7 +37,7 @@ static const char * const btrfs_cmd_group_usage[] = {
 	 * The main command group is the only one that takes options so this
 	 * needs the newlines and manual formatting.
 	 */
-	"btrfs [global] <group> [<group>...] <command> [<args>]\n"
+	"btrfs [global options] <group> [<group>...] <command> [options] [<args>]\n"
 	"\n"
 	"Global options:\n"
 	"  --format <format> if supported, print subcommand output in that format (text, json)\n"
@@ -48,12 +48,19 @@ static const char * const btrfs_cmd_group_usage[] = {
 	"\n"
 	"Options for the main command only:\n"
 	"  --help            print condensed help for all subcommands\n"
-	"  --version         print version string",
+	"  --version         print version string and built-in features",
 	NULL
 };
 
 static const char btrfs_cmd_group_info[] =
-	"Use --help as an argument for information on a specific group or command.";
+	"Use --help as an option for information about a group or command:\n"
+	"  btrfs subvolume --help\n"
+	"  btrfs subvolume create --help\n"
+	"\n"
+	"Global options like -q/-v must follow the tool name 'btrfs':\n"
+	"  btrfs -q subvolume create ...\n"
+	"  btrfs --dry-run subvolume create ..."
+	;
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -363,7 +370,6 @@ static void handle_special_globals(int shift, int argc, char **argv)
 			usage_command_group(&btrfs_cmd_group, true, false);
 		else
 			cmd_execute(&cmd_struct_help, argc, argv);
-		print_output_formats(stdout);
 		exit(0);
 	}
 
