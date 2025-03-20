@@ -627,7 +627,6 @@ Notable fixes or changes:
 
 - extent map shrinker, allow memory consumption reduction for direct io loads
 
-
 6.11 (Sep 2024)
 ^^^^^^^^^^^^^^^
 
@@ -702,6 +701,33 @@ Pull requests:
 `v6.12-rc7 <https://git.kernel.org/linus/9183e033ec4f8bdac778070ebccdd41727da2305>`__,
 `v6.12 <https://git.kernel.org/linus/c9dd4571ad38654f26c07ff2b7c7dba03301fc76>`__
 
+User visible changes:
+
+- the FSTRIM ioctl updates the processed range even after an error or interruption
+
+- cleaner thread is woken up in SYNC ioctl instead of waking the transaction
+  thread that can take some delay before waking up the cleaner, this can speed
+  up cleaning of deleted subvolumes
+
+- print an error message when opening a device fail, e.g. when it's unexpectedly read-only
+
+Core changes:
+
+- improved extent map handling in various ways (locking, iteration, ...)
+- new assertions and locking annotations
+- raid-stripe-tree locking fixes
+- use xarray for tracking dirty qgroup extents, switched from rb-tree
+- turn the subpage test to compile-time condition if possible (e.g.  on x86_64
+  with 4K pages), this allows to skip a lot of ifs and remove dead code
+- more preparatory work for compression in subpage mode
+
+Cleanups and refactoring:
+
+- folio API conversions, many simple cases where page is passed so switch it to
+  folios
+- more subpage code refactoring, update page state bitmap processing
+- introduce auto free for btrfs_path structure, use for the simple cases
+
 6.13 (Jan 2025)
 ^^^^^^^^^^^^^^^
 
@@ -714,6 +740,128 @@ Pull requests:
 `v6.13-rc7 <https://git.kernel.org/linus/643e2e259c2b25a2af0ae4c23c6e16586d9fd19c>`__,
 `v6.13 <https://git.kernel.org/linus/ed8fd8d5dd4aa250e18152b80cbac24de7335488>`__
 
+User visible changes:
+
+- wire encoded read (ioctl) to io_uring commands, this can be used on itself,
+  in the future this will allow 'send' to be asynchronous. As a consequence,
+  the encoded read ioctl can also work in non-blocking mode
+
+- new ioctl to wait for cleaned subvolumes, no need to use the generic and
+  root-only SEARCH_TREE ioctl, will be used by "btrfs subvol sync"
+
+- recognize different paths/symlinks for the same devices and don't report them
+  during rescanning, this can be observed with LVM or DM
+
+- seeding device use case change, the sprout device (the one capturing new
+  writes) will not clear the read-only status of the super block; this prevents
+  accumulating space from deleted snapshots
+
+- swapfile activation updates that are nice to CPU and activation is interruptible
+
+Performance improvements:
+
+- reduce lock contention when traversing extent buffers
+- reduce extent tree lock contention when searching for inline backref
+- switch from rb-trees to xarray for delayed ref tracking, improvements due to
+  better cache locality, branching factors and more compact data structures
+- enable extent map shrinker again (prevent memory exhaustion under some types
+  of IO load), reworked to run in a single worker thread (there used to be
+  problems causing long stalls under memory pressure)
+
+Core changes:
+
+- raid-stripe-tree feature updates:
+   - make device replace and scrub work
+   - implement partial deletion of stripe extents
+   - new selftests
+
+- split the config option BTRFS_DEBUG and add EXPERIMENTAL for
+  features that are experimental or with known problems so we don't
+  misuse debugging config for that
+
+- subpage mode updates (sector < page):
+  - update compression implementations
+  - update writepage, writeback
+
+- continued folio API conversions, buffered writes
+- make buffered write copy one page at a time, preparatory work for
+  future integration with large folios, may cause performance drop
+- proper locking of root item regarding starting send
+- error handling improvements
+
+- code cleanups and refactoring:
+
+  - dead code removal
+  - unused parameter reduction
+  - lockdep assertions
+
+6.14 (Mar 2025)
+^^^^^^^^^^^^^^^
+
+Pull requests:
+`v6.14-rc1 <https://git.kernel.org/linus/0eb4aaa230d725fa9b1cd758c0f17abca5597af6>`__,
+`v6.14-rc2 <https://git.kernel.org/linus/92514ef226f511f2ca1fb1b8752966097518edc0>`__,
+`v6.14-rc3 <https://git.kernel.org/linus/945ce413ac14388219afe09de84ee08994f05e53>`__,
+`v6.14-rc5 <https://git.kernel.org/linus/cc8a0934d099b8153fc880a3588eec4791a7bccb>`__,
+`v6.14-rc6 <https://git.kernel.org/linus/6ceb6346b0436ea6591c33ab6ab22e5077ed17e7>`__,
+
+
+User visible changes, features:
+
+- rebuilding of the free space tree at mount time is done in more transactions,
+  fix potential hangs when the transaction thread is blocked due to large
+  amount of block groups
+
+- more read IO balancing strategies (experimental config), add two new ways how
+  to select a device for read if the profiles allow that (all RAID1*), the
+  current default selects the device by pid which is good on average but less
+  performant for single reader workloads
+
+  - select preferred device for all reads (namely for testing)
+  - round-robin, balance reads across devices relevant for the requested IO range
+
+  - add encoded write ioctl support to io_uring (read was added in
+    6.12), basis for writing send stream using that instead of
+    syscalls, non-blocking mode is not yet implemented
+
+  - support FS_IOC_READ_VERITY_METADATA, applications can use the
+    metadata to do their own verification
+
+  - pass inode's i_write_hint to bios, for parity with other
+    filesystems, ioctls F_GET_RW_HINT/F_SET_RW_HINT
+
+Core:
+
+- in zoned mode: allow to directly reclaim a block group by simply
+  resetting it, then it can be reused and another block group does
+  not need to be allocated
+
+- super block validation now also does more comprehensive sys array
+  validation, adding it to the points where superblock is validated
+  (post-read, pre-write)
+
+- subpage mode fixes:
+   - fix double accounting of blocks due to some races
+   - improved or fixed error handling in a few cases (compression,
+     delalloc)
+
+- raid stripe tree:
+   - fix various cases with extent range splitting or deleting
+   - implement hole punching to extent range
+   - reduce number of stripe tree lookups during bio submission
+   - more self-tests
+
+- updated self-tests (delayed refs)
+
+- error handling improvements
+
+- cleanups, refactoring
+   - remove rest of backref caching infrastructure from relocation,
+     not needed anymore
+   - error message updates
+   - remove unnecessary calls when extent buffer was marked dirty
+   - unused parameter removal
+   - code moved to new files
 
 5.x
 ---
