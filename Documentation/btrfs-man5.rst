@@ -21,6 +21,7 @@ tools.  Currently covers:
 #. filesystems with multiple block group profiles
 #. seeding device
 #. RAID56 status and recommended practices
+#. glossary
 #. storage model, hardware considerations
 
 .. _man-btrfs5-mount-options:
@@ -440,6 +441,12 @@ The striping happens on all available devices (at the time the chunks were
 allocated), so in case a new device is added it may not be utilized
 immediately and would require a rebalance. A fixed configured stripe width is
 not implemented.
+
+
+GLOSSARY
+--------
+
+.. include:: ch-glossary.rst
 
 
 STORAGE MODEL, HARDWARE CONSIDERATIONS
