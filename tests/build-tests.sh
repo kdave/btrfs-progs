@@ -42,13 +42,14 @@ buildme() {
 }
 
 buildme_common() {
+	echo "::group::$CFLAGS configure $conf $@"
 	make clean-all
-
 	./autogen.sh && CFLAGS="$CFLAGS" ./configure "$conf" $1 || die "configure not working with: $@"
 	$make clean
 	$make $opts $target
 	check_result "$?"
 	echo "VERDICT: $verdict"
+	echo "::endgroup::"
 }
 
 buildme_cflags() {
