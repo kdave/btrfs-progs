@@ -37,9 +37,14 @@ $str"
 }
 
 buildme() {
+	buildme_common
+	buildme_common --enable-experimental
+}
+
+buildme_common() {
 	make clean-all
 
-	./autogen.sh && CFLAGS="$CFLAGS" configure "$conf" || die "configure not working with: $@"
+	./autogen.sh && CFLAGS="$CFLAGS" ./configure "$conf" $1 || die "configure not working with: $@"
 	$make clean
 	$make $opts $target
 	check_result "$?"
@@ -115,10 +120,13 @@ build_make_targets
 conf='--disable-python'
 build_make_targets
 
-conf='--with-convert=ext2'
+conf='--disable-zstd'
 build_make_targets
 
-conf='--enable-zstd'
+conf='--disable-lzo'
+build_make_targets
+
+conf='--with-convert=ext2'
 build_make_targets
 
 conf='--with-crypto=libgcrypt'
