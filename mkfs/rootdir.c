@@ -17,6 +17,7 @@
  */
 
 #include "kerncompat.h"
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
 #include <dirent.h>
@@ -25,6 +26,7 @@
 #include <ftw.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #if COMPRESSION_ZSTD
@@ -34,6 +36,9 @@
 #include <zlib.h>
 #if COMPRESSION_LZO
 #include <lzo/lzo1x.h>
+#endif
+#ifdef HAVE_LINUX_FSVERITY_H
+#include <linux/fsverity.h>
 #endif
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/accessors.h"
@@ -157,6 +162,7 @@ static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
 static u64 default_subvol_id;
 static enum btrfs_compression_type g_compression;
 static u64 g_compression_level;
+static bool g_fsverity_enabled = true;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -1068,6 +1074,142 @@ out:
 }
 #endif
 
+static void hd(const char *id, int ofs, char *buf, int len) {
+	printf("HEX %s/%d (%d bytes)", id, ofs, len);
+	for (int i = 0; i < len; i++)
+		printf(" %02x", (unsigned char) buf[i]);
+	printf("\n");
+}
+
+#ifdef HAVE_LINUX_FSVERITY_H
+/* Read as much data as possible into source->buf.  Returns how many
+ * bytes were read.  If the return value is less than MAX_EXTENT_SIZE
+ * then we've definitely hit the end, but if it's equal, then another
+ * call is required to check.
+ */
+static ssize_t read_fsverity_metadata(const struct source_descriptor *source,
+				      uint32_t metadata_type, size_t start_offset)
+{
+	size_t n_bytes = 0;
+
+	while (n_bytes < MAX_EXTENT_SIZE) {
+		struct fsverity_read_metadata_arg arg = {
+			.metadata_type = metadata_type,
+			.buf_ptr = (uint64_t) &source->buf[n_bytes],
+			.length = MAX_EXTENT_SIZE - n_bytes,
+			.offset = start_offset + n_bytes,
+		};
+		ssize_t ret;
+
+		ret = ioctl(source->fd, FS_IOC_READ_VERITY_METADATA, &arg);
+		if (ret < 0) {
+			if (errno == EINTR)
+				continue;
+			return -errno;
+		} else if (ret == 0) {
+			break;
+		} else {
+			hd("ioctl", arg.offset, (char*) arg.buf_ptr, ret);
+			n_bytes += ret;
+		}
+	}
+
+	hd("RA", 0, source->buf, n_bytes);
+	return n_bytes;
+}
+
+static int add_file_item_fsverity(struct btrfs_trans_handle *trans,
+				  struct btrfs_root *root,
+				  struct btrfs_inode_item *btrfs_inode,
+				  u64 objectid,
+				  const struct source_descriptor *source)
+{
+	int ret;
+	ssize_t s;
+
+	/* First check for a descriptor */
+	s = read_fsverity_metadata(source, FS_VERITY_METADATA_TYPE_DESCRIPTOR, 0);
+	if (s < 0) {
+		/* ENODATA means that the file doesn't have fs-verity
+		 * enabled, so we don't need to do anything. */
+		if (errno == ENODATA)
+			return 0;
+		error("cannot read fs-verity descriptor: %m");
+		return s;
+	} else if (s == MAX_EXTENT_SIZE) {
+		error("fs-verity descriptor is implausibly large");
+		return -E2BIG;
+	}
+
+	/* Otherwise we have a descriptor.  Write the header and the
+	 * descriptor. */
+	struct btrfs_key key = {
+		.objectid = objectid,
+		.type = BTRFS_VERITY_DESC_ITEM_KEY,
+		.offset = 0,
+	};
+	struct btrfs_verity_descriptor_item descr_item = { };
+	btrfs_set_stack_verity_descriptor_size(&descr_item, s);
+	ret = btrfs_insert_item(trans, root, &key, &descr_item, sizeof descr_item);
+	if (ret)
+		return ret;
+
+	key.offset = 1;
+	ret = btrfs_insert_item(trans, root, &key, source->buf, s);
+	if (ret)
+		return ret;
+
+	assert (fs_block_size == 4096);
+
+	/* Now try to copy over the Merkle tree content.  'key.offset'
+	 * must always be a multiple of the block size of the created
+	 * filesystem.  It is used both as an offset into the fs-verity
+	 * data and also as the item index.
+	 */
+	key.type = BTRFS_VERITY_MERKLE_ITEM_KEY;
+	key.offset = 0;
+	do {
+		s = read_fsverity_metadata(source,
+					   FS_VERITY_METADATA_TYPE_MERKLE_TREE,
+					   key.offset);
+		if (s < 0)
+			return s;
+		if (s % fs_block_size != 0) {
+			error("read invalid partial fs-verity merkle tree block");
+			return -EINVAL;
+		}
+
+		/* We store a page at a time */
+		for (int i = 0; i < s; i += fs_block_size) {
+			hd("insert", key.offset, source->buf + i, fs_block_size);
+			ret = btrfs_insert_item(trans, root, &key,
+						source->buf + i, fs_block_size);
+			if (ret < 0)
+				return ret;
+			key.offset += fs_block_size;
+		}
+	} while (s == MAX_EXTENT_SIZE);
+
+	/* Set the correct flag on the inode.
+	 *
+	 * In btrfs_inode_item the flags and ro_flags fields from the
+	 * inode are combined into a single 64bit 'flags' field with the
+	 * ro_flags occupying the top 32 bits.  Make sure we shift it.
+	 */
+	u64 flags = btrfs_stack_inode_flags(btrfs_inode);
+	flags |= ((uint64_t) BTRFS_INODE_RO_VERITY) << 32;
+	btrfs_set_stack_inode_flags(btrfs_inode, flags);
+
+	/* Ensure the feature flag is set on the superblock as well... */
+	u64 features = btrfs_super_compat_ro_flags(trans->fs_info->super_copy);
+	features |= BTRFS_FEATURE_COMPAT_RO_VERITY;
+	btrfs_set_super_compat_ro_flags(trans->fs_info->super_copy, features);
+
+	/* And done! */
+	return 0;
+}
+#endif
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
@@ -1082,7 +1224,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	struct source_descriptor source;
 	int fd;
 
-	if (st->st_size == 0)
+	if (st->st_size == 0) // TODO: may want to fs-verity the empty file anyway
 		return 0;
 
 	fd = open(path_name, O_RDONLY);
@@ -1223,11 +1365,24 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	source.comp_buf = comp_buf;
 	source.wrkmem = wrkmem;
 
+	if (g_fsverity_enabled) {
+#ifdef HAVE_LINUX_FSVERITY_H
+		ret = add_file_item_fsverity(trans, root, btrfs_inode, objectid,
+					     &source);
+#else
+		error("verity support not compiled in");
+		ret = -EINVAL;
+#endif
+		if (ret < 0)
+			goto end;
+	}
+
+
 	while (file_pos < st->st_size) {
 		ret = add_file_item_extent(trans, root, btrfs_inode, objectid,
 					   &source, file_pos);
 		if (ret < 0)
-			break;
+			goto end;
 
 		file_pos += ret;
 	}
@@ -1640,7 +1795,7 @@ static int set_default_subvolume(struct btrfs_trans_handle *trans)
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
-			enum btrfs_compression_type compression,
+			bool fsverity, enum btrfs_compression_type compression,
 			unsigned int compression_level)
 {
 	int ret;
@@ -1688,6 +1843,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 	g_subvols = subvols;
 	g_compression = compression;
 	g_compression_level = compression_level;
+	g_fsverity_enabled = fsverity;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
 	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
