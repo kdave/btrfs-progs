@@ -98,6 +98,23 @@ more CPU the system performance is affected.
 Level 0 always maps to the default. The compression level does not affect
 compatibility.
 
+Exceptions
+----------
+
+Any file that has been touched by the *fallocate* system call will always be
+excepted from compression even if *force-compress* mount option is used.
+
+The reason for this is that a successful *fallocate* call must guarantee that
+future writes to the allocated range will not fail because of lack of space.
+This is difficult to guarantee in a COW filesystem. To reduce the chances of
+it happening, btrfs preallocates space and disables compression for the file.
+
+As a workaround, one can trigger a compressed rewrite for such a file using the
+*btrfs defrag* command. Be aware that if the file is touched again by the
+*fallocate* system call, it will be excepted again from compression for all the
+new data written to it.
+
+
 Incompressible data
 -------------------
 
