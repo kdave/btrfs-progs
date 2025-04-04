@@ -104,10 +104,11 @@ Incompressible data
 Files with already compressed data or with data that won't compress well with
 the CPU and memory constraints of the kernel implementations are using a simple
 decision logic. If the first portion of data being compressed is not smaller
-than the original, the compression of the file is disabled -- unless the
-filesystem is mounted with *compress-force*. In that case compression will
-always be attempted on the file only to be later discarded. This is not optimal
-and subject to optimizations and further development.
+than the original, the compression of the whole file is disabled. Unless the
+filesystem is mounted with *compress-force* in which case btrfs will try
+compressing every block, falling back to storing the uncompressed version for
+each block that ends up larger after compression. This is not optimal and
+subject to optimizations and further development.
 
 If a file is identified as incompressible, a flag is set (*NOCOMPRESS*) and it's
 sticky. On that file compression won't be performed unless forced. The flag
