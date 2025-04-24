@@ -1,0 +1,40 @@
+#include "include/config.h"
+
+#ifdef __ANDROID__
+
+/* Workaround for `pthread_cancel()` in Android, using `pthread_kill()` instead,
+ * as Android NDK does not support `pthread_cancel()`.
+ */
+
+#include <string.h>
+#include <signal.h>
+#include "btrfs_pthread.h"
+
+int pthread_setcanceltype(int type, int *oldtype) { return 0; }
+int pthread_setcancelstate(int state, int *oldstate) { return 0; }
+int pthread_cancel(pthread_t thread_id) {
+	int status;
+	if ((status = btrfs_set_thread_exit_handler()) == 0) {
+		status = pthread_kill(thread_id, SIGUSR1);
+	}
+	return status;
+}
+
+void btrfs_thread_exit_handler(int sig) {
+	pthread_exit(0);
+}
+
+int btrfs_set_thread_exit_handler() {
+	int rc;
+	struct sigaction actions;
+
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = btrfs_thread_exit_handler;
+
+	rc = sigaction(SIGUSR1, &actions, NULL);
+	return rc;
+}
+
+#endif

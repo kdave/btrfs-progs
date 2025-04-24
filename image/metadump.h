@@ -18,7 +18,7 @@
 #define __BTRFS_IMAGE_METADUMP_H__
 
 #include "kerncompat.h"
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"

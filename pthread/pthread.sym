@@ -1,0 +1,8 @@
+PTHREAD_0.1 {
+global:
+	pthread_setcanceltype;			/* used */
+	pthread_setcancelstate;			/* used */
+	pthread_cancel;				/* used */
+local:
+	*;
+};

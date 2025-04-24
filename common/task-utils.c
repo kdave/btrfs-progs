@@ -15,7 +15,7 @@
  */
 
 #include <sys/timerfd.h>
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>

@@ -19,7 +19,7 @@
 
 #include "kerncompat.h"
 #include <sys/types.h>
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "convert/common.h"
 

@@ -19,7 +19,7 @@
 
 #include "kerncompat.h"
 #include <time.h>
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 
 struct periodic_info {
 	int timer_fd;
