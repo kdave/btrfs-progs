@@ -878,9 +878,27 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 	}
 
 	/* Skip additional sort if nothing defined by user. */
-	if (comp.count > 0)
+	if (comp.count > 0) {
+#ifdef __ANDROID__
+		for (i = comp.count - 1; i >= 0; i--) {
+			if (comp.id[i] == CHUNK_SORT_PSTART) {
+				qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_cmp_t)cmp_cse_pstart);
+			}
+			else if (comp.id[i] == CHUNK_SORT_LSTART) {
+				qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_cmp_t)cmp_cse_lstart);
+			}
+			else if (comp.id[i] == CHUNK_SORT_USAGE) {
+				qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_cmp_t)cmp_cse_usage);
+			}
+			else if (comp.id[i] == CHUNK_SORT_LENGTH) {
+				qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), (sort_cmp_t)cmp_cse_length);
+			}
+		}
+#else
 		qsort_r(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
 			(sort_r_cmp_t)compare_cmp_multi, &comp);
+#endif
+	}
 
 	col_count = 9;
 	/* Two rows for header and separator. */
