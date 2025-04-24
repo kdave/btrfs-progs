@@ -45,6 +45,7 @@
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/volumes.h"
 #include "common/defs.h"
+#include "common/compat.h"
 #include "common/messages.h"
 #include "common/utils.h"
 #include "common/open-utils.h"

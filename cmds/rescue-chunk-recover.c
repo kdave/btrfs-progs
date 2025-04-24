@@ -37,11 +37,16 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/extent_io.h"
 #include "common/internal.h"
+#include "common/compat.h"
 #include "common/messages.h"
 #include "common/extent-cache.h"
 #include "common/utils.h"
 #include "cmds/rescue.h"
 #include "check/common.h"
+
+#ifdef __ANDROID__
+#include <stdatomic.h>
+#endif
 
 struct recover_control {
 	int verbose;
@@ -82,6 +87,9 @@ struct device_scan {
 	struct btrfs_device *dev;
 	int fd;
 	u64 bytenr;
+#ifdef __ANDROID__
+	atomic_flag thread_running;
+#endif
 };
 
 static struct extent_record *btrfs_new_extent_record(struct extent_buffer *eb)
@@ -761,8 +769,12 @@ static int scan_one_device(void *dev_scan_struct)
 		return 1;
 
 	buf = malloc(sizeof(*buf) + rc->nodesize);
-	if (!buf)
+	if (!buf) {
+#ifdef __ANDROID__
+		atomic_flag_clear(&dev_scan->thread_running);
+#endif
 		return -ENOMEM;
+	}
 	buf->len = rc->nodesize;
 
 	bytenr = 0;
@@ -823,6 +835,9 @@ next_node:
 out:
 	close(fd);
 	free(buf);
+#ifdef __ANDROID__
+	atomic_flag_clear(&dev_scan->thread_running);
+#endif
 	return ret;
 }
 
@@ -869,6 +884,9 @@ static int scan_devices(struct recover_control *rc)
 		dev_scans[devidx].dev = dev;
 		dev_scans[devidx].fd = fd;
 		dev_scans[devidx].bytenr = -1;
+#ifdef __ANDROID__
+		atomic_flag_test_and_set(&dev_scans[devidx].thread_running);
+#endif
 		devidx++;
 	}
 
@@ -887,8 +905,15 @@ static int scan_devices(struct recover_control *rc)
 		for (i = 0; i < devidx; i++) {
 			if (dev_scans[i].bytenr == -1)
 				continue;
+#ifdef __ANDROID__
+			if (atomic_flag_test_and_set(&dev_scans[i].thread_running))
+				ret = EBUSY;
+			else
+				ret = pthread_join(t_scans[i], (void **)&t_rets[i]);
+#else
 			ret = pthread_tryjoin_np(t_scans[i],
 						 (void **)&t_rets[i]);
+#endif
 			if (ret == EBUSY) {
 				all_done = false;
 				continue;

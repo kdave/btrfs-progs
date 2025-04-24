@@ -18,6 +18,7 @@
 #define __COMMON_SORT_UTILS_H__
 
 #include <stdbool.h>
+#include "common/compat.h"
 
 /*
  * Example:
