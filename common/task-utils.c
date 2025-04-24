@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "common/task-utils.h"
+#include "common/compat.h"
 
 struct task_info *task_init(void *(*threadfn)(void *), int (*postfn)(void *),
 			    void *thread_private)
