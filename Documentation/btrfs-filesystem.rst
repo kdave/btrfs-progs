@@ -118,7 +118,7 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 compression. See also section *EXAMPLES*.
 
         -L|--level <level>
-                Since kernel 6.14 the compresison can also take the level parameter which will be used
+                Since kernel 6.15 the compresison can also take the level parameter which will be used
                 only for the defragmentation and overrides the eventual mount option compression level.
                 Valid levels depend on the compression algorithms: *zlib*
                 1..9, *lzo* does not have any levels, *zstd* the standard levels 1..15 and also the
