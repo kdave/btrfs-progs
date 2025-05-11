@@ -18,6 +18,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/backref.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "cmds/rescue.h"
@@ -159,6 +160,50 @@ static int iterate_one_csum_item(struct btrfs_fs_info *fs_info, struct btrfs_pat
 	return ret;
 }
 
+static int print_filenames(u64 ino, u64 offset, u64 rootid, void *ctx)
+{
+	struct btrfs_fs_info *fs_info = ctx;
+	struct btrfs_root *root;
+	struct btrfs_key key;
+	struct inode_fs_paths *ipath;
+	struct btrfs_path path = { 0 };
+	int ret;
+
+	key.objectid = rootid;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(fs_info, &key);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		errno = -ret;
+		error("failed to get subvolume %llu: %m", rootid);
+		return ret;
+	}
+	ipath = init_ipath(128 * BTRFS_PATH_NAME_MAX, root, &path);
+	if (IS_ERR(ipath)) {
+		ret = PTR_ERR(ipath);
+		errno = -ret;
+		error("failed to initialize ipath: %m");
+		return ret;
+	}
+	ret = paths_from_inode(ino, ipath);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to resolve root %llu ino %llu to paths: %m", rootid, ino);
+		goto out;
+	}
+	for (int i = 0; i < ipath->fspath->elem_cnt; i++)
+		pr_verbose(LOG_DEFAULT, "  (subvolume %llu)/%s\n", rootid,
+			   (char *)ipath->fspath->val[i]);
+	if (ipath->fspath->elem_missed)
+		pr_verbose(LOG_DEFAULT, "  (subvolume %llu) %d files not printed\n",
+			   rootid, ipath->fspath->elem_missed);
+out:
+	free_ipath(ipath);
+	return ret;
+}
+
 static int iterate_csum_root(struct btrfs_fs_info *fs_info, struct btrfs_root *csum_root)
 {
 	struct btrfs_path path = { 0 };
@@ -198,9 +243,10 @@ next:
 	return ret;
 }
 
-static void report_corrupted_blocks(void)
+static void report_corrupted_blocks(struct btrfs_fs_info *fs_info)
 {
 	struct corrupted_block *entry;
+	struct btrfs_path path = { 0 };
 
 	if (list_empty(&corrupted_blocks)) {
 		pr_verbose(LOG_DEFAULT, "no data checksum mismatch found\n");
@@ -209,6 +255,7 @@ static void report_corrupted_blocks(void)
 
 	list_for_each_entry(entry, &corrupted_blocks, list) {
 		bool has_printed = false;
+		int ret;
 
 		pr_verbose(LOG_DEFAULT, "logical=%llu corrtuped mirrors=", entry->logical);
 		/* Open coded bitmap print. */
@@ -224,7 +271,14 @@ static void report_corrupted_blocks(void)
 				has_printed=true;
 			}
 		}
-		pr_verbose(LOG_DEFAULT, "\n");
+		pr_verbose(LOG_DEFAULT, " affected files:\n");
+		ret = iterate_inodes_from_logical(entry->logical, fs_info, &path,
+						  print_filenames, fs_info);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to iterate involved files: %m");
+			break;
+		}
 	}
 }
 
@@ -280,7 +334,7 @@ int btrfs_recover_fix_data_checksum(const char *path, enum btrfs_fix_data_checks
 		errno = -ret;
 		error("failed to iterate csum tree: %m");
 	}
-	report_corrupted_blocks();
+	report_corrupted_blocks(fs_info);
 out_close:
 	free_corrupted_blocks();
 	close_ctree_fs_info(fs_info);
