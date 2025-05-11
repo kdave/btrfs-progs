@@ -50,6 +50,25 @@ fix-device-size <device>
 
                 WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]
 
+fix-data-checksum <device>
+	fix data checksum mismatch
+
+	There is a long existing problem that if a user space program is doing
+	direct IO and modifies the buffer before the write back finished, it
+	can lead to data checksum mismatches.
+
+	This problem is known but not fixed until upstream release v6.15
+	(backported to older kernels). So it's possible to hit false data
+	checksum mismatch for any long running btrfs.
+
+	In that case this program can be utilized to repair such problem.
+
+        ``Options``
+
+	-r|--readonly
+		readonly mode, only scan for and report data checksum mismatches,
+		do not repair
+
 .. _man-rescue-clear-ino-cache:
 
 clear-ino-cache <device>
