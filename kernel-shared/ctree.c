@@ -1246,6 +1246,17 @@ static void reada_for_search(struct btrfs_fs_info *fs_info,
 	}
 }
 
+/*
+ * Find the first key in @fs_root that matches all the following conditions:
+ *
+ * - key.obojectid == @iobjectid
+ * - key.type == @key_type
+ * - key.offset >= ioff
+ *
+ * Return 0 if such key can be found, and @found_key is updated.
+ * Return >0 if no such key can be found.
+ * Return <0 for critical errors.
+ */
 int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *found_path,
 		u64 iobjectid, u64 ioff, u8 key_type,
 		struct btrfs_key *found_key)
@@ -1279,11 +1290,10 @@ int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *found_path,
 	}
 
 	btrfs_item_key_to_cpu(eb, found_key, path->slots[0]);
-	if (found_key->type != key.type ||
-			found_key->objectid != key.objectid) {
+	if (found_key->type != key.type || found_key->objectid != key.objectid)
 		ret = 1;
-		goto out;
-	}
+	else
+		ret = 0;
 
 out:
 	if (path != found_path)
