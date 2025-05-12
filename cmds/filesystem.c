@@ -259,21 +259,6 @@ static int uuid_search(struct btrfs_fs_devices *fs_devices, const char *search)
 	return 0;
 }
 
-/*
- * Sort devices by devid, ascending
- */
-static int cmp_device_id(void *priv, struct list_head *a,
-		struct list_head *b)
-{
-	const struct btrfs_device *da = list_entry(a, struct btrfs_device,
-			dev_list);
-	const struct btrfs_device *db = list_entry(b, struct btrfs_device,
-			dev_list);
-
-	return da->devid < db->devid ? -1 :
-		da->devid > db->devid ? 1 : 0;
-}
-
 static void splice_device_list(struct list_head *seed_devices,
 			       struct list_head *all_devices)
 {

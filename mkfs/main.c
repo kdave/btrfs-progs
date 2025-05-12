@@ -512,13 +512,6 @@ static int zero_output_file(int out_fd, u64 size)
 	return ret;
 }
 
-static int _cmp_device_by_id(void *priv, struct list_head *a,
-			     struct list_head *b)
-{
-	return list_entry(a, struct btrfs_device, dev_list)->devid -
-	       list_entry(b, struct btrfs_device, dev_list)->devid;
-}
-
 static void list_all_devices(struct btrfs_root *root, bool is_zoned)
 {
 	struct btrfs_fs_devices *fs_devices;
@@ -532,7 +525,7 @@ static void list_all_devices(struct btrfs_root *root, bool is_zoned)
 	list_for_each_entry(device, &fs_devices->devices, dev_list)
 		number_of_devices++;
 
-	list_sort(NULL, &fs_devices->devices, _cmp_device_by_id);
+	list_sort(NULL, &fs_devices->devices, cmp_device_id);
 
 	printf("Number of devices:  %d\n", number_of_devices);
 	printf("Devices:\n");
