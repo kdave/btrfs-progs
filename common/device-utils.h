@@ -58,6 +58,8 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 ssize_t btrfs_direct_pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t btrfs_direct_pwrite(int fd, const void *buf, size_t count, off_t offset);
 
+int cmp_device_id(void *priv, struct list_head *a, struct list_head *b);
+
 #ifdef BTRFS_ZONED
 static inline ssize_t btrfs_pwrite(int fd, const void *buf, size_t count,
 				   off_t offset, bool direct)
