@@ -21,7 +21,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 #include <getopt.h>
 #include <limits.h>
 #include <errno.h>

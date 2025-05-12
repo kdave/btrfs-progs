@@ -215,6 +215,7 @@ objects = \
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\
 	kernel-shared/zoned.o	\
+	pthread/btrfs_pthread.o	\
 	common/array.o		\
 	common/cpu-utils.o	\
 	common/device-scan.o	\
@@ -292,7 +293,7 @@ tune_objects = tune/main.o tune/seeding.o tune/change-uuid.o tune/change-metadat
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
-tags_files = $(addsuffix /*.[ch], . check cmds common convert crypto image include mkfs tune \
+tags_files = $(addsuffix /*.[ch], . check cmds common convert crypto image include mkfs pthread tune \
 	       kernel-lib kernel-shared kernel-shared/uapi \
 	       libbtrfs libbtrfsutil libbtrfsutil/python tests)
 
@@ -928,6 +929,7 @@ clean: $(CLEANDIRS)
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
 		libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d \
 		mkfs/*.o mkfs/.deps/*.o.d \
+		pthread/*.o pthread/.deps/*.o.d \
 		tune/*.o tune/.deps/*.o.d
 	$(Q)$(RM) -fd -- .deps */.deps */*/.deps
 	@echo "Cleaning test targets"
