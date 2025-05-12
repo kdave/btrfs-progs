@@ -692,7 +692,7 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"btrfs inspect-internal list-chunks [options] <path>",
 	"Enumerate chunks on all devices",
 	"Enumerate chunks on all devices. Chunks are the physical storage tied to a device,",
-	"striped profiles they appear multiple times for a ginve logical offset, on other",
+	"striped profiles they appear multiple times for a given logical offset, on other",
 	"profiles the correspondence is 1:1 or 1:N.",
 	"",
 	HELPINFO_UNITS_LONG,
