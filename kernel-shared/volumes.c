@@ -1688,7 +1688,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_device *device = NULL;
 	struct list_head private_devs;
-	struct list_head *dev_list = &info->fs_devices->devices;
+	struct list_head *devs = &info->fs_devices->devices;
 	struct list_head *cur;
 	u64 min_free;
 	u64 avail = 0;
@@ -1698,7 +1698,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	int ret;
 	int index;
 
-	if (list_empty(dev_list))
+	if (list_empty(devs))
 		return -ENOSPC;
 
 	ctl.type = type;
@@ -1715,7 +1715,7 @@ again:
 		return ret;
 
 	INIT_LIST_HEAD(&private_devs);
-	cur = dev_list->next;
+	cur = devs->next;
 	index = 0;
 
 	if (type & BTRFS_BLOCK_GROUP_DUP)
@@ -1737,11 +1737,11 @@ again:
 				index++;
 		} else if (avail > max_avail)
 			max_avail = avail;
-		if (cur == dev_list)
+		if (cur == devs)
 			break;
 	}
 	if (index < ctl.num_stripes) {
-		list_splice(&private_devs, dev_list);
+		list_splice(&private_devs, devs);
 		if (index >= ctl.min_stripes) {
 			ctl.num_stripes = index;
 			if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
@@ -1773,13 +1773,13 @@ again:
 	while (!list_empty(&private_devs)) {
 		device = list_entry(private_devs.next, struct btrfs_device,
 				    dev_list);
-		list_move(&device->dev_list, dev_list);
+		list_move(&device->dev_list, devs);
 	}
 	/*
 	 * All private devs moved back to @dev_list, now dev_list should not be
 	 * empty.
 	 */
-	ASSERT(!list_empty(dev_list));
+	ASSERT(!list_empty(devs));
 	*start = ctl.start;
 	*num_bytes = ctl.num_bytes;
 
