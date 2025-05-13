@@ -319,12 +319,11 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	ret = ioctl(fdmnt, BTRFS_IOC_DEV_REPLACE, &start_args);
 	if (do_not_background) {
 		if (ret < 0) {
-			error("ioctl(DEV_REPLACE_START) failed on \"%s\": %m", path);
-			if (start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
-				pr_stderr(LOG_DEFAULT, ", %s\n",
-					replace_dev_result2string(start_args.result));
+			if (start_args.result == BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
+				error("ioctl(DEV_REPLACE_START) failed on \"%s\": %m", path);
 			else
-				pr_stderr(LOG_DEFAULT, "\n");
+				error("ioctl(DEV_REPLACE_START) failed on \"%s\": %m, %s",
+				      path, replace_dev_result2string(start_args.result));
 
 			if (errno == EOPNOTSUPP)
 				warning("device replace of RAID5/6 not supported with this kernel");
