@@ -1771,8 +1771,14 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
-	if (memcmp(result, sb->csum, csum_size)) {
-		error("superblock checksum mismatch");
+	if (memcmp(result, sb->csum, csum_size) != 0) {
+		char found[BTRFS_CSUM_STRING_LEN];
+		char wanted[BTRFS_CSUM_STRING_LEN];
+
+		btrfs_format_csum(csum_type, result, found);
+		btrfs_format_csum(csum_type, (u8 *)sb->csum, wanted);
+
+		error("superblock checksum mismatch: wanted %s found %s", wanted, found);
 		return -EIO;
 	}
 	if (btrfs_super_root_level(sb) >= BTRFS_MAX_LEVEL) {
