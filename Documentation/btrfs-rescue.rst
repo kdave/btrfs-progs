@@ -72,6 +72,12 @@ fix-data-checksum <device>
 	-i|--interactive
 		interactive mode, ask for how to repair, ignore the errors by default
 
+	-m|--mirror <num>
+		use specified mirror to update the checksum item for all corrupted blocks.
+
+		The value must be >= 1, and if the corrupted block has fewer mirrors than
+		the value, the mirror number will be ``num % (num_mirrors + 1)``.
+
 .. _man-rescue-clear-ino-cache:
 
 clear-ino-cache <device>
