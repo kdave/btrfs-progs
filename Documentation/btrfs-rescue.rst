@@ -69,6 +69,9 @@ fix-data-checksum <device>
 		readonly mode, only scan and report for data checksum mismatch,
 		do no repair
 
+	-i|--interactive
+		interactive mode, ask for how to repair, ignore the error by default
+
 .. _man-rescue-clear-ino-cache:
 
 clear-ino-cache <device>
