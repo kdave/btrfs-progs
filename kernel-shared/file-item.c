@@ -112,7 +112,7 @@ fail:
 	return err;
 }
 
-static struct btrfs_csum_item *
+struct btrfs_csum_item *
 btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 		  struct btrfs_root *root,
 		  struct btrfs_path *path,
