@@ -381,7 +381,8 @@ out:
 }
 
 static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
-				    enum btrfs_fix_data_checksum_mode mode)
+				    enum btrfs_fix_data_checksum_mode mode,
+				    unsigned int mirror)
 {
 	struct corrupted_block *entry;
 	struct btrfs_path path = { 0 };
@@ -393,7 +394,6 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 	}
 
 	list_for_each_entry(entry, &corrupted_blocks, list) {
-		unsigned int mirror;
 		bool has_printed = false;
 		int ret;
 
@@ -426,6 +426,10 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 		case BTRFS_FIX_DATA_CSUMS_READONLY:
 			action = ACTION_IGNORE;
 			break;
+		case BTRFS_FIX_DATA_CSUMS_UPDATE_CSUM_ITEM:
+			action = ACTION_UPDATE_CSUM;
+			mirror = mirror % (entry->num_mirrors + 1);
+			break;
 		default:
 			UASSERT(0);
 		}
@@ -434,6 +438,7 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 		case ACTION_IGNORE:
 			break;
 		case ACTION_UPDATE_CSUM:
+			UASSERT(mirror > 0 && mirror <= entry->num_mirrors);
 			ret = update_csum_item(fs_info, entry->logical, mirror);
 			break;
 		default:
@@ -455,7 +460,8 @@ static void free_corrupted_blocks(void)
 }
 
 int btrfs_recover_fix_data_checksum(const char *path,
-				    enum btrfs_fix_data_checksum_mode mode)
+				    enum btrfs_fix_data_checksum_mode mode,
+				    unsigned int mirror)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_root *csum_root;
@@ -465,6 +471,8 @@ int btrfs_recover_fix_data_checksum(const char *path,
 	if (mode >= BTRFS_FIX_DATA_CSUMS_LAST)
 		return -EINVAL;
 
+	if (mode == BTRFS_FIX_DATA_CSUMS_UPDATE_CSUM_ITEM)
+		UASSERT(mirror > 0);
 	ret = check_mounted(path);
 	if (ret < 0) {
 		errno = -ret;
@@ -495,7 +503,7 @@ int btrfs_recover_fix_data_checksum(const char *path,
 		errno = -ret;
 		error("failed to iterate csum tree: %m");
 	}
-	report_corrupted_blocks(fs_info, mode);
+	report_corrupted_blocks(fs_info, mode, mirror);
 out_close:
 	free_corrupted_blocks();
 	close_ctree_fs_info(fs_info);
