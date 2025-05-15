@@ -20,6 +20,8 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/backref.h"
+#include "kernel-shared/transaction.h"
+#include "kernel-shared/file-item.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "cmds/rescue.h"
@@ -48,6 +50,7 @@ struct corrupted_block {
 
 enum fix_data_checksum_action_value {
 	ACTION_IGNORE,
+	ACTION_UPDATE_CSUM,
 	ACTION_LAST,
 };
 
@@ -58,6 +61,10 @@ static const struct fix_data_checksum_action {
 	[ACTION_IGNORE] = {
 		.value = ACTION_IGNORE,
 		.string = "ignore",
+	},
+	[ACTION_UPDATE_CSUM] = {
+		.value = ACTION_UPDATE_CSUM,
+		.string = "update-csum",
 	},
 };
 
@@ -258,10 +265,13 @@ next:
 }
 
 #define ASK_ACTION_BUFSIZE	(32)
-static enum fix_data_checksum_action_value ask_action()
+static enum fix_data_checksum_action_value ask_action(unsigned int num_mirrors,
+						      unsigned int *mirror_ret)
 {
+	unsigned long ret;
 	char buf[ASK_ACTION_BUFSIZE] = { 0 };
 	bool printed;
+	char *endptr;
 
 again:
 	printed = false;
@@ -269,12 +279,22 @@ again:
 		if (printed)
 			printf("/");
 		/* Mark Ignore as default */
-		if (i == ACTION_IGNORE)
+		if (i == ACTION_IGNORE) {
 			printf("<<%c>>%s", toupper(actions[i].string[0]),
 			       actions[i].string + 1);
-		else
+		} else if (i == ACTION_UPDATE_CSUM) {
+			/*
+			 * For update-csum action, we need a mirror number,
+			 * so output all valid mirrors numbers instead.
+			 */
+			for (int cur_mirror = 1; cur_mirror <= num_mirrors;
+			     cur_mirror++)
+				printf("<%u>", cur_mirror);
+		} else {
 			printf("<%c>%s", toupper(actions[i].string[0]),
 			       actions[i].string + 1);
+		}
+		printed = true;
 	}
 	printf(":");
 	fflush(stdout);
@@ -285,13 +305,79 @@ again:
 		return ACTION_IGNORE;
 	/* Check exact match or matching the initial letter. */
 	for (int i = 0; i < ACTION_LAST; i++) {
-		if (strncasecmp(buf, actions[i].string, 1) == 0 ||
-		    strncasecmp(buf, actions[i].string, ASK_ACTION_BUFSIZE) == 0)
+		if ((strncasecmp(buf, actions[i].string, 1) == 0 ||
+		     strncasecmp(buf, actions[i].string, ASK_ACTION_BUFSIZE) == 0) &&
+		     actions[i].value != ACTION_UPDATE_CSUM)
 			return actions[i].value;
 	}
-	/* No valid action found, retry. */
-	warning("invalid action, please retry");
-	goto again;
+	/* No match, check if it's some numeric string. */
+	ret = strtoul(buf, &endptr, 10);
+	if (endptr == buf || ret == ULONG_MAX) {
+		/* No valid action found, retry. */
+		warning("invalid action, please retry");
+		goto again;
+	}
+	if (ret > num_mirrors || ret == 0) {
+		warning("invalid mirror number %lu, must be in range [1, %d], please retry",
+			ret, num_mirrors);
+		goto again;
+	}
+	*mirror_ret = ret;
+	return ACTION_UPDATE_CSUM;
+}
+
+static int update_csum_item(struct btrfs_fs_info *fs_info, u64 logical,
+			    unsigned int mirror)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, logical);
+	struct btrfs_path path = { 0 };
+	struct btrfs_csum_item *citem;
+	u64 read_len = fs_info->sectorsize;
+	u8 csum[BTRFS_CSUM_SIZE] = { 0 };
+	u8 *buf;
+	int ret;
+
+	buf = malloc(fs_info->sectorsize);
+	if (!buf)
+		return -ENOMEM;
+	ret = read_data_from_disk(fs_info, buf, logical, &read_len, mirror);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to read block at logical %llu mirror %u: %m",
+			logical, mirror);
+		goto out;
+	}
+	trans = btrfs_start_transaction(csum_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		goto out;
+	}
+	citem = btrfs_lookup_csum(trans, csum_root, &path, logical,
+				  BTRFS_EXTENT_CSUM_OBJECTID, fs_info->csum_type, 1);
+	if (IS_ERR(citem)) {
+		ret = PTR_ERR(citem);
+		errno = -ret;
+		error("failed to find csum item for logical %llu: $m", logical);
+		btrfs_abort_transaction(trans, ret);
+		goto out;
+	}
+	btrfs_csum_data(fs_info, fs_info->csum_type, buf, csum, fs_info->sectorsize);
+	write_extent_buffer(path.nodes[0], csum, (unsigned long)citem, fs_info->csum_size);
+	btrfs_release_path(&path);
+	ret = btrfs_commit_transaction(trans, csum_root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+	}
+	printf("Csum item for logical %llu updated using data from mirror %u\n",
+		logical, mirror);
+out:
+	free(buf);
+	btrfs_release_path(&path);
+	return ret;
 }
 
 static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
@@ -307,6 +393,7 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 	}
 
 	list_for_each_entry(entry, &corrupted_blocks, list) {
+		unsigned int mirror;
 		bool has_printed = false;
 		int ret;
 
@@ -334,10 +421,20 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 		}
 		switch (mode) {
 		case BTRFS_FIX_DATA_CSUMS_INTERACTIVE:
-			action = ask_action();
-			UASSERT(action == ACTION_IGNORE);
-			fallthrough;
+			action = ask_action(entry->num_mirrors, &mirror);
+			break;
 		case BTRFS_FIX_DATA_CSUMS_READONLY:
+			action = ACTION_IGNORE;
+			break;
+		default:
+			UASSERT(0);
+		}
+
+		switch (action) {
+		case ACTION_IGNORE:
+			break;
+		case ACTION_UPDATE_CSUM:
+			ret = update_csum_item(fs_info, entry->logical, mirror);
 			break;
 		default:
 			UASSERT(0);
