@@ -280,7 +280,8 @@ static const char * const cmd_rescue_fix_data_checksum_usage[] = {
 	"btrfs rescue fix-data-checksum <device>",
 	"Fix data checksum mismatches.",
 	"",
-	OPTLINE("-r", "readonly mode, only report errors without repair"),
+	OPTLINE("-r|--readonly", "readonly mode, only report errors without repair"),
+	OPTLINE("-i|--interactive", "interactive mode, ignore the error by default."),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -298,15 +299,19 @@ static int cmd_rescue_fix_data_checksum(const struct cmd_struct *cmd,
 		enum { GETOPT_VAL_DRYRUN = GETOPT_VAL_FIRST };
 		static const struct option long_options [] = {
 			{"readonly", no_argument, NULL, 'r'},
+			{"interactive", no_argument, NULL, 'i'},
 			{"NULL", 0, NULL, 0},
 		};
 
-		c = getopt_long(argc, argv, "r", long_options, NULL);
+		c = getopt_long(argc, argv, "ri", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'r':
 			mode = BTRFS_FIX_DATA_CSUMS_READONLY;
+			break;
+		case 'i':
+			mode = BTRFS_FIX_DATA_CSUMS_INTERACTIVE;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

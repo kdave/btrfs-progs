@@ -15,6 +15,7 @@
  */
 
 #include "kerncompat.h"
+#include <ctype.h>
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
@@ -43,6 +44,21 @@ struct corrupted_block {
 	 * live mirror, and we never utilized that mirror 0.
 	 */
 	unsigned long *error_mirror_bitmap;
+};
+
+enum fix_data_checksum_action_value {
+	ACTION_IGNORE,
+	ACTION_LAST,
+};
+
+static const struct fix_data_checksum_action {
+	enum fix_data_checksum_action_value value;
+	const char *string;
+} actions[] = {
+	[ACTION_IGNORE] = {
+		.value = ACTION_IGNORE,
+		.string = "ignore"
+	},
 };
 
 static int global_repair_mode;
@@ -243,10 +259,49 @@ next:
 	return ret;
 }
 
-static void report_corrupted_blocks(struct btrfs_fs_info *fs_info)
+#define ASK_ACTION_BUFSIZE	(32)
+static enum fix_data_checksum_action_value ask_action(void)
+{
+	char buf[ASK_ACTION_BUFSIZE] = { 0 };
+	bool printed;
+
+again:
+	printed = false;
+	for (int i = 0; i < ACTION_LAST; i++) {
+		if (printed)
+			pr_verbose(LOG_DEFAULT, "/");
+		/* Mark Ignore as default. */
+		if (i == ACTION_IGNORE)
+			pr_verbose(LOG_DEFAULT, "<<%c>>%s", toupper(actions[i].string[0]),
+				   actions[i].string + 1);
+		else
+			pr_verbose(LOG_DEFAULT, "<%c>%s", toupper(actions[i].string[0]),
+				   actions[i].string + 1);
+	}
+	pr_verbose(LOG_DEFAULT, ":");
+	fflush(stdout);
+	/* Default to Ignore if no action provided. */
+	if (fgets(buf, sizeof(buf) - 1, stdin) == 0)
+		return ACTION_IGNORE;
+	if (buf[0] == '\n')
+		return ACTION_IGNORE;
+	/* Check exact match or matching the initial letter. */
+	for (int i = 0; i < ACTION_LAST; i++) {
+		if (strncasecmp(buf, actions[i].string, 1) == 0 ||
+		    strncasecmp(buf, actions[i].string, ASK_ACTION_BUFSIZE) == 0)
+			return actions[i].value;
+	}
+	/* No valid action found, retry. */
+	warning("invalid action, please retry");
+	goto again;
+}
+
+static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
+				    enum btrfs_fix_data_checksum_mode mode)
 {
 	struct corrupted_block *entry;
 	struct btrfs_path path = { 0 };
+	enum fix_data_checksum_action_value action;
 
 	if (list_empty(&corrupted_blocks)) {
 		pr_verbose(LOG_DEFAULT, "no data checksum mismatch found\n");
@@ -278,6 +333,16 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info)
 			errno = -ret;
 			error("failed to iterate involved files: %m");
 			break;
+		}
+		switch (mode) {
+		case BTRFS_FIX_DATA_CSUMS_INTERACTIVE:
+			action = ask_action();
+			UASSERT(action == ACTION_IGNORE);
+			fallthrough;
+		case BTRFS_FIX_DATA_CSUMS_READONLY:
+			break;
+		default:
+			UASSERT(0);
 		}
 	}
 }
@@ -334,7 +399,7 @@ int btrfs_recover_fix_data_checksum(const char *path, enum btrfs_fix_data_checks
 		errno = -ret;
 		error("failed to iterate csum tree: %m");
 	}
-	report_corrupted_blocks(fs_info);
+	report_corrupted_blocks(fs_info, mode);
 out_close:
 	free_corrupted_blocks();
 	close_ctree_fs_info(fs_info);

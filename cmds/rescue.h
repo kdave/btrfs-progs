@@ -22,6 +22,7 @@
 
 enum btrfs_fix_data_checksum_mode {
 	BTRFS_FIX_DATA_CSUMS_READONLY,
+	BTRFS_FIX_DATA_CSUMS_INTERACTIVE,
 	BTRFS_FIX_DATA_CSUMS_LAST,
 };
 
