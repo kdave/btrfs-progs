@@ -27,7 +27,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <pthread.h>
+#include "pthread/btrfs_pthread.h"
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
