@@ -716,11 +716,18 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	u64 buf_size;
 	char *write_buf;
 	bool do_comp = g_compression != BTRFS_COMPRESS_NONE;
+	bool datasum = true;
 	ssize_t comp_ret;
 	u64 flags = btrfs_stack_inode_flags(btrfs_inode);
 
 	if (flags & BTRFS_INODE_NOCOMPRESS)
 		do_comp = false;
+
+	if (flags & BTRFS_INODE_NODATACOW ||
+	    flags & BTRFS_INODE_NODATASUM) {
+		datasum = false;
+		do_comp = false;
+	}
 
 	buf_size = do_comp ? BTRFS_MAX_COMPRESSED : MAX_EXTENT_SIZE;
 	to_read = min(file_pos + buf_size, source->size) - file_pos;
@@ -852,13 +859,15 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	for (unsigned int i = 0; i < to_write / sectorsize; i++) {
-		ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
+	if (datasum) {
+		for (unsigned int i = 0; i < to_write / sectorsize; i++) {
+			ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
 					BTRFS_EXTENT_CSUM_OBJECTID,
 					root->fs_info->csum_type,
 					write_buf + (i * sectorsize));
-		if (ret)
-			return ret;
+			if (ret)
+				return ret;
+		}
 	}
 
 	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
