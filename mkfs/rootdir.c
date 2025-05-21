@@ -153,6 +153,7 @@ static struct rootdir_path current_path = {
 
 static struct btrfs_trans_handle *g_trans = NULL;
 static struct list_head *g_subvols;
+static struct list_head *g_inode_flags_list;
 static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
 static u64 default_subvol_id;
 static enum btrfs_compression_type g_compression;
@@ -1295,6 +1296,40 @@ static u8 ftype_to_btrfs_type(mode_t ftype)
 	return BTRFS_FT_UNKNOWN;
 }
 
+static void update_inode_flags(const struct rootdir_inode_flags_entry *rif,
+			       struct btrfs_inode_item *stack_inode)
+{
+	u64 inode_flags;
+
+	inode_flags = btrfs_stack_inode_flags(stack_inode);
+	if (rif->nodatacow) {
+		inode_flags |= BTRFS_INODE_NODATACOW;
+
+		if (S_ISREG(btrfs_stack_inode_mode(stack_inode)))
+			inode_flags |= BTRFS_INODE_NODATASUM;
+	}
+	if (rif->nodatasum)
+		inode_flags |= BTRFS_INODE_NODATASUM;
+
+	btrfs_set_stack_inode_flags(stack_inode, inode_flags);
+}
+
+static void search_and_update_inode_flags(struct btrfs_inode_item *stack_inode,
+					  const char *full_path)
+{
+	struct rootdir_inode_flags_entry *rif;
+
+	list_for_each_entry(rif, g_inode_flags_list, list) {
+		if (strcmp(rif->full_path, full_path) == 0) {
+			update_inode_flags(rif, stack_inode);
+
+			list_del(&rif->list);
+			free(rif);
+			return;
+		}
+	}
+}
+
 static int ftw_add_subvol(const char *full_path, const struct stat *st,
 			  int typeflag, struct FTW *ftwbuf,
 			  struct rootdir_subvol *subvol)
@@ -1353,6 +1388,7 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 	}
 	stat_to_inode_item(&inode_item, st);
 
+	search_and_update_inode_flags(&inode_item, full_path);
 	btrfs_set_stack_inode_nlink(&inode_item, 1);
 	ret = update_inode_item(g_trans, new_root, &inode_item, ino);
 	if (ret < 0) {
@@ -1370,6 +1406,31 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 	}
 
 	return 0;
+}
+
+static int read_inode_item(struct btrfs_root *root, struct btrfs_inode_item *inode_item,
+			   u64 ino)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	read_extent_buffer(path.nodes[0], inode_item,
+			   btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+			   sizeof(*inode_item));
+out:
+	btrfs_release_path(&path);
+	return ret;
 }
 
 static int ftw_add_inode(const char *full_path, const struct stat *st,
@@ -1519,6 +1580,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		return ret;
 	}
 	stat_to_inode_item(&inode_item, st);
+	search_and_update_inode_flags(&inode_item, full_path);
 
 	ret = btrfs_insert_inode(g_trans, root, ino, &inode_item);
 	if (ret < 0) {
@@ -1551,11 +1613,17 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	}
 
 	/*
-	 * btrfs_add_link() has increased the nlink to 1 in the metadata.
-	 * Also update the value in case we need to update the inode item
-	 * later.
+	 * btrfs_add_link() has increased the nlink, and may even updated the
+	 * inode flags (inherited from the parent).
+	 * Read out the latest version of inode item.
 	 */
-	btrfs_set_stack_inode_nlink(&inode_item, 1);
+	ret = read_inode_item(root, &inode_item, ino);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to read inode item for subvol %llu inode %llu ('%s'): %m",
+			btrfs_root_id(root), ino, full_path);
+		return ret;
+	}
 
 	ret = add_xattr_item(g_trans, root, ino, full_path);
 	if (ret < 0) {
@@ -1648,6 +1716,7 @@ static int set_default_subvolume(struct btrfs_trans_handle *trans)
 
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
+			struct list_head *inode_flags_list,
 			enum btrfs_compression_type compression,
 			unsigned int compression_level)
 {
@@ -1694,6 +1763,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 
 	g_trans = trans;
 	g_subvols = subvols;
+	g_inode_flags_list = inode_flags_list;
 	g_compression = compression;
 	g_compression_level = compression_level;
 	INIT_LIST_HEAD(&current_path.inode_list);

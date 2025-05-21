@@ -213,6 +213,41 @@ OPTIONS
         :file:`hardlink1` and :file:`hardlink2` because :file:`hardlink3` will
         be inside a new subvolume.
 
+--inode-flags <flags>:<path>
+	Specify that *path* to have inode *flags*, other than the default one (which
+	implies data COW and data checksum).  The option *--rootdir* must also be
+	specified.  This option can be specified multiple times.
+
+	The supported flag(s) are:
+
+	* *nodatacow*: disable data COW, implies *nodatasum* for regular files.
+	* *nodatasum*: disable data checksum only.
+
+	*flags* can be separated by comma (*,*).
+
+	Children inodes will inherit the flags from their parent inodes, like the
+	following case:
+
+        .. code-block:: none
+
+		rootdir/
+		|- file1
+		|- file2
+		|- dir/
+		   |- file3
+
+	In that case, if *--inode-flags nodatacow:dir* is specified, both
+	:file:`dir` and :file:`file3` will have the *nodatacow* flag.
+
+	And this option also works with *--subvol* option, but the inode flag of
+	each subvolume is independent and will not inherit from the parent directory.
+	(The same as the kernel behavior.)
+
+        .. note::
+                Both *--inode-flags* and *--subvol* options are memory hungry,
+                will consume at least 8KiB for each option.  Please keep the
+                usage of both options to minimum.
+
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 
