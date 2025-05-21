@@ -158,6 +158,59 @@ out:
 	return ret;
 }
 
+/* Similar to btrfs_inherit_iflags(), but different interfaces. */
+static int inherit_inode_flags(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root, u64 ino, u64 parent_ino)
+{
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	struct btrfs_inode_item *iitem;
+	u64 parent_inode_flags;
+	u64 child_inode_flags;
+	int ret;
+
+	key.objectid = parent_ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	iitem = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
+	parent_inode_flags = btrfs_inode_flags(path.nodes[0], iitem);
+	btrfs_release_path(&path);
+
+	key.objectid = ino;
+
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+	iitem = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
+	child_inode_flags = btrfs_inode_flags(path.nodes[0], iitem);
+
+	if (parent_inode_flags & BTRFS_INODE_NOCOMPRESS) {
+		child_inode_flags &= ~BTRFS_INODE_COMPRESS;
+		child_inode_flags |= BTRFS_INODE_NOCOMPRESS;
+	} else if (parent_inode_flags & BTRFS_INODE_COMPRESS){
+		child_inode_flags &= ~BTRFS_INODE_NOCOMPRESS;
+		child_inode_flags |= BTRFS_INODE_COMPRESS;
+	}
+	if (parent_inode_flags & BTRFS_INODE_NODATACOW) {
+		child_inode_flags |= BTRFS_INODE_NODATACOW;
+		if (S_ISREG(btrfs_inode_mode(path.nodes[0], iitem)))
+			child_inode_flags |= BTRFS_INODE_NODATASUM;
+	}
+	btrfs_set_inode_flags(path.nodes[0], iitem, child_inode_flags);
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 /*
  * Add dir_item/index for 'parent_ino' if add_backref is true, also insert a
  * backref from the ino to parent dir and update the nlink(Kernel version does
@@ -220,6 +273,17 @@ int btrfs_add_link(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 					      nlink);
 			btrfs_mark_buffer_dirty(path->nodes[0]);
 			btrfs_release_path(path);
+			/*
+			 * If this is the first nlink of the inode, meaning the
+			 * inode is newly created under the parent inode, this
+			 * new child inode should inherit the inode flags from
+			 * the parent.
+			 */
+			if (nlink == 1) {
+				ret = inherit_inode_flags(trans, root, ino, parent_ino);
+				if (ret < 0)
+					goto out;
+			}
 		}
 	}
 
