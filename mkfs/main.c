@@ -463,6 +463,10 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("", "- ro - create the subvolume as read-only"),
 	OPTLINE("", "- default - the SUBDIR will be a subvolume and also set as default (can be specified only once)"),
 	OPTLINE("", "- default-ro - like 'default' and is created as read-only subvolume (can be specified only once)"),
+	OPTLINE("--inode-flags FLAGS:PATH", "specify that path to have inode flags, can be specified multiple times"),
+	OPTLINE("", "FLAGS is one of:"),
+	OPTLINE("", "- nodatacow - disable data CoW, implies nodatasum for regular files"),
+	OPTLINE("", "- nodatasum - disable data checksum only"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
@@ -1164,6 +1168,63 @@ static int parse_subvolume(const char *path, struct list_head *subvols,
 	return 0;
 }
 
+static int parse_inode_flags(const char *option, struct list_head *inode_flags_list)
+{
+	struct rootdir_inode_flags_entry *entry = NULL;
+	char *colon;
+	char *dumpped = NULL;
+	char *token;
+	int ret;
+
+	dumpped = strdup(option);
+	if (!dumpped) {
+		ret = -ENOMEM;
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		goto cleanup;
+	}
+	entry = calloc(1, sizeof(*entry));
+	if (!entry) {
+		ret = -ENOMEM;
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		goto cleanup;
+	}
+	colon = strstr(dumpped, ":");
+	if (!colon) {
+		error("invalid inode flags: %s", option);
+		ret = -EINVAL;
+		goto cleanup;
+	}
+	*colon = '\0';
+
+	token = strtok(dumpped, ",");
+	while (token) {
+		if (token == NULL)
+			break;
+		if (strcmp(token, "nodatacow") == 0) {
+			entry->nodatacow = true;
+		} else if (strcmp(token, "nodatasum") == 0) {
+			entry->nodatasum = true;
+		} else {
+			error("unknown flag: %s", token);
+			ret = -EINVAL;
+			goto cleanup;
+		}
+		token = strtok(NULL, ",");
+	}
+
+	if (arg_copy_path(entry->inode_path, colon + 1, sizeof(entry->inode_path))) {
+		error("--inode-flags path too long");
+		ret = -E2BIG;
+		goto cleanup;
+	}
+	list_add_tail(&entry->list, inode_flags_list);
+	return 0;
+cleanup:
+	free(dumpped);
+	free(entry);
+	return ret;
+}
+
 int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
@@ -1206,10 +1267,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
 	char *source_dir = NULL;
 	struct rootdir_subvol *rds;
+	struct rootdir_inode_flags_entry *rif;
 	bool has_default_subvol = false;
 	enum btrfs_compression_type compression = BTRFS_COMPRESS_NONE;
 	unsigned int compression_level = 0;
 	LIST_HEAD(subvols);
+	LIST_HEAD(inode_flags_list);
 
 	cpu_detect_flags();
 	hash_init_accel();
@@ -1223,6 +1286,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
 			GETOPT_VAL_DEVICE_UUID,
+			GETOPT_VAL_INODE_FLAGS,
 			GETOPT_VAL_COMPRESS,
 		};
 		static const struct option long_options[] = {
@@ -1241,6 +1305,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "version", no_argument, NULL, 'V' },
 			{ "rootdir", required_argument, NULL, 'r' },
 			{ "subvol", required_argument, NULL, 'u' },
+			{ "inode-flags", required_argument, NULL, GETOPT_VAL_INODE_FLAGS },
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
 			{ "runtime-features", required_argument, NULL, 'R' },
@@ -1374,6 +1439,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'q':
 				bconf_be_quiet();
 				break;
+			case GETOPT_VAL_INODE_FLAGS:
+				ret = parse_inode_flags(optarg, &inode_flags_list);
+				if (ret)
+					goto error;
+				break;
 			case GETOPT_VAL_COMPRESS:
 				if (parse_compression(optarg, &compression, &compression_level)) {
 					ret = 1;
@@ -1438,6 +1508,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		ret = 1;
 		goto error;
 	}
+	if (!list_empty(&inode_flags_list) && source_dir == NULL) {
+		error("option --inode-flags must be used with --rootdir");
+		ret = 1;
+		goto error;
+	}
 
 	if (source_dir) {
 		char *canonical = realpath(source_dir, NULL);
@@ -1498,6 +1573,41 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			if (strcmp(rds2->full_path, rds->full_path) == 0) {
 				error("subvolume specified more than once: %s", rds->dir);
 				ret = 1;
+				goto error;
+			}
+		}
+	}
+
+	list_for_each_entry(rif, &inode_flags_list, list) {
+		char path[PATH_MAX];
+		struct rootdir_inode_flags_entry *rif2;
+
+		if (path_cat_out(path, source_dir, rif->inode_path)) {
+			ret = -EINVAL;
+			error("path invalid: %s", path);
+			goto error;
+		}
+		if (!realpath(path, rif->full_path)) {
+			ret = -errno;
+			error("could not get canonical path: %s: %m", path);
+			goto error;
+		}
+		if (!path_exists(rif->full_path)) {
+			ret = -ENOENT;
+			error("inode path does not exist: %s", rif->full_path);
+			goto error;
+		}
+		list_for_each_entry(rif2, &inode_flags_list, list) {
+			/*
+			 * Only compare entries before us. So we won't compare
+			 * the same pair twice.
+			 */
+			if (rif2 == rif)
+				break;
+			if (strcmp(rif2->full_path, rif->full_path) == 0) {
+				error("duplicated inode flag entries for %s",
+					rif->full_path);
+				ret = -EEXIST;
 				goto error;
 			}
 		}
@@ -2084,10 +2194,15 @@ raid_groups:
 				   rds->is_default ? "" : " ",
 				   rds->dir);
 		}
+		list_for_each_entry(rif, &inode_flags_list, list) {
+			pr_verbose(LOG_DEFAULT, "  Inode flags (%s):  %s\n",
+				   rif->nodatacow ? "NODATACOW" : "",
+				   rif->inode_path);
+		}
 
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
-					  &subvols, compression,
-					  compression_level);
+					  &subvols, &inode_flags_list,
+					  compression, compression_level);
 		if (ret) {
 			errno = -ret;
 			error("error while filling filesystem: %m");
@@ -2228,6 +2343,12 @@ error:
 		head = list_entry(subvols.next, struct rootdir_subvol, list);
 		list_del(&head->list);
 		free(head);
+	}
+	while (!list_empty(&inode_flags_list)) {
+		rif = list_entry(inode_flags_list.next,
+				 struct rootdir_inode_flags_entry, list);
+		list_del(&rif->list);
+		free(rif);
 	}
 
 	return !!ret;

@@ -45,8 +45,23 @@ struct rootdir_subvol {
 	bool readonly;
 };
 
+/*
+ * Represent a flag for specified inode at @full_path.
+ */
+struct rootdir_inode_flags_entry {
+	struct list_head list;
+	/* Fully canonicalized path to the source file. */
+	char full_path[PATH_MAX];
+	/* Path inside the source directory. */
+	char inode_path[PATH_MAX];
+
+	bool nodatacow;
+	bool nodatasum;
+};
+
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
+			struct list_head *inode_flags_list,
 			enum btrfs_compression_type compression,
 			unsigned int compression_level);
 u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
