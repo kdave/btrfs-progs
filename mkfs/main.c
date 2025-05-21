@@ -445,6 +445,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("-b|--byte-count SIZE", "set size of each device to SIZE (filesystem size is sum of all device sizes)"),
 	OPTLINE("-r|--rootdir DIR", "copy files from DIR to the image root directory, can be combined with --subvol"),
 	OPTLINE("--compress ALGO[:LEVEL]", "compress files by algorithm and level, ALGO can be 'no' (default), zstd, lzo, zlib"),
+	OPTLINE("--fs-verity", "copy fs-verity metadata from files in the --rootdir"),
 	OPTLINE("", "Built-in:"),
 #if COMPRESSION_ZSTD
 	OPTLINE("", "- ZSTD: yes (levels 1..15)"),
@@ -1209,6 +1210,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	bool has_default_subvol = false;
 	enum btrfs_compression_type compression = BTRFS_COMPRESS_NONE;
 	unsigned int compression_level = 0;
+	bool fsverity = false;
 	LIST_HEAD(subvols);
 
 	cpu_detect_flags();
@@ -1224,6 +1226,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_GLOBAL_ROOTS,
 			GETOPT_VAL_DEVICE_UUID,
 			GETOPT_VAL_COMPRESS,
+			GETOPT_VAL_FS_VERITY,
 		};
 		static const struct option long_options[] = {
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -1252,6 +1255,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 			{ "compress", required_argument, NULL,
 				GETOPT_VAL_COMPRESS },
+			{ "fs-verity", no_argument, NULL,
+				GETOPT_VAL_FS_VERITY },
 #if EXPERIMENTAL
 			{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 			{ "num-global-roots", required_argument, NULL, GETOPT_VAL_GLOBAL_ROOTS },
@@ -1380,6 +1385,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					goto error;
 				}
 				break;
+			case GETOPT_VAL_FS_VERITY:
+				fsverity = true;
+				break;
 			case GETOPT_VAL_DEVICE_UUID:
 				strncpy_null(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
 				break;
@@ -1453,6 +1461,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	} else {
 		if (compression != BTRFS_COMPRESS_NONE) {
 			error("--compression must be used with --rootdir");
+			ret = 1;
+			goto error;
+		}
+		if (fsverity) {
+			error("--fs-verity must be used with --rootdir");
 			ret = 1;
 			goto error;
 		}
@@ -2086,8 +2099,8 @@ raid_groups:
 		}
 
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
-					  &subvols, compression,
-					  compression_level);
+					  &subvols, fsverity,
+					  compression, compression_level);
 		if (ret) {
 			errno = -ret;
 			error("error while filling filesystem: %m");
