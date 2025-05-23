@@ -260,19 +260,8 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 	 * Provided bytenr must in ascending order, or tree root will have a
 	 * bad key order.
 	 */
-	if (!(root_bytenr < extent_bytenr && extent_bytenr < dev_bytenr &&
-	      dev_bytenr < fs_bytenr && fs_bytenr < csum_bytenr)) {
-		error("bad tree bytenr order: "
-				"root < extent %llu < %llu, "
-				"extent < dev %llu < %llu, "
-				"dev < fs %llu < %llu, "
-				"fs < csum %llu < %llu",
-				root_bytenr, extent_bytenr,
-				extent_bytenr, dev_bytenr,
-				dev_bytenr, fs_bytenr,
-				fs_bytenr, csum_bytenr);
-		return -EINVAL;
-	}
+	UASSERT(root_bytenr < extent_bytenr && extent_bytenr < dev_bytenr &&
+	        dev_bytenr < fs_bytenr && fs_bytenr < csum_bytenr);
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
@@ -703,22 +692,9 @@ static int setup_temp_extent_tree(int fd, struct btrfs_mkfs_config *cfg,
 	 * We must ensure provided bytenr are in ascending order,
 	 * or extent tree key order will be broken.
 	 */
-	if (!(chunk_bytenr < root_bytenr && root_bytenr < extent_bytenr &&
-	      extent_bytenr < dev_bytenr && dev_bytenr < fs_bytenr &&
-	      fs_bytenr < csum_bytenr)) {
-		error("bad tree bytenr order: "
-				"chunk < root %llu < %llu, "
-				"root < extent %llu < %llu, "
-				"extent < dev %llu < %llu, "
-				"dev < fs %llu < %llu, "
-				"fs < csum %llu < %llu",
-				chunk_bytenr, root_bytenr,
-				root_bytenr, extent_bytenr,
-				extent_bytenr, dev_bytenr,
-				dev_bytenr, fs_bytenr,
-				fs_bytenr, csum_bytenr);
-		return -EINVAL;
-	}
+	UASSERT(chunk_bytenr < root_bytenr && root_bytenr < extent_bytenr &&
+		extent_bytenr < dev_bytenr && dev_bytenr < fs_bytenr &&
+		fs_bytenr < csum_bytenr);
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
