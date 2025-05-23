@@ -189,17 +189,29 @@ static int setup_temp_extent_buffer(struct extent_buffer *buf,
 	return 0;
 }
 
+static u32 get_item_offset(const struct extent_buffer *eb,
+			   const struct btrfs_mkfs_config *cfg)
+{
+	u32 slot = btrfs_header_nritems(eb);
+
+	if (slot)
+		return btrfs_item_offset(eb, slot - 1);
+	else
+		return cfg->leaf_data_size;
+}
+
 static void insert_temp_root_item(struct extent_buffer *buf,
 				  struct btrfs_mkfs_config *cfg,
-				  int *slot, u32 *itemoff, u64 objectid,
-				  u64 bytenr)
+				  u64 objectid, u64 bytenr)
 {
 	struct btrfs_root_item root_item;
 	struct btrfs_inode_item *inode_item;
 	struct btrfs_disk_key disk_key;
+	u32 slot = btrfs_header_nritems(buf);
+	u32 itemoff = get_item_offset(buf, cfg);
 
-	btrfs_set_header_nritems(buf, *slot + 1);
-	(*itemoff) -= sizeof(root_item);
+	btrfs_set_header_nritems(buf, slot + 1);
+	itemoff -= sizeof(root_item);
 	memset(&root_item, 0, sizeof(root_item));
 	inode_item = &root_item.inode;
 	btrfs_set_stack_inode_generation(inode_item, 1);
@@ -217,13 +229,12 @@ static void insert_temp_root_item(struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, objectid);
 	btrfs_set_disk_key_offset(&disk_key, 0);
 
-	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset(buf, *slot, *itemoff);
-	btrfs_set_item_size(buf, *slot, sizeof(root_item));
+	btrfs_set_item_key(buf, &disk_key, slot);
+	btrfs_set_item_offset(buf, slot, itemoff);
+	btrfs_set_item_size(buf, slot, sizeof(root_item));
 	write_extent_buffer(buf, &root_item,
-			    btrfs_item_ptr_offset(buf, *slot),
+			    btrfs_item_ptr_offset(buf, slot),
 			    sizeof(root_item));
-	(*slot)++;
 }
 
 /*
@@ -252,8 +263,6 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 				u64 dev_bytenr, u64 fs_bytenr, u64 csum_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = cfg->leaf_data_size;
-	int slot = 0;
 	int ret;
 
 	/*
@@ -271,14 +280,10 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 	if (ret < 0)
 		goto out;
 
-	insert_temp_root_item(buf, cfg, &slot, &itemoff,
-			      BTRFS_EXTENT_TREE_OBJECTID, extent_bytenr);
-	insert_temp_root_item(buf, cfg, &slot, &itemoff,
-			      BTRFS_DEV_TREE_OBJECTID, dev_bytenr);
-	insert_temp_root_item(buf, cfg, &slot, &itemoff,
-			      BTRFS_FS_TREE_OBJECTID, fs_bytenr);
-	insert_temp_root_item(buf, cfg, &slot, &itemoff,
-			      BTRFS_CSUM_TREE_OBJECTID, csum_bytenr);
+	insert_temp_root_item(buf, cfg, BTRFS_EXTENT_TREE_OBJECTID, extent_bytenr);
+	insert_temp_root_item(buf, cfg, BTRFS_DEV_TREE_OBJECTID, dev_bytenr);
+	insert_temp_root_item(buf, cfg, BTRFS_FS_TREE_OBJECTID, fs_bytenr);
+	insert_temp_root_item(buf, cfg, BTRFS_CSUM_TREE_OBJECTID, csum_bytenr);
 
 	ret = write_temp_extent_buffer(fd, buf, root_bytenr, cfg);
 out:
