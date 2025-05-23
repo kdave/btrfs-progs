@@ -1212,6 +1212,12 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	if (btrfs_check_nodesize(nodesize, blocksize, features))
 		goto fail;
+	if (features->compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE &&
+	    (!(features->incompat_flags & BTRFS_FEATURE_INCOMPAT_NO_HOLES) ||
+	     !(features->compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE))) {
+		error("block group tree requires no-holes and free-space-tree features");
+		goto fail;
+	}
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
 		error("unable to open %s: %m", devname);
