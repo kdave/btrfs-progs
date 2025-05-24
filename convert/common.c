@@ -514,8 +514,8 @@ out:
 	return ret;
 }
 
-static int setup_temp_fs_tree(int fd, struct btrfs_mkfs_config *cfg,
-			      u64 fs_bytenr)
+static int setup_temp_empty_tree(int fd, struct btrfs_mkfs_config *cfg,
+				 u64 root_bytenr, u64 owner)
 {
 	struct extent_buffer *buf = NULL;
 	int ret;
@@ -523,36 +523,13 @@ static int setup_temp_fs_tree(int fd, struct btrfs_mkfs_config *cfg,
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
-	ret = setup_temp_extent_buffer(buf, cfg, fs_bytenr,
-				       BTRFS_FS_TREE_OBJECTID);
+	ret = setup_temp_extent_buffer(buf, cfg, root_bytenr, owner);
 	if (ret < 0)
 		goto out;
 	/*
 	 * Temporary fs tree is completely empty.
 	 */
-	ret = write_temp_extent_buffer(fd, buf, fs_bytenr, cfg);
-out:
-	free(buf);
-	return ret;
-}
-
-static int setup_temp_csum_tree(int fd, struct btrfs_mkfs_config *cfg,
-				u64 csum_bytenr)
-{
-	struct extent_buffer *buf = NULL;
-	int ret;
-
-	buf = malloc(sizeof(*buf) + cfg->nodesize);
-	if (!buf)
-		return -ENOMEM;
-	ret = setup_temp_extent_buffer(buf, cfg, csum_bytenr,
-				       BTRFS_CSUM_TREE_OBJECTID);
-	if (ret < 0)
-		goto out;
-	/*
-	 * Temporary csum tree is completely empty.
-	 */
-	ret = write_temp_extent_buffer(fd, buf, csum_bytenr, cfg);
+	ret = write_temp_extent_buffer(fd, buf, root_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
@@ -867,10 +844,10 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 				  dev_bytenr);
 	if (ret < 0)
 		goto out;
-	ret = setup_temp_fs_tree(fd, cfg, fs_bytenr);
+	ret = setup_temp_empty_tree(fd, cfg, fs_bytenr, BTRFS_FS_TREE_OBJECTID);
 	if (ret < 0)
 		goto out;
-	ret = setup_temp_csum_tree(fd, cfg, csum_bytenr);
+	ret = setup_temp_empty_tree(fd, cfg, csum_bytenr, BTRFS_CSUM_TREE_OBJECTID);
 	if (ret < 0)
 		goto out;
 	/*
