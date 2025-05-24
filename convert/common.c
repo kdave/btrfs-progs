@@ -459,28 +459,29 @@ out:
 }
 
 static void insert_temp_dev_extent(struct extent_buffer *buf,
-				   int *slot, u32 *itemoff, u64 start, u64 len)
+				   struct btrfs_mkfs_config *cfg, u64 start, u64 len)
 {
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
+	u32 slot = btrfs_header_nritems(buf);
+	u32 itemoff = get_item_offset(buf, cfg);
 
-	btrfs_set_header_nritems(buf, *slot + 1);
-	(*itemoff) -= sizeof(*dev_extent);
+	btrfs_set_header_nritems(buf, slot + 1);
+	itemoff -= sizeof(*dev_extent);
 	btrfs_set_disk_key_type(&disk_key, BTRFS_DEV_EXTENT_KEY);
 	btrfs_set_disk_key_objectid(&disk_key, 1);
 	btrfs_set_disk_key_offset(&disk_key, start);
-	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset(buf, *slot, *itemoff);
-	btrfs_set_item_size(buf, *slot, sizeof(*dev_extent));
+	btrfs_set_item_key(buf, &disk_key, slot);
+	btrfs_set_item_offset(buf, slot, itemoff);
+	btrfs_set_item_size(buf, slot, sizeof(*dev_extent));
 
-	dev_extent = btrfs_item_ptr(buf, *slot, struct btrfs_dev_extent);
+	dev_extent = btrfs_item_ptr(buf, slot, struct btrfs_dev_extent);
 	btrfs_set_dev_extent_chunk_objectid(buf, dev_extent,
 					    BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	btrfs_set_dev_extent_length(buf, dev_extent, len);
 	btrfs_set_dev_extent_chunk_offset(buf, dev_extent, start);
 	btrfs_set_dev_extent_chunk_tree(buf, dev_extent,
 					BTRFS_CHUNK_TREE_OBJECTID);
-	(*slot)++;
 }
 
 static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
@@ -488,8 +489,6 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 			       u64 dev_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = cfg->leaf_data_size;
-	int slot = 0;
 	int ret;
 
 	/* Must ensure SYS chunk starts before META chunk */
@@ -505,9 +504,9 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 				       BTRFS_DEV_TREE_OBJECTID);
 	if (ret < 0)
 		goto out;
-	insert_temp_dev_extent(buf, &slot, &itemoff, sys_chunk_start,
+	insert_temp_dev_extent(buf, cfg, sys_chunk_start,
 			       BTRFS_MKFS_SYSTEM_GROUP_SIZE);
-	insert_temp_dev_extent(buf, &slot, &itemoff, meta_chunk_start,
+	insert_temp_dev_extent(buf, cfg, meta_chunk_start,
 			       BTRFS_CONVERT_META_GROUP_SIZE);
 	ret = write_temp_extent_buffer(fd, buf, dev_bytenr, cfg);
 out:
