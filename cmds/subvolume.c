@@ -122,6 +122,21 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 	return 0;
 }
 
+static int wait_for_subvolume_sync(int fd, size_t count, uint64_t *ids) {
+	int ret;
+	struct btrfs_ioctl_subvol_wait arg;
+
+	for (int i = 0; i < count; i++) {
+		arg.subvolid = ids[i];
+		arg.mode = BTRFS_SUBVOL_SYNC_WAIT_FOR_ONE;
+
+		ret = ioctl(fd, BTRFS_IOC_SUBVOL_SYNC_WAIT, &arg);
+		if (ret < 0 && errno != ENOENT)
+			return -errno;
+	}
+	return 0;
+}
+
 static const char * const subvolume_cmd_group_usage[] = {
 	"btrfs subvolume <command> <args>",
 	NULL
@@ -1726,9 +1741,12 @@ static const char * const cmd_subvolume_sync_usage[] = {
 	"after deletion.",
 	"If no subvolume id is given, wait until all current deletion requests",
 	"are completed, but do not wait for subvolumes deleted meanwhile.",
-	"The status of subvolume ids is checked periodically.",
+	"The status of subvolume IDs is first checked by attempting to wait"
+	"via ioctl. If the ioctl is not supported or fails, the status is checked"
+	"periodically as a fallback.",
 	"",
 	OPTLINE("-s <N>", "sleep N seconds between checks (default: 1)"),
+	OPTLINE("-p", "use periodic checking instead of waiting via ioctl"),
 	NULL
 };
 
@@ -1740,6 +1758,7 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 	size_t id_count, i;
 	int sleep_interval = 1;
 	enum btrfs_util_error err;
+	bool periodic = false;
 
 	optind = 0;
 	while (1) {
@@ -1756,6 +1775,9 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 				ret = 1;
 				goto out;
 			}
+			break;
+		case 'p':
+			periodic = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -1814,7 +1836,16 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 		}
 	}
 
-	ret = wait_for_subvolume_cleaning(fd, id_count, ids, sleep_interval);
+	if (periodic) {
+		ret = wait_for_subvolume_cleaning(fd, id_count, ids, sleep_interval);
+	} else {
+		ret = wait_for_subvolume_sync(fd, id_count, ids);
+		if (ret) {
+			if (ret == -ENOTTY)
+				error("subvolume sync ioctl not supported in this kernel version, 6.13 and newer is required");
+			ret = wait_for_subvolume_cleaning(fd, id_count, ids, sleep_interval);
+		}
+	}
 
 out:
 	free(ids);
