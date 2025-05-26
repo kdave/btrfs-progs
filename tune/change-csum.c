@@ -158,8 +158,7 @@ static int read_verify_one_data_sector(struct btrfs_fs_info *fs_info,
 			error("failed to read logical %llu: %m", logical);
 			continue;
 		}
-		btrfs_csum_data(fs_info, fs_info->csum_type, data_buf, csum_has,
-				sectorsize);
+		btrfs_csum_data(fs_info->csum_type, data_buf, csum_has, sectorsize);
 		if (memcmp(csum_has, old_csums, fs_info->csum_size) == 0) {
 			found_good = true;
 			break;
@@ -577,9 +576,9 @@ static int rewrite_tree_block_csum(struct btrfs_fs_info *fs_info, u64 logical,
 	}
 
 	/* Verify the csum first. */
-	btrfs_csum_data(fs_info, fs_info->csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
+	btrfs_csum_data(fs_info->csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
 			result_old, fs_info->nodesize - BTRFS_CSUM_SIZE);
-	btrfs_csum_data(fs_info, new_csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
+	btrfs_csum_data(new_csum_type, (u8 *)eb->data + BTRFS_CSUM_SIZE,
 			result_new, fs_info->nodesize - BTRFS_CSUM_SIZE);
 
 	/* Matches old csum, rewrite. */

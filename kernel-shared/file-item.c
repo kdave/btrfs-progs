@@ -298,8 +298,7 @@ csum:
 	item = (struct btrfs_csum_item *)((unsigned char *)item +
 					  csum_offset * csum_size);
 found:
-	btrfs_csum_data(root->fs_info, csum_type, (u8 *)data, csum_result,
-			sectorsize);
+	btrfs_csum_data(csum_type, (u8 *)data, csum_result, sectorsize);
 	write_extent_buffer(leaf, csum_result, (unsigned long)item,
 			    csum_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
