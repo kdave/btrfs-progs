@@ -1392,7 +1392,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 		printf("%02hhx", (int)(eb->data[i]));
 	printf("\n");
 	memset(csum, 0, sizeof(csum));
-	btrfs_csum_data(fs_info, btrfs_super_csum_type(fs_info->super_copy),
+	btrfs_csum_data(btrfs_super_csum_type(fs_info->super_copy),
 			(u8 *)eb->data + BTRFS_CSUM_SIZE,
 			csum, fs_info->nodesize - BTRFS_CSUM_SIZE);
 	printf("checksum calced ");
@@ -1902,7 +1902,7 @@ static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 {
 	u8 result[BTRFS_CSUM_SIZE];
 
-	btrfs_csum_data(NULL, csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
+	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
 	return !memcmp(sb, result, csum_size);

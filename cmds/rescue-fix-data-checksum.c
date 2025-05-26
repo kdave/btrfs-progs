@@ -135,7 +135,7 @@ static int verify_one_data_block(struct btrfs_fs_info *fs_info,
 				break;
 		}
 		/* Verify the data checksum. */
-		btrfs_csum_data(fs_info, fs_info->csum_type, buf, csum, blocksize);
+		btrfs_csum_data(fs_info->csum_type, buf, csum, blocksize);
 		read_extent_buffer(leaf, csum_expected, leaf_offset, csum_size);
 		if (memcmp(csum_expected, csum, csum_size) != 0) {
 			ret = add_corrupted_block(fs_info, logical, mirror, num_mirrors);
@@ -364,7 +364,7 @@ static int update_csum_item(struct btrfs_fs_info *fs_info, u64 logical,
 		btrfs_abort_transaction(trans, ret);
 		goto out;
 	}
-	btrfs_csum_data(fs_info, fs_info->csum_type, buf, csum, fs_info->sectorsize);
+	btrfs_csum_data(fs_info->csum_type, buf, csum, fs_info->sectorsize);
 	write_extent_buffer(path.nodes[0], csum, (unsigned long)citem, fs_info->csum_size);
 	btrfs_release_path(&path);
 	ret = btrfs_commit_transaction(trans, csum_root);

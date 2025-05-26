@@ -1060,7 +1060,7 @@ static int migrate_super_block(int fd, u64 old_bytenr)
 	BUG_ON(btrfs_super_bytenr(&super) != old_bytenr);
 	btrfs_set_super_bytenr(&super, BTRFS_SUPER_INFO_OFFSET);
 
-	btrfs_csum_data(NULL, btrfs_super_csum_type(&super),
+	btrfs_csum_data(btrfs_super_csum_type(&super),
 			(u8 *)&super + BTRFS_CSUM_SIZE, result,
 			BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 	memcpy(&super.csum[0], result, BTRFS_CSUM_SIZE);
