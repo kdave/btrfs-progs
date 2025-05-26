@@ -1344,8 +1344,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	u32 nr;
 	u8 backref_rev;
 	char csum_str[2 * BTRFS_CSUM_SIZE + 8 /* strlen(" csum 0x") */ + 1];
-	int i;
-	int csum_size = fs_info->csum_size;
+	const int csum_size = (fs_info ? fs_info->csum_size : 0);
 
 	flags = btrfs_header_flags(eb) & ~BTRFS_BACKREF_REV_MASK;
 	backref_rev = btrfs_header_flags(eb) >> BTRFS_BACKREF_REV_SHIFT;
@@ -1372,7 +1371,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 
 		strcpy(csum_str, " csum 0x");
 		tmp = csum_str + strlen(csum_str);
-		for (i = 0; i < csum_size; i++) {
+		for (int i = 0; i < csum_size; i++) {
 			sprintf(tmp, "%02x", tree_csum[i]);
 			tmp++;
 			tmp++;
@@ -1387,18 +1386,20 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	       csum_str);
 
 #if EXPERIMENTAL
-	printf("checksum stored ");
-	for (i = 0; i < csum_size; i++)
-		printf("%02hhx", (int)(eb->data[i]));
-	printf("\n");
-	memset(csum, 0, sizeof(csum));
-	btrfs_csum_data(btrfs_super_csum_type(fs_info->super_copy),
-			(u8 *)eb->data + BTRFS_CSUM_SIZE,
-			csum, fs_info->nodesize - BTRFS_CSUM_SIZE);
-	printf("checksum calced ");
-	for (i = 0; i < csum_size; i++)
-		printf("%02hhx", (int)(csum[i]));
-	printf("\n");
+	if (fs_info) {
+		printf("checksum stored ");
+		for (int i = 0; i < csum_size; i++)
+			printf("%02hhx", (int)(eb->data[i]));
+		printf("\n");
+		memset(csum, 0, sizeof(csum));
+		btrfs_csum_data(btrfs_super_csum_type(fs_info->super_copy),
+				(u8 *)eb->data + BTRFS_CSUM_SIZE,
+				csum, fs_info->nodesize - BTRFS_CSUM_SIZE);
+		printf("checksum calced ");
+		for (int i = 0; i < csum_size; i++)
+			printf("%02hhx", (int)(csum[i]));
+		printf("\n");
+	}
 #endif
 
 	print_uuids(eb);
@@ -1478,10 +1479,10 @@ static void print_dev_replace_item(struct extent_buffer *eb, struct btrfs_dev_re
 void __btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_disk_key disk_key;
-	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(eb->fs_info);
+	u32 leaf_data_size = __BTRFS_LEAF_DATA_SIZE(eb->len);
 	u32 i;
 	u32 nr;
-	const bool print_csum_items = (mode & BTRFS_PRINT_TREE_CSUM_ITEMS);
+	const bool print_csum_items = (mode & BTRFS_PRINT_TREE_CSUM_ITEMS) && eb->fs_info;
 
 	print_header_info(eb, mode);
 	nr = btrfs_header_nritems(eb);

@@ -1887,9 +1887,7 @@ int btrfs_leaf_free_space(const struct extent_buffer *leaf)
 	u32 leaf_data_size;
 	int ret;
 
-	BUG_ON(!leaf->fs_info);
-	BUG_ON(leaf->fs_info->nodesize != leaf->len);
-	leaf_data_size = BTRFS_LEAF_DATA_SIZE(leaf->fs_info);
+	leaf_data_size = __BTRFS_LEAF_DATA_SIZE(leaf->len);
 	ret = leaf_data_size - leaf_space_used(leaf, 0 ,nritems);
 	if (ret < 0) {
 		printk("leaf free space ret %d, leaf data size %u, used %d nritems %d\n",
