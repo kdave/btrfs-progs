@@ -754,12 +754,9 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	}
 
 	/* and write out the super block */
-	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
-	memcpy(buf->data, &super, sizeof(super));
-	buf->len = BTRFS_SUPER_INFO_SIZE;
-	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
-			     cfg->csum_type);
-	ret = sbwrite(fd, buf->data, BTRFS_SUPER_INFO_OFFSET);
+	btrfs_csum_data(cfg->csum_type, (u8 *)&super + BTRFS_CSUM_SIZE,
+			super.csum, sizeof(super) - BTRFS_CSUM_SIZE);
+	ret = sbwrite(fd, &super, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
