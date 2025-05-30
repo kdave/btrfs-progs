@@ -3978,6 +3978,139 @@ out:
 }
 
 /*
+ * A read-only version of lookup_inline_extent_backref().
+ * We can not reuse that function as it always assume COW.
+ */
+static int has_inline_shared_backref(u64 data_bytenr, u64 data_len, u64 parent)
+{
+	struct btrfs_root *extent_root = btrfs_extent_root(gfs_info, data_bytenr);
+	struct btrfs_extent_inline_ref *iref;
+	struct btrfs_extent_item *ei;
+	struct btrfs_path path = { 0 };
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	unsigned long ptr;
+	unsigned long end;
+	bool found = false;
+	u32 item_size;
+	u64 flags;
+	int ret;
+
+	key.objectid = data_bytenr;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = data_len;
+	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	leaf = path.nodes[0];
+	item_size = btrfs_item_size(leaf, path.slots[0]);
+	if (item_size < sizeof(*ei)) {
+		error("extent item size %u < %zu, leaf %llu slot %u",
+		      item_size, sizeof(*ei), leaf->start, path.slots[0]);
+		ret = -EUCLEAN;
+		goto out;
+	}
+	ei = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_extent_item);
+	flags = btrfs_extent_flags(leaf, ei);
+
+	if (!(flags & BTRFS_EXTENT_FLAG_DATA)) {
+		error("backref item flag for bytenr %llu is not data",
+			data_bytenr);
+		ret = -EUCLEAN;
+		goto out;
+	}
+
+	ptr = (unsigned long)(ei + 1);
+	end = (unsigned long)ei + item_size;
+
+	while (true) {
+		u64 ref_parent;
+		u8 type;
+
+		if (ptr >= end) {
+			if (ptr > end) {
+				error("inline extent item for %llu is not properly ended",
+				      data_bytenr);
+				ret = -EUCLEAN;
+				goto out;
+			}
+			break;
+		}
+		iref = (struct btrfs_extent_inline_ref *)ptr;
+		type = btrfs_extent_inline_ref_type(leaf, iref);
+		if (type != BTRFS_SHARED_DATA_REF_KEY)
+			goto next;
+
+		ref_parent = btrfs_extent_inline_ref_offset(leaf, iref);
+		if (ref_parent == parent) {
+			found = true;
+			goto out;
+		}
+next:
+		ptr += btrfs_extent_inline_ref_size(type);
+	}
+
+out:
+	btrfs_release_path(&path);
+	if (ret < 0)
+		return ret;
+	return found;
+}
+
+static int has_keyed_shared_backref(u64 data_bytenr, u64 parent)
+{
+	struct btrfs_root *extent_root = btrfs_extent_root(gfs_info, data_bytenr);
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = data_bytenr;
+	key.type = BTRFS_SHARED_DATA_REF_KEY;
+	key.offset = parent;
+	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
+	btrfs_release_path(&path);
+	if (ret < 0)
+		return ret;
+	/* No keyed ref found, return 0. */
+	if (ret > 0)
+		return 0;
+	return 1;
+}
+
+/*
+ * A helper to determine if the @leaf already belongs to a shared data backref item.
+ * (with parent bytenr)
+ *
+ * Return >0 if the @leaf belongs to a shared data backref.
+ * Return 0 if not.
+ * Return <0 for critical error.
+ */
+static int is_leaf_shared(struct extent_buffer *leaf, u64 data_bytenr, u64 data_len)
+{
+	int ret;
+
+	ret = has_inline_shared_backref(data_bytenr, data_len, leaf->start);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search inlined shared backref for logical %llu len %llu, %m",
+			data_bytenr, data_len);
+		return ret;
+	}
+	if (ret > 0)
+		return ret;
+	ret = has_keyed_shared_backref(data_bytenr, leaf->start);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search keyed shared backref for logical %llu len %llu, %m",
+			data_bytenr, data_len);
+	}
+	return ret;
+}
+
+/*
  * Check referencer for normal (inlined) data ref
  * If len == 0, it will be resolved by searching in extent tree
  */
@@ -4049,13 +4182,13 @@ static int check_extent_data_backref(u64 root_id, u64 objectid, u64 offset,
 		    btrfs_header_owner(leaf) != root_id)
 			goto next;
 		/*
-		 * For tree blocks have been relocated, data backref are
-		 * shared instead of keyed. Do not account it.
+		 * If the node belongs to a shared backref item, we should not
+		 * account the number.
 		 */
-		if (btrfs_header_flag(leaf, BTRFS_HEADER_FLAG_RELOC)) {
-			/*
-			 * skip the leaf to speed up.
-			 */
+		ret = is_leaf_shared(leaf, bytenr, len);
+		if (ret < 0)
+			break;
+		if (ret > 0) {
 			slot = btrfs_header_nritems(leaf);
 			goto next;
 		}
