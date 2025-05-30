@@ -2043,6 +2043,15 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
+	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED) {
+		ret = create_data_block_groups(trans, root, mixed, &allocation);
+		if (ret) {
+			errno = -ret;
+			error("failed to create data relocation block groups: %m");
+			goto error;
+		}
+	}
+
 	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
 		ret = create_global_roots(trans, nr_global_roots);
 		if (ret) {
