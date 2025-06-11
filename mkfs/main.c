@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
-#include "pthread/btrfs_pthread.h"
+#include "android-compat/btrfs_pthread.h"
 #include <uuid/uuid.h>
 #include <blkid/blkid.h>
 #include "kernel-lib/list.h"

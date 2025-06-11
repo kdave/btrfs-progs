@@ -23,7 +23,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include "pthread/btrfs_pthread.h"
+#include "android-compat/btrfs_pthread.h"
 #include <zlib.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"

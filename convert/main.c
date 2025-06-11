@@ -88,7 +88,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
-#include "pthread/btrfs_pthread.h"
+#include "android-compat/btrfs_pthread.h"
 #include <stdbool.h>
 #include <errno.h>
 #include <limits.h>
