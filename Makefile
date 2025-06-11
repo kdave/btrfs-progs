@@ -215,7 +215,8 @@ objects = \
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\
 	kernel-shared/zoned.o	\
-	pthread/btrfs_pthread.o	\
+	android-compat/btrfs_pthread.o	\
+	android-compat/qsort.o	\
 	common/array.o		\
 	common/cpu-utils.o	\
 	common/device-scan.o	\
@@ -293,8 +294,8 @@ tune_objects = tune/main.o tune/seeding.o tune/change-uuid.o tune/change-metadat
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
-tags_files = $(addsuffix /*.[ch], . check cmds common convert crypto image include mkfs pthread tune \
-	       kernel-lib kernel-shared kernel-shared/uapi \
+tags_files = $(addsuffix /*.[ch], . android-compat check cmds common convert crypto \
+	       image include mkfs tune kernel-lib kernel-shared kernel-shared/uapi \
 	       libbtrfs libbtrfsutil libbtrfsutil/python tests)
 
 udev_rules = 64-btrfs-dm.rules 64-btrfs-zoned.rules
@@ -918,6 +919,7 @@ clean: $(CLEANDIRS)
 		libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links)
 	@echo "Cleaning object files and dependencies"
 	$(Q)$(RM) -f -- *.o .deps/*.o.d  \
+		android-compat/*.o android-compat/.deps/*.o.d \
 		check/*.o check/.deps/*.o.d \
 		cmds/*.o cmds/.deps/*.o.d \
 		common/*.o common/.deps/*.o.d \
@@ -929,7 +931,6 @@ clean: $(CLEANDIRS)
 		libbtrfs/*.o libbtrfs/.deps/*.o.d \
 		libbtrfsutil/*.o libbtrfsutil/.deps/*.o.d \
 		mkfs/*.o mkfs/.deps/*.o.d \
-		pthread/*.o pthread/.deps/*.o.d \
 		tune/*.o tune/.deps/*.o.d
 	$(Q)$(RM) -fd -- .deps */.deps */*/.deps
 	@echo "Cleaning test targets"
