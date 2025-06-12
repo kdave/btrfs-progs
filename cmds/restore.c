@@ -391,8 +391,6 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 		size_left -= offset;
 	}
 
-	pr_verbose(offset ? 1 : 0, "offset is %llu\n", offset);
-
 	inbuf = malloc(size_left);
 	if (!inbuf) {
 		error_msg(ERROR_MSG_MEMORY, NULL);
