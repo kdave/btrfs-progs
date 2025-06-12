@@ -19,7 +19,7 @@
 
 #include "kerncompat.h"
 #include <time.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 
 struct periodic_info {
 	int timer_fd;

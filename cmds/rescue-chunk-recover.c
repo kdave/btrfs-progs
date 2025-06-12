@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 #include <errno.h>
 #include <stddef.h>
 #include <string.h>

@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 #include <errno.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

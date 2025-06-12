@@ -25,7 +25,7 @@
 
 #include <string.h>
 #include <signal.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 
 int pthread_setcanceltype(int type, int *oldtype) { return 0; }
 int pthread_setcancelstate(int state, int *oldstate) { return 0; }

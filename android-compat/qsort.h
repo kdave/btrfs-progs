@@ -14,8 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef ANDROID_COMPAT_QSORT_H
-#define ANDROID_COMPAT_QSORT_H
+#ifndef __ANDROID_COMPAT_QSORT_H__
+#define __ANDROID_COMPAT_QSORT_H__
 
 #include <sys/types.h>
 

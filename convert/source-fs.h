@@ -19,7 +19,7 @@
 
 #include "kerncompat.h"
 #include <sys/types.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "convert/common.h"
 

@@ -215,7 +215,7 @@ objects = \
 	kernel-shared/uuid-tree.o	\
 	kernel-shared/volumes.o	\
 	kernel-shared/zoned.o	\
-	android-compat/btrfs_pthread.o	\
+	android-compat/pthread.o	\
 	android-compat/qsort.o	\
 	common/array.o		\
 	common/cpu-utils.o	\

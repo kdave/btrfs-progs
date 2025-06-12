@@ -27,7 +27,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>

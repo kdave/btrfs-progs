@@ -18,7 +18,7 @@
 #define __BTRFS_IMAGE_METADUMP_H__
 
 #include "kerncompat.h"
-#include "android-compat/btrfs_pthread.h"
+#include "android-compat/pthread.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"

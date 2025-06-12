@@ -14,8 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __BTRFS_PTHREAD_H__
-#define __BTRFS_PTHREAD_H__
+#ifndef __ANDROID_COMPAT_PTHREAD_H__
+#define __ANDROID_COMPAT_PTHREAD_H__
 
 #include "include/config.h"
 
