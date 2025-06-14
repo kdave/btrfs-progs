@@ -74,8 +74,8 @@ create [options] [<dest>/]<name> [[<dest2>/]<name2> ...]
 delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid> <path>
         Delete the subvolume(s) from the filesystem.
 
-        If *subvolume* is not a subvolume, btrfs returns an error but continues if
-        there are more arguments to process.
+        If *subvolume* is not a subvolume, the command returns an error but
+        continues if there are more arguments to process.
 
         If *--subvolid* is used, *path* must point to a btrfs filesystem. See
         :ref:`btrfs subvolume list<man-subvolume-list>` or
@@ -86,10 +86,10 @@ delete [options] [<subvolume> [<subvolume>...]], delete -i|--subvolid <subvolid>
         removed later in the background. The command returns immediately. See
         :ref:`btrfs subvolume sync<man-subvolume-sync>` how to wait until the subvolume gets completely removed.
 
-        The deletion does not involve full transaction commit by default due to
+        The deletion does not involve a full transaction commit by default due to
         performance reasons.  As a consequence, the subvolume may appear again after a
         crash.  Use one of the *--commit* options to wait until the operation is
-        safely stored on the device.
+        safely stored on the device before the command returns.
 
         Deleting subvolume needs sufficient permissions, by default the owner
         cannot delete it unless it's enabled by a mount option

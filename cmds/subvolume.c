@@ -562,7 +562,7 @@ again:
 
 		error_btrfs_util(err);
 		if (saved_errno == EPERM)
-			warning("deletion failed with EPERM, you don't have permissions or send may be in progress");
+			warning("deletion failed with EPERM, you don't have permissions or send may be in progress or the subvolume is set as default");
 		ret = 1;
 		goto out;
 	}
