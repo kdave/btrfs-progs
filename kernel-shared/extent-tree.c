@@ -2860,7 +2860,7 @@ static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 					   struct btrfs_root *root)
 {
 	struct btrfs_path path = {0};
-	struct btrfs_key key;
+	struct btrfs_key key = { 0 };
 	struct cache_extent *ce;
 	/* The last block group bytenr in the old root. */
 	u64 last_bg_in_old_root;
