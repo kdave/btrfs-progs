@@ -2643,14 +2643,14 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 }
 
 /*
- * Find a block group which starts >= @key->objectid in extent tree.
+ * Find a block group which starts >= @key->objectid and ends < max_bytenr.
  *
  * Return 0 for found
  * Return >0 for not found
  * Return <0 for error
  */
-static int find_first_block_group(struct btrfs_root *root,
-		struct btrfs_path *path, struct btrfs_key *key)
+static int find_first_block_group(struct btrfs_root *root, struct btrfs_path *path,
+				  struct btrfs_key *key, u64 max_bytenr)
 {
 	int ret;
 	struct btrfs_key found_key;
@@ -2676,6 +2676,8 @@ static int find_first_block_group(struct btrfs_root *root,
 		if (found_key.objectid >= key->objectid &&
 		    found_key.type == BTRFS_BLOCK_GROUP_ITEM_KEY)
 			return 0;
+		if (found_key.objectid >= max_bytenr)
+			break;
 		path->slots[0]++;
 	}
 	ret = 1;
@@ -2792,7 +2794,7 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 		/* Empty bg tree, all converted, then grab the first bg. */
 		if (btrfs_header_nritems(path.nodes[0]) == 0) {
 			btrfs_release_path(&path);
-			ret = find_first_block_group(extent_root, &path, &key);
+			ret = find_first_block_group(extent_root, &path, &key, (u64)-1);
 			/* We should have at least one bg item in extent tree. */
 			ASSERT(ret == 0);
 
@@ -2861,39 +2863,12 @@ static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_path path = {0};
 	struct btrfs_key key = { 0 };
-	struct cache_extent *ce;
-	/* The last block group bytenr in the old root. */
-	u64 last_bg_in_old_root;
 	int ret;
-
-	if (fs_info->last_converted_bg_bytenr != (u64)-1) {
-		/*
-		 * We know the last converted bg in the other tree, load the chunk
-		 * before that last converted as our last bg in the tree.
-		 */
-		ce = search_cache_extent(&fs_info->mapping_tree.cache_tree,
-			         fs_info->last_converted_bg_bytenr);
-		if (!ce || ce->start != fs_info->last_converted_bg_bytenr) {
-			error("no chunk found for bytenr %llu",
-			      fs_info->last_converted_bg_bytenr);
-			return -ENOENT;
-		}
-		ce = prev_cache_extent(ce);
-		/*
-		 * We should have previous unconverted chunk, or we have
-		 * already finished the convert.
-		 */
-		ASSERT(ce);
-
-		last_bg_in_old_root = ce->start;
-	} else {
-		last_bg_in_old_root = (u64)-1;
-	}
 
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 
 	while (true) {
-		ret = find_first_block_group(root, &path, &key);
+		ret = find_first_block_group(root, &path, &key, fs_info->last_converted_bg_bytenr);
 		if (ret > 0) {
 			ret = 0;
 			goto out;
@@ -2906,10 +2881,6 @@ static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 		ret = read_one_block_group(fs_info, &path);
 		if (ret < 0 && ret != -ENOENT)
 			goto out;
-
-		/* We have reached last bg in the old root, no need to continue */
-		if (key.objectid >= last_bg_in_old_root)
-			break;
 
 		if (key.offset == 0)
 			key.objectid++;
@@ -2935,7 +2906,7 @@ static int read_block_groups_from_root(struct btrfs_fs_info *fs_info,
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 
 	while (true) {
-		ret = find_first_block_group(root, &path, &key);
+		ret = find_first_block_group(root, &path, &key, (u64)-1);
 		if (ret > 0) {
 			ret = 0;
 			goto out;
