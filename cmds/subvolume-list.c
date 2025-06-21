@@ -767,7 +767,7 @@ static int resolve_root(struct rb_root *rl, struct root_info *ri,
  */
 static int lookup_ino_path(int fd, struct root_info *ri)
 {
-	struct btrfs_ioctl_ino_lookup_args args;
+	struct btrfs_ioctl_ino_lookup_user_args args;
 	int ret;
 
 	if (ri->path)
@@ -778,9 +778,9 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 
 	memset(&args, 0, sizeof(args));
 	args.treeid = ri->ref_tree;
-	args.objectid = ri->dir_id;
+	args.dirid = ri->dir_id;
 
-	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP_USER, &args);
 	if (ret < 0) {
 		if (errno == ENOENT) {
 			ri->ref_tree = 0;
@@ -789,6 +789,8 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 		error("failed to lookup path for root %llu: %m", ri->ref_tree);
 		return ret;
 	}
+
+	strcpy(ri->name, args.name);
 
 	if (args.name[0]) {
 		/*
