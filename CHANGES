@@ -1,3 +1,18 @@
+btrfs-progs-6.15 (2025-06-23)
+-----------------------------
+   * mkfs: new option --inode-flags to specify flags/attributes for
+     inodes/directories/subvolumes
+   * check:
+     * fix false alert on missing checksum for hole
+     * in lowmem mode, fix false alerts when checking refs
+   * convert: check feature compatibility when enabling block-group-tree
+   * tune convert-bgt: fix resume of conversion
+   * rescue: add new command fix-data-checksum, selectively fix or find
+     mismatching checksums
+   * other:
+      * new and updated tests
+      * documentation updates
+
 btrfs-progs-6.14 (2025-03-26)
 -----------------------------
    * mkfs:

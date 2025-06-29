@@ -512,13 +512,6 @@ static int zero_output_file(int out_fd, u64 size)
 	return ret;
 }
 
-static int _cmp_device_by_id(void *priv, struct list_head *a,
-			     struct list_head *b)
-{
-	return list_entry(a, struct btrfs_device, dev_list)->devid -
-	       list_entry(b, struct btrfs_device, dev_list)->devid;
-}
-
 static void list_all_devices(struct btrfs_root *root, bool is_zoned)
 {
 	struct btrfs_fs_devices *fs_devices;
@@ -532,7 +525,7 @@ static void list_all_devices(struct btrfs_root *root, bool is_zoned)
 	list_for_each_entry(device, &fs_devices->devices, dev_list)
 		number_of_devices++;
 
-	list_sort(NULL, &fs_devices->devices, _cmp_device_by_id);
+	list_sort(NULL, &fs_devices->devices, cmp_device_id);
 
 	printf("Number of devices:  %d\n", number_of_devices);
 	printf("Devices:\n");
@@ -1172,12 +1165,12 @@ static int parse_inode_flags(const char *option, struct list_head *inode_flags_l
 {
 	struct rootdir_inode_flags_entry *entry = NULL;
 	char *colon;
-	char *dumpped = NULL;
+	char *option_dup = NULL;
 	char *token;
 	int ret;
 
-	dumpped = strdup(option);
-	if (!dumpped) {
+	option_dup = strdup(option);
+	if (!option_dup) {
 		ret = -ENOMEM;
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		goto cleanup;
@@ -1188,7 +1181,7 @@ static int parse_inode_flags(const char *option, struct list_head *inode_flags_l
 		error_msg(ERROR_MSG_MEMORY, NULL);
 		goto cleanup;
 	}
-	colon = strstr(dumpped, ":");
+	colon = strstr(option_dup, ":");
 	if (!colon) {
 		error("invalid inode flags: %s", option);
 		ret = -EINVAL;
@@ -1196,7 +1189,7 @@ static int parse_inode_flags(const char *option, struct list_head *inode_flags_l
 	}
 	*colon = '\0';
 
-	token = strtok(dumpped, ",");
+	token = strtok(option_dup, ",");
 	while (token) {
 		if (token == NULL)
 			break;
@@ -1218,9 +1211,10 @@ static int parse_inode_flags(const char *option, struct list_head *inode_flags_l
 		goto cleanup;
 	}
 	list_add_tail(&entry->list, inode_flags_list);
+	free(option_dup);
 	return 0;
 cleanup:
-	free(dumpped);
+	free(option_dup);
 	free(entry);
 	return ret;
 }

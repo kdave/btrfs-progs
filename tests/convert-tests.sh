@@ -85,7 +85,7 @@ run_one_test() {
 		fi
 		check_test_results "$RESULTS" "$testname"
 	else
-		_fail "custom test script not found"
+		_fail "custom test script not found or lacks execution permission"
 	fi
 }
 

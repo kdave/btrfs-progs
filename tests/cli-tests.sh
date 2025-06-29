@@ -74,6 +74,8 @@ do
 			fi
 			_fail "test failed for case $name"
 		fi
+	else
+		_fail "custom test script not found or lacks execution permission"
 	fi
 	cd "$TEST_TOP"
 done
