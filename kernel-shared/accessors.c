@@ -28,17 +28,6 @@ static bool check_setget_bounds(const struct extent_buffer *eb,
 
 /*
  * MODIFIED:
- *  - We don't have eb->folios
- */
-void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *eb)
-{
-	token->eb = eb;
-	token->kaddr = eb->data;
-	token->offset = 0;
-}
-
-/*
- * MODIFIED:
  *  - We don't have eb->folios, simply wrap the set/get helpers.
  *  - no const for extent buffer in btrfs_set_*
  */
@@ -52,11 +41,6 @@ void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *e
  * - btrfs_set_8 (for 8/16/32/64)
  * - btrfs_get_8 (for 8/16/32/64)
  *
- * Generic helpers with a token (cached address of the most recently accessed
- * page):
- * - btrfs_set_token_8 (for 8/16/32/64)
- * - btrfs_get_token_8 (for 8/16/32/64)
- *
  * The set/get functions handle data spanning two pages transparently, in case
  * metadata block size is larger than page.  Every pointer to metadata items is
  * an offset into the extent buffer page array, cast to a specific type.  This
@@ -68,16 +52,6 @@ void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *e
  */
 
 #define DEFINE_BTRFS_SETGET_BITS(bits)					\
-u##bits btrfs_get_token_##bits(struct btrfs_map_token *token,		\
-			       const void *ptr, unsigned long off)	\
-{									\
-	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const int size = sizeof(u##bits);				\
-	ASSERT(token);							\
-	ASSERT(token->kaddr);						\
-	ASSERT(check_setget_bounds(token->eb, ptr, off, size));		\
-	return get_unaligned_le##bits(token->kaddr + member_offset);	\
-}									\
 u##bits btrfs_get_##bits(const struct extent_buffer *eb,		\
 			 const void *ptr, unsigned long off)		\
 {									\
@@ -85,17 +59,6 @@ u##bits btrfs_get_##bits(const struct extent_buffer *eb,		\
 	const int size = sizeof(u##bits);				\
 	ASSERT(check_setget_bounds(eb, ptr, off, size));		\
 	return get_unaligned_le##bits(eb->data + member_offset);	\
-}									\
-void btrfs_set_token_##bits(struct btrfs_map_token *token,		\
-			    const void *ptr, unsigned long off,		\
-			    u##bits val)				\
-{									\
-	unsigned long member_offset = (unsigned long)ptr + off;		\
-	const int size = sizeof(u##bits);				\
-	ASSERT(token);							\
-	ASSERT(token->kaddr);						\
-	ASSERT(check_setget_bounds(token->eb, ptr, off, size));		\
-	put_unaligned_le##bits(val, token->kaddr + member_offset);	\
 }									\
 void btrfs_set_##bits(struct extent_buffer *eb, void *ptr,		\
 		      unsigned long off, u##bits val)			\

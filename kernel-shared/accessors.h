@@ -14,14 +14,6 @@
 #define _static_assert(expr)   _Static_assert(expr, #expr)
 #endif
 
-struct btrfs_map_token {
-	struct extent_buffer *eb;
-	char *kaddr;
-	unsigned long offset;
-};
-
-void btrfs_init_map_token(struct btrfs_map_token *token, struct extent_buffer *eb);
-
 /*
  * Some macros to generate set/get functions for the struct fields.  This
  * assumes there is a lefoo_to_cpu for every type, so lets make a simple one
@@ -54,11 +46,6 @@ static inline void put_unaligned_le8(u8 val, void *p)
 			   sizeof(((type *)0)->member)))
 
 #define DECLARE_BTRFS_SETGET_BITS(bits)					\
-u##bits btrfs_get_token_##bits(struct btrfs_map_token *token,		\
-			       const void *ptr, unsigned long off);	\
-void btrfs_set_token_##bits(struct btrfs_map_token *token,		\
-			    const void *ptr, unsigned long off,		\
-			    u##bits val);				\
 u##bits btrfs_get_##bits(const struct extent_buffer *eb,		\
 			 const void *ptr, unsigned long off);		\
 void btrfs_set_##bits(struct extent_buffer *eb, void *ptr,		\
@@ -82,18 +69,6 @@ static inline void btrfs_set_##name(struct extent_buffer *eb, type *s, \
 	_static_assert(sizeof(u##bits) == sizeof(((type *)0))->member);	\
 	btrfs_set_##bits(eb, s, offsetof(type, member), val);		\
 }									\
-static inline u##bits btrfs_token_##name(struct btrfs_map_token *token,	\
-					 const type *s)			\
-{									\
-	_static_assert(sizeof(u##bits) == sizeof(((type *)0))->member);	\
-	return btrfs_get_token_##bits(token, s, offsetof(type, member));\
-}									\
-static inline void btrfs_set_token_##name(struct btrfs_map_token *token,\
-					  type *s, u##bits val)		\
-{									\
-	_static_assert(sizeof(u##bits) == sizeof(((type *)0))->member);	\
-	btrfs_set_token_##bits(token, s, offsetof(type, member), val);	\
-}
 
 /*
  * MODIFIED:
@@ -512,18 +487,6 @@ static inline void btrfs_set_item_##member(struct extent_buffer *eb,	\
 					   int slot, u32 val)			\
 {										\
 	btrfs_set_raw_item_##member(eb, btrfs_item_nr(eb, slot), val);		\
-}										\
-static inline u32 btrfs_token_item_##member(struct btrfs_map_token *token,	\
-					    int slot)				\
-{										\
-	struct btrfs_item *item = btrfs_item_nr(token->eb, slot);		\
-	return btrfs_token_raw_item_##member(token, item);			\
-}										\
-static inline void btrfs_set_token_item_##member(struct btrfs_map_token *token,	\
-						 int slot, u32 val)		\
-{										\
-	struct btrfs_item *item = btrfs_item_nr(token->eb, slot);		\
-	btrfs_set_token_raw_item_##member(token, item, val);			\
 }
 
 BTRFS_ITEM_SETGET_FUNCS(offset)
