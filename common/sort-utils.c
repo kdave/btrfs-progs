@@ -78,6 +78,9 @@ int compare_add_sort_id(struct compare *comp, int id)
 		if (comp->sortdef[i].name == NULL)
 			return -1;
 		if (comp->sortdef[i].id == id) {
+#ifdef __ANDROID__
+			comp->id[comp->count] = id;
+#endif
 			comp->comp[comp->count] = comp->sortdef[i].comp;
 			comp->count++;
 			break;
