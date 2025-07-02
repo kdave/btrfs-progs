@@ -99,12 +99,12 @@ start [options] <path>|<device>
 	--limit <limit>
 		set the scrub throughput limit for each device.
 
-		If the scrub is for the whole fs, it's the same as
-		:command:`btrfs scrub limit -a -l <value>`.
+		If the scrub is for the whole filesystem, it's the same as
+		:command:`btrfs scrub limit --all --limit <value>`.
 		If the scrub is for a single device, it's the same as
-		:command:`btrfs scrub limit -d <devid> -l <value>`.
+		:command:`btrfs scrub limit --devid <devid> -l <value>`.
 
-		The value is bytes per second, and accepts the usual KMGT prefixes.
+		The value is bytes per second, and accepts the usual KMGT suffixes.
 		After the scrub is finished, the throughput limit will be reset to
 		the old value of each device.
         -f
@@ -114,6 +114,9 @@ start [options] <path>|<device>
                 necessary
 
         ``Deprecated options``
+
+        The priority settings work only with certain schedulers, in particular
+        they *don't* work with the most common one *mq-deadline*.
 
         -c <ioprio_class>
                 set IO priority class (see :manref:`ionice(1)` manual page) if the IO
@@ -131,7 +134,8 @@ status [options] <path>|<device>
         or for the specified *device*.
 
         If no scrub is running, show statistics of the last finished or
-        cancelled scrub for that filesystem or device.
+        cancelled scrub for that filesystem or device. The status is read from
+        the file located in :file:`/var/lib/btrfs`.
 
         ``Options``
 
