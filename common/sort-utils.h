@@ -89,6 +89,9 @@ struct compare {
 	unsigned long invert_map;
 	int count;
 	const struct sortdef *sortdef;
+#ifdef __ANDROID__
+	int id[SORT_MAX_KEYS];
+#endif
 };
 
 int compare_init(struct compare *comp, const struct sortdef *sortdef);
