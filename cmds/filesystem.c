@@ -948,6 +948,7 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	OPTLINE("-r", "defragment files recursively"),
 	OPTLINE("-c[zlib,lzo,zstd]", "compress the file while defragmenting, optional parameter (no space in between)"),
 	OPTLINE("-L|--level level", "use given compression level if enabled (zlib: 1..9, zstd: -15..15, and 0 selects the default level)"),
+	OPTLINE("--nocomp", "don't compress while defragmenting (uncompress if needed)"),
 	OPTLINE("-f", "flush data to disk immediately after defragmenting"),
 	OPTLINE("-s start", "defragment only from byte onward"),
 	OPTLINE("-l len", "defragment only up to len bytes"),
@@ -1053,6 +1054,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
 	int compress_level = 0;
+	bool opt_nocomp = false;
 
 	/*
 	 * Kernel 4.19+ supports defragmention of files open read-only,
@@ -1085,10 +1087,11 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	defrag_global_errors = 0;
 	optind = 0;
 	while(1) {
-		enum { GETOPT_VAL_STEP = GETOPT_VAL_FIRST };
+		enum { GETOPT_VAL_STEP = GETOPT_VAL_FIRST, GETOPT_VAL_NOCOMP };
 		static const struct option long_options[] = {
 			{ "level", required_argument, NULL, 'L' },
 			{ "step", required_argument, NULL, GETOPT_VAL_STEP },
+			{ "nocomp", no_argument, NULL, GETOPT_VAL_NOCOMP },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c;
@@ -1099,6 +1102,11 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 
 		switch(c) {
 		case 'c':
+			if (opt_nocomp) {
+				error("cannot use compression with --nocomp");
+				return 1;
+			}
+
 			compress_type = BTRFS_COMPRESS_ZLIB;
 			if (optarg)
 				compress_type = parse_compress_type_arg(optarg);
@@ -1142,6 +1150,13 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		case 'r':
 			recursive = true;
 			break;
+		case GETOPT_VAL_NOCOMP:
+			if (compress_level != BTRFS_COMPRESS_NONE) {
+				error("cannot use --nocomp with compression set");
+				return 1;
+			}
+			opt_nocomp = true;
+			break;
 		case GETOPT_VAL_STEP:
 			defrag_global_step = arg_strtou64_with_suffix(optarg);
 			if (defrag_global_step < SZ_256K) {
@@ -1171,6 +1186,8 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		} else
 			defrag_global_range.compress_type = compress_type;
 	}
+	if (opt_nocomp)
+		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_NOCOMPRESS;
 	if (flush)
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
 
