@@ -124,6 +124,8 @@ defragment [options] <file>|<dir> [<file>|<dir>...]
                 1..9, *lzo* does not have any levels, *zstd* the standard levels 1..15 and also the
                 realtime -1..-15.
 
+        --nocomp
+                Do not compress while defragmenting, uncompress extents if needed.
         -r
                 defragment files recursively in given directories, does not descend to
                 subvolumes or mount points
