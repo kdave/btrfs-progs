@@ -310,7 +310,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		else
 			ret = PTR_ERR(parent_subvol);
 		uuid_unparse(parent_uuid, uuid_str);
-		error("snapshot: cannot find parent subvolume %s", uuid_str);
+		error("snapshot receive: cannot find parent subvolume %s", uuid_str);
 		goto out;
 	}
 
