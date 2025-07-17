@@ -1049,7 +1049,12 @@ static int check_overwrite(const char *device)
 	}
 
 	if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL)) {
-		error("%s appears to contain an existing filesystem (%s)", device, type);
+		const char *label = NULL;
+
+		blkid_probe_lookup_value(pr, "LABEL", &label, NULL);
+
+		error("%s appears to contain an existing filesystem (type=%s%s%s)",
+		      device, type, (label ? ", label=" : ""), (label ? label : ""));
 	} else if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL)) {
 		error("%s appears to contain a partition table (%s)", device, type);
 	} else {
