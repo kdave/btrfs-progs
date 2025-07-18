@@ -164,7 +164,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 			goto out;
 		}
 
-		bg = btrfs_lookup_first_block_group(fs_info, key.objectid);
+		bg = btrfs_lookup_block_group(fs_info, key.objectid);
 		if (!bg) {
 			fprintf(stderr,
 		"We have a space info key for a block group that doesn't exist\n");
