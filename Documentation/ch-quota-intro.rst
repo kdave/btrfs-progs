@@ -11,7 +11,7 @@ on the fly.
 
 On the other hand, the traditional approach has only a poor solution to
 restrict directories.
-At installation time, the harddisk can be partitioned so that every directory
+At installation time, the storage device can be partitioned so that every directory
 (e.g. :file:`/usr`, :file:`/var`, ...) that needs a limit gets its own partition.  The obvious
 problem is that those limits cannot be changed without a reinstallation.  The
 btrfs subvolume feature builds a bridge.  Subvolumes correspond in many ways to
@@ -37,7 +37,8 @@ space and the amount of exclusively referenced space.
 
 referenced
         space is the amount of data that can be reached from any of the
-        subvolumes contained in the qgroup, while
+        subvolumes contained in the qgroup
+
 exclusive
         is the amount of data where all references to this data can be reached
         from within this qgroup.
@@ -50,12 +51,12 @@ qgroup.  Qgroups are notated as *level/id*, e.g.  the qgroup 3/2 is a qgroup of
 level 3. For level 0, the leading *0/* can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
-is the qgroup for the root subvolume.
+is the qgroup for the toplevel subvolume.
 For the :command:`btrfs qgroup` command, the path to the subvolume can also be used
 instead of *0/ID*.  For all higher levels, the ID can be chosen freely.
 
 Each qgroup can contain a set of lower level qgroups, thus creating a hierarchy
-of qgroups. Figure 1 shows an example qgroup tree.
+of qgroups. Here's an example of qgroup tree:
 
 .. code-block:: none
 
@@ -74,8 +75,6 @@ of qgroups. Figure 1 shows an example qgroup tree.
                       |         /       \     /       \
                       |        /         \   /         \
         extents       1       2            3            4
-
-        Figure 1: Sample qgroup hierarchy
 
 At the bottom, some extents are depicted showing which qgroups reference which
 extents.  It is important to understand the notion of *referenced* vs
