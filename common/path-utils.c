@@ -107,87 +107,11 @@ int path_exists(const char *path)
 	return 1;
 }
 
-/* checks if a device is a loop device */
-static int is_loop_device(const char *device)
-{
-	struct stat statbuf;
-
-	if(stat(device, &statbuf) < 0)
-		return -errno;
-
-	return (S_ISBLK(statbuf.st_mode) &&
-		MAJOR(statbuf.st_rdev) == LOOP_MAJOR);
-}
-
-/*
- * Takes a loop device path (e.g. /dev/loop0) and returns
- * the associated file (e.g. /images/my_btrfs.img) using
- * loopdev API
- */
-static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_file)
-{
-	int fd;
-	int ret;
-	struct loop_info64 lo64;
-
-	fd = open(loop_dev, O_RDONLY | O_NONBLOCK);
-	if (fd < 0)
-		return -errno;
-	ret = ioctl(fd, LOOP_GET_STATUS64, &lo64);
-	if (ret < 0) {
-		ret = -errno;
-		goto out;
-	}
-
-	memcpy(loop_file, lo64.lo_file_name, sizeof(lo64.lo_file_name));
-	loop_file[sizeof(lo64.lo_file_name)] = 0;
-
-out:
-	close(fd);
-
-	return ret;
-}
-
-/*
- * Takes a loop device path (e.g. /dev/loop0) and returns
- * the associated file (e.g. /images/my_btrfs.img)
- */
-static int resolve_loop_device(const char* loop_dev, char* loop_file,
-		int max_len)
-{
-	int ret;
-	FILE *f;
-	char fmt[20];
-	char p[PATH_MAX];
-	char real_loop_dev[PATH_MAX];
-
-	if (!realpath(loop_dev, real_loop_dev))
-		return -errno;
-	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", strrchr(real_loop_dev, '/'));
-	if (!(f = fopen(p, "r"))) {
-		if (errno == ENOENT)
-			/*
-			 * It's possibly a partitioned loop device, which is
-			 * resolvable with loopdev API.
-			 */
-			return resolve_loop_device_with_loopdev(loop_dev, loop_file);
-		return -errno;
-	}
-
-	snprintf(fmt, 20, "%%%i[^\n]", max_len - 1);
-	ret = fscanf(f, fmt, loop_file);
-	fclose(f);
-	if (ret == EOF)
-		return -errno;
-
-	return 0;
-}
-
 /*
  * Checks whether a and b are identical or device
  * files associated with the same block device
  */
-static int is_same_blk_file(const char* a, const char* b)
+int is_same_blk_file(const char* a, const char* b)
 {
 	struct stat st_buf_a, st_buf_b;
 	char real_a[PATH_MAX];
@@ -222,55 +146,6 @@ static int is_same_blk_file(const char* a, const char* b)
 	}
 
 	return 0;
-}
-
-/*
- * Checks if a and b are identical or device files associated with the same
- * block device or if one file is a loop device that uses the other file.
- */
-int is_same_loop_file(const char *a, const char *b)
-{
-	char res_a[PATH_MAX];
-	char res_b[PATH_MAX];
-	const char* final_a = NULL;
-	const char* final_b = NULL;
-	int ret;
-
-	/* Resolve a if it is a loop device */
-	if ((ret = is_loop_device(a)) < 0) {
-		if (ret == -ENOENT)
-			return 0;
-		return ret;
-	} else if (ret) {
-		ret = resolve_loop_device(a, res_a, sizeof(res_a));
-		if (ret < 0) {
-			if (errno != EPERM)
-				return ret;
-		} else {
-			final_a = res_a;
-		}
-	} else {
-		final_a = a;
-	}
-
-	/* Resolve b if it is a loop device */
-	if ((ret = is_loop_device(b)) < 0) {
-		if (ret == -ENOENT)
-			return 0;
-		return ret;
-	} else if (ret) {
-		ret = resolve_loop_device(b, res_b, sizeof(res_b));
-		if (ret < 0) {
-			if (errno != EPERM)
-				return ret;
-		} else {
-			final_b = res_b;
-		}
-	} else {
-		final_b = b;
-	}
-
-	return is_same_blk_file(final_a, final_b);
 }
 
 /* Checks if a file exists and is a block or regular file*/
