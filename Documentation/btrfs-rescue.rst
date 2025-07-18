@@ -9,7 +9,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-:command:`btrfs rescue` is used to try to recover a damaged btrfs filesystem.
+A set of commands that are targeting to fix a specific problem and may not
+suitable for :doc`btrfs-check`.
 
 SUBCOMMAND
 ----------
@@ -29,10 +30,10 @@ chunk-recover [options] <device>
 
 .. note::
    Since :command:`chunk-recover` will scan the whole device, it will be very
-   slow especially executed on a large device.
+   slow especially if executed on a large device.
 
 fix-device-size <device>
-        fix device size and super block total bytes values that do not match
+        Fix device size and super block total bytes values that do not match.
 
         Kernel 4.11 starts to check the device size more strictly and this might
         mismatch the stored value of total bytes. See the exact error message below.
@@ -51,7 +52,7 @@ fix-device-size <device>
                 WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]
 
 fix-data-checksum <device>
-	fix data checksum mismatch
+	Selectively fix data checksum mismatch.
 
 	There is a long existing problem that if a user space program is doing
 	direct IO and modifies the buffer before the write back finished, it
@@ -81,15 +82,15 @@ fix-data-checksum <device>
 .. _man-rescue-clear-ino-cache:
 
 clear-ino-cache <device>
-        Remove leftover items pertaining to the deprecated `inode cache` feature.
+        Remove leftover items pertaining to the deprecated *inode number cache* feature.
 
-	The `inode cache` feature (enabled by mount option "inode_cache") has been
-	completely removed in 5.11 kernel.
+        The feature enabled by mount option *inode_cache* has been completely
+        removed in 5.11 kernel.
 
 clear-space-cache <v1|v2> <device>
 	Completely remove the on-disk data of free space cache of given version.
 
-	Especially for v1 free space cache, `clear_cache` mount option would only
+	Especially for v1 free space cache, *clear_cache* mount option would only
 	remove the cache for updated block groups, the remaining would not be removed.
 	Thus this command is provided to manually clear the free space cache.
 
@@ -116,15 +117,11 @@ super-recover [options] <device>
                 (deprecated) alias for global *-v* option
 
 zero-log <device>
-        clear the filesystem log tree
+        Clear the filesystem log tree.
 
         This command will clear the filesystem log tree. This may fix a specific
-        set of problem when the filesystem mount fails due to the log replay. See below
+        set of problem when the filesystem mount fails during log replay. See below
         for sample stack traces that may show up in system log.
-
-        The common case where this happens was fixed a long time ago,
-        so it is unlikely that you will see this particular problem, but the command is
-        kept around.
 
         .. note::
                 Clearing the log may lead to loss of changes that were made
