@@ -19,20 +19,15 @@ of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
         :ref:`HIERARCHICAL QUOTA GROUP CONCEPTS<man-quota-hierarchical-quota-group-concepts>`
         for a detailed description.
 
-PERFORMANCE IMPLICATIONS
-^^^^^^^^^^^^^^^^^^^^^^^^
+STABILITY AND PERFORMANCE IMPLICATIONS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The qgroup implementation is considered reasonably stable for daily use and has
+been enabled in various distributions.
 
 When quotas are activated, they affect all extent processing, which takes a
 performance hit. Activation of qgroups is not recommended unless the user
 intends to actually use them.
-
-STABILITY STATUS
-^^^^^^^^^^^^^^^^
-
-The qgroup implementation has turned out to be quite difficult as it affects
-the core of the filesystem operation. Qgroup users have hit various corner cases
-over time, such as incorrect accounting or system instability. The situation is
-gradually improving and issues found and fixed.
 
 .. _man-quota-hierarchical-quota-group-concepts:
 
