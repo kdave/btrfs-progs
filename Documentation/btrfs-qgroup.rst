@@ -13,11 +13,7 @@ DESCRIPTION
 
 .. note::
    To use qgroup you need to enable quota first using :command:`btrfs quota enable`
-   command.
-
-.. warning::
-   Qgroup is not stable yet and will impact performance in current mainline
-   kernel (v4.14).
+   command, see :doc:`btrfs-quota`.
 
 QGROUP
 ------
@@ -26,10 +22,10 @@ Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are
 attached to subvolumes. The size limits are set per qgroup and apply when any
 limit is reached in tree that contains a given subvolume.
 
-The limits are separated between shared and exclusive and reflect the extent
+The limits are separated between *shared* and *exclusive* and reflect the extent
 ownership. For example a fresh snapshot shares almost all the blocks with the
 original subvolume, new writes to either subvolume will raise towards the
-exclusive limit.
+exclusive limit. Extent sharing is also result of *reflink* or *deduplication*.
 
 .. note::
    Qgroup limit only works when qgroup is in a consistent state.
@@ -40,11 +36,12 @@ exclusive limit.
 The qgroup identifiers conform to *level/id* where level 0 is reserved to the
 qgroups associated with subvolumes. Such qgroups are created automatically.
 
-The qgroup hierarchy is built by commands :command:`create` and :command:`assign`.
+The qgroup hierarchy is built by commands :command:`btrfs qgroup create` and
+:command:`btrfs qgroup assign`.
 
 .. note::
-   If the qgroup of a subvolume is destroyed, quota about the subvolume will
-   not be functional until qgroup *0/<subvolume id>* is created again.
+   If the qgroup of a subvolume is destroyed, quota related to the subvolume
+   will not be functional until qgroup *0/<subvolume id>* is created again.
 
 SUBCOMMAND
 ----------
@@ -78,8 +75,9 @@ destroy <qgroupid> <path>
 
 clear-stale <path>
 	Clear all stale qgroups whose subvolume does not exist anymore, this is the
-	level 0 qgroup like 0/subvolid. Higher level qgroups are not deleted even
-	if they don't have any child qgroups.
+	level 0 qgroup like *0/subvolid*. Higher level qgroups are not deleted even
+        if they don't have any child qgroups as they are always created by the
+        user and their deletion should be verified first.
 
 limit [options] <size>|none [<qgroupid>] <path>
         Limit the size of a qgroup to *size* or no limit in the btrfs filesystem
@@ -161,21 +159,21 @@ show [options] <path>
 
 SPECIAL PATHS
 -------------
-For `btrfs qgroup show` subcommand, the ``path`` column may has some special
-strings:
+For :command:`btrfs qgroup show` command, the :file:`path` column can print
+special values:
 
 `<toplevel>`
-	The toplevel subvolume
+	The toplevel subvolume.
 
 `<under deletion>`
-        The subvolume has been deleted (it's directory removed), but the
+        The subvolume has been deleted (its directory removed), but the
         subvolume metadata not not yet fully cleaned.
 
 `<squota space holder>`
-	For simple quota mode only.
+	For *simple quota* mode only.
 	By its design, a fully deleted subvolume may still have accounting on
-	it, so even the subvolume is gone, the numbers are still here for future
-	accounting.
+        it, so even if the subvolume is gone, the numbers are still here for
+        future accounting.
 
 `<stale>`
 	The qgroup has no corresponding subvolume anymore, and the qgroup
@@ -190,7 +188,7 @@ QUOTA RESCAN
 The rescan reads all extent sharing metadata and updates the respective qgroups
 accordingly.
 
-The information consists of bytes owned exclusively (*excl*) or shared/referred
+The information consists of bytes owned exclusively (*excl*) or shared/referenced
 to (*rfer*). There's no explicit information about which extents are shared or
 owned exclusively.  This means when qgroup relationship changes, extent owners
 change and qgroup numbers are no longer consistent unless we do a full rescan.
