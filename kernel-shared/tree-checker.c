@@ -2221,8 +2221,8 @@ int btrfs_verify_level_key(struct extent_buffer *eb, int level,
 		btrfs_node_key_to_cpu(eb, &found_key, 0);
 	else
 		btrfs_item_key_to_cpu(eb, &found_key, 0);
-	ret = btrfs_comp_cpu_keys(first_key, &found_key);
 
+	ret = btrfs_comp_cpu_keys(first_key, &found_key);
 	if (ret) {
 		WARN(IS_ENABLED(CONFIG_BTRFS_DEBUG),
 		     KERN_ERR "BTRFS: tree first key check failed\n");

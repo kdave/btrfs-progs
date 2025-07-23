@@ -36,6 +36,11 @@ enum {
 	 */
 	ENUM_BIT(EXTENT_DELALLOC_NEW),
 	/*
+	 * Mark that a range is being locked for finishing an ordered extent.
+	 * Used together with EXTENT_LOCKED.
+	 */
+	ENUM_BIT(EXTENT_FINISHING_ORDERED),
+	/*
 	 * When an ordered extent successfully completes for a region marked as
 	 * a new delalloc range, use this flag when clearing a new delalloc
 	 * range to indicate that the VFS' inode number of bytes should be
@@ -48,6 +53,15 @@ enum {
 	 * want the extent states to go away.
 	 */
 	ENUM_BIT(EXTENT_CLEAR_ALL_BITS),
+
+	/*
+	 * This must be last.
+	 *
+	 * Bit not representing a state but a request for NOWAIT semantics,
+	 * e.g. when allocating memory, and must be masked out from the other
+	 * bits.
+	 */
+	ENUM_BIT(EXTENT_NOWAIT)
 };
 
 #define EXTENT_DO_ACCOUNTING    (EXTENT_CLEAR_META_RESV | \
@@ -55,6 +69,8 @@ enum {
 #define EXTENT_CTLBITS		(EXTENT_DO_ACCOUNTING | \
 				 EXTENT_ADD_INODE_BYTES | \
 				 EXTENT_CLEAR_ALL_BITS)
+
+#define EXTENT_LOCK_BITS	(EXTENT_LOCKED | EXTENT_DIO_LOCKED)
 
 /*
  * Redefined bits above which are used only in the device allocation tree,

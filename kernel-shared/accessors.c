@@ -56,16 +56,14 @@ u##bits btrfs_get_##bits(const struct extent_buffer *eb,		\
 			 const void *ptr, unsigned long off)		\
 {									\
 	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const int size = sizeof(u##bits);				\
-	ASSERT(check_setget_bounds(eb, ptr, off, size));		\
+	ASSERT(check_setget_bounds(eb, ptr, off, sizeof(u##bits)));	\
 	return get_unaligned_le##bits(eb->data + member_offset);	\
 }									\
 void btrfs_set_##bits(struct extent_buffer *eb, void *ptr,		\
 		      unsigned long off, u##bits val)			\
 {									\
 	unsigned long member_offset = (unsigned long)ptr + off;		\
-	const int size = sizeof(u##bits);				\
-	ASSERT(check_setget_bounds(eb, ptr, off, size));		\
+	ASSERT(check_setget_bounds(eb, ptr, off, sizeof(u##bits)));	\
 	put_unaligned_le##bits(val, (void *)eb->data + member_offset);	\
 }
 
