@@ -8,7 +8,7 @@
 
 #ifdef CONFIG_PRINTK
 
-#define STATE_STRING_PREFACE	": state "
+#define STATE_STRING_PREFACE	" state "
 #define STATE_STRING_BUF_LEN	(sizeof(STATE_STRING_PREFACE) + BTRFS_FS_STATE_COUNT + 1)
 
 /*
@@ -21,7 +21,8 @@ static const char fs_state_chars[] = {
 	[BTRFS_FS_STATE_TRANS_ABORTED]		= 'A',
 	[BTRFS_FS_STATE_DEV_REPLACING]		= 'R',
 	[BTRFS_FS_STATE_DUMMY_FS_INFO]		= 0,
-	[BTRFS_FS_STATE_NO_CSUMS]		= 'C',
+	[BTRFS_FS_STATE_NO_DATA_CSUMS]		= 'C',
+	[BTRFS_FS_STATE_SKIP_META_CSUMS]	= 'S',
 	[BTRFS_FS_STATE_LOG_CLEANUP_ERROR]	= 'L',
 };
 
@@ -260,14 +261,6 @@ void __cold _btrfs_printk(const struct btrfs_fs_info *fs_info, const char *fmt, 
 }
 #endif
 
-#ifdef CONFIG_BTRFS_ASSERT
-void __cold btrfs_assertfail(const char *expr, const char *file, int line)
-{
-	pr_err("assertion failed: %s, in %s:%d\n", expr, file, line);
-	BUG();
-}
-#endif
-
 #if BITS_PER_LONG == 32 && defined(__KERNEL__)
 void __cold btrfs_warn_32bit_limit(struct btrfs_fs_info *fs_info)
 {
@@ -295,8 +288,8 @@ void __cold btrfs_err_32bit_limit(struct btrfs_fs_info *fs_info)
 #endif
 
 /*
- * __btrfs_panic decodes unexpected, fatal errors from the caller, issues an
- * alert, and either panics or BUGs, depending on mount options.
+ * Decode unexpected, fatal errors from the caller, issue an alert, and either
+ * panic or BUGs, depending on mount options.
  *
  * MODIFIED:
  *  - We don't have btrfs_test_opt() yet, kill that and s_id.

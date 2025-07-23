@@ -633,9 +633,9 @@ static inline void btrfs_dir_item_key_to_cpu(const struct extent_buffer *eb,
 static inline void btrfs_disk_key_to_cpu(struct btrfs_key *cpu,
 					 const struct btrfs_disk_key *disk)
 {
-	cpu->objectid = le64_to_cpu(disk->objectid);
-	cpu->type = disk->type;
 	cpu->offset = le64_to_cpu(disk->offset);
+	cpu->type = disk->type;
+	cpu->objectid = le64_to_cpu(disk->objectid);
 }
 
 static inline void btrfs_cpu_key_to_disk(struct btrfs_disk_key *disk,

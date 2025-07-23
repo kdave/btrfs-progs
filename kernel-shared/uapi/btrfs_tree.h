@@ -725,18 +725,6 @@ struct btrfs_super_block {
 	__u8 padding[565];
 } __attribute__ ((__packed__));
 
-struct btrfs_raid_stride {
-	/* The id of device this raid extent lives on. */
-	__le64 devid;
-	/* The physical location on disk. */
-	__le64 physical;
-} __attribute__ ((__packed__));
-
-struct btrfs_stripe_extent {
-	/* An array of raid strides this stripe is composed of. */
-	__DECLARE_FLEX_ARRAY(struct btrfs_raid_stride, strides);
-} __attribute__ ((__packed__));
-
 #define BTRFS_FREE_SPACE_EXTENT	1
 #define BTRFS_FREE_SPACE_BITMAP	2
 
@@ -751,6 +739,18 @@ struct btrfs_free_space_header {
 	__le64 generation;
 	__le64 num_entries;
 	__le64 num_bitmaps;
+} __attribute__ ((__packed__));
+
+struct btrfs_raid_stride {
+	/* The id of device this raid extent lives on. */
+	__le64 devid;
+	/* The physical location on disk. */
+	__le64 physical;
+} __attribute__ ((__packed__));
+
+struct btrfs_stripe_extent {
+	/* An array of raid strides this stripe is composed of. */
+	__DECLARE_FLEX_ARRAY(struct btrfs_raid_stride, strides);
 } __attribute__ ((__packed__));
 
 #define BTRFS_HEADER_FLAG_WRITTEN	(1ULL << 0)

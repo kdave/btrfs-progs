@@ -24,11 +24,11 @@
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 
-struct btrfs_tree_parent_check;
 struct btrfs_fs_devices;
 struct btrfs_key;
 struct btrfs_super_block;
 struct btrfs_trans_handle;
+struct btrfs_tree_parent_check;
 struct extent_buffer;
 struct rb_node;
 
