@@ -14,12 +14,6 @@ on:
       - release-test
       - master
 jobs:
-  check-centos7:
-    name: CI Centos 7
-    runs-on: ubuntu-24.04
-    steps:
-      - name: CI Centos7
-        run: sudo docker run kdave/ci-centos-7-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-libudev
   check-centos8:
     name: CI Centos 8
     runs-on: ubuntu-24.04
