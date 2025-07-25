@@ -3491,22 +3491,29 @@ static int check_root_refs(struct btrfs_root *root,
 		rec = container_of(cache, struct root_record, cache);
 		cache = next_cache_extent(cache);
 
-		if (rec->found_ref == 0 &&
-		    rec->objectid >= BTRFS_FIRST_FREE_OBJECTID &&
+		/* A subvolume tree, should check if its refs match. */
+		if (rec->objectid >= BTRFS_FIRST_CHUNK_TREE_OBJECTID &&
 		    rec->objectid <= BTRFS_LAST_FREE_OBJECTID) {
-			ret = check_orphan_item(gfs_info->tree_root, rec->objectid);
-			if (ret == 0)
+			if (rec->found_ref != rec->expected_ref) {
+				errors++;
+				fprintf(stderr, "fs tree %llu refs mismatch found %u expect %u\n",
+					rec->objectid, rec->found_ref, rec->expected_ref);
 				continue;
-
-			/*
-			 * If we don't have a root item then we likely just have
-			 * a dir item in a snapshot for this root but no actual
-			 * ref key or anything so it's meaningless.
-			 */
-			if (!rec->found_root_item)
-				continue;
-			errors++;
-			fprintf(stderr, "fs tree %llu not referenced\n", rec->objectid);
+			}
+			if (rec->expected_ref == 0) {
+				ret = check_orphan_item(gfs_info->tree_root, rec->objectid);
+				if (ret == 0)
+					continue;
+				/*
+				 * If we don't have a root item then we likely just have
+				 * a dir item in a snapshot for this root but no actual
+				 * ref key or anything so it's meaningless.
+				 */
+				if (!rec->found_root_item)
+					continue;
+				errors++;
+				fprintf(stderr, "fs tree %llu missing orphan item\n", rec->objectid);
+			}
 		}
 
 		error = 0;
@@ -3728,8 +3735,8 @@ static int check_fs_root(struct btrfs_root *root,
 	if (root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
 		rec = get_root_rec(root_cache, root->root_key.objectid);
 		BUG_ON(IS_ERR(rec));
-		if (btrfs_root_refs(root_item) > 0)
-			rec->found_root_item = 1;
+		rec->found_root_item = 1;
+		rec->expected_ref = btrfs_root_refs(&root->root_item);
 	}
 
 	memset(&root_node, 0, sizeof(root_node));
