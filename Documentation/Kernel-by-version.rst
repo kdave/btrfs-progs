@@ -36,6 +36,7 @@ Pull requests:
       if supported
     - send 'otime' (inode creation time) among other timestamps
     - send file attributes (a.k.a file flags and xflags)
+
   - this is first version bump, backward compatibility on send and
     receive side is provided
   - there are still some known and wanted commands that will be
@@ -439,31 +440,36 @@ Pull requests:
 
 New features:
 
-- raid-stripe-tree: New tree for logical file extent mapping where the
-  physical mapping may not match on multiple devices. This is now used in zoned
-  mode to implement RAID0/RAID1* profiles, but can be used in non-zoned mode as
-  well. The support for RAID56 is in development and will eventually fix the
-  problems with the current implementation. This is a backward incompatible
-  feature and has to be enabled at mkfs time.
+- raid-stripe-tree:
 
-- simple quota accounting (squota): A simplified mode of qgroup that accounts
-  all space on the initial extent owners (a subvolume), the snapshots are then
-  cheap to create and delete. The deletion of snapshots in fully accounting
-  qgroups is a known CPU/IO performance bottleneck.
+  - New tree for logical file extent mapping where the physical mapping may not
+    match on multiple devices. This is now used in zoned mode to implement
+    RAID0/RAID1* profiles, but can be used in non-zoned mode as well. The
+    support for RAID56 is in development and will eventually fix the problems
+    with the current implementation. This is a backward incompatible feature
+    and has to be enabled at mkfs time.
 
-  Note: The squota is not suitable for the general use case but works well for
-  containers where the original subvolume exists for the whole time. This is a
-  backward incompatible feature as it needs extending some structures, but can
-  be enabled on an existing filesystem.
+- simple quota accounting (squota):
 
-- temporary filesystem fsid (temp_fsid): The fsid identifies a filesystem and
-  is hard coded in the structures, which disallows mounting the same fsid found
-  on different devices.
+  - A simplified mode of qgroup that accounts all space on the initial extent
+    owners (a subvolume), the snapshots are then cheap to create and delete.
+    The deletion of snapshots in fully accounting qgroups is a known CPU/IO
+    performance bottleneck.
 
-  For a single device filesystem this is not strictly necessary, a new
-  temporary fsid can be generated on mount e.g. after a device is cloned. This
-  will be used by Steam Deck for root partition A/B testing, or can be used for
-  VM root images.
+  - Note: The squota is not suitable for the general use case but works well
+    for containers where the original subvolume exists for the whole time. This
+    is a backward incompatible feature as it needs extending some structures,
+    but can be enabled on an existing filesystem.
+
+- temporary filesystem fsid (temp_fsid):
+
+  - The fsid identifies a filesystem and is hard coded in the structures, which
+    disallows mounting the same fsid found on different devices.
+
+  - For a single device filesystem this is not strictly necessary, a new
+    temporary fsid can be generated on mount e.g. after a device is cloned.
+    This will be used by Steam Deck for root partition A/B testing, or can be
+    used for VM root images.
 
 - filesystems with partially finished metadata_uuid conversion cannot be
   mounted anymore and the uuid fixup has to be done by btrfs-progs (btrfstune).
@@ -512,20 +518,22 @@ Pull requests:
 Core changes:
 
 -  convert extent buffers to folios:
-    - direct API conversion where possible
-    - performance can drop by a few percent on metadata heavy
-      workloads, the folio sizes are not constant and the calculations
-      add up in the item helpers
-    - both regular and subpage modes
-    - data cannot be converted yet, we need to port that to iomap and
-      there are some other generic changes required
+
+   - direct API conversion where possible
+   - performance can drop by a few percent on metadata heavy
+     workloads, the folio sizes are not constant and the calculations
+     add up in the item helpers
+   - both regular and subpage modes
+   - data cannot be converted yet, we need to port that to iomap and
+     there are some other generic changes required
 
 -  convert mount to the new API, should not be user visible:
-    - options deprecated long time ago have been removed: inode_cache,
-      recovery
-    - the new logic that splits mount to two phases slightly changes
-      timing of device scanning for multi-device filesystems
-    - LSM options will now work (like for selinux)
+
+   - options deprecated long time ago have been removed: inode_cache,
+     recovery
+   - the new logic that splits mount to two phases slightly changes
+     timing of device scanning for multi-device filesystems
+   - LSM options will now work (like for selinux)
 
 - convert delayed nodes radix tree to xarray, preserving the
   preload-like logic that still allows to allocate with GFP_NOFS
@@ -576,15 +584,17 @@ Performance improvements:
   delayed allocation bits, applies to several common workload types
 
 - features under CONFIG_BTRFS_DEBUG:
-   - sysfs knob for setting the how checksums are calculated when submitting IO,
-     inline or offloaded to a thread, this affects latency and throughput on some
-     block group profiles
+
+  - sysfs knob for setting the how checksums are calculated when submitting IO,
+    inline or offloaded to a thread, this affects latency and throughput on some
+    block group profiles
 
 Notable fixes:
 
 - fix device tracking in memory that broke grub-probe
 
 - zoned mode fixes:
+
   - use zone-aware super block access during scrub
   - delete zones that are 100% unusable to reclaim space
 
@@ -643,29 +653,32 @@ Pull requests:
 User visible features:
 
 - dynamic block group reclaim:
-   - tunable framework to avoid situations where eager data allocations prevent
-     creating new metadata chunks due to lack of unallocated space
-   - reuse sysfs knob bg_reclaim_threshold (otherwise used only in zoned mode)
-     for a fixed value threshold
-   - new on/off sysfs knob "dynamic_reclaim" calculating the value based on
-     heuristics, aiming to keep spare working space for relocating chunks but
-     not to needlessly relocate partially utilized block groups or reclaim newly
-     allocated ones
-   - stats are exported in sysfs per block group type, files "reclaim_*"
-   - this may increase IO load at unexpected times but the corner case of no
-     allocatable block groups is known to be worse
+
+  - tunable framework to avoid situations where eager data allocations prevent
+    creating new metadata chunks due to lack of unallocated space
+  - reuse sysfs knob bg_reclaim_threshold (otherwise used only in zoned mode)
+    for a fixed value threshold
+  - new on/off sysfs knob "dynamic_reclaim" calculating the value based on
+    heuristics, aiming to keep spare working space for relocating chunks but
+    not to needlessly relocate partially utilized block groups or reclaim newly
+    allocated ones
+  - stats are exported in sysfs per block group type, files "reclaim_*"
+  - this may increase IO load at unexpected times but the corner case of no
+    allocatable block groups is known to be worse
 
 - automatically remove qgroup of deleted subvolumes:
-   - adjust qgroup removal conditions, make sure all related subvolume data are
-     already removed, or return EBUSY, also take into account setting of sysfs
-     drop_subtree_threshold
-   - also works in squota mode
 
--  mount option updates: new modes of 'rescue=' that allow to mount images
-    (read-only) that could have been partially converted by user space tools
-     - ignoremetacsums  - invalid metadata checksums are ignored
-     - ignoresuperflags - super block flags that track conversion in progress
-                          (like UUID or checksums)
+  - adjust qgroup removal conditions, make sure all related subvolume data are
+    already removed, or return EBUSY, also take into account setting of sysfs
+    drop_subtree_threshold
+  - also works in squota mode
+
+- mount option updates: new modes of 'rescue=' that allow to mount images
+  (read-only) that could have been partially converted by user space tools
+
+  - ignoremetacsums  - invalid metadata checksums are ignored
+  - ignoresuperflags - super block flags that track conversion in progress
+    (like UUID or checksums)
 
 Other notable changes or fixes:
 
@@ -771,15 +784,17 @@ Performance improvements:
 Core changes:
 
 - raid-stripe-tree feature updates:
-   - make device replace and scrub work
-   - implement partial deletion of stripe extents
-   - new selftests
+
+  - make device replace and scrub work
+  - implement partial deletion of stripe extents
+  - new selftests
 
 - split the config option BTRFS_DEBUG and add EXPERIMENTAL for
   features that are experimental or with known problems so we don't
   misuse debugging config for that
 
 - subpage mode updates (sector < page):
+
   - update compression implementations
   - update writepage, writeback
 
@@ -840,27 +855,30 @@ Core:
   (post-read, pre-write)
 
 - subpage mode fixes:
-   - fix double accounting of blocks due to some races
-   - improved or fixed error handling in a few cases (compression,
-     delalloc)
+
+  - fix double accounting of blocks due to some races
+  - improved or fixed error handling in a few cases (compression,
+    delalloc)
 
 - raid stripe tree:
-   - fix various cases with extent range splitting or deleting
-   - implement hole punching to extent range
-   - reduce number of stripe tree lookups during bio submission
-   - more self-tests
+
+  - fix various cases with extent range splitting or deleting
+  - implement hole punching to extent range
+  - reduce number of stripe tree lookups during bio submission
+  - more self-tests
 
 - updated self-tests (delayed refs)
 
 - error handling improvements
 
 - cleanups, refactoring
-   - remove rest of backref caching infrastructure from relocation,
-     not needed anymore
-   - error message updates
-   - remove unnecessary calls when extent buffer was marked dirty
-   - unused parameter removal
-   - code moved to new files
+
+  - remove rest of backref caching infrastructure from relocation,
+    not needed anymore
+  - error message updates
+  - remove unnecessary calls when extent buffer was marked dirty
+  - unused parameter removal
+  - code moved to new files
 
 6.15 (May 2025)
 ^^^^^^^^^^^^^^^
@@ -2036,7 +2054,7 @@ Fixes:
 ^^^^^^^^^^^^^^
 
 * restriper - infrastructure to change btrfs raid profiles on the fly via balance
-* optional integrity checker infrastructure ([http://lwn.net/Articles/466493/ details])
+* optional integrity checker infrastructure (http://lwn.net/Articles/466493)
 * fixed a few corner cases where TRIM did not process some blocks
 * cluster allocator improvements (less fragmentation, some speedups)
 
@@ -2073,8 +2091,8 @@ Fixes:
 ^^^^^^^^^^^^^^
 
 * subvolume-aware quotas (''qgroups'')
-* support for send/receive between snapshot changes ([http://lwn.net/Articles/506244/ LWN article])
-* ''atime'' is not updated on read-only snapshots ([http://lwn.net/Articles/499293/ LWN article])
+* support for send/receive between snapshot changes (http://lwn.net/Articles/506244)
+* ''atime'' is not updated on read-only snapshots (http://lwn.net/Articles/499293)
 * allowed cross-subvolume file clone (aka. reflink)
 * remount with ''no'' compression possible
 * new ioctl to read device readiness status
@@ -2085,37 +2103,37 @@ Fixes:
 
 * ''fsync'' speedups
 * removed limitation of number of hardlinks in a single directory
-* file hole punching ([http://lwn.net/Articles/415889/ LWN article])
+* file hole punching (http://lwn.net/Articles/415889)
 * per-file ''NOCOW''
 * fixes to send/receive
 
 3.8 (Feb 2013)
 ^^^^^^^^^^^^^^
 
-* ability to replace devices at runtime in an effective way ([http://lwn.net/Articles/524589/ description])
+* ability to replace devices at runtime in an effective way (http://lwn.net/Articles/524589)
 * speed improvements (cumulative effect of many small improvements)
 * a few more bugfixes
 
 3.9 (Apr 2013)
 ^^^^^^^^^^^^^^
 
-* preliminary Raid 5/6 support (details in the [http://www.spinics.net/lists/linux-btrfs/msg22169.html announcement])
+* preliminary Raid 5/6 support (details in http://www.spinics.net/lists/linux-btrfs/msg22169.html)
 * snapshot-aware defrag
 * a mode of ''send'' to avoid transferring file data
-* direct IO speedup ([https://patchwork.kernel.org/patch/2114921/ numbers])
+* direct IO speedup (https://patchwork.kernel.org/patch/2114921)
 * new ''ioctl''s to set/get filesystem label
 * defrag is cancellable
 
 3.10 (Jun 2013)
 ^^^^^^^^^^^^^^^
 
-* reduced size of metadata by so-called :ref:`skinny extents<mkfs-feature-skinny-metadata>` [http://git.kernel.org/linus/3173a18f70554fe7880bb2d85c7da566e364eb3c]
-* enhanced syslog message format [http://permalink.gmane.org/gmane.comp.file-systems.btrfs/24330]
+* reduced size of metadata by so-called :ref:`skinny extents<mkfs-feature-skinny-metadata>` (http://git.kernel.org/linus/3173a18f70554fe7880bb2d85c7da566e364eb3c)
+* enhanced syslog message format (http://permalink.gmane.org/gmane.comp.file-systems.btrfs/24330)
 * the mount option ''subvolrootid'' is deprecated
 * lots of stability improvements, removed many< BUG_ONs
-* qgroups are automatically created when quotas are enabled [http://git.kernel.org/linus/7708f029dca5f1b9e9d6ea01ab10cd83e4c74ff2]
+* qgroups are automatically created when quotas are enabled (http://git.kernel.org/linus/7708f029dca5f1b9e9d6ea01ab10cd83e4c74ff2)
 * qgroups are able to ''rescan'' current filesystem and sync the quota state with the existing subvolumes
-* enhanced ''send/recv '' format for multiplexing more data into one stream [http://git.kernel.org/linus/c2c71324ecb471c932bc1ff59e46ffcf82f274fc]
+* enhanced ''send/recv '' format for multiplexing more data into one stream (http://git.kernel.org/linus/c2c71324ecb471c932bc1ff59e46ffcf82f274fc)
 * various unsorted code cleanups, minor performance updates
 
 3.11 (Sep 2013)
@@ -2159,29 +2177,29 @@ Fixes:
 3.16 (Aug 2014)
 ^^^^^^^^^^^^^^^
 
-* ''O_TMPFILE'' support [http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357]
+* ''O_TMPFILE'' support (http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357)
 * reworked qgroup accounting, to fix negative numbers after subvol deletion
-* SEARCH_TREE ioctl v2, extended for retrieving more data [http://www.spinics.net/lists/linux-btrfs/msg31213.html]
-* new balance filter ''limit'' for more finegrained balancing [http://www.spinics.net/lists/linux-btrfs/msg33872.html]
+* SEARCH_TREE ioctl v2, extended for retrieving more data (http://www.spinics.net/lists/linux-btrfs/msg31213.html)
+* new balance filter ''limit'' for more finegrained balancing (http://www.spinics.net/lists/linux-btrfs/msg33872.html)
 * ioctl FS_INFO and it's sysfs counterpart export information about ''nodesize'', ''sectorsize'' and ''clone_alignment''
 * snapshots are protected during send
 
 3.17 (Oct 2014)
 ^^^^^^^^^^^^^^^
 
-* fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
-* fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
-* updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
-* speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
+* fix for the infamous deadlock (https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d)
+* fixed longstanding bug in qgroups accounting after snapshot deletion (https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30)
+* updated (less inaccurate) ''df'' numbers (https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d)
+* speedup for ''rename'' and ''truncate'', less strict flushes (https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc)
 * updated and fixes to the ''seeding'' feature
 
 3.17 (Oct 2014)
 ^^^^^^^^^^^^^^^
 
-* fix for the infamous deadlock [https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
-* fixed longstanding bug in qgroups accounting after snapshot deletion [https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30]
-* updated (less inaccurate) ''df'' numbers [https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d]
-* speedup for ''rename'' and ''truncate'', less strict flushes [https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc]
+* fix for the infamous deadlock (https://git.kernel.org/linus/9e0af23764344f7f1b68e4eefbe7dc865018b63d]
+* fixed longstanding bug in qgroups accounting after snapshot deletion (https://git.kernel.org/linus/1152651a081720ef6a8c76bb7da676e8c900ac30)
+* updated (less inaccurate) ''df'' numbers (https://git.kernel.org/linus/ba7b6e62f420f5a8832bc161ab0c7ba767f65b3d)
+* speedup for ''rename'' and ''truncate'', less strict flushes (https://git.kernel.org/linus/8d875f95da43c6a8f18f77869f2ef26e9594fecc)
 * updated and fixes to the ''seeding'' feature
 
 3.18 (Dec 2014)
@@ -2211,8 +2229,7 @@ get/set ioctl, allow compression during defrag.
 
 On-disk free space cache, asynchronous snapshots, unprivileged subvolume
 deletion, extent buffer switches from a rbtree with spinlocks to a radix tree
-with RCU. (Explanations of these features are described in
-[http://www.linux-mag.com/id/7945 this] article [registration needed]).
+with RCU.
 
 2.6.35 (August 2010)
 ^^^^^^^^^^^^^^^^^^^^
@@ -2245,7 +2262,7 @@ of space and still show some free space. That space comes from a data/metadata
 chunk that can't get filled because there's not space left to create its
 metadata/data counterpart chunk. This is unrelated to the -ENOSPC handling and
 will be fixed in the future. Code:
-[http://git.kernel.org/linus/9ed74f2dba6ebf9f30b80554290bfc73cc3ef083 (commit)]
+(http://git.kernel.org/linus/9ed74f2dba6ebf9f30b80554290bfc73cc3ef083)
 
 Proper snapshot and subvolume deletion
 
@@ -2253,8 +2270,8 @@ In the last btrfs-progs version you have options that allow to delete snapshots
 and subvolumes without having to use rm. This is much faster because it does
 the deletion via btree walking. It's also now possible to rename snapshots and
 subvols. Work done by Yan Zheng (Oracle). Code:
-[http://git.kernel.org/linus/4df27c4d5cc1dda54ed7d0a8389347f2df359cf9 (commit
-1)], [http://git.kernel.org/linus/76dda93c6ae2c1dc3e6cde34569d6aca26b0c918 2)]
+(http://git.kernel.org/linus/4df27c4d5cc1dda54ed7d0a8389347f2df359cf9,
+http://git.kernel.org/linus/76dda93c6ae2c1dc3e6cde34569d6aca26b0c918)
 
 Performance improvements
 
@@ -2270,9 +2287,8 @@ Support for "discard" operation on SSD devices
 
 "Discard" support is a way to telling SSD devices which blocks are free so that
 the underlying firmware knows that it's safe to do some optimizations
-[http://git.kernel.org/linus/e244a0aeb6a599c19a7c802cda6e2d67c847b154
-(commit)],
-[http://git.kernel.org/linus/0634857488ec6e28fa22920cd0bee3c2ac07ccfd (commit)]
+(http://git.kernel.org/linus/e244a0aeb6a599c19a7c802cda6e2d67c847b154,
+http://git.kernel.org/linus/0634857488ec6e28fa22920cd0bee3c2ac07ccfd )
 
 0.x
 ---
