@@ -263,7 +263,10 @@ struct root_record {
 	struct cache_extent cache;
 	unsigned int found_root_item:1;
 	u64 objectid;
+	/* The found number of refs in tree root. */
 	u32 found_ref;
+	/* The expected number of refs in root item. */
+	u32 expected_ref;
 };
 
 struct ptr_node {
