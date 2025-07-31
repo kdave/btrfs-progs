@@ -498,7 +498,7 @@ again:
 	default_subvol_id = 0;
 	err = btrfs_util_subvolume_get_default_fd(fd, &default_subvol_id);
 	if (err == BTRFS_UTIL_ERROR_SEARCH_FAILED) {
-		if (geteuid() != 0)
+		if (geteuid() == 0)
 			warning("cannot read default subvolume id: %m");
 	}
 
