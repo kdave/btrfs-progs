@@ -369,7 +369,9 @@ static u64 device_get_partition_size_sysfs(const char *dev)
 		return 0;
 	}
 	close(sysfd);
-	return size;
+
+	/* <device>/size value is in sector (512B) unit. */
+	return size << SECTOR_SHIFT;
 }
 
 u64 device_get_partition_size(const char *dev)
