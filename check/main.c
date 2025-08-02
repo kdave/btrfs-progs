@@ -8645,6 +8645,7 @@ static int check_device_used(struct device_record *dev_rec,
 		if (opt_check_repair) {
 			ret = repair_dev_item_bytes_used(gfs_info,
 					dev_rec->devid, total_byte);
+			dev_rec->byte_used = total_byte;
 		}
 		return ret;
 	} else {
@@ -8702,6 +8703,28 @@ static bool is_super_size_valid(void)
 	return true;
 }
 
+static int check_super_dev_item(struct device_record *dev_rec)
+{
+	struct btrfs_dev_item *super_di = &gfs_info->super_copy->dev_item;
+	int ret = 0;
+
+	if (btrfs_stack_device_total_bytes(super_di) != dev_rec->total_byte) {
+		warning("device %llu's total_bytes was %llu in tree but %llu in superblock",
+			dev_rec->devid, dev_rec->total_byte,
+			btrfs_stack_device_total_bytes(super_di));
+		ret = 1;
+	}
+
+	if (btrfs_stack_device_bytes_used(super_di) != dev_rec->byte_used) {
+		warning("device %llu's bytes_used was %llu in tree but %llu in superblock",
+			dev_rec->devid, dev_rec->byte_used,
+			btrfs_stack_device_bytes_used(super_di));
+		ret = 1;
+	}
+
+	return ret;
+}
+
 /* check btrfs_dev_item -> btrfs_dev_extent */
 static int check_devices(struct rb_root *dev_cache,
 			 struct device_extent_tree *dev_extent_cache)
@@ -8723,6 +8746,18 @@ static int check_devices(struct rb_root *dev_cache,
 					 gfs_info->sectorsize);
 		if (dev_rec->bad_block_dev_size && !ret)
 			ret = 1;
+
+		if (dev_rec->devid == gfs_info->super_copy->dev_item.devid) {
+			/*
+			 * This dev item mismatch between super and chunk tree
+			 * is not a criticl problem, and CI kernels do not receive
+			 * needed backport so they will cause mismatch during RW mounts.
+			 *
+			 * SO here we didn't record the mismatch as an error.
+			 */
+			check_super_dev_item(dev_rec);
+		}
+
 		dev_node = rb_next(dev_node);
 	}
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_device_orphans,
