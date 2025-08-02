@@ -323,19 +323,6 @@ u64 device_get_partition_size_fd_stat(int fd, const struct stat *st)
 	return 0;
 }
 
-/*
- * Read partition size using the low-level ioctl
- */
-u64 device_get_partition_size_fd(int fd)
-{
-	u64 result;
-
-	if (ioctl(fd, BLKGETSIZE64, &result) < 0)
-		return 0;
-
-	return result;
-}
-
 static u64 device_get_partition_size_sysfs(const char *dev)
 {
 	int ret;
