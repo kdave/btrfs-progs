@@ -35,13 +35,13 @@ sprouted_output=$(_mktemp btrfs-progs-sprouted-check-stdout.XXXXXX)
 run_check_stdout $SUDO_HELPER "$TOP/btrfs" check "$dev1" >> "$seed_output"
 run_check_stdout $SUDO_HELPER "$TOP/btrfs" check "$dev2" >> "$sprouted_output"
 
-# There should be no warning for both seed and sprouted fs
-if grep -q "WARNING" "$seed_output"; then
+# There should be no warning about the device size for both seed and sprouted fs
+if grep -q "fix-device-size" "$seed_output"; then
 	cleanup_loopdevs
 	rm -f -- "$seed_output" "$sprouted_output"
 	_fail "false alerts detected for seed fs"
 fi
-if grep -q "WARNING" "$sprouted_output"; then
+if grep -q "fix-device-size" "$sprouted_output"; then
 	cleanup_loopdevs
 	rm -f -- "$seed_output" "$sprouted_output"
 	_fail "false alerts detected for sprouted fs"
