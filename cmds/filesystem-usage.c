@@ -959,7 +959,6 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		int k;
 		const char *p;
 		const struct device_info *devinfo = devinfos->data[i];
-
 		u64  total_allocated = 0, unused;
 
 		p = strrchr(devinfo->path, '/');
@@ -1000,7 +999,6 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			col++;
 		}
 
-		unused = device_get_partition_size(devinfo->path) - total_allocated;
 		unused = devinfo->size - total_allocated;
 
 		table_printf(matrix, unallocated_col, vhdr_skip + i, ">%s",
