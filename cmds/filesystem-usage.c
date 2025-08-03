@@ -622,7 +622,7 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 	 */
 	unreliable_allocated = (raid56 && chunkinfos->length == 0);
 	if (unreliable_allocated) {
-		warning("radid56 found, we cannots compute some values, run as root if needed");
+		warning("raid56 found, we cannot compute some values, run as root if needed");
 		ret = 1;
 		goto exit;
 	}
