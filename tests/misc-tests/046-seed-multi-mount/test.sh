@@ -1,5 +1,5 @@
 #!/bin/bash
-# Verify that a seeding device can be mounted several times
+# Verify that a seeding device can be shared by different sprout filesystems.
 
 source "$TEST_TOP/common" || exit
 
@@ -74,20 +74,19 @@ nextdevice() {
 	if [ "$md5sum" != "$md5sum2" ]; then
 		_fail "file contents not same after remount"
 	fi
+	# Unmount the new device so that the seed device won't be mounted
+	# when the sprout fs is already mounted.
+	# This is to compensate for the new v6.17 kernel, as each different
+	# fs will have different holder for a block device, and a single block
+	# device can not belong to different mounted filesystems.
+	run_check_umount_test_dev
 }
 
-# Keep previous device(s) mounted, create a new filesystem from the seeding device
+# Create a new filesystem from the seeding device, with previous devices unmounted.
 nextdevice 2
 nextdevice 3
 nextdevice 4
 nextdevice 5
-
-# Final umount
-# Skip seeding device, loop device 1,
-run_check $SUDO_HELPER umount ${loopdevs[2]}
-run_check $SUDO_HELPER umount ${loopdevs[3]}
-run_check $SUDO_HELPER umount ${loopdevs[4]}
-run_check $SUDO_HELPER umount ${loopdevs[5]}
 
 cleanup_loopdevs
 
