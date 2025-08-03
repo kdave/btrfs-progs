@@ -26,10 +26,12 @@ filesystem at :file:`/path` ready for use.
 
 .. note::
 
-        There is a known bug with using remount to make the mount writeable:
+        There was a known bug with using remount to make the mount writeable:
         remount will leave the filesystem in a state where it is unable to
         clean deleted snapshots, so it will leak space until it is unmounted
         and mounted properly.
+
+	That bug has fixed in 5.11 and newer kernels.
 
 Furthermore, deleting the seeding device from the filesystem can turn it into
 a normal filesystem, provided that the writable device can also contain all the
