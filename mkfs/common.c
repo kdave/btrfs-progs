@@ -1167,35 +1167,6 @@ bool test_status_for_mkfs(const char *file, bool force_overwrite)
 	return false;
 }
 
-int is_vol_small(const char *file)
-{
-	int fd = -1;
-	int e;
-	struct stat st;
-	u64 size;
-
-	fd = open(file, O_RDONLY);
-	if (fd < 0)
-		return -errno;
-	if (fstat(fd, &st) < 0) {
-		e = -errno;
-		close(fd);
-		return e;
-	}
-	size = device_get_partition_size_fd_stat(fd, &st);
-	if (size == 0) {
-		close(fd);
-		return -1;
-	}
-	if (size < BTRFS_MKFS_SMALL_VOLUME_SIZE) {
-		close(fd);
-		return 1;
-	} else {
-		close(fd);
-		return 0;
-	}
-}
-
 int test_minimum_size(const char *file, u64 min_dev_size)
 {
 	int fd;
