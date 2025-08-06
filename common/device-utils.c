@@ -323,7 +323,7 @@ u64 device_get_partition_size_fd_stat(int fd, const struct stat *st)
 	return 0;
 }
 
-static u64 device_get_partition_size_sysfs(const char *dev)
+static int device_get_partition_size_sysfs(const char *dev, u64 *size_ret)
 {
 	int ret;
 	char path[PATH_MAX] = {};
@@ -335,47 +335,45 @@ static u64 device_get_partition_size_sysfs(const char *dev)
 
 	name = realpath(dev, path);
 	if (!name)
-		return 0;
+		return -errno;
 	name = path_basename(path);
 
 	ret = path_cat3_out(sysfs, "/sys/class/block", name, "size");
 	if (ret < 0)
-		return 0;
+		return ret;
 	sysfd = open(sysfs, O_RDONLY);
 	if (sysfd < 0)
-		return 0;
+		return -errno;
 	ret = sysfs_read_file(sysfd, sizebuf, sizeof(sizebuf));
-	if (ret < 0) {
-		close(sysfd);
-		return 0;
-	}
+	close(sysfd);
+	if (ret < 0)
+		return ret;
 	errno = 0;
 	size = strtoull(sizebuf, NULL, 10);
-	if (size == ULLONG_MAX && errno == ERANGE) {
-		close(sysfd);
-		return 0;
-	}
-	close(sysfd);
-
-	/* <device>/size value is in sector (512B) unit. */
-	return size << SECTOR_SHIFT;
+	if (size == ULLONG_MAX && errno == ERANGE)
+		return -ERANGE;
+	/* Extra overflow check. */
+	if (size > ULLONG_MAX >> SECTOR_SHIFT)
+		return -ERANGE;
+	*size_ret = size << SECTOR_SHIFT;
+	return 0;
 }
 
-u64 device_get_partition_size(const char *dev)
+int device_get_partition_size(const char *dev, u64 *size_ret)
 {
 	u64 result;
 	int fd = open(dev, O_RDONLY);
 
 	if (fd < 0)
-		return device_get_partition_size_sysfs(dev);
+		return device_get_partition_size_sysfs(dev, size_ret);
 
 	if (ioctl(fd, BLKGETSIZE64, &result) < 0) {
 		close(fd);
-		return 0;
+		return -errno;
 	}
 	close(fd);
-
-	return result;
+	*size_ret = result;
+	return 0;
 }
 
 /*

@@ -820,8 +820,14 @@ static int load_device_info(int fd, struct array *devinfos)
 			strcpy(info->path, "missing");
 		} else {
 			strcpy(info->path, (char *)dev_info.path);
-			info->device_size =
-				device_get_partition_size((const char *)dev_info.path);
+			ret = device_get_partition_size((const char *)dev_info.path,
+							&info->device_size);
+			if (ret < 0) {
+				errno = -ret;
+				warning("failed to get device size for %s: %m",
+					dev_info.path);
+				info->device_size = 0;
+			}
 		}
 		info->size = dev_info.total_bytes;
 		ndevs++;

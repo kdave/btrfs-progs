@@ -269,7 +269,12 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		strncpy_null((char *)start_args.start.srcdev_name, srcdev,
 			     BTRFS_DEVICE_PATH_NAME_MAX + 1);
 		start_args.start.srcdevid = 0;
-		srcdev_size = device_get_partition_size(srcdev);
+		ret = device_get_partition_size(srcdev, &srcdev_size);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to get device size for %s: %m", srcdev);
+			goto leave_with_error;
+		}
 	} else {
 		error("source device must be a block device or a devid");
 		goto leave_with_error;
@@ -279,7 +284,12 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	if (ret)
 		goto leave_with_error;
 
-	dstdev_size = device_get_partition_size(dstdev);
+	ret = device_get_partition_size(dstdev, &dstdev_size);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get device size for %s: %m", dstdev);
+		goto leave_with_error;
+	}
 	if (srcdev_size > dstdev_size) {
 		error("target device smaller than source device (required %llu bytes)",
 			srcdev_size);
