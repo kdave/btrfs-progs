@@ -60,25 +60,6 @@ static int discard_range(int fd, u64 start, u64 len)
 	return 0;
 }
 
-static int discard_supported(const char *device)
-{
-	int ret;
-	char buf[128] = {};
-
-	ret = device_get_queue_param(device, "discard_granularity", buf, sizeof(buf));
-	if (ret == 0) {
-		pr_verbose(3, "cannot read discard_granularity for %s\n", device);
-		return 0;
-	} else {
-		if (atoi(buf) == 0) {
-			pr_verbose(3, "%s: discard_granularity %s", device, buf);
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
 /*
  * Discard blocks in the given range in 1G chunks, the process is interruptible
  */
@@ -97,6 +78,29 @@ int device_discard_blocks(int fd, u64 start, u64 len)
 	}
 
 	return 0;
+}
+
+static void prepare_discard_device(const char *filename, int fd, u64 byte_count, unsigned opflags)
+{
+	u64 cur = 0;
+
+	while (cur < byte_count) {
+		/* 1G granularity */
+		u64 chunk_size = (cur == 0) ? SZ_1M : min_t(u64, byte_count - cur, SZ_1G);
+		int ret;
+
+		ret = discard_range(fd, cur, chunk_size);
+		if (ret)
+			return;
+		/*
+		 * The first range discarded successfully, meaning the device supports
+		 * discard.
+		 */
+		if (opflags & PREP_DEVICE_VERBOSE && cur == 0)
+			printf("Performing full device TRIM %s (%s) ...\n",
+			       filename, pretty_size(byte_count));
+		cur += chunk_size;
+	}
 }
 
 /*
@@ -273,17 +277,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 			}
 		}
 	} else if (opflags & PREP_DEVICE_DISCARD) {
-		/*
-		 * We intentionally ignore errors from the discard ioctl.  It
-		 * is not necessary for the mkfs functionality but just an
-		 * optimization.
-		 */
-		if (discard_supported(file)) {
-			if (opflags & PREP_DEVICE_VERBOSE)
-				printf("Performing full device TRIM %s (%s) ...\n",
-				       file, pretty_size(byte_count));
-			device_discard_blocks(fd, 0, byte_count);
-		}
+		prepare_discard_device(file, fd, byte_count, opflags);
 	}
 
 	ret = zero_dev_clamped(fd, zinfo, 0, ZERO_DEV_BYTES, byte_count);
