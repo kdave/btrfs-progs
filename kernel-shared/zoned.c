@@ -166,7 +166,8 @@ static int emulate_report_zones(const char *file, int fd, u64 pos,
 {
 	const sector_t zone_sectors = emulated_zone_size >> SECTOR_SHIFT;
 	struct stat st;
-	sector_t bdev_size;
+	u64 bdev_size;
+	sector_t bdev_nr_sectors;
 	unsigned int i;
 	int ret;
 
@@ -176,7 +177,13 @@ static int emulate_report_zones(const char *file, int fd, u64 pos,
 		return -EIO;
 	}
 
-	bdev_size = device_get_partition_size_fd_stat(fd, &st) >> SECTOR_SHIFT;
+	ret = device_get_partition_size_fd_stat(fd, &st, &bdev_size);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get device size for %s: %m", file);
+		return ret;
+	}
+	bdev_nr_sectors = bdev_size >> SECTOR_SHIFT;
 
 	pos >>= SECTOR_SHIFT;
 	for (i = 0; i < nr_zones; i++) {
@@ -187,7 +194,7 @@ static int emulate_report_zones(const char *file, int fd, u64 pos,
 		zones[i].type = BLK_ZONE_TYPE_CONVENTIONAL;
 		zones[i].cond = BLK_ZONE_COND_NOT_WP;
 
-		if (zones[i].wp >= bdev_size) {
+		if (zones[i].wp >= bdev_nr_sectors) {
 			i++;
 			break;
 		}
@@ -325,8 +332,9 @@ static int report_zones(int fd, const char *file,
 		return -EIO;
 	}
 
-	device_size = device_get_partition_size_fd_stat(fd, &st);
-	if (device_size == 0) {
+	ret = device_get_partition_size_fd_stat(fd, &st, &device_size);
+	if (ret < 0) {
+		errno = -ret;
 		error("zoned: failed to read size of %s: %m", file);
 		exit(1);
 	}

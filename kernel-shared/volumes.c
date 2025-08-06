@@ -3096,8 +3096,13 @@ static int btrfs_fix_block_device_size(struct btrfs_fs_info *fs_info,
 		return -errno;
 	}
 
-	block_dev_size = round_down(device_get_partition_size_fd_stat(device->fd, &st),
-				    fs_info->sectorsize);
+	ret = device_get_partition_size_fd_stat(device->fd, &st, &block_dev_size);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get device size for %s: %m", device->name);
+		return ret;
+	}
+	block_dev_size = round_down(block_dev_size, fs_info->sectorsize);
 
 	/*
 	 * Total_bytes in device item is no larger than the device block size,
