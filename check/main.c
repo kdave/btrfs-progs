@@ -5447,7 +5447,13 @@ static int process_device_item(struct rb_root *dev_cache,
 				device->devid);
 			goto skip;
 		}
-		block_dev_size = device_get_partition_size_fd_stat(device->fd, &st);
+		ret = device_get_partition_size_fd_stat(device->fd, &st, &block_dev_size);
+		if (ret < 0) {
+			errno = -ret;
+			warning("failed to get device size for %s, skipping size check: %m",
+				device->name);
+			goto skip;
+		}
 		if (block_dev_size < rec->total_byte) {
 			error(
 "block device size is smaller than total_bytes in device item, has %llu expect >= %llu",

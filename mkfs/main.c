@@ -1818,9 +1818,15 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		 * Block_count not specified, use file/device size first.
 		 * Or we will always use source_dir_size calculated for mkfs.
 		 */
-		if (!byte_count)
-			byte_count = round_down(device_get_partition_size_fd_stat(fd, &statbuf),
-						sectorsize);
+		if (!byte_count) {
+			ret = device_get_partition_size_fd_stat(fd, &statbuf, &byte_count);
+			if (ret < 0) {
+				errno = -ret;
+				error("failed to get device size for %s: %m", file);
+				goto error;
+			}
+			byte_count = round_down(byte_count, sectorsize);
+		}
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
 		UASSERT(IS_ALIGNED(source_dir_size, sectorsize));

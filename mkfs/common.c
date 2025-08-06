@@ -1170,7 +1170,9 @@ bool test_status_for_mkfs(const char *file, bool force_overwrite)
 int test_minimum_size(const char *file, u64 min_dev_size)
 {
 	int fd;
+	int ret;
 	struct stat statbuf;
+	u64 size;
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0)
@@ -1179,11 +1181,12 @@ int test_minimum_size(const char *file, u64 min_dev_size)
 		close(fd);
 		return -errno;
 	}
-	if (device_get_partition_size_fd_stat(fd, &statbuf) < min_dev_size) {
-		close(fd);
-		return 1;
-	}
+	ret = device_get_partition_size_fd_stat(fd, &statbuf, &size);
 	close(fd);
+	if (ret < 0)
+		return ret;
+	if (size < min_dev_size)
+		return 1;
 	return 0;
 }
 

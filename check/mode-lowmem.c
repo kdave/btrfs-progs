@@ -4822,7 +4822,14 @@ next:
 			dev->devid);
 		return 0;
 	}
-	block_dev_size = device_get_partition_size_fd_stat(dev->fd, &st);
+	ret = device_get_partition_size_fd_stat(dev->fd, &st, &block_dev_size);
+	if (ret < 0) {
+		errno = -ret;
+		warning(
+	"failed to get device size for %s, skipping its block device size check: %m",
+			dev->name);
+		return 0;
+	}
 	if (block_dev_size < total_bytes) {
 		error(
 "block device size is smaller than total_bytes in device item, has %llu expect >= %llu",

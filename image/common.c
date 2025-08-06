@@ -118,7 +118,12 @@ void write_backup_supers(int fd, u8 *buf)
 		return;
 	}
 
-	size = device_get_partition_size_fd_stat(fd, &st);
+	ret = device_get_partition_size_fd_stat(fd, &st, &size);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to get device size for backup supers: %m");
+		return;
+	}
 
 	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
