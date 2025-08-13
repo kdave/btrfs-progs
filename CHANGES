@@ -1,3 +1,22 @@
+btrfs-progs-6.17 (2025-09-29)
+-----------------------------
+   * inspect list-chunks: more sorting keys, descending order
+   * fi resize: add support for offline (unmounted) growing of single device
+   * device stats: add support for offline (unmounted) reads
+   * quota status: new command, overview what mode is enabled, tunables
+   * fi commit-stats: new command, print various commit stats from sysfs (since
+     kernel 6.1)
+   * balance start: print warning and delay start if there's a missing device
+     in the filesystem
+   * mkfs:
+      * print zoned mode (native, emulated)
+   * check:
+      * verify device bytes in super block item and in chunk tree
+   * other
+      * updated CI, new and updated tests
+      * cleanups, refactoring
+      * documentation updates
+
 btrfs-progs-6.16 (2025-08-13)
 -----------------------------
    * mkfs:
