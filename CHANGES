@@ -1,3 +1,23 @@
+btrfs-progs-6.16 (2025-08-13)
+-----------------------------
+   * mkfs:
+      * print label of existing filesystem if attempting to overwrite
+      * remove note about changed defaults in 6.15
+      * discard support detection uses the ioctl and not sysfs, this should
+        work for all types of block devices
+   * device usage: fix printing units of partition sizes, used to be in 512B
+     sectors
+   * defrag: new option --nocomp to request no compression (kernel 6.17)
+   * check: detect missing orphan items for deleted subvolumes
+   * subvol delete: don't print warning if filesystem is mounted with
+     user_subvol_rm_allowed
+   * build: add build support for Android
+   * other:
+      * cleanups and refactoring
+      * sync sources with kernel
+      * documentation updates
+      * CI and test updates
+
 btrfs-progs-6.15 (2025-06-23)
 -----------------------------
    * mkfs: new option --inode-flags to specify flags/attributes for
