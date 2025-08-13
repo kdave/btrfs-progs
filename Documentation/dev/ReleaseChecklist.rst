@@ -29,10 +29,8 @@ Pre-release:
 
 Python btrfsutil (pypi.org):
 
-*  rebuild whole project (regenerate constants.c)
+*  rebuild whole project (regenerate constants.c and version.py)
 *  ``cd libbtrfsutil/python``
-*  edit ``setup.py`` version manually (the toplevel VERSION is not accessible
-   during dist build)
 *  ``python3 -m build`` -- build dist files
 *  ``twine check dist/*.tar.gz`` -- look for warnings
 *  ``twine upload dist/*.tar.gz`` -- make sure there's only the latest version,
