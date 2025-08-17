@@ -41,7 +41,9 @@ struct rootdir_subvol {
 	struct list_head list;
 	/* The path inside the source_dir. */
 	char dir[PATH_MAX];
-	char full_path[PATH_MAX];
+	/* st_dev and st_ino is going to uniquely determine an inode inside the host fs. */
+	dev_t st_dev;
+	ino_t st_ino;
 	bool is_default;
 	bool readonly;
 };
