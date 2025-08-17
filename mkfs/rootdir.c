@@ -1123,6 +1123,45 @@ int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvol
 	return 0;
 }
 
+int btrfs_mkfs_validate_inode_flags(const char *source_dir, struct list_head *inode_flags)
+{
+	struct rootdir_inode_flags_entry *rif;
+
+	list_for_each_entry(rif, inode_flags, list) {
+		char path[PATH_MAX];
+		struct rootdir_inode_flags_entry *rif2;
+		int ret;
+
+		if (path_cat_out(path, source_dir, rif->inode_path)) {
+			error("path invalid: %s", path);
+			return -EINTR;
+		}
+		if (!realpath(path, rif->full_path)) {
+			ret = -errno;
+			error("could not get canonical path: %s: %m", path);
+			return ret;
+		}
+		if (!path_exists(rif->full_path)) {
+			error("inode path does not exist: %s", rif->full_path);
+			return -ENOENT;
+		}
+		list_for_each_entry(rif2, inode_flags, list) {
+			/*
+			 * Only compare entries before us. So we won't compare
+			 * the same pair twice.
+			 */
+			if (rif2 == rif)
+				break;
+			if (strcmp(rif2->full_path, rif->full_path) == 0) {
+				error("duplicated inode flag entries for %s",
+					rif->full_path);
+				return -EEXIST;
+			}
+		}
+	}
+	return 0;
+}
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
