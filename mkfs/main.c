@@ -1527,50 +1527,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	list_for_each_entry(rds, &subvols, list) {
-		char path[PATH_MAX];
-		struct rootdir_subvol *rds2;
-
-		if (path_cat_out(path, source_dir, rds->dir)) {
-			error("path invalid: %s", path);
-			ret = 1;
-			goto error;
-		}
-
-		if (!realpath(path, rds->full_path)) {
-			error("could not get canonical path: %s", rds->dir);
-			ret = 1;
-			goto error;
-		}
-
-		if (!path_exists(rds->full_path)) {
-			error("subvolume path does not exist: %s", rds->dir);
-			ret = 1;
-			goto error;
-		}
-
-		if (!path_is_dir(rds->full_path)) {
-			error("subvolume is not a directory: %s", rds->dir);
-			ret = 1;
-			goto error;
-		}
-
-		if (!path_is_in_dir(source_dir, rds->full_path)) {
-			error("subvolume %s is not a child of %s", rds->dir, source_dir);
-			ret = 1;
-			goto error;
-		}
-
-		for (rds2 = list_first_entry(&subvols, struct rootdir_subvol, list);
-		     rds2 != rds;
-		     rds2 = list_next_entry(rds2, list)) {
-			if (strcmp(rds2->full_path, rds->full_path) == 0) {
-				error("subvolume specified more than once: %s", rds->dir);
-				ret = 1;
-				goto error;
-			}
-		}
-	}
+	ret = btrfs_mkfs_validate_subvols(source_dir, &subvols);
+	if (ret < 0)
+		goto error;
 
 	list_for_each_entry(rif, &inode_flags_list, list) {
 		char path[PATH_MAX];
