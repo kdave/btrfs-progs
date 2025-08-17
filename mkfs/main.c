@@ -1531,40 +1531,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret < 0)
 		goto error;
 
-	list_for_each_entry(rif, &inode_flags_list, list) {
-		char path[PATH_MAX];
-		struct rootdir_inode_flags_entry *rif2;
-
-		if (path_cat_out(path, source_dir, rif->inode_path)) {
-			ret = -EINVAL;
-			error("path invalid: %s", path);
-			goto error;
-		}
-		if (!realpath(path, rif->full_path)) {
-			ret = -errno;
-			error("could not get canonical path: %s: %m", path);
-			goto error;
-		}
-		if (!path_exists(rif->full_path)) {
-			ret = -ENOENT;
-			error("inode path does not exist: %s", rif->full_path);
-			goto error;
-		}
-		list_for_each_entry(rif2, &inode_flags_list, list) {
-			/*
-			 * Only compare entries before us. So we won't compare
-			 * the same pair twice.
-			 */
-			if (rif2 == rif)
-				break;
-			if (strcmp(rif2->full_path, rif->full_path) == 0) {
-				error("duplicated inode flag entries for %s",
-					rif->full_path);
-				ret = -EEXIST;
-				goto error;
-			}
-		}
-	}
+	ret = btrfs_mkfs_validate_inode_flags(source_dir, &inode_flags_list);
+	if (ret < 0)
+		goto error;
 
 	if (*fs_uuid) {
 		uuid_t dummy_uuid;
