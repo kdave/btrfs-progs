@@ -1077,6 +1077,52 @@ out:
 }
 #endif
 
+int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvols)
+{
+	struct rootdir_subvol *rds;
+
+	list_for_each_entry(rds, subvols, list) {
+		char path[PATH_MAX];
+		struct rootdir_subvol *rds2;
+		int ret;
+
+		ret = path_cat_out(path, source_dir, rds->dir);
+		if (ret < 0) {
+			errno = -ret;
+			error("path invalid '%s': %m", path);
+			return ret;
+		}
+		if (!realpath(path, rds->full_path)) {
+			ret = -errno;
+			error("could not get canonical path of '%s': %m", rds->dir);
+			return ret;
+		}
+		ret = path_exists(rds->full_path);
+		if (ret < 0) {
+			error("subvolume path does not exist: %s", rds->dir);
+			return ret;
+		}
+		ret = path_is_dir(rds->full_path);
+		if (ret < 0) {
+			error("subvolume is not a directory: %s", rds->dir);
+			return ret;
+		}
+		list_for_each_entry(rds2, subvols, list) {
+			/*
+			 * Only compare entries before us, So we won't compare
+			 * the same pair twice.
+			 */
+			if (rds2 == rds)
+				break;
+			if (strcmp(rds2->full_path, rds->full_path) == 0) {
+				error("subvolume specified more than once: %s", rds->dir);
+				return -EINVAL;
+			}
+		}
+	}
+	return 0;
+}
+
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,

@@ -39,6 +39,7 @@ struct btrfs_root;
 
 struct rootdir_subvol {
 	struct list_head list;
+	/* The path inside the source_dir. */
 	char dir[PATH_MAX];
 	char full_path[PATH_MAX];
 	bool is_default;
@@ -59,6 +60,7 @@ struct rootdir_inode_flags_entry {
 	bool nodatasum;
 };
 
+int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvols);
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
 			struct list_head *inode_flags_list,
