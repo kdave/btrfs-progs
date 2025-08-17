@@ -1139,22 +1139,32 @@ int btrfs_mkfs_validate_inode_flags(const char *source_dir, struct list_head *in
 
 	list_for_each_entry(rif, inode_flags, list) {
 		char path[PATH_MAX];
+		char full_path[PATH_MAX];
 		struct rootdir_inode_flags_entry *rif2;
+		struct stat stbuf;
 		int ret;
 
 		if (path_cat_out(path, source_dir, rif->inode_path)) {
 			error("path invalid: %s", path);
 			return -EINTR;
 		}
-		if (!realpath(path, rif->full_path)) {
+		if (!realpath(path, full_path)) {
 			ret = -errno;
 			error("could not get canonical path: %s: %m", path);
 			return ret;
 		}
-		if (!path_exists(rif->full_path)) {
-			error("inode path does not exist: %s", rif->full_path);
+		if (!path_exists(full_path)) {
+			error("inode path does not exist: %s", full_path);
 			return -ENOENT;
 		}
+		ret = lstat(full_path, &stbuf);
+		if (ret < 0) {
+			ret = -errno;
+			error("failed to get stat of '%s': %m", full_path);
+			return ret;
+		}
+		rif->st_dev = stbuf.st_dev;
+		rif->st_ino = stbuf.st_ino;
 		list_for_each_entry(rif2, inode_flags, list) {
 			/*
 			 * Only compare entries before us. So we won't compare
@@ -1162,9 +1172,9 @@ int btrfs_mkfs_validate_inode_flags(const char *source_dir, struct list_head *in
 			 */
 			if (rif2 == rif)
 				break;
-			if (strcmp(rif2->full_path, rif->full_path) == 0) {
+			if (rif2->st_dev == rif->st_dev && rif2->st_ino == rif->st_ino) {
 				error("duplicated inode flag entries for %s",
-					rif->full_path);
+					full_path);
 				return -EEXIST;
 			}
 		}
@@ -1410,12 +1420,12 @@ static void update_inode_flags(const struct rootdir_inode_flags_entry *rif,
 }
 
 static void search_and_update_inode_flags(struct btrfs_inode_item *stack_inode,
-					  const char *full_path)
+					  const struct stat *st)
 {
 	struct rootdir_inode_flags_entry *rif;
 
 	list_for_each_entry(rif, g_inode_flags_list, list) {
-		if (strcmp(rif->full_path, full_path) == 0) {
+		if (rif->st_dev == st->st_dev && rif->st_ino == st->st_ino) {
 			update_inode_flags(rif, stack_inode);
 
 			list_del(&rif->list);
@@ -1493,7 +1503,7 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 	}
 	stat_to_inode_item(&inode_item, st);
 
-	search_and_update_inode_flags(&inode_item, full_path);
+	search_and_update_inode_flags(&inode_item, st);
 	btrfs_set_stack_inode_nlink(&inode_item, 1);
 	ret = update_inode_item(g_trans, new_root, &inode_item, ino);
 	if (ret < 0) {
@@ -1687,7 +1697,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		return ret;
 	}
 	stat_to_inode_item(&inode_item, st);
-	search_and_update_inode_flags(&inode_item, full_path);
+	search_and_update_inode_flags(&inode_item, st);
 
 	ret = btrfs_insert_inode(g_trans, root, ino, &inode_item);
 	if (ret < 0) {
