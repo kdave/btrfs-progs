@@ -61,6 +61,7 @@ struct rootdir_inode_flags_entry {
 };
 
 int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvols);
+int btrfs_mkfs_validate_inode_flags(const char *source_dir, struct list_head *inode_flags);
 int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir,
 			struct btrfs_root *root, struct list_head *subvols,
 			struct list_head *inode_flags_list,
