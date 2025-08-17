@@ -1083,6 +1083,8 @@ int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvol
 
 	list_for_each_entry(rds, subvols, list) {
 		char path[PATH_MAX];
+		char full_path[PATH_MAX];
+		struct stat stbuf;
 		struct rootdir_subvol *rds2;
 		int ret;
 
@@ -1092,21 +1094,29 @@ int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvol
 			error("path invalid '%s': %m", path);
 			return ret;
 		}
-		if (!realpath(path, rds->full_path)) {
+		if (!realpath(path, full_path)) {
 			ret = -errno;
 			error("could not get canonical path of '%s': %m", rds->dir);
 			return ret;
 		}
-		ret = path_exists(rds->full_path);
+		ret = path_exists(full_path);
 		if (ret < 0) {
 			error("subvolume path does not exist: %s", rds->dir);
 			return ret;
 		}
-		ret = path_is_dir(rds->full_path);
+		ret = path_is_dir(full_path);
 		if (ret < 0) {
 			error("subvolume is not a directory: %s", rds->dir);
 			return ret;
 		}
+		ret = lstat(full_path, &stbuf);
+		if (ret < 0) {
+			ret = -errno;
+			error("failed to get stat of '%s': %m", full_path);
+			return ret;
+		}
+		rds->st_dev = stbuf.st_dev;
+		rds->st_ino = stbuf.st_ino;
 		list_for_each_entry(rds2, subvols, list) {
 			/*
 			 * Only compare entries before us, So we won't compare
@@ -1114,7 +1124,7 @@ int btrfs_mkfs_validate_subvols(const char *source_dir, struct list_head *subvol
 			 */
 			if (rds2 == rds)
 				break;
-			if (strcmp(rds2->full_path, rds->full_path) == 0) {
+			if (rds2->st_dev == rds->st_dev && rds2->st_ino == rds->st_ino) {
 				error("subvolume specified more than once: %s", rds->dir);
 				return -EINVAL;
 			}
@@ -1423,15 +1433,26 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 	struct btrfs_root *new_root;
 	struct inode_entry *parent;
 	struct btrfs_inode_item inode_item = { 0 };
+	char *path_dump;
+	char *base_path;
 	u64 subvol_id, ino;
 
 	subvol_id = next_subvol_id++;
+	path_dump = strdup(full_path);
+	if (!path_dump)
+		return -ENOMEM;
+	base_path = path_basename(path_dump);
+	if (!base_path) {
+		ret = -errno;
+		error("failed to get basename of '%s': %m", path_dump);
+		goto out;
+	}
 
 	ret = btrfs_make_subvolume(g_trans, subvol_id, subvol->readonly);
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to create subvolume: %m");
-		return ret;
+		goto out;
 	}
 
 	if (subvol->is_default)
@@ -1446,19 +1467,17 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 		ret = PTR_ERR(new_root);
 		errno = -ret;
 		error("unable to read fs root id %llu: %m", subvol_id);
-		return ret;
+		goto out;
 	}
 
 	parent = rootdir_path_last(&current_path);
 
 	ret = btrfs_link_subvolume(g_trans, parent->root, parent->ino,
-				   path_basename(subvol->full_path),
-				   strlen(path_basename(subvol->full_path)),
-				   new_root);
+				   base_path, strlen(base_path), new_root);
 	if (ret) {
 		errno = -ret;
-		error("unable to link subvolume %s: %m", path_basename(subvol->full_path));
-		return ret;
+		error("unable to link subvolume %s: %m", base_path);
+		goto out;
 	}
 
 	ino = btrfs_root_dirid(&new_root->root_item);
@@ -1468,7 +1487,7 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 		errno = -ret;
 		error("failed to add xattr item for the top level inode in subvol %llu: %m",
 		      subvol_id);
-		return ret;
+		goto out;
 	}
 	stat_to_inode_item(&inode_item, st);
 
@@ -1478,7 +1497,7 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to update root dir for root %llu: %m", subvol_id);
-		return ret;
+		goto out;
 	}
 
 	ret = rootdir_path_push(&current_path, new_root, ino);
@@ -1486,10 +1505,12 @@ static int ftw_add_subvol(const char *full_path, const struct stat *st,
 		errno = -ret;
 		error("failed to allocate new entry for subvolume %llu ('%s'): %m",
 		      subvol_id, full_path);
-		return ret;
+		goto out;
 	}
 
-	return 0;
+out:
+	free(path_dump);
+	return ret;
 }
 
 static int read_inode_item(struct btrfs_root *root, struct btrfs_inode_item *inode_item,
@@ -1610,7 +1631,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 
 	if (S_ISDIR(st->st_mode)) {
 		list_for_each_entry(rds, g_subvols, list) {
-			if (!strcmp(full_path, rds->full_path)) {
+			if (st->st_dev == rds->st_dev && st->st_ino == rds->st_ino) {
 				ret = ftw_add_subvol(full_path, st, typeflag,
 						     ftwbuf, rds);
 
