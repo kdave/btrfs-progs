@@ -49,14 +49,15 @@ struct rootdir_subvol {
 };
 
 /*
- * Represent a flag for specified inode at @full_path.
+ * Represent a flag for specified inode at "$source_dir/$inode_path".
  */
 struct rootdir_inode_flags_entry {
 	struct list_head list;
-	/* Fully canonicalized path to the source file. */
-	char full_path[PATH_MAX];
 	/* Path inside the source directory. */
 	char inode_path[PATH_MAX];
+	/* st_dev and st_ino is going to uniquely determine an inode inside the host fs. */
+	dev_t st_dev;
+	ino_t st_ino;
 
 	bool nodatacow;
 	bool nodatasum;
