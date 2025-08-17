@@ -243,11 +243,6 @@ OPTIONS
 	each subvolume is independent and will not inherit from the parent directory.
 	(The same as the kernel behavior.)
 
-        .. note::
-                Both *--inode-flags* and *--subvol* options are memory hungry,
-                will consume at least 8KiB for each option.  Please keep the
-                usage of both options to minimum.
-
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 
