@@ -167,10 +167,19 @@ pattern detection, byte frequency, Shannon entropy.
 Compatibility
 -------------
 
-Compression is done using the COW mechanism so it's incompatible with
-*nodatacow*. Direct IO read works on compressed files but will fall back to
-buffered writes and leads to no compression even if force compression is set.
-Currently *nodatasum* and compression don't work together.
+Compression requires both data checksums and COW, so either *nodatasum* or
+*nodatasum* mount option/inode flag will result in no compression.
+
+Direct IO reads of compressed data will always fallback to buffered reads.
+
+Direct IO write behavior depends on the inode flag.
+For inodes with data checksum, direct IO writes always fallback to buffered
+writes, thus can generate compressed data if the mount option/inode flags
+allows that.
+
+For inodes without data checksums, direct IO writes will not populate page cache,
+and since the inode has no data checksums, no compressed data will be generated
+anyway.
 
 The compression algorithms have been added over time so the version
 compatibility should be also considered, together with other tools that may
