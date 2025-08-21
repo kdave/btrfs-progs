@@ -628,6 +628,66 @@ out:
 	return ret;
 }
 
+static int discard_logical_range_mirror(struct btrfs_fs_info *fs_info,
+				      int mirror, u64 start, u64 len)
+{
+	struct btrfs_multi_bio *multi = NULL;
+	int ret;
+	u64 cur_offset = 0;
+	u64 cur_len;
+
+	while (cur_offset < len) {
+		struct btrfs_device *device;
+		int i;
+
+		cur_len = len - cur_offset;
+		ret = btrfs_map_block(fs_info, READ, start + cur_offset,
+				      &cur_len, &multi, mirror, NULL);
+		if (ret)
+			return ret;
+
+		cur_len = min(cur_len, len - cur_offset);
+
+		for (i = 0; i < multi->num_stripes; i++) {
+			device = multi->stripes[i].dev;
+
+			ret = device_discard_blocks(device->fd,
+						    multi->stripes[i].physical,
+						    cur_len);
+
+			if (ret < 0) {
+				free(multi);
+
+				if (ret == -EOPNOTSUPP)
+					ret = 0;
+
+				return ret;
+			}
+		}
+		free(multi);
+		multi = NULL;
+		cur_offset += cur_len;
+	}
+
+	return 0;
+}
+
+static int discard_logical_range(struct btrfs_fs_info *fs_info, u64 start,
+				 u64 len)
+{
+	int ret, num_copies;
+
+	num_copies = btrfs_num_copies(fs_info, start, len);
+
+	for (int i = 0; i < num_copies; i++) {
+		ret = discard_logical_range_mirror(fs_info, i + 1, start, len);
+		if (ret < 0)
+			return ret;
+	}
+
+	return 0;
+}
+
 /* This function will cleanup  */
 static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 			       struct mkfs_allocation *alloc,
@@ -688,6 +748,14 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 					data_profile, meta_profile,
 					sys_profile)) {
 			u64 flags = btrfs_block_group_flags(path.nodes[0], bgi);
+
+			if (opt_discard) {
+				ret = discard_logical_range(fs_info,
+							    found_key.objectid,
+							    found_key.offset);
+				if (ret < 0)
+					goto out;
+			}
 
 			ret = btrfs_remove_block_group(trans,
 					found_key.objectid, found_key.offset);
