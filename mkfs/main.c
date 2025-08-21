@@ -1287,6 +1287,115 @@ cleanup:
 	return ret;
 }
 
+static int discard_free_space(struct btrfs_fs_info *fs_info,
+			      u64 metadata_profile)
+{
+	struct btrfs_root *free_space_root;
+	struct btrfs_path path = { 0 };
+	struct extent_buffer *leaf;
+	int ret;
+	struct btrfs_key key = {
+		.objectid = BTRFS_FREE_SPACE_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+		.offset = 0,
+	};
+
+	if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
+		return 0;
+
+	/*
+	 * Follow the kernel in not doing discard for RAID5 or 6.
+	 * We don't have to worry about data here, as --rootdir only works
+	 * with single-device filesystems, and the data block groups are
+	 * empty otherwise.
+	 */
+
+	if (metadata_profile & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		return 0;
+
+	free_space_root = btrfs_global_root(fs_info, &key);
+
+	key.objectid = 0;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, free_space_root, &key, &path, 0, 0);
+
+	if (ret < 0)
+		return ret;
+
+	while (true) {
+		leaf = path.nodes[0];
+
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(free_space_root, &path);
+			if (ret)
+				break;
+
+			leaf = path.nodes[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.type == BTRFS_FREE_SPACE_EXTENT_KEY) {
+			ret = discard_logical_range(fs_info, key.objectid,
+						    key.offset);
+			if (ret < 0)
+				goto out;
+		} else if (key.type == BTRFS_FREE_SPACE_BITMAP_KEY) {
+			int size, nrbits;
+			void *bitmap;
+			unsigned long start_bit, end_bit;
+
+			size = btrfs_item_size(leaf, path.slots[0]);
+
+			bitmap = malloc(size);
+			if (!bitmap) {
+				ret = -ENOMEM;
+				goto out;
+			}
+
+			read_extent_buffer(leaf, bitmap,
+					btrfs_item_ptr_offset(leaf, path.slots[0]),
+					size);
+
+			nrbits = div_u64(key.offset, fs_info->sectorsize);
+			start_bit = find_next_bit_le(bitmap, nrbits, 0);
+
+			while (start_bit < nrbits) {
+				u64 addr, length;
+
+				end_bit = find_next_zero_bit_le(bitmap, nrbits,
+								start_bit);
+
+				addr = key.objectid +
+					(start_bit * fs_info->sectorsize);
+				length = (end_bit - start_bit) *
+					fs_info->sectorsize;
+
+				ret = discard_logical_range(fs_info, addr,
+							    length);
+				if (ret < 0) {
+					free(bitmap);
+					goto out;
+				}
+
+				start_bit = find_next_bit_le(bitmap, nrbits, end_bit);
+			}
+
+			free(bitmap);
+		}
+
+		path.slots[0]++;
+	}
+
+	ret = 0;
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
@@ -2294,6 +2403,15 @@ raid_groups:
 "NOTE: you may need to manually load kernel module implementing accelerated SHA256 in case\n"
 "      the generic implementation is built-in, before mount. Check lsmod or /proc/crypto\n\n"
 );
+		}
+	}
+
+	if (opt_discard) {
+		ret = discard_free_space(fs_info, metadata_profile);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to discard free space: %m");
+			goto out;
 		}
 	}
 
