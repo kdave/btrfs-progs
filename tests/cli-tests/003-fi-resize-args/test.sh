@@ -58,7 +58,7 @@ done
 run_mustfail_stdout "should fail for image" \
 	"$TOP/btrfs" filesystem resize 1:-128M "$TEST_DEV" |
 	_log_stdout |
-	grep -q "ERROR: resize works on mounted filesystems and accepts only" ||
+	grep -q "ERROR: to resize a file containing a BTRFS image use the --offline flag" ||
 	_fail "no expected error message in the output 2"
 
 run_check_umount_test_dev
