@@ -1661,6 +1661,50 @@ static void print_dir_item_err(struct btrfs_root *root, struct btrfs_key *key,
 
 }
 
+static bool check_for_dupe_filenames_lowmem(struct extent_buffer *eb, int slot,
+					    int nritems, struct btrfs_root *root,
+					    struct btrfs_key *di_key)
+{
+	struct btrfs_dir_item *di, *di2;
+	char namebuf[BTRFS_NAME_LEN], namebuf2[BTRFS_NAME_LEN];
+	u32 len, len2;
+
+	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
+
+	for (int i = 0; i < nritems - 1; i++) {
+		len = btrfs_dir_name_len(eb, di) + btrfs_dir_data_len(eb, di);
+
+		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
+
+		di2 = di;
+		len2 = len;
+
+		for (int j = i + 1; j < nritems; j++) {
+			di2 = (struct btrfs_dir_item *)
+			((char *)di2 + sizeof(*di2) + len2);
+			len2 = btrfs_dir_name_len(eb, di2) +
+			btrfs_dir_data_len(eb, di2);
+
+			if (len != len2)
+				continue;
+
+			read_extent_buffer(eb, namebuf2,
+					   (unsigned long)(di2 + 1), len2);
+
+			if (!memcmp(namebuf, namebuf2, len)) {
+				error("root %llu inode %llu dup filename %.*s",
+				      root->objectid, di_key->objectid,
+				      len, namebuf);
+				return true;
+			}
+		}
+
+		di = (struct btrfs_dir_item *) ((char *)di + sizeof(*di) + len);
+	}
+
+	return false;
+}
+
 /*
  * Traverse the given DIR_ITEM/DIR_INDEX and check related INODE_ITEM and
  * call find_inode_ref() to check related INODE_REF/INODE_EXTREF.
@@ -1695,6 +1739,7 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 	int err;
 	int tmp_err;
 	int need_research = 0;
+	int nritems = 1;
 
 begin:
 	err = 0;
@@ -1835,7 +1880,17 @@ next:
 			      di_key->offset);
 			break;
 		}
+
+		if (cur < total)
+			nritems++;
 	}
+
+	if (nritems > 1) {
+		if (check_for_dupe_filenames_lowmem(node, slot, nritems, root,
+						    di_key))
+			err |= DUP_FILENAME_ERROR;
+	}
+
 out:
 	/* research path */
 	btrfs_release_path(path);
