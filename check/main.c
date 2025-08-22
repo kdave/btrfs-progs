@@ -653,6 +653,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 			rec->nlink);
 	if (errors & I_ERR_INVALID_XATTR)
 		fprintf(stderr, ", invalid xattr");
+	if (errors & I_ERR_DUP_FILENAME)
+		fprintf(stderr, ", dup filename");
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -1434,6 +1436,40 @@ static int add_mismatch_dir_hash(struct inode_record *dir_rec,
 	return 0;
 }
 
+static void check_for_dupe_filenames(struct extent_buffer *eb, int slot,
+				     int nritems, struct inode_record *rec)
+{
+	struct btrfs_dir_item *di, *di2;
+	char namebuf[BTRFS_NAME_LEN], namebuf2[BTRFS_NAME_LEN];
+	u32 len, len2;
+
+	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
+
+	for (int i = 0; i < nritems - 1; i++) {
+		len = btrfs_dir_name_len(eb, di) + btrfs_dir_data_len(eb, di);
+
+		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
+
+		di2 = di;
+		len2 = len;
+
+		for (int j = i + 1; j < nritems; j++) {
+			di2 = (struct btrfs_dir_item *)((char *)di2 + sizeof(*di2) + len2);
+			len2 = btrfs_dir_name_len(eb, di2) + btrfs_dir_data_len(eb, di2);
+
+			if (len != len2)
+				continue;
+
+			read_extent_buffer(eb, namebuf2, (unsigned long)(di2 + 1), len2);
+
+			if (memcmp(namebuf, namebuf2, len) == 0)
+				rec->errors |= I_ERR_DUP_FILENAME;
+		}
+
+		di = (struct btrfs_dir_item *)((char *)di + sizeof(*di) + len);
+	}
+}
+
 static int process_dir_item(struct extent_buffer *eb,
 			    int slot, struct btrfs_key *key,
 			    struct shared_node *active_node)
@@ -1524,6 +1560,9 @@ next:
 	}
 	if (key->type == BTRFS_DIR_INDEX_KEY && nritems > 1)
 		rec->errors |= I_ERR_DUP_DIR_INDEX;
+
+	if (key->type == BTRFS_DIR_ITEM_KEY && nritems > 1)
+		check_for_dupe_filenames(eb, slot, nritems, rec);
 
 	return 0;
 }
