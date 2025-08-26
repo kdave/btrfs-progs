@@ -1783,7 +1783,12 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	tomnt = argv[optind];
 
 	if (fromfile[0]) {
-		receive_fd = open(fromfile, O_RDONLY | O_NOATIME);
+		int flags = O_RDONLY;
+
+		if (!dump)
+			flags |= O_NOATIME;
+
+		receive_fd = open(fromfile, flags);
 		if (receive_fd < 0) {
 			error("cannot open %s: %m", fromfile);
 			goto out;
