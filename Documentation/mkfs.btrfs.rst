@@ -243,6 +243,11 @@ OPTIONS
 	each subvolume is independent and will not inherit from the parent directory.
 	(The same as the kernel behavior.)
 
+--reflink
+        When used with *--rootdir* try to clone file extents using FICLONERANGE
+        ioctl instead of copying the bytes. This requires the source files and
+        the final image to exist on the same filesystem.
+
 --shrink
         Shrink the filesystem to its minimal size, only works with *--rootdir* option.
 

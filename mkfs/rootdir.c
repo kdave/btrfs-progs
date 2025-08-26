@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <sys/ioctl.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -158,6 +159,7 @@ static u64 next_subvol_id = BTRFS_FIRST_FREE_OBJECTID;
 static u64 default_subvol_id;
 static enum btrfs_compression_type g_compression;
 static u64 g_compression_level;
+static bool g_do_reflink;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -702,6 +704,82 @@ struct source_descriptor {
 	char *wrkmem;
 };
 
+static int do_reflink_write(struct btrfs_fs_info *info,
+			    const struct source_descriptor *source, u64 addr,
+			    u64 file_pos, u64 bytes, const void *buf)
+{
+	struct btrfs_multi_bio *multi = NULL;
+	struct btrfs_device *device;
+	u64 bytes_left;
+	u64 this_len;
+	u64 total_write = 0;
+	u64 dev_bytenr;
+	int dev_nr;
+	int ret = 0;
+	struct file_clone_range fcr;
+
+	fcr.src_fd = source->fd;
+	bytes_left = round_down(bytes, info->sectorsize);
+
+	while (bytes_left > 0) {
+		this_len = bytes_left;
+		dev_nr = 0;
+
+		ret = btrfs_map_block(info, WRITE, addr, &this_len, &multi, 0, NULL);
+		if (ret) {
+			error("cannot map the block %llu", addr);
+			return -EIO;
+		}
+
+		while (dev_nr < multi->num_stripes) {
+			device = multi->stripes[dev_nr].dev;
+			if (device->fd <= 0) {
+				kfree(multi);
+				return -EIO;
+			}
+
+			dev_bytenr = multi->stripes[dev_nr].physical;
+			this_len = min(this_len, bytes_left);
+			dev_nr++;
+			device->total_ios++;
+
+			fcr.src_offset = file_pos + total_write;
+			fcr.src_length = this_len;
+			fcr.dest_offset = dev_bytenr;
+
+			ret = ioctl(device->fd, FICLONERANGE, &fcr);
+			if (ret < 0) {
+				error("cannot clone range: %m");
+				ret = -errno;
+				kfree(multi);
+				return ret;
+			}
+		}
+
+		BUG_ON(bytes_left < this_len);
+
+		bytes_left -= this_len;
+		addr += this_len;
+		total_write += this_len;
+
+		kfree(multi);
+		multi = NULL;
+	}
+
+	/*
+	 * FICLONERANGE can only handle whole sectors. If the file is not a
+	 * multiple of the sector size, we need to write the last sector
+	 * manually.
+	 */
+	if (bytes % info->sectorsize) {
+		return write_data_to_disk(info,
+			(char *)buf + round_down(bytes, info->sectorsize),
+			addr, info->sectorsize);
+	}
+
+	return 0;
+}
+
 static int add_file_item_extent(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
 				struct btrfs_inode_item *btrfs_inode,
@@ -721,7 +799,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	ssize_t comp_ret;
 	u64 flags = btrfs_stack_inode_flags(btrfs_inode);
 
-	if (flags & BTRFS_INODE_NOCOMPRESS)
+	if (g_do_reflink || flags & BTRFS_INODE_NOCOMPRESS)
 		do_comp = false;
 
 	if ((flags & BTRFS_INODE_NODATACOW) || (flags & BTRFS_INODE_NODATASUM)) {
@@ -852,8 +930,13 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 
 	first_block = key.objectid;
 
-	ret = write_data_to_disk(root->fs_info, write_buf, first_block,
-				 to_write);
+	if (g_do_reflink) {
+		ret = do_reflink_write(root->fs_info, source, first_block, file_pos,
+				       to_read, write_buf);
+	} else {
+		ret = write_data_to_disk(root->fs_info, write_buf, first_block, to_write);
+	}
+
 	if (ret) {
 		error("failed to write %s", source->path_name);
 		return ret;
@@ -1833,7 +1916,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 			struct btrfs_root *root, struct list_head *subvols,
 			struct list_head *inode_flags_list,
 			enum btrfs_compression_type compression,
-			unsigned int compression_level)
+			unsigned int compression_level, bool do_reflink)
 {
 	int ret;
 	struct stat root_st;
@@ -1881,6 +1964,7 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 	g_inode_flags_list = inode_flags_list;
 	g_compression = compression;
 	g_compression_level = compression_level;
+	g_do_reflink = do_reflink;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
 	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);

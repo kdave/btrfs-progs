@@ -472,6 +472,7 @@ static const char * const mkfs_usage[] = {
 	OPTLINE("", "FLAGS is one of:"),
 	OPTLINE("", "- nodatacow - disable data CoW, implies nodatasum for regular files"),
 	OPTLINE("", "- nodatasum - disable data checksum only"),
+	OPTLINE("--reflink", "(with --rootdir) write file data by cloning ranges"),
 	OPTLINE("--shrink", "(with --rootdir) shrink the filled filesystem to minimal size"),
 	OPTLINE("-K|--nodiscard", "do not perform whole device TRIM"),
 	OPTLINE("-f|--force", "force overwrite of existing filesystem"),
@@ -1235,7 +1236,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int close_ret;
 	int i;
 	bool ssd = false;
-	bool shrink_rootdir = false;
+	bool shrink_rootdir = false, do_reflink = false;
 	u64 source_dir_size = 0;
 	u64 min_dev_size;
 	u64 shrink_size;
@@ -1287,6 +1288,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			GETOPT_VAL_DEVICE_UUID,
 			GETOPT_VAL_INODE_FLAGS,
 			GETOPT_VAL_COMPRESS,
+			GETOPT_VAL_REFLINK,
 		};
 		static const struct option long_options[] = {
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -1316,6 +1318,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 			{ "compress", required_argument, NULL,
 				GETOPT_VAL_COMPRESS },
+			{ "reflink", no_argument, NULL, GETOPT_VAL_REFLINK },
 #if EXPERIMENTAL
 			{ "param", required_argument, NULL, GETOPT_VAL_PARAM },
 			{ "num-global-roots", required_argument, NULL, GETOPT_VAL_GLOBAL_ROOTS },
@@ -1465,6 +1468,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case GETOPT_VAL_PARAM:
 				bconf_save_param(optarg);
 				break;
+			case GETOPT_VAL_REFLINK:
+				do_reflink = true;
+				break;
 			case GETOPT_VAL_HELP:
 			default:
 				usage(&mkfs_cmd, c != GETOPT_VAL_HELP);
@@ -1499,6 +1505,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 	if (shrink_rootdir && source_dir == NULL) {
 		error("the option --shrink must be used with --rootdir");
+		ret = 1;
+		goto error;
+	}
+	if (do_reflink && source_dir == NULL) {
+		error("the option --reflink must be used with --rootdir");
 		ret = 1;
 		goto error;
 	}
@@ -2135,7 +2146,8 @@ raid_groups:
 
 		ret = btrfs_mkfs_fill_dir(trans, source_dir, root,
 					  &subvols, &inode_flags_list,
-					  compression, compression_level);
+					  compression, compression_level,
+					  do_reflink);
 		if (ret) {
 			errno = -ret;
 			error("error while filling filesystem: %m");
