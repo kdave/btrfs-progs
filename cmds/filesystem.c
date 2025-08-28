@@ -1290,19 +1290,84 @@ static const char * const cmd_filesystem_resize_usage[] = {
 	NULL
 };
 
+struct resize_args {
+	bool is_cancel;
+	bool specified_dev_id;
+	bool is_max;
+	u64 devid;
+	int mod;
+	u64 size;
+};
+
+static bool parse_resize_args(const char *amount, struct resize_args *ret)
+{
+	char amount_dup[BTRFS_VOL_NAME_MAX];
+	char *devstr;
+	char *sizestr;
+
+	ret->is_cancel = false;
+	if (strcmp("cancel", amount) == 0) {
+		ret->is_cancel = true;
+		return true;
+	}
+
+	if (strlen(amount) >= BTRFS_VOL_NAME_MAX) {
+		error("newsize argument is too long %zu >= %d", strlen(amount),
+		      BTRFS_VOL_NAME_MAX);
+		return false;
+	}
+	strncpy(amount_dup, amount, BTRFS_VOL_NAME_MAX);
+
+	sizestr = amount_dup;
+	devstr = strchr(sizestr, ':');
+	ret->specified_dev_id = false;
+	if (devstr) {
+		sizestr = devstr + 1;
+		*devstr = 0;
+		devstr = amount_dup;
+
+		errno = 0;
+		ret->specified_dev_id = true;
+		ret->devid = strtoull(devstr, NULL, 10);
+
+		if (errno) {
+			error("failed to parse devid %s: %m", devstr);
+			return false;
+		}
+	}
+
+	if (strcmp(sizestr, "max") == 0) {
+		ret->is_max = true;
+	} else {
+		ret->is_max = false;
+
+		ret->mod = 0;
+		if (sizestr[0] == '-') {
+			ret->mod = -1;
+			sizestr++;
+		} else if (sizestr[0] == '+') {
+			ret->mod = 1;
+			sizestr++;
+		}
+		if (parse_u64_with_suffix(sizestr, &ret->size) < 0) {
+			error("failed to parse size %s", sizestr);
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static int check_resize_args(const char *amount, const char *path, u64 *devid_ret)
 {
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	struct resize_args args;
 	int ret, i, dev_idx = -1;
-	u64 devid = 1;
 	u64 mindev = (u64)-1;
 	int mindev_idx = 0;
 	const char *res_str = NULL;
-	char *devstr = NULL, *sizestr = NULL;
-	u64 new_size = 0, old_size = 0, diff = 0;
-	int mod = 0;
-	char amount_dup[BTRFS_VOL_NAME_MAX];
+	u64 new_size = 0, old_size = 0;
 
 	*devid_ret = (u64)-1;
 	ret = get_fs_info(path, &fi_args, &di_args);
@@ -1317,37 +1382,20 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		goto out;
 	}
 
-	ret = snprintf(amount_dup, BTRFS_VOL_NAME_MAX, "%s", amount);
-	if (strlen(amount) != ret) {
-		error("newsize argument is too long");
+	if (!parse_resize_args(amount, &args)) {
 		ret = 1;
 		goto out;
 	}
-	ret = 0;
 
 	/* Cancel does not need to determine the device number. */
-	if (strcmp(amount, "cancel") == 0) {
+	if (args.is_cancel) {
 		/* Different format, print and exit */
 		pr_verbose(LOG_DEFAULT, "Request to cancel resize\n");
 		goto out;
 	}
 
-	sizestr = amount_dup;
-	devstr = strchr(sizestr, ':');
-	if (devstr) {
-		sizestr = devstr + 1;
-		*devstr = 0;
-		devstr = amount_dup;
-
-		errno = 0;
-		devid = strtoull(devstr, NULL, 10);
-
-		if (errno) {
-			error("failed to parse devid %s: %m", devstr);
-			ret = 1;
-			goto out;
-		}
-	}
+	if (!args.specified_dev_id)
+		args.devid = 1;
 
 	dev_idx = -1;
 	for(i = 0; i < fi_args.num_devices; i++) {
@@ -1355,18 +1403,18 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 			mindev = di_args[i].devid;
 			mindev_idx = i;
 		}
-		if (di_args[i].devid == devid) {
+		if (di_args[i].devid == args.devid) {
 			dev_idx = i;
 			break;
 		}
 	}
 
-	if (devstr && dev_idx < 0) {
+	if (args.specified_dev_id && dev_idx < 0) {
 		/* Devid specified but not found. */
-		error("cannot find devid: %lld", devid);
+		error("cannot find devid: %llu", args.devid);
 		ret = 1;
 		goto out;
-	} else if (!devstr && devid == 1 && dev_idx < 0) {
+	} else if (!args.specified_dev_id && dev_idx < 0) {
 		/*
 		 * No device specified, assuming implicit 1 but it does not
 		 * exist. Use minimum device as fallback.
@@ -1374,7 +1422,7 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		warning("no devid specified means devid 1 which does not exist, using\n"
 			"\t lowest devid %llu as a fallback", mindev);
 		*devid_ret = mindev;
-		devid = mindev;
+		args.devid = mindev;
 		dev_idx = mindev_idx;
 	} else {
 		/*
@@ -1383,44 +1431,31 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 		 */
 	}
 
-	if (strcmp(sizestr, "max") == 0) {
+	if (args.is_max) {
 		res_str = "max";
 	} else {
-		if (sizestr[0] == '-') {
-			mod = -1;
-			sizestr++;
-		} else if (sizestr[0] == '+') {
-			mod = 1;
-			sizestr++;
-		}
-		ret = parse_u64_with_suffix(sizestr, &diff);
-		if (ret < 0) {
-			error("failed to parse size %s", sizestr);
-			ret = 1;
-			goto out;
-		}
 		old_size = di_args[dev_idx].total_bytes;
 
 		/* For target sizes without +/- sign prefix (e.g. 1:150g) */
-		if (mod == 0) {
-			new_size = diff;
-		} else if (mod < 0) {
-			if (diff > old_size) {
+		if (args.mod == 0) {
+			new_size = args.size;
+		} else if (args.mod < 0) {
+			if (args.size > old_size) {
 				error("current size is %s which is smaller than %s",
 				      pretty_size_mode(old_size, UNITS_DEFAULT),
-				      pretty_size_mode(diff, UNITS_DEFAULT));
+				      pretty_size_mode(args.size, UNITS_DEFAULT));
 				ret = 1;
 				goto out;
 			}
-			new_size = old_size - diff;
-		} else if (mod > 0) {
-			if (diff > ULLONG_MAX - old_size) {
+			new_size = old_size - args.size;
+		} else if (args.mod > 0) {
+			if (args.size > ULLONG_MAX - old_size) {
 				error("increasing %s is out of range",
-				      pretty_size_mode(diff, UNITS_DEFAULT));
+				      pretty_size_mode(args.size, UNITS_DEFAULT));
 				ret = 1;
 				goto out;
 			}
-			new_size = old_size + diff;
+			new_size = old_size + args.size;
 		}
 		new_size = round_down(new_size, fi_args.sectorsize);
 		res_str = pretty_size_mode(new_size, UNITS_DEFAULT);
@@ -1430,7 +1465,7 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 			new_size, pretty_size_mode(new_size, UNITS_DEFAULT));
 	}
 
-	pr_verbose(LOG_DEFAULT, "Resize device id %lld (%s) from %s to %s\n", devid,
+	pr_verbose(LOG_DEFAULT, "Resize device id %llu (%s) from %s to %s\n", args.devid,
 		di_args[dev_idx].path,
 		pretty_size_mode(di_args[dev_idx].total_bytes, UNITS_DEFAULT),
 		res_str);
