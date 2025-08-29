@@ -317,8 +317,17 @@ tree-stats [options] <device>
         -b|--raw
                 raw numbers in bytes, without the *B* suffix
 
-        -t <treeid>
-                Print stats only for the given treeid.
+        -t <tree_id>
+                print only the tree with the specified ID, where the ID can be numerical or
+                common name in a flexible human readable form
+
+                The tree id name recognition rules:
+
+                * case does not matter
+                * the C source definition, e.g. BTRFS_ROOT_TREE_OBJECTID
+                * short forms without BTRFS\_ prefix, without _TREE and _OBJECTID suffix, e.g. ROOT_TREE, ROOT
+                * convenience aliases, e.g. DEVICE for the DEV tree, CHECKSUM for CSUM
+                * unrecognized ID is an error
         --human-readable
                 print human friendly numbers, base 1024, this is the default
 
