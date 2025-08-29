@@ -30,6 +30,7 @@ int parse_bg_profile(const char *profile, u64 *flags);
 int parse_compress_type(const char *type);
 int parse_qgroupid(const char *str, u64 *qgroupid);
 u64 parse_qgroupid_or_path(const char *p);
+u64 parse_tree_id(const char* str);
 int fls64(u64 x);
 
 #endif
