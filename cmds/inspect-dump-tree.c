@@ -39,6 +39,7 @@
 #include "common/help.h"
 #include "common/device-scan.h"
 #include "common/string-utils.h"
+#include "common/parse-utils.h"
 #include "cmds/commands.h"
 
 static void print_extents(struct extent_buffer *eb)
@@ -135,81 +136,6 @@ static void print_old_roots(struct btrfs_super_block *super)
 		       btrfs_backup_total_bytes(backup),
 		       btrfs_backup_num_devices(backup));
 	}
-}
-
-/*
- * Convert a tree name from various forms to the numerical id if possible
- * Accepted forms:
- * - case does not matter
- * - same as the key name, BTRFS_ROOT_TREE_OBJECTID
- * - dtto shortened, BTRFS_ROOT_TREE
- * - dtto without prefix, ROOT_TREE
- * - common name, ROOT, CHUNK, EXTENT, ...
- * - dtto alias, DEVICE for DEV, CHECKSUM for CSUM
- *
- * Returns 0 if the tree id was not recognized.
- */
-static u64 treeid_from_string(const char *str, const char **end)
-{
-	int match = 0;
-	int i;
-	u64 id;
-	static struct treename {
-		const char *name;
-		u64 id;
-	} tn[] = {
-		{ "ROOT", BTRFS_ROOT_TREE_OBJECTID },
-		{ "EXTENT", BTRFS_EXTENT_TREE_OBJECTID },
-		{ "CHUNK", BTRFS_CHUNK_TREE_OBJECTID },
-		{ "DEVICE", BTRFS_DEV_TREE_OBJECTID },
-		{ "DEV", BTRFS_DEV_TREE_OBJECTID },
-		{ "FS", BTRFS_FS_TREE_OBJECTID },
-		{ "CSUM", BTRFS_CSUM_TREE_OBJECTID },
-		{ "CHECKSUM", BTRFS_CSUM_TREE_OBJECTID },
-		{ "QUOTA", BTRFS_QUOTA_TREE_OBJECTID },
-		{ "UUID", BTRFS_UUID_TREE_OBJECTID },
-		{ "FREE_SPACE", BTRFS_FREE_SPACE_TREE_OBJECTID },
-		{ "FREE-SPACE", BTRFS_FREE_SPACE_TREE_OBJECTID },
-		{ "TREE_LOG_FIXUP", BTRFS_TREE_LOG_FIXUP_OBJECTID },
-		{ "TREE-LOG-FIXUP", BTRFS_TREE_LOG_FIXUP_OBJECTID },
-		{ "TREE_LOG", BTRFS_TREE_LOG_OBJECTID },
-		{ "TREE-LOG", BTRFS_TREE_LOG_OBJECTID },
-		{ "TREE_RELOC", BTRFS_TREE_RELOC_OBJECTID },
-		{ "TREE-RELOC", BTRFS_TREE_RELOC_OBJECTID },
-		{ "DATA_RELOC", BTRFS_DATA_RELOC_TREE_OBJECTID },
-		{ "DATA-RELOC", BTRFS_DATA_RELOC_TREE_OBJECTID },
-		{ "BLOCK_GROUP", BTRFS_BLOCK_GROUP_TREE_OBJECTID },
-		{ "BLOCK-GROUP", BTRFS_BLOCK_GROUP_TREE_OBJECTID },
-		{ "RAID_STRIPE", BTRFS_RAID_STRIPE_TREE_OBJECTID },
-		{ "RAID-STRIPE", BTRFS_RAID_STRIPE_TREE_OBJECTID },
-	};
-
-	if (strncasecmp("BTRFS_", str, strlen("BTRFS_")) == 0)
-		str += strlen("BTRFS_");
-
-	for (i = 0; i < ARRAY_SIZE(tn); i++) {
-		int len = strlen(tn[i].name);
-
-		if (strncasecmp(tn[i].name, str, len) == 0) {
-			id = tn[i].id;
-			match = 1;
-			str += len;
-			break;
-		}
-	}
-
-	if (!match)
-		return 0;
-
-	if (strncasecmp("_TREE", str, strlen("_TREE")) == 0)
-		str += strlen("_TREE");
-
-	if (strncasecmp("_OBJECTID", str, strlen("_OBJECTID")) == 0)
-		str += strlen("_OBJECTID");
-
-	*end = str;
-
-	return id;
 }
 
 static const char * const cmd_inspect_dump_tree_usage[] = {
@@ -417,27 +343,9 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			if (ret < 0)
 				goto out;
 			break;
-		case 't': {
-			const char *end = NULL;
-
-			if (string_is_numerical(optarg))
-				tree_id = arg_strtou64(optarg);
-			else
-				tree_id = treeid_from_string(optarg, &end);
-
-			if (!tree_id) {
-				error("unrecognized tree id: %s",
-						optarg);
-				exit(1);
-			}
-
-			if (end && *end) {
-				error("unexpected tree id suffix of '%s': %s",
-						optarg, end);
-				exit(1);
-			}
+		case 't':
+			tree_id = parse_tree_id(optarg);
 			break;
-			}
 		case GETOPT_VAL_FOLLOW:
 			follow = BTRFS_PRINT_TREE_FOLLOW;
 			break;
