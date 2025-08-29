@@ -36,6 +36,7 @@
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "common/parse-utils.h"
 #include "common/units.h"
 #include "cmds/commands.h"
 
@@ -441,7 +442,7 @@ static const char * const cmd_inspect_tree_stats_usage[] = {
 	"",
 	OPTLINE("-b", "raw numbers in bytes"),
 	HELPINFO_UNITS_LONG,
-	OPTLINE("-t <rootid>", "print only tree with the given rootid"),
+	OPTLINE("-t <tree_id>", "print only tree with the given id (string or number)"),
 	NULL
 };
 
@@ -467,11 +468,7 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			unit_mode = UNITS_RAW;
 			break;
 		case 't':
-			tree_id = arg_strtou64(optarg);
-			if (!tree_id) {
-				error("unrecognized tree id: %s", optarg);
-				exit(1);
-			}
+			tree_id = parse_tree_id(optarg);
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
