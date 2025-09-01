@@ -337,6 +337,11 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
         }
+	if (btrfs_fs_incompat(info, RAID_STRIPE_TREE)) {
+		ret = __recow_root(trans, info->stripe_root);
+		if (ret)
+			return ret;
+	}
 	ret = recow_global_roots(trans);
 	if (ret)
 		return ret;
