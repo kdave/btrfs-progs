@@ -241,9 +241,7 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
         can be resized by specifying a *devid*.
 
         .. warning::
-                If *path* is a file containing a BTRFS image then resize does not work
-                as expected and does not resize the image. This would resize the underlying
-                filesystem instead.
+                To resize a file containing a BTRFS image, please use the --offline flag.
 
         The *devid* can be found in the output of :command:`btrfs filesystem show` and
         defaults to 1 if not specified.
@@ -290,6 +288,14 @@ resize [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>
 
         --enqueue
                 wait if there's another exclusive operation running, otherwise continue
+        --offline
+                resize an unmounted (offline) filesystem. The offline resize
+                functionality currently supports **only increasing** the size of
+                **single-device** filesystems. Shrinking and multi-device filesystems
+                are **not supported** with this option. For filesystems stored in regular
+                files, the file will be truncated to the new size as part of the resize operation.
+                This flag is **not compatible** with --enqueue since offline resizing
+                is synchronous.
 
 show [options] [<path>|<uuid>|<device>|<label>]
         Show the btrfs filesystem with some additional info about devices and space
