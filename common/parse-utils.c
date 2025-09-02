@@ -457,24 +457,21 @@ static u64 tree_id_from_string(const char *str, const char **end)
 	return id;
 }
 
-u64 parse_tree_id(const char* str) {
-	u64 tree_id = 0;
+int parse_tree_id(const char* str, u64 *tree_id) {
 	const char *end = NULL;
 
 	if (string_is_numerical(str))
-		tree_id = arg_strtou64(str);
+		*tree_id = arg_strtou64(str);
 	else
-		tree_id = tree_id_from_string(str, &end);
+		*tree_id = tree_id_from_string(str, &end);
 
-	if (!tree_id) {
-		error("unrecognized tree id: %s", str);
-		exit(1);
-	}
+	if (*tree_id == 0)
+		return -EINVAL;
 
 	if (end && *end) {
 		error("unexpected tree id suffix of '%s': %s", str, end);
-		exit(1);
+		return -EINVAL;
 	}
 
-	return tree_id;
+	return 0;
 }

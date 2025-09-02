@@ -468,7 +468,11 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			unit_mode = UNITS_RAW;
 			break;
 		case 't':
-			tree_id = parse_tree_id(optarg);
+			ret = parse_tree_id(optarg, &tree_id);
+			if (ret < 0) {
+				error("cannot parse tree id: %s", optarg);
+				return 1;
+			}
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

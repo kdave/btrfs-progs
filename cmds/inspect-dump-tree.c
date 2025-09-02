@@ -344,7 +344,11 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 				goto out;
 			break;
 		case 't':
-			tree_id = parse_tree_id(optarg);
+			ret = parse_tree_id(optarg, &tree_id);
+			if (ret < 0) {
+				error("cannot parse tree id: %s", optarg);
+				return 1;
+			}
 			break;
 		case GETOPT_VAL_FOLLOW:
 			follow = BTRFS_PRINT_TREE_FOLLOW;
