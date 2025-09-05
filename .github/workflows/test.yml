@@ -39,17 +39,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update -qqq
-      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev ccache
       - name: Configure
-        run: ./autogen.sh && ./configure
+        run: ./autogen.sh && ./configure --disable-documentation
+      - run: which gcc
+      - run: mkdir ~/.ccache
+      - run: echo "PATH=/usr/lib64/ccache:/usr/lib/ccache:$PATH" >> "$GITHUB_ENV"
+      - run: echo "CCACHE_DIR=.ccache" >> "$GITHUB_ENV"
+      - run: ccache -s
       - run: which gcc
       - name: Load ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          save-always: true
-          path: ~/.ccache
-          key: ${{ github.job }}-ccache-testing
-          restore-keys: ${{ github.job }}-ccache-testing
+          path: .ccache
+          key: ${{ github.job }}-ccache-testing-${{ github.run_id }}
+          restore-keys: ${{ github.job }}-ccache-testing-
       - run: which gcc
       - name: Make
-        run: echo make V=1
+        run: make -j 4
+      - run: ls -lR .ccache
+      - run: ccache -s
+      - name: Save ccache
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ${{ github.job}}-ccache-testing-${{ github.run_id }}
