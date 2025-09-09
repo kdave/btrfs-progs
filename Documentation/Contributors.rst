@@ -181,6 +181,22 @@ Statistics for 2.6.x series
    "2.6.38", "23", "46573", "61980",  "90", "+3472 -983"
    "2.6.39", "28", "47206", "62859", "102", "+2115 -1236"
 
+Historical notes
+----------------
+
+The first commit in Btrfs' recorded history is
+`be0e5c097fc206b8 <https://git.kernel.org/linus/be0e5c097fc206b863ce9fe6b3cfd6974b0110f4>`__
+from 2007-01-26, which is about kernel v2.6.20.  The code was tracked in git in
+directory *fs/btrfs* but in a tree independent from *linux.git*, then merged in
+commit `aef8755711a28bb0 <https://git.kernel.org/aef8755711a28bb0ecde7780ae6613fcb62cf6f7>`__
+(2008-09-24, v2.6.27-rc7) to expected place in the *linux.git* file hierarchy.
+After a
+`few <https://git.kernel.org/linus/26ce34a9c47334ff7984769e4661b2f1883594ff>`__
+`more <https://git.kernel.org/linus/ae20a6afec1cf21919d97303f2d8b737eac5acc7>`__
+`merges <https://git.kernel.org/linus/860a7a0c321ce0267fdb6ebdcd03aa63c5fcb31d>`__
+it was finally `merged <https://git.kernel.org/73d59314e6ed268d6f322ae1bdd723b23fa5a4ed>`__
+by Linus to the *linux.git* git tree (2009-01-09, v2.6.29-rc1).
+
 Graphs
 ------
 
