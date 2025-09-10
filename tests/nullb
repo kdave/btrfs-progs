@@ -146,6 +146,9 @@ fi
 if [ "$CMD" = 'create' ]; then
 	_check_setup
 	index=$(_find_free_index)
+	if [ -z "$index" ]; then
+		exit 1
+	fi
 	name="nullb$index"
 	# size in MB
 	size=$(_parse_device_size "$@")
