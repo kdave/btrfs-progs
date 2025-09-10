@@ -984,6 +984,14 @@ cleanup_nullbdevs()
 		name=$(basename "$dev")
 		run_check $SUDO_HELPER "$nullb" rm "$name"
 	done
+	unset nullb_devs
+}
+
+wait_for_nullbdevs()
+{
+	for dev in ${nullb_devs[@]}; do
+		run_mayfail $SUDO_HELPER "$TOP/btrfs" device ready "$dev"
+	done
 }
 
 init_env()
