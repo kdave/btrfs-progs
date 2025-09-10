@@ -18,6 +18,22 @@ btrfs-progs-6.16 (2025-08-13)
       * documentation updates
       * CI and test updates
 
+btrfs-progs-6.16.1 (2025-09-10)
+"""""""""""""""""""""""""""""""
+   * mkfs:
+      * add option --reflink, when used with --rootdir clone file extents instead
+        of copying (requires source and target image on the same filesystem)
+      * improved tracking of inodes and subvolumes for option --inode-flags
+      * fix initializing raid-stripe-tree
+      * extend what is trimmed/discarded during initialization (temporary chunks,
+        free space)
+   * check: detect duplicate file names in directory items
+   * inspect tree-stats: accept string names for option -t
+   * receive: allow to dump stream from different user
+   * other:
+      * updated documentation
+      * new and updated tests
+
 btrfs-progs-6.15 (2025-06-23)
 -----------------------------
    * mkfs: new option --inode-flags to specify flags/attributes for
