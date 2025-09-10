@@ -34,12 +34,12 @@ SYSFS='/sys/kernel/config/nullb'
 # setup
 
 function _error() {
-	echo "ERROR: $@"
+	echo "ERROR: $@" 1>&2
 	exit 1
 }
 
 function _warn() {
-	echo "WARNING: $@"
+	echo "WARNING: $@" 1>&2
 }
 
 function _msg() {
