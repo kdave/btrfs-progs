@@ -237,6 +237,10 @@ list-chunks [options] <path>
 
                         *length* - by chunk length
 
+                        *type* - by chunk type (data, metadata, system)
+
+                        *profile* - by chunk profile (single, DUP, RAID0, RAID1, ...)
+
         --raw
                 raw numbers in bytes, without the *B* suffix
         --human-readable

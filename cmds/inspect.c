@@ -702,7 +702,9 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 			"pstart - physical start\n"
 			"lstart - logical offset\n"
 			"usage  - by chunk usage\n"
-			"length - by chunk length"
+			"length - by chunk length\n"
+			"type   - chunk type (data, metadata, system)\n"
+			"profile - chunk profile (single, RAID, ...)"
 	       ),
 	NULL
 };
@@ -805,6 +807,50 @@ static int cmp_cse_length(const void *va, const void *vb)
 	return 0;
 }
 
+static int cmp_cse_ch_type(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+	const u64 atype = (a->flags & BTRFS_BLOCK_GROUP_TYPE_MASK);
+	const u64 btype = (b->flags & BTRFS_BLOCK_GROUP_TYPE_MASK);
+	static int order[] = {
+		[BTRFS_BLOCK_GROUP_DATA]     = 0,
+		[BTRFS_BLOCK_GROUP_METADATA] = 1,
+		[BTRFS_BLOCK_GROUP_SYSTEM]   = 2
+	};
+
+	if (order[atype] < order[btype])
+		return -1;
+	if (order[atype] > order[btype])
+		return 1;
+	return 0;
+}
+
+static int cmp_cse_ch_profile(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+	const u64 aprofile = (a->flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
+	const u64 bprofile = (b->flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
+	static int order[] = {
+		[0 /* single */]            = 0,
+		[BTRFS_BLOCK_GROUP_DUP]     = 1,
+		[BTRFS_BLOCK_GROUP_RAID0]   = 2,
+		[BTRFS_BLOCK_GROUP_RAID1]   = 3,
+		[BTRFS_BLOCK_GROUP_RAID1C3] = 4,
+		[BTRFS_BLOCK_GROUP_RAID1C4] = 5,
+		[BTRFS_BLOCK_GROUP_RAID10]  = 6,
+		[BTRFS_BLOCK_GROUP_RAID5]   = 7,
+		[BTRFS_BLOCK_GROUP_RAID6]   = 8,
+	};
+
+	if (order[aprofile] < order[bprofile])
+		return -1;
+	if (order[aprofile] > order[bprofile])
+		return 1;
+	return 0;
+}
+
 static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 			     unsigned unit_mode)
 {
@@ -820,6 +866,8 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 		CHUNK_SORT_LSTART,
 		CHUNK_SORT_USAGE,
 		CHUNK_SORT_LENGTH,
+		CHUNK_SORT_CH_TYPE,
+		CHUNK_SORT_CH_PROFILE,
 		CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
 	};
 	static const struct sortdef sortit[] = {
@@ -842,6 +890,14 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 		{ .name = "length", .comp = (sort_cmp_t)cmp_cse_length,
 		  .desc = "sort by length",
 		  .id = CHUNK_SORT_LENGTH
+		},
+		{ .name = "type", .comp = (sort_cmp_t)cmp_cse_ch_type,
+		  .desc = "sort by chunk type",
+		  .id = CHUNK_SORT_CH_TYPE
+		},
+		{ .name = "profile", .comp = (sort_cmp_t)cmp_cse_ch_profile,
+		  .desc = "sort by chunk profile",
+		  .id = CHUNK_SORT_CH_PROFILE
 		},
 		SORTDEF_END
 	};
