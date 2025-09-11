@@ -39,7 +39,7 @@ int compare_cmp_multi(const void *a, const void *b, const struct compare *comp)
 	return 0;
 }
 
-int compare_add_sort_key(struct compare *comp, const char *key)
+int compare_add_sort_key(struct compare *comp, const char *key, bool descending)
 {
 	int i;
 
@@ -51,6 +51,8 @@ int compare_add_sort_key(struct compare *comp, const char *key)
 			return -1;
 		if (strcasecmp(key, comp->sortdef[i].name) == 0) {
 			comp->comp[comp->count] = comp->sortdef[i].comp;
+			if (descending)
+				comp->invert_map |= (1U << comp->count);
 			comp->count++;
 			break;
 		}
@@ -64,7 +66,7 @@ int compare_add_sort_key(struct compare *comp, const char *key)
  * Return: 0  if id is valid
  *         -1 if id not in sortdef
  */
-int compare_add_sort_id(struct compare *comp, int id)
+int compare_add_sort_id(struct compare *comp, int id, bool descending)
 {
 	int i;
 
@@ -79,6 +81,8 @@ int compare_add_sort_id(struct compare *comp, int id)
 			return -1;
 		if (comp->sortdef[i].id == id) {
 			comp->comp[comp->count] = comp->sortdef[i].comp;
+			if (descending)
+				comp->invert_map |= (1U << comp->count);
 			comp->count++;
 			break;
 		}
@@ -97,7 +101,7 @@ int compare_add_sort_id(struct compare *comp, int id)
  *         -1 on error
  *         -2 end of buffer
  */
-int compare_parse_key_to_id(const struct compare *comp, const char **next)
+int compare_parse_key_to_id(const struct compare *comp, const char **next, bool *descending)
 {
 	const char *tmp = *next, *start = *next;
 
@@ -108,14 +112,23 @@ int compare_parse_key_to_id(const struct compare *comp, const char **next)
 	if (!*next || !**next)
 		return -2;
 
+	*descending = false;
 	do {
 		/* End of word. */
 		if (*tmp == ',' || *tmp == 0) {
+			int desc = 0;
+
+			/* Descending order. */
+			if (start[0] == '-') {
+				desc = 1;
+				*descending = true;
+			}
+
 			/* Look up in sortdef. */
 			for (int i = 0; comp->sortdef[i].name; i++) {
 				int len = strlen(comp->sortdef[i].name);
 
-				if (strncasecmp(start, comp->sortdef[i].name, len) == 0) {
+				if (strncasecmp(start + desc, comp->sortdef[i].name, len) == 0) {
 					/* Point to last NUL. */
 					*next = tmp;
 					/* Or the next valid char. */
@@ -129,7 +142,7 @@ int compare_parse_key_to_id(const struct compare *comp, const char **next)
 			return -1;
 		}
 		/* Invalid char found. */
-		if (!isalnum(*tmp)) {
+		if (start[0] != '-' && !isalnum(*tmp)) {
 			*next = tmp;
 			return -1;
 		}
@@ -201,12 +214,14 @@ int compare_setup_sort(struct compare *comp, const struct sortdef *sdef, const c
 
 	tmp = def;
 	do {
-		id = compare_parse_key_to_id(comp, &tmp);
+		bool descending;
+
+		id = compare_parse_key_to_id(comp, &tmp, &descending);
 		if (id == -1) {
 			error("unknown sort key: %s", tmp);
 			return -1;
 		}
-		compare_add_sort_id(comp, id);
+		compare_add_sort_id(comp, id, descending);
 	} while (id >= 0);
 
 	return 0;

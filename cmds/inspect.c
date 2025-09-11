@@ -853,12 +853,14 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 
 	tmp = sortmode;
 	do {
-		id = compare_parse_key_to_id(&comp, &tmp);
+		bool descending;
+
+		id = compare_parse_key_to_id(&comp, &tmp, &descending);
 		if (id == -1) {
 			error("unknown sort key: %s", tmp);
 			return 1;
 		}
-		compare_add_sort_id(&comp, id);
+		compare_add_sort_id(&comp, id, descending);
 	} while (id >= 0);
 
 	/*

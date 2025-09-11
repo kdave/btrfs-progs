@@ -58,7 +58,9 @@ void test() {
 
 	compare_init(&comp, sortit);
 	for (i = 0; i < sizeof(sortby) / sizeof(sortby[0]); i++) {
-		ret = compare_add_sort_key(&comp, sortby[i]);
+		bool descending = true;
+
+		ret = compare_add_sort_key(&comp, sortby[i], descending);
 		if (ret < 0) {
 			printf("ERROR adding sort key %s\n", sortby[i]);
 			break;
@@ -94,9 +96,9 @@ struct compare {
 
 int compare_init(struct compare *comp, const struct sortdef *sortdef);
 int compare_cmp_multi(const void *a, const void *b, const struct compare *comp);
-int compare_add_sort_key(struct compare *comp, const char *key);
-int compare_parse_key_to_id(const struct compare *comp, const char **next);
-int compare_add_sort_id(struct compare *comp, int id);
+int compare_add_sort_key(struct compare *comp, const char *key, bool descending);
+int compare_parse_key_to_id(const struct compare *comp, const char **next, bool *descending);
+int compare_add_sort_id(struct compare *comp, int id, bool descending);
 int compare_key_id(const struct compare *comp, const char *key);
 const char *compare_id_name(const struct compare *comp, int id);
 bool compare_has_id(const struct compare *comp, int id);
