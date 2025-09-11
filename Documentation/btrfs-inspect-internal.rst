@@ -209,8 +209,9 @@ list-chunks [options] <path>
         * *Usage* -- chunk usage, percentage of used data/metadata of the chunk length
 
         The chunks in the output can be sorted by one or more sorting criteria, evaluated
-        as specified, in the ascending order.  By default the chunks are sorted
-        by *devid* and *pstart*, this is most convenient for single device filesystems.
+        as specified, in the ascending order (or descending when used like *-devid,-pstart*).
+        By default the chunks are sorted by *devid* and *pstart*, this is most
+        convenient for single device filesystems.
 
         On multi-device filesystems it's up to the user what is preferred as the layout
         of chunks on e.g. striped profiles (RAID0 etc) cannot be easily represented.
@@ -223,7 +224,7 @@ list-chunks [options] <path>
         ``Options``
 
         --sort MODE
-                sort by a column (ascending):
+                sort by a column (ascending, prepend '-' for descending):
 
                 MODE is a comma separated list of:
 

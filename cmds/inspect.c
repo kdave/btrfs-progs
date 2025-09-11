@@ -696,7 +696,7 @@ static const char * const cmd_inspect_list_chunks_usage[] = {
 	"profiles the correspondence is 1:1 or 1:N.",
 	"",
 	HELPINFO_UNITS_LONG,
-	OPTLINE("--sort MODE", "sort by a column (ascending):\n"
+	OPTLINE("--sort MODE", "sort by a column (ascending, prepend '-' for descending):\n"
 			"MODE is a coma separated list of:\n"
 			"devid - by device id (default, with pstart)\n"
 			"pstart - physical start\n"
