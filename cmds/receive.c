@@ -1344,6 +1344,7 @@ static int process_fallocate(const char *path, int mode, u64 offset, u64 len,
 
 static int process_fileattr(const char *path, u64 attr, void *user)
 {
+#if 0
 	/*
 	 * Not yet supported, ignored for now, just like in send stream v1.
 	 * The content of 'attr' matches the flags in the btrfs inode item,
@@ -1353,24 +1354,25 @@ static int process_fileattr(const char *path, u64 attr, void *user)
 	 * The commented code below therefore does not work.
 	 */
 
-	/* int ret; */
-	/* struct btrfs_receive *rctx = user; */
-	/* char full_path[PATH_MAX]; */
+	int ret;
+	struct btrfs_receive *rctx = user;
+	char full_path[PATH_MAX];
 
-	/* ret = path_cat_out(full_path, rctx->full_subvol_path, path); */
-	/* if (ret < 0) { */
-	/* 	error("fileattr: path invalid: %s", path); */
-	/* 	return ret; */
-	/* } */
-	/* ret = open_inode_for_write(rctx, full_path); */
-	/* if (ret < 0) */
-	/* 	return ret; */
-	/* ret = ioctl(rctx->write_fd, FS_IOC_SETFLAGS, &attr); */
-	/* if (ret < 0) { */
-	/* 	ret = -errno; */
-	/* 	error("fileattr: set file attributes on %s failed: %m", path); */
-	/* 	return ret; */
-	/* } */
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
+	if (ret < 0) {
+		error("fileattr: path invalid: %s", path);
+		return ret;
+	}
+	ret = open_inode_for_write(rctx, full_path);
+	if (ret < 0)
+		return ret;
+	ret = ioctl(rctx->write_fd, FS_IOC_SETFLAGS, &attr);
+	if (ret < 0) {
+		ret = -errno;
+		error("fileattr: set file attributes on %s failed: %m", path);
+		return ret;
+	}
+#endif
 	return 0;
 }
 
