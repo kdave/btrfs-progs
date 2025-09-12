@@ -120,75 +120,6 @@ int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	return 0;
 }
 
-
-static u64 find_max_device_id(struct btrfs_tree_search_args *args, int nr_items)
-{
-	struct btrfs_dev_item *dev_item;
-	char *buf = btrfs_tree_search_data(args, 0);
-
-	buf += (nr_items - 1) * (sizeof(struct btrfs_ioctl_search_header)
-				       + sizeof(struct btrfs_dev_item));
-	buf += sizeof(struct btrfs_ioctl_search_header);
-
-	dev_item = (struct btrfs_dev_item *)buf;
-
-	return btrfs_stack_device_id(dev_item);
-}
-
-static int search_chunk_tree_for_fs_info(int fd,
-				struct btrfs_ioctl_fs_info_args *fi_args)
-{
-	int ret;
-	int max_items;
-	u64 start_devid = 1;
-	struct btrfs_tree_search_args args;
-	struct btrfs_ioctl_search_key *sk;
-
-	fi_args->num_devices = 0;
-
-	max_items = BTRFS_SEARCH_ARGS_BUFSIZE
-	       / (sizeof(struct btrfs_ioctl_search_header)
-			       + sizeof(struct btrfs_dev_item));
-
-	memset(&args, 0, sizeof(args));
-	sk = btrfs_tree_search_sk(&args);
-	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
-	sk->min_objectid = BTRFS_DEV_ITEMS_OBJECTID;
-	sk->min_type = BTRFS_DEV_ITEM_KEY;
-	sk->max_objectid = BTRFS_DEV_ITEMS_OBJECTID;
-	sk->max_type = BTRFS_DEV_ITEM_KEY;
-	sk->min_transid = 0;
-	sk->max_transid = (u64)-1;
-	sk->nr_items = max_items;
-	sk->max_offset = (u64)-1;
-
-again:
-	sk->min_offset = start_devid;
-
-	ret = btrfs_tree_search_ioctl(fd, &args);
-	if (ret < 0)
-		return -errno;
-
-	fi_args->num_devices += (u64)sk->nr_items;
-
-	if (sk->nr_items == max_items) {
-		start_devid = find_max_device_id(&args, sk->nr_items) + 1;
-		goto again;
-	}
-
-	/* Get the latest max_id to stay consistent with the num_devices */
-	if (sk->nr_items == 0)
-		/*
-		 * last tree_search returns an empty buf, use the devid of
-		 * the last dev_item of the previous tree_search
-		 */
-		fi_args->max_id = start_devid - 1;
-	else
-		fi_args->max_id = find_max_device_id(&args, sk->nr_items);
-
-	return 0;
-}
-
 /*
  * For a given path, fill in the ioctl fs_ and info_ args.
  * If the path is a btrfs mountpoint, fill info for all devices.
@@ -258,6 +189,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	/* fill in fi_args if not just a single device */
 	if (fi_args->num_devices != 1) {
+		u64 count = 0;
+
 		ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
 		if (ret < 0) {
 			ret = -errno;
@@ -265,16 +198,22 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		}
 
 		/*
-		 * The fs_args->num_devices does not include seed devices
+		 * The fs_args->num_devices does not include seed devices,
+		 * so we count them manually.
 		 */
-		ret = search_chunk_tree_for_fs_info(fd, fi_args);
-		if (ret)
-			goto out;
+		for (u64 devid = 1; devid <= fi_args->max_id; devid++) {
+			struct btrfs_ioctl_dev_info_args args = { .devid = devid };
 
-		/*
-		 * search_chunk_tree_for_fs_info() will lacks the devid 0
-		 * so manual probe for it here.
-		 */
+			ret = ioctl(fd, BTRFS_IOC_DEV_INFO, &args);
+			if (ret == 0)
+				count++;
+		}
+		if (count > fi_args->num_devices) {
+			printf("found more devices than fs_info\n");
+			fi_args->num_devices = count;
+		}
+
+		/* We did not count devid 0, do another probe. */
 		ret = device_get_info(fd, 0, &tmp);
 		if (!ret) {
 			fi_args->num_devices++;
