@@ -172,7 +172,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 	int fd;
 	int ret;
 
-	fd = open(mount_path, O_RDONLY | O_NOATIME);
+	fd = open(mount_path, O_RDONLY);
 	if (fd < 0) {
 		error("unable to access %s: %m", mount_path);
 		return -1;
