@@ -2394,9 +2394,14 @@ raid_groups:
 			pretty_size(allocation.system));
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
 		printf("Zoned device:       %s\n", opt_zoned ? "yes" : "no");
-		if (opt_zoned)
+		if (opt_zoned) {
 			printf("  Zone size:        %s\n",
 			       pretty_size(fs_info->zone_size));
+			if (zoned_model(file) == ZONED_NONE)
+				printf("  Mode:             emulated\n");
+			else
+				printf("  Mode:             host managed\n");
+		}
 		btrfs_parse_fs_features_to_string(features_buf, &features);
 		printf("Features:           %s\n", features_buf);
 		printf("Checksum:           %s\n",
