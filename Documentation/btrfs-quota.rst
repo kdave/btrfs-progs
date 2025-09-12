@@ -65,6 +65,29 @@ rescan [options] <path>
         -W|--wait-norescan
                 wait for rescan to finish without starting it
 
+status [options] <path>
+        Print status information about quotas if enabled on *path*. The information
+        is read from :file:`/sys/fs/btrfs/FSID/qgroups` and root privileges are
+        not needed.
+
+        Example output for quotas enabled by :command:`btrfs quota enable /mnt`:
+
+        .. code-block:: none
+
+		Quotas on /mnt:
+		  Enabled:                 yes
+		  Mode:                    qgroup (full accounting)
+		  Inconsistent:            no
+		  Override limits:         no
+		  Drop subtree threshold:  3
+		  Total count:             1
+		  Level 0:                 1
+
+        ``Options``
+
+        --is-enabled
+                only check if quotas are enabled, not not print anything
+
 EXIT STATUS
 -----------
 
