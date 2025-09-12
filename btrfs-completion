@@ -31,7 +31,7 @@ _btrfs()
 	commands_rescue='chunk-recover super-recover zero-log fix-device-size create-control-device clear-uuid-tree clear-ino-cache clear-space-cache'
 	commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats map-swapfile'
 	commands_property='get set list'
-	commands_quota='enable disable rescan'
+	commands_quota='enable disable rescan status'
 	commands_qgroup='assign remove create destroy show limit clear-stale'
 	commands_replace='start status cancel'
 

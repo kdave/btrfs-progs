@@ -20,15 +20,20 @@
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include "kernel-shared/uapi/btrfs.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/messages.h"
+#include "common/sysfs-utils.h"
+#include "common/parse-utils.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 
 static const char * const quota_cmd_group_usage[] = {
@@ -238,6 +243,173 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 }
 static DEFINE_SIMPLE_COMMAND(quota_rescan, "rescan");
 
+static const char * const cmd_quota_status_usage[] = {
+	"btrfs quota status <path>",
+	"Show status information about quota if enabled on the <path>.",
+	"",
+	OPTLINE("--is-enabled", "only check if quotas are enabled, not not print anything"),
+	NULL
+};
+
+static bool quota_is_enabled(const char *path)
+{
+	int fsfd = -1;
+	int dirfd = -1;
+	bool ret = true;
+
+	fsfd = btrfs_open_dir(path);
+	if (fsfd < 0)
+		return false;
+
+	dirfd = sysfs_open_fsid_dir(fsfd, "qgroups");
+	if (dirfd < 0) {
+		ret = false;
+		goto out;
+	}
+
+out:
+	close(fsfd);
+	close(dirfd);
+	return ret;
+}
+
+static const char *describe_mode(const char *mode)
+{
+	if (strcmp("qgroup", mode) == 0)
+		return "full accounting";
+	if (strcmp("squota", mode) == 0)
+		return "simplified accounting";
+	return "unknown mode";
+}
+
+static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int ret;
+	int fsfd = -1;
+	int dirfd = -1;
+	int fd = -1;
+	char buf[4096] = { 0 };
+	u64 num, num2;
+	DIR *dir = NULL;
+
+	optind = 0;
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_IS_ENABLED = GETOPT_VAL_FIRST };
+		static const struct option long_options[] = {
+			{ "is-enabled", no_argument, NULL, GETOPT_VAL_IS_ENABLED },
+			{ NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+		switch (c) {
+		case GETOPT_VAL_IS_ENABLED:
+			return quota_is_enabled(argv[optind]) ? 0 : 1;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	fsfd = btrfs_open_dir(argv[1]);
+	if (fsfd < 0)
+		return 1;
+
+	dirfd = sysfs_open_fsid_dir(fsfd, "qgroups");
+	pr_verbose(LOG_DEFAULT, "Quotas on %s:\n", argv[1]);
+	if (dirfd < 0) {
+		pr_verbose(LOG_DEFAULT, "  Enabled: no\n");
+		goto out;
+	}
+	pr_verbose(LOG_DEFAULT, "  Enabled:                 %s\n", "yes");
+
+	fd = sysfs_open_fsid_file(fsfd, "qgroups/mode");
+	if (fd < 0) {
+		error("cannot open file qgroups/mode: %m");
+		goto out;
+	}
+	ret = sysfs_read_file(fd, buf, sizeof(buf));
+	if (fd < 0) {
+		error("cannot read file qgroups/mode: %m");
+		goto out;
+	}
+	while (isspace(buf[strlen(buf) - 1]))
+		buf[strlen(buf) - 1] = 0;
+	pr_verbose(LOG_DEFAULT, "  Mode:                    %s (%s)\n", buf, describe_mode(buf));
+	close(fd);
+
+	ret = sysfs_read_fsid_file_u64(fsfd, "qgroups/inconsistent", &num);
+	if (ret < 0) {
+		error("cannot read file qgroups/inconsistent: %m");
+		goto out;
+	}
+	pr_verbose(LOG_DEFAULT, "  Inconsistent:            %s%s\n",
+		   (num ? "yes" : "no"), (num ? " (rescan needed)" : ""));
+
+	ret = sysfs_read_fsid_file_u64(fsfd, "quota_override", &num);
+	if (ret < 0) {
+		error("cannot read file qgroups/quota_override: %m");
+		goto out;
+	}
+	pr_verbose(LOG_DEFAULT, "  Override limits:         %s\n", (num ? "yes" : "no"));
+
+	ret = sysfs_read_fsid_file_u64(fsfd, "qgroups/drop_subtree_threshold", &num);
+	if (ret < 0) {
+		error("cannot read file qgroups/drop_subtree_threshold");
+		goto out;
+	}
+	pr_verbose(LOG_DEFAULT, "  Drop subtree threshold:  %llu\n", num);
+
+	/* Count */
+	dir = fdopendir(dirfd);
+	if (!dir) {
+		error("cannot open qgroups/ directory: %m");
+		goto out;
+	}
+	num = 0;
+	num2 = 0;
+	while (1) {
+		struct dirent *de;
+		u64 qgroupid;
+		char *str;
+
+		de = readdir(dir);
+		if (!de)
+			break;
+
+		str = de->d_name;
+		while (*str) {
+			if (*str == '_') {
+				*str = '/';
+				break;
+			}
+			str++;
+		}
+
+		ret = parse_qgroupid(de->d_name, &qgroupid);
+		if (ret < 0)
+			continue;
+
+		num++;
+		if (btrfs_qgroup_level(qgroupid) == 0)
+			num2++;
+	}
+	pr_verbose(LOG_DEFAULT, "  Total count:             %llu\n", num);
+	pr_verbose(LOG_DEFAULT, "  Level 0:                 %llu\n", num2);
+
+out:
+	if (dir)
+		closedir(dir);
+	close(dirfd);
+	close(fsfd);
+	return 0;
+}
+static DEFINE_SIMPLE_COMMAND(quota_status, "status");
+
 static const char quota_cmd_group_info[] =
 "manage filesystem quota settings";
 
@@ -246,6 +418,7 @@ static const struct cmd_group quota_cmd_group = {
 		&cmd_struct_quota_enable,
 		&cmd_struct_quota_disable,
 		&cmd_struct_quota_rescan,
+		&cmd_struct_quota_status,
 		NULL
 	}
 };
