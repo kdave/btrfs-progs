@@ -359,8 +359,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	return 0;
 
 leave_with_error:
-	if (dstdev)
-		free(dstdev);
+	free(dstdev);
 	if (fdmnt != -1)
 		close(fdmnt);
 	if (fddstdev != -1)
