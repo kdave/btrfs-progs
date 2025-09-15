@@ -84,7 +84,7 @@ static int add_info_to_list(struct array *chunkinfos, struct btrfs_chunk *chunk)
 
 			p = calloc(1, sizeof(struct chunk_info));
 			if (!p) {
-				error_msg(ERROR_MSG_MEMORY, NULL);
+				error_mem(NULL);
 				return -ENOMEM;
 			}
 			p->devid = devid;
@@ -94,7 +94,7 @@ static int add_info_to_list(struct array *chunkinfos, struct btrfs_chunk *chunk)
 
 			ret = array_append(chunkinfos, p);
 			if (ret < 0) {
-				error_msg(ERROR_MSG_MEMORY, NULL);
+				error_mem(NULL);
 				return -ENOMEM;
 			}
 		}
@@ -243,7 +243,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return NULL;
 	}
 
@@ -268,7 +268,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
 		free(sargs_orig);
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return NULL;
 	}
 
@@ -805,7 +805,7 @@ static int load_device_info(int fd, struct array *devinfos)
 
 		info = calloc(1, sizeof(struct device_info));
 		if (!info) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			return 1;
 		}
 		ret = array_append(devinfos, info);
@@ -927,7 +927,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return;
 	}
 

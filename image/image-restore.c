@@ -564,7 +564,7 @@ static void *restore_worker(void *data)
 
 	buffer = malloc(buffer_size);
 	if (!buffer) {
-		error_msg(ERROR_MSG_MEMORY, "restore worker buffer");
+		error_mem("restore worker buffer");
 		pthread_mutex_lock(&mdres->mutex);
 		if (!mdres->error)
 			mdres->error = -ENOMEM;
@@ -795,7 +795,7 @@ static int read_chunk_tree_block(struct mdrestore_struct *mdres,
 
 		fs_chunk = malloc(sizeof(struct fs_chunk));
 		if (!fs_chunk) {
-			error_msg(ERROR_MSG_MEMORY, "allocate chunk");
+			error_mem("allocate chunk");
 			return -ENOMEM;
 		}
 		memset(fs_chunk, 0, sizeof(*fs_chunk));
@@ -957,13 +957,13 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 
 	cluster = malloc(IMAGE_BLOCK_SIZE);
 	if (!cluster) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
 	buffer = malloc(max_size);
 	if (!buffer) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		free(cluster);
 		return -ENOMEM;
 	}
@@ -971,7 +971,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 	if (mdres->compress_method == COMPRESS_ZLIB) {
 		tmp = malloc(max_size);
 		if (!tmp) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			free(cluster);
 			free(buffer);
 			return -ENOMEM;
@@ -1143,7 +1143,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	buffer = malloc(get_unaligned_le32(&item->size));
 	if (!buffer) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
@@ -1306,14 +1306,14 @@ static int add_cluster(struct meta_cluster *cluster,
 		item = &cluster->items[i];
 		async = calloc(1, sizeof(*async));
 		if (!async) {
-			error_msg(ERROR_MSG_MEMORY, "async data");
+			error_mem("async data");
 			return -ENOMEM;
 		}
 		async->start = get_unaligned_le64(&item->bytenr);
 		async->bufsize = get_unaligned_le32(&item->size);
 		async->buffer = malloc(async->bufsize);
 		if (!async->buffer) {
-			error_msg(ERROR_MSG_MEMORY, "async buffer");
+			error_mem("async buffer");
 			free(async);
 			return -ENOMEM;
 		}
@@ -1802,7 +1802,7 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 
 	cluster = malloc(IMAGE_BLOCK_SIZE);
 	if (!cluster) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		ret = -ENOMEM;
 		goto failed_info;
 	}

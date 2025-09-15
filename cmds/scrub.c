@@ -2168,7 +2168,7 @@ static int cmd_scrub_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	cols = 3;
 	table = table_create(cols, 2 + fi_args.num_devices);
 	if (!table) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		ret = 1;
 		goto out;
 	}

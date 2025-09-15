@@ -560,7 +560,7 @@ ssize_t btrfs_direct_pread(int fd, void *buf, size_t count, off_t offset)
 
 	ret = posix_memalign(&bounce_buf, alignment, iosize);
 	if (ret) {
-		error_msg(ERROR_MSG_MEMORY, "bounce buffer");
+		error_mem("bounce buffer");
 		errno = ret;
 		return -ret;
 	}
@@ -611,7 +611,7 @@ ssize_t btrfs_direct_pwrite(int fd, const void *buf, size_t count, off_t offset)
 
 	ret = posix_memalign(&bounce_buf, alignment, iosize);
 	if (ret) {
-		error_msg(ERROR_MSG_MEMORY, "bounce buffer");
+		error_mem("bounce buffer");
 		errno = ret;
 		return -ret;
 	}

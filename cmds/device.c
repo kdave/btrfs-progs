@@ -624,7 +624,7 @@ static int print_device_stat_string(struct format_ctx *fctx,
 		canonical_path = malloc(32);
 
 		if (!canonical_path) {
-			error_msg(ERROR_MSG_MEMORY, "device path buffer");
+			error_mem("device path buffer");
 			return -ENOMEM;
 		}
 
@@ -678,7 +678,7 @@ static int print_device_stat_tabular(struct string_table *table, int row,
 		canonical_path = malloc(32);
 
 		if (!canonical_path) {
-			error_msg(ERROR_MSG_MEMORY, "device path buffer");
+			error_mem("device path buffer");
 			return -ENOMEM;
 		}
 
@@ -775,7 +775,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		 */
 		table = table_create(7, fi_args.num_devices + 2);
 		if (!table) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			goto out;
 		}
 		free_table = true;
