@@ -124,21 +124,35 @@ scan [options] [<device> [<device>...]]
                 Unregister a given device or all stale devices if no path is given, the device
                 must be unmounted otherwise it's an error.
 
-stats [options] <path>|<device>
+stats [options] <path>|<device>|<file>
         Read and print the device IO error statistics for all devices of the given
-        filesystem identified by *path* or for a single *device*. The filesystem must
-        be mounted.  See section :ref:`DEVICE STATS<man-device-device-stats>`
-        for more information about the reported statistics and the meaning.
+        filesystem identified by *path* or for a single *device* or *file* (the
+        offline mode, unmounted filesystem).
+
+        When the filesystem is mounted the *path* is expected to be a directory
+        and the stats are read using an ioctl and can be reset or checked. Same
+        for a block *device* of a mounted filesystem.
+
+        For an offline mode the path must be a file image or a block device,
+        the option *--offline* is mandatory. As it's read-only access the
+        option *--reset* does not work.
+
+        See section :ref:`DEVICE STATS<man-device-device-stats>` for more
+        information about the reported statistics and the meaning.
 
         ``Options``
 
         -z|--reset
-                Print the stats and reset the values to zero afterwards.
+                Print the stats and reset the values to zero afterwards. Does
+                not work in offline mode.
 
         -c|--check
                 Check if the stats are all zeros and return 0 if it is so. Set bit 6 of the
                 return code if any of the statistics is no-zero. The error values is 65 if
                 reading stats from at least one device failed, otherwise it's 64.
+
+        --offline
+                Read the stats from the file image or directly from block device.
 
         -T
                 Print stats in a tabular form, devices as rows and stats as columns
