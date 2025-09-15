@@ -325,7 +325,7 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
 	outbuf = calloc(1, ram_size);
 	if (!outbuf) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
@@ -393,14 +393,14 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 
 	inbuf = malloc(size_left);
 	if (!inbuf) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
 	if (compress != BTRFS_COMPRESS_NONE) {
 		outbuf = calloc(1, ram_size);
 		if (!outbuf) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			free(inbuf);
 			return -ENOMEM;
 		}
@@ -1026,7 +1026,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			char *dir = strdup(fs_name);
 
 			if (!dir) {
-				error_msg(ERROR_MSG_MEMORY, NULL);
+				error_mem(NULL);
 				ret = -ENOMEM;
 				goto out;
 			}

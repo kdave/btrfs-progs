@@ -662,7 +662,7 @@ static struct btrfs_qgroup_comparer_set *qgroup_alloc_comparer_set(void)
 	       sizeof(struct btrfs_qgroup_comparer);
 	set = calloc(1, size);
 	if (!set) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		exit(1);
 	}
 
@@ -822,7 +822,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 
 	bq = calloc(1, sizeof(*bq));
 	if (!bq) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return ERR_PTR(-ENOMEM);
 	}
 
@@ -939,7 +939,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 
 	list = malloc(sizeof(*list));
 	if (!list) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
@@ -1074,7 +1074,7 @@ static struct btrfs_qgroup_filter_set *qgroup_alloc_filter_set(void)
 	       sizeof(struct btrfs_qgroup_filter);
 	set = calloc(1, size);
 	if (!set) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		exit(1);
 	}
 	set->total = BTRFS_QGROUP_NFILTERS_INCREASE;
@@ -1101,7 +1101,7 @@ static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			free(tmp);
 			exit(1);
 		}

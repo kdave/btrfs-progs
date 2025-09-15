@@ -615,7 +615,7 @@ static ssize_t zstd_compress_extent(bool first_sector, u32 sectorsize,
 
 	zstd_ctx = ZSTD_createCCtx();
 	if (!zstd_ctx) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
@@ -992,7 +992,7 @@ static ssize_t zlib_compress_inline_extent(char *buf, u64 size, char **comp_buf)
 
 	out = malloc(size);
 	if (!out) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1050,7 +1050,7 @@ static ssize_t lzo_compress_inline_extent(void *buf, u64 size, char **comp_buf,
 
 	out = malloc(out_size);
 	if (!out) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1098,7 +1098,7 @@ static ssize_t zstd_compress_inline_extent(char *buf, u64 size, char **comp_buf)
 
 	zstd_ctx = ZSTD_createCCtx();
 	if (!zstd_ctx) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return -ENOMEM;
 	}
 
@@ -1121,7 +1121,7 @@ static ssize_t zstd_compress_inline_extent(char *buf, u64 size, char **comp_buf)
 
 	out = malloc(size);
 	if (!out) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1677,7 +1677,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 		ret = rootdir_path_push(&current_path, root, btrfs_root_dirid(&root->root_item));
 		if (ret < 0) {
 			errno = -ret;
-			error_msg(ERROR_MSG_MEMORY, "push path for rootdir: %m");
+			error_mem("push path for rootdir: %m");
 			return ret;
 		}
 		return ret;

@@ -1189,7 +1189,7 @@ static int parse_subvolume(const char *path, struct list_head *subvols,
 
 	subvol = calloc(1, sizeof(struct rootdir_subvol));
 	if (!subvol) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return 1;
 	}
 
@@ -1244,13 +1244,13 @@ static int parse_inode_flags(const char *option, struct list_head *inode_flags_l
 	option_dup = strdup(option);
 	if (!option_dup) {
 		ret = -ENOMEM;
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		goto cleanup;
 	}
 	entry = calloc(1, sizeof(*entry));
 	if (!entry) {
 		ret = -ENOMEM;
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		goto cleanup;
 	}
 	colon = strstr(option_dup, ":");
@@ -2028,7 +2028,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	prepare_ctx = calloc(device_count, sizeof(*prepare_ctx));
 
 	if (!t_prepare || !prepare_ctx) {
-		error_msg(ERROR_MSG_MEMORY, "thread for preparing devices");
+		error_mem("thread for preparing devices");
 		ret = 1;
 		goto error;
 	}

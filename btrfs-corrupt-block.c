@@ -54,8 +54,7 @@ static int debug_corrupt_sector(struct btrfs_root *root, u64 logical, int mirror
 
 	buf = malloc(root->fs_info->sectorsize);
 	if (!buf) {
-		error_msg(ERROR_MSG_MEMORY, "allocating memory for bytenr %llu",
-			  logical);
+		error_mem("allocating memory for bytenr %llu", logical);
 		return -ENOMEM;
 	}
 
@@ -1491,7 +1490,7 @@ int main(int argc, char **argv)
 		del = rand_range(3);
 		path = btrfs_alloc_path();
 		if (!path) {
-			error_msg(ERROR_MSG_MEMORY, NULL);
+			error_mem(NULL);
 			goto out_close;
 		}
 
@@ -1617,9 +1616,7 @@ int main(int argc, char **argv)
 			eb = btrfs_find_create_tree_block(root->fs_info,
 					logical);
 			if (!eb) {
-				error_msg(ERROR_MSG_MEMORY,
-					"allocating extent buffer for bytenr %llu",
-					logical);
+				error_mem("allocating extent buffer for bytenr %llu", logical);
 				ret = 1;
 				goto out_close;
 			}

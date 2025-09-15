@@ -513,7 +513,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 
 			eb = kmalloc(sizeof(struct extent_buffer) + this_len, GFP_KERNEL);
 			if (!eb) {
-				error_msg(ERROR_MSG_MEMORY, "extent buffer");
+				error_mem("extent buffer");
 				ret = -ENOMEM;
 				goto out;
 			}

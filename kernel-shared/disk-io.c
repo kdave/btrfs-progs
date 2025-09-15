@@ -1506,7 +1506,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 
 	fs_info = btrfs_new_fs_info(flags & OPEN_CTREE_WRITES, sb_bytenr);
 	if (!fs_info) {
-		error_msg(ERROR_MSG_MEMORY, "fs_info");
+		error_mem("fs_info");
 		return NULL;
 	}
 	if (flags & OPEN_CTREE_RESTORE)
