@@ -9,7 +9,6 @@ on:
     branches:
       - devel
       - 'ci/**'
-      - 'CI/**'
 jobs:
   build-simple:
     name: Simple build tests, manual page build test
