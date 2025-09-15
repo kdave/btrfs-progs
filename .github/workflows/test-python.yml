@@ -1,0 +1,32 @@
+# Testing workflow for CI developments, reacts to push of branch 'devel-ci'
+name: Testing CI build (python)
+run-name: Testing CI (python)
+on:
+  push:
+    branches:
+      - devel-ci
+jobs:
+  python-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.6 not available since 22.04
+        # 3.12 broken on 24.04 (no setuptools during build but installed, FIXME)
+        # 3.13 not available on 24.04
+        python-version: ["3.9", "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qqq
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev python3-setuptools
+      - name: Set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -c "import sys; print(sys.version)"
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation --disable-programs --disable-static
+      - name: Make
+        run: make V=1 -j 4 all mkfs.btrfs
+      - name: Test python
+        run: sudo make test-libbtrfsutil
