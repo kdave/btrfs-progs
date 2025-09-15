@@ -230,7 +230,7 @@ filesystem lifetime or from a scrub run.
 write_io_errs
         Failed writes to the block devices, means that the layers beneath the
         filesystem were not able to satisfy the write request.
-read_io_errors
+read_io_errs
         Read request analogy to write_io_errs.
 flush_io_errs
         Number of failed writes with the *FLUSH* flag set. The flushing is a method of
