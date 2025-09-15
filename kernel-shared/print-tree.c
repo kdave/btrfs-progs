@@ -1906,7 +1906,7 @@ static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
-	return !memcmp(sb, result, csum_size);
+	return (memcmp(sb, result, csum_size) == 0);
 }
 
 #define DEF_COMPAT_RO_FLAG_ENTRY(bit_name)		\
@@ -2290,10 +2290,10 @@ void btrfs_print_superblock(struct btrfs_super_block *sb, int full)
 
 	uuid_unparse(sb->dev_item.fsid, buf);
 	if (metadata_uuid_present) {
-		cmp_res = !memcmp(sb->dev_item.fsid, sb->metadata_uuid,
-				 BTRFS_FSID_SIZE);
+		cmp_res = (memcmp(sb->dev_item.fsid, sb->metadata_uuid,
+				 BTRFS_FSID_SIZE) == 0);
 	} else {
-		cmp_res = !memcmp(sb->dev_item.fsid, sb->fsid, BTRFS_FSID_SIZE);
+		cmp_res = (memcmp(sb->dev_item.fsid, sb->fsid, BTRFS_FSID_SIZE) == 0);
 	}
 	printf("dev_item.fsid\t\t%s %s\n", buf,
 	       cmp_res ? "[match]" : "[DON'T MATCH]");
