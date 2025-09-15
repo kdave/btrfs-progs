@@ -1579,8 +1579,8 @@ static struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 
 static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	struct btrfs_list_filter_set *filter_set;
-	struct btrfs_list_comparer_set *comparer_set;
+	struct btrfs_list_filter_set *filter_set = NULL;
+	struct btrfs_list_comparer_set *comparer_set = NULL;
 	u64 flags = 0;
 	int fd = -1;
 	u64 top_id;
@@ -1591,7 +1591,15 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 	enum btrfs_list_layout layout = BTRFS_LIST_LAYOUT_DEFAULT;
 
 	filter_set = btrfs_list_alloc_filter_set();
+	if (!filter_set) {
+		error_msg(ERROR_MSG_MEMORY, "allocating filter set");
+		return 1;
+	}
 	comparer_set = btrfs_list_alloc_comparer_set();
+	if (!comparer_set) {
+		error_msg(ERROR_MSG_MEMORY, "allocating comparator set");
+		return 1;
+	}
 
 	optind = 0;
 	while(1) {
@@ -1730,10 +1738,8 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 
 out:
 	close(fd);
-	if (filter_set)
-		free(filter_set);
-	if (comparer_set)
-		free(comparer_set);
+	free(filter_set);
+	free(comparer_set);
 	if (uerr)
 		usage(cmd, 1);
 	return !!ret;
