@@ -417,6 +417,8 @@ static u64 get_first_device_zone_size(int fd)
 	}
 	while (1) {
 		de = readdir(dir);
+		if (!de)
+			break;
 		if (strcmp(".", de->d_name) == 0 || strcmp("..", de->d_name) == 0)
 			continue;
 		strcpy(name, de->d_name);
