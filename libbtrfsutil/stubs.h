@@ -16,6 +16,7 @@
  */
 
 #ifndef _LIBBTRFSUTIL_STUBS_H_
+#define _LIBBTRFSUTIL_STUBS_H_
 
 #include <stddef.h>
 
