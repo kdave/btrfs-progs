@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include "kernel-lib/list_sort.h"
 #include "kernel-shared/zoned.h"
 #include "common/string-table.h"
 #include "common/utils.h"
@@ -585,10 +586,13 @@ static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [options] <path>|<device>",
 	"Show device IO error statistics",
 	"Show device IO error statistics for all devices of the given filesystem",
-	"identified by PATH or DEVICE. The filesystem must be mounted.",
+	"identified by PATH or DEVICE. On a mounted filesystem the stats are read",
+	"using ioctls, for direct read from file images or block devices use the",
+	"option --offline.",
 	"",
 	OPTLINE("-c|--check", "return non-zero if any stat counter is not zero"),
 	OPTLINE("-z|--reset", "show current stats and reset values to zero"),
+	OPTLINE("--offline", "read stats from file or device directly (not from mounted filesystem)"),
 	OPTLINE("-T", "show current stats in tabular format"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
@@ -701,28 +705,132 @@ static int print_device_stat_tabular(struct string_table *table, int row,
 	return err;
 }
 
+/*
+ * Offline version of GET_DEV_STATS ioctl.
+ */
+static int get_device_stats_offline(struct btrfs_fs_info *fs_info, u64 devid,
+				    struct btrfs_ioctl_get_dev_stats *stats_args)
+{
+	int ret = 0;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	struct btrfs_dev_stats_item *stats_item;
+
+	key.objectid = BTRFS_DEV_STATS_OBJECTID;
+	key.type = BTRFS_PERSISTENT_ITEM_KEY;
+	key.offset = devid;
+	ret = btrfs_search_slot(NULL, fs_info->dev_root, &key, &path, 0, 0);
+	if (ret < 0)
+		goto out;
+	if (ret > 0) {
+		pr_verbose(LOG_DEBUG, "no device stats found for devid %llu\n", devid);
+		ret = 0;
+		goto out;
+	}
+
+	memset(stats_args->values, 0, stats_args->nr_items * sizeof(u64));
+	stats_item = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dev_stats_item);
+
+	stats_args->values[BTRFS_DEV_STAT_WRITE_ERRS] =
+		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_WRITE_ERRS);
+	stats_args->values[BTRFS_DEV_STAT_READ_ERRS] =
+		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_READ_ERRS);
+	stats_args->values[BTRFS_DEV_STAT_FLUSH_ERRS] =
+		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_FLUSH_ERRS);
+	stats_args->values[BTRFS_DEV_STAT_CORRUPTION_ERRS] =
+		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_CORRUPTION_ERRS);
+	stats_args->values[BTRFS_DEV_STAT_GENERATION_ERRS] =
+		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_GENERATION_ERRS);
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+/*
+ * Offline version of get_fs_info() with limitations:
+ *
+ * - no seeding device support
+ * - fi_args filled only partially (num_devices)
+ */
+static int get_fs_info_offline(struct btrfs_fs_info *fs_info,
+			       struct btrfs_ioctl_fs_info_args *fi_args,
+			       struct btrfs_ioctl_dev_info_args **di_ret)
+{
+	int i;
+	struct btrfs_ioctl_dev_info_args *di_args;
+	struct btrfs_fs_devices *cur_fs;
+	struct btrfs_device *device;
+	struct list_head *fs_uuids;
+
+	fs_uuids = btrfs_scanned_uuids();
+	/* Count devices from fs_devices in case some of them are missing */
+	fi_args->num_devices = 0;
+	list_for_each_entry(cur_fs, fs_uuids, fs_list) {
+		if (memcmp(fs_info->fs_devices->fsid, cur_fs->fsid, BTRFS_FSID_SIZE) != 0)
+			continue;
+		list_for_each_entry(device, &cur_fs->devices, dev_list) {
+			fi_args->num_devices++;
+		}
+	}
+
+	di_args = malloc(fi_args->num_devices * sizeof(*di_args));
+	if (!di_args)
+		return -ENOMEM;
+
+	i = 0;
+	list_sort(NULL, &fs_info->fs_devices->devices, cmp_device_id);
+	list_for_each_entry(cur_fs, fs_uuids, fs_list) {
+		if (memcmp(fs_info->fs_devices->fsid, cur_fs->fsid, BTRFS_FSID_SIZE) != 0)
+			continue;
+
+		list_for_each_entry(device, &cur_fs->devices, dev_list) {
+			di_args[i].devid = device->devid;
+			memcpy(di_args[i].uuid, device->uuid, BTRFS_FSID_SIZE);
+			di_args[i].bytes_used = device->bytes_used;
+			di_args[i].total_bytes = device->total_bytes;
+			memcpy(di_args[i].fsid, cur_fs->fsid, BTRFS_FSID_SIZE);
+			/*
+			 * File devices without loop device or a missing device
+			 * don't have a path.
+			 */
+			if (device->name)
+				strncpy_null((char *)di_args[i].path, device->name,
+					     BTRFS_DEVICE_PATH_NAME_MAX + 1);
+			i++;
+		}
+	}
+
+	*di_ret = di_args;
+	return 0;
+}
+
 static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char *dev_path;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	struct btrfs_fs_info *fs_info = NULL;
 	struct string_table *table = NULL;
 	int ret;
-	int fdmnt;
+	int fdmnt = -1;
 	int i;
 	int err = 0;
 	bool check = false;
 	bool free_table = false;
 	bool tabular = false;
+	bool opt_offline = false;
 	__u64 flags = 0;
 	struct format_ctx fctx;
 
 	optind = 0;
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_OFFLINE = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{"check", no_argument, NULL, 'c'},
 			{"reset", no_argument, NULL, 'z'},
+			{"offline", no_argument, NULL, GETOPT_VAL_OFFLINE},
 			{NULL, 0, NULL, 0}
 		};
 
@@ -740,6 +848,9 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		case 'T':
 			tabular = true;
 			break;
+		case GETOPT_VAL_OFFLINE:
+			opt_offline = true;
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
@@ -748,19 +859,48 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
 
+	if (opt_offline && (flags & BTRFS_DEV_STATS_RESET)) {
+		error("--offline and --reset cannot be used together");
+		return 1;
+	}
+
 	dev_path = argv[optind];
 
-	fdmnt = btrfs_open_mnt(dev_path);
-	if (fdmnt < 0)
-		return 1;
+	if (!opt_offline) {
+		fdmnt = btrfs_open_mnt(dev_path);
+		if (fdmnt < 0) {
+			if (fdmnt == -ENOTDIR && !opt_offline)
+				error("to read device stats from a file image use --offline option");
+			return 1;
+		}
 
-	ret = get_fs_info(dev_path, &fi_args, &di_args);
-	if (ret) {
-		errno = -ret;
-		error("getting device info for %s failed: %m", dev_path);
-		err = 1;
-		goto out;
+		ret = get_fs_info(dev_path, &fi_args, &di_args);
+		if (ret) {
+			errno = -ret;
+			error("getting device info for %s failed: %m", dev_path);
+			err = 1;
+			goto out;
+		}
+	} else {
+		struct open_ctree_args oca = { 0 };
+
+		oca.filename = dev_path;
+		fs_info = open_ctree_fs_info(&oca);
+		if (!fs_info) {
+			error("cannot open filesystem on %s", dev_path);
+			err = 1;
+			goto out;
+		}
+
+		ret = get_fs_info_offline(fs_info, &fi_args, &di_args);
+		if (ret < 0) {
+			errno = -ret;
+			error("getting device info for %s failed: %m", dev_path);
+			err = 1;
+			goto out;
+		}
 	}
+
 	if (!fi_args.num_devices) {
 		error("no devices found");
 		err = 1;
@@ -802,13 +942,28 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 
 		args.devid = di_args[i].devid;
 		args.nr_items = BTRFS_DEV_STAT_VALUES_MAX;
-		args.flags = flags;
+		if (!opt_offline) {
+			args.flags = flags;
 
-		if (ioctl(fdmnt, BTRFS_IOC_GET_DEV_STATS, &args) < 0) {
-			error("device stats ioctl failed on %s: %m",
-			      path);
-			err |= 1;
-			goto out;
+			if (ioctl(fdmnt, BTRFS_IOC_GET_DEV_STATS, &args) < 0) {
+				error("device stats ioctl failed on %s: %m",
+				      path);
+				err |= 1;
+				goto out;
+			}
+		} else {
+			if (args.flags != 0) {
+				error("no flags supported");
+				err = -EINVAL;
+				goto out;
+			}
+			ret = get_device_stats_offline(fs_info, di_args[i].devid, &args);
+			if (ret < 0) {
+				error("cannot read offline stats for devid %llu",
+				      di_args[i].devid);
+				err = ret;
+				goto out;
+			}
 		}
 
 		if (tabular)
@@ -836,6 +991,8 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 out:
 	free(di_args);
 	close(fdmnt);
+	if (fs_info)
+		close_ctree_fs_info(fs_info);
 	if (free_table)
 		table_free(table);
 
