@@ -670,13 +670,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 {
 	u64 search_start;
 	int ret;
-	/*
-	if (trans->transaction != root->fs_info->running_transaction) {
-		printk(KERN_CRIT "trans %llu running %llu\n", trans->transid,
-		       root->fs_info->running_transaction->transid);
-		WARN_ON(1);
-	}
-	*/
+
 	if (trans->transid != root->fs_info->generation) {
 		printk(KERN_CRIT "trans %llu running %llu\n",
 			(unsigned long long)trans->transid,
