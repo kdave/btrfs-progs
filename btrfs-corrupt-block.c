@@ -374,43 +374,43 @@ enum btrfs_block_group_field {
 
 static enum btrfs_block_group_field convert_block_group_field(char *field)
 {
-	if (!strncmp(field, "used", FIELD_BUF_LEN))
+	if (strncmp(field, "used", FIELD_BUF_LEN) == 0)
 		return BTRFS_BLOCK_GROUP_ITEM_USED;
-	if (!strncmp(field, "flags", FIELD_BUF_LEN))
+	if (strncmp(field, "flags", FIELD_BUF_LEN) == 0)
 		return BTRFS_BLOCK_GROUP_ITEM_FLAGS;
-	if (!strncmp(field, "chunk_objectid", FIELD_BUF_LEN))
+	if (strncmp(field, "chunk_objectid", FIELD_BUF_LEN) == 0)
 		return BTRFS_BLOCK_GROUP_ITEM_CHUNK_OBJECTID;
 	return BTRFS_BLOCK_GROUP_ITEM_BAD;
 }
 
 static enum btrfs_inode_field convert_inode_field(char *field)
 {
-	if (!strncmp(field, "isize", FIELD_BUF_LEN))
+	if (strncmp(field, "isize", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_ISIZE;
-	if (!strncmp(field, "nbytes", FIELD_BUF_LEN))
+	if (strncmp(field, "nbytes", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_NBYTES;
-	if (!strncmp(field, "nlink", FIELD_BUF_LEN))
+	if (strncmp(field, "nlink", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_NLINK;
-	if (!strncmp(field, "generation", FIELD_BUF_LEN))
+	if (strncmp(field, "generation", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_GENERATION;
-	if (!strncmp(field, "transid", FIELD_BUF_LEN))
+	if (strncmp(field, "transid", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_TRANSID;
-	if (!strncmp(field, "block_group", FIELD_BUF_LEN))
+	if (strncmp(field, "block_group", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_BLOCK_GROUP;
-	if (!strncmp(field, "mode", FIELD_BUF_LEN))
+	if (strncmp(field, "mode", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_MODE;
-	if (!strncmp(field, "uid", FIELD_BUF_LEN))
+	if (strncmp(field, "uid", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_UID;
-	if (!strncmp(field, "gid", FIELD_BUF_LEN))
+	if (strncmp(field, "gid", FIELD_BUF_LEN) == 0)
 		return BTRFS_INODE_FIELD_GID;
 	return BTRFS_INODE_FIELD_BAD;
 }
 
 static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 {
-	if (!strncmp(field, "disk_bytenr", FIELD_BUF_LEN))
+	if (strncmp(field, "disk_bytenr", FIELD_BUF_LEN) == 0)
 		return BTRFS_FILE_EXTENT_DISK_BYTENR;
-	if (!strncmp(field, "type", FIELD_BUF_LEN))
+	if (strncmp(field, "type", FIELD_BUF_LEN) == 0)
 		return BTRFS_FILE_EXTENT_TYPE;
 	return BTRFS_FILE_EXTENT_BAD;
 }
@@ -418,36 +418,36 @@ static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 static enum btrfs_metadata_block_field
 convert_metadata_block_field(char *field)
 {
-	if (!strncmp(field, "generation", FIELD_BUF_LEN))
+	if (strncmp(field, "generation", FIELD_BUF_LEN) == 0)
 		return BTRFS_METADATA_BLOCK_GENERATION;
-	if (!strncmp(field, "shift_items", FIELD_BUF_LEN))
+	if (strncmp(field, "shift_items", FIELD_BUF_LEN) == 0)
 		return BTRFS_METADATA_BLOCK_SHIFT_ITEMS;
 	return BTRFS_METADATA_BLOCK_BAD;
 }
 
 static enum btrfs_key_field convert_key_field(char *field)
 {
-	if (!strncmp(field, "objectid", FIELD_BUF_LEN))
+	if (strncmp(field, "objectid", FIELD_BUF_LEN) == 0)
 		return BTRFS_KEY_OBJECTID;
-	if (!strncmp(field, "type", FIELD_BUF_LEN))
+	if (strncmp(field, "type", FIELD_BUF_LEN) == 0)
 		return BTRFS_KEY_TYPE;
-	if (!strncmp(field, "offset", FIELD_BUF_LEN))
+	if (strncmp(field, "offset", FIELD_BUF_LEN) == 0)
 		return BTRFS_KEY_OFFSET;
 	return BTRFS_KEY_BAD;
 }
 
 static enum btrfs_item_field convert_item_field(char *field)
 {
-	if (!strncmp(field, "offset", FIELD_BUF_LEN))
+	if (strncmp(field, "offset", FIELD_BUF_LEN) == 0)
 		return BTRFS_ITEM_OFFSET;
 	return BTRFS_ITEM_BAD;
 }
 
 static enum btrfs_dir_item_field convert_dir_item_field(char *field)
 {
-	if (!strncmp(field, "name", FIELD_BUF_LEN))
+	if (strncmp(field, "name", FIELD_BUF_LEN) == 0)
 		return BTRFS_DIR_ITEM_NAME;
-	if (!strncmp(field, "location_objectid", FIELD_BUF_LEN))
+	if (strncmp(field, "location_objectid", FIELD_BUF_LEN) == 0)
 		return BTRFS_DIR_ITEM_LOCATION_OBJECTID;
 	return BTRFS_DIR_ITEM_BAD;
 }
