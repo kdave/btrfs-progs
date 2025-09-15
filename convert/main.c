@@ -1224,8 +1224,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		goto fail;
 	}
 	btrfs_parse_fs_features_to_string(features_buf, features);
-	if (!memcmp(features, &btrfs_mkfs_default_features,
-		   sizeof(struct btrfs_mkfs_features)))
+	if (memcmp(features, &btrfs_mkfs_default_features,
+		   sizeof(struct btrfs_mkfs_features)) == 0)
 		strcat(features_buf, " (default)");
 
 	if (convert_flags & CONVERT_FLAG_COPY_FSID) {

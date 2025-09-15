@@ -314,7 +314,7 @@ static struct btrfs_device *find_device(struct btrfs_fs_devices *fs_devices,
 
 	list_for_each_entry(dev, head, dev_list) {
 		if (dev->devid == devid &&
-		    (!uuid || !memcmp(dev->uuid, uuid, BTRFS_UUID_SIZE))) {
+		    (!uuid || memcmp(dev->uuid, uuid, BTRFS_UUID_SIZE) == 0)) {
 			return dev;
 		}
 	}
@@ -2321,7 +2321,7 @@ struct btrfs_device *btrfs_find_device(struct btrfs_fs_info *fs_info, u64 devid,
 	cur_devices = fs_info->fs_devices;
 	while (cur_devices) {
 		if (!fsid ||
-		    (!memcmp(cur_devices->metadata_uuid, fsid, BTRFS_FSID_SIZE) ||
+		    (memcmp(cur_devices->metadata_uuid, fsid, BTRFS_FSID_SIZE) == 0 ||
 		     fs_info->ignore_fsid_mismatch)) {
 			device = find_device(cur_devices, devid, uuid);
 			if (device)
@@ -2502,7 +2502,7 @@ static int open_seed_devices(struct btrfs_fs_info *fs_info, u8 *fsid)
 
 	fs_devices = fs_info->fs_devices->seed;
 	while (fs_devices) {
-		if (!memcmp(fs_devices->fsid, fsid, BTRFS_UUID_SIZE)) {
+		if (memcmp(fs_devices->fsid, fsid, BTRFS_UUID_SIZE) == 0) {
 			ret = 0;
 			goto out;
 		}

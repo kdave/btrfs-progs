@@ -39,7 +39,7 @@ static int check_csum_superblock(void *sb)
 	btrfs_csum_data(NULL, csum_type, (unsigned char *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
-	return !memcmp(sb, result, csum_size);
+	return (memcmp(sb, result, csum_size) == 0);
 }
 
 static void update_block_csum(void *block)
