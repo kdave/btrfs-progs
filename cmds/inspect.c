@@ -944,7 +944,7 @@ static int print_list_chunks(struct list_chunks_ctx *ctx, const char *sortmode,
 	/* Two rows for header and separator. */
 	table = table_create(col_count, 2 + ctx->length);
 	if (!table) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return 1;
 	}
 	/* Print header */
@@ -1077,7 +1077,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	ctx.stats = calloc(ctx.size, sizeof(ctx.stats[0]));
 	if (!ctx.stats) {
 		ret = 1;
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		goto out;
 	}
 
@@ -1101,7 +1101,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 	lnumber = calloc(lnumber_size, sizeof(u64));
 	if (!lnumber) {
 		ret = 1;
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		goto out;
 	}
 
@@ -1149,7 +1149,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 					tmp = calloc(lnumber_size, sizeof(u64));
 					if (!tmp) {
 						ret = 1;
-						error_msg(ERROR_MSG_MEMORY, NULL);
+						error_mem(NULL);
 						goto out;
 					}
 					memcpy(tmp, lnumber, sizeof(u64) * old_size);
@@ -1168,7 +1168,7 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 						* sizeof(ctx.stats[0]));
 					if (!ctx.stats) {
 						ret = 1;
-						error_msg(ERROR_MSG_MEMORY, NULL);
+						error_mem(NULL);
 						goto out;
 					}
 				}

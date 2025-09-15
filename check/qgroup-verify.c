@@ -581,7 +581,7 @@ static int account_all_refs(int do_qgroups, u64 search_subvol)
 	ulist_free(roots);
 	return 0;
 enomem:
-	error_msg(ERROR_MSG_MEMORY, "accounting for refs for qgroups");
+	error_mem("accounting for refs for qgroups");
 	return -ENOMEM;
 }
 
@@ -1011,7 +1011,7 @@ loop:
 			count = alloc_count(&disk_key, leaf, item);
 			if (!count) {
 				ret = ENOMEM;
-				error_msg(ERROR_MSG_MEMORY, NULL);
+				error_mem(NULL);
 				goto out;
 			}
 
@@ -1592,7 +1592,7 @@ int print_extent_state(struct btrfs_fs_info *info, u64 subvol)
 
 	tree_blocks = ulist_alloc(0);
 	if (!tree_blocks) {
-		error_msg(ERROR_MSG_MEMORY, "allocate ulist");
+		error_mem("allocate ulist");
 		return ENOMEM;
 	}
 

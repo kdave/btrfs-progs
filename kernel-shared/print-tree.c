@@ -2030,7 +2030,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 
 	buf = alloc_dummy_extent_buffer(NULL, 0, BTRFS_SUPER_INFO_SIZE);
 	if (!buf) {
-		error_msg(ERROR_MSG_MEMORY, NULL);
+		error_mem(NULL);
 		return;
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));
