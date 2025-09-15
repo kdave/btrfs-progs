@@ -194,7 +194,7 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 
 	if (verify) {
 		if (buf->fs_info && buf->fs_info->skip_csum_check) {
-			/* printf("skip csum check for block %llu\n", buf->start); */
+			/* Skip csum check for block buf->start. */
 		} else if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
 			if (!silent) {
 				char found[BTRFS_CSUM_STRING_LEN];
