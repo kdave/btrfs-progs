@@ -833,8 +833,8 @@ static int reiserfs_copy_one_xattr(reiserfs_filsys_t fs,
 	body = xa_data->body + sizeof(struct reiserfs_xattr_header);
 	len = xa_data->len - sizeof(struct reiserfs_xattr_header);
 
-	if (!strncmp("system.posix_acl_default", name, namelen) ||
-	    !strncmp("system.posix_acl_access", name, namelen)) {
+	if (strncmp("system.posix_acl_default", name, namelen) == 0 ||
+	    strncmp("system.posix_acl_access", name, namelen) == 0) {
 		size_t bufsize = acl_ea_size(ext2_acl_count(len));
 		char *databuf = malloc(bufsize);
 

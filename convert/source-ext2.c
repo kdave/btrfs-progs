@@ -224,7 +224,7 @@ static int ext2_dir_iterate_proc(ext2_ino_t dir, int entry,
 	name_len = dirent->name_len & 0xFF;
 
 	objectid = dirent->inode + INO_OFFSET;
-	if (!strncmp(dirent->name, dotdot, name_len)) {
+	if (strncmp(dirent->name, dotdot, name_len) == 0) {
 		if (name_len == 2) {
 			if (idata->parent != 0) {
 				error("dotdot entry parent not zero: %llu",
