@@ -361,12 +361,12 @@ static int parse_one_fs_feature(const char *name,
 	for (i = 0; i < array_size; i++) {
 		const struct btrfs_feature *feat = get_feature(i, source);
 
-		if (name[0] == '^' && !strcmp(feat->name, name + 1)) {
+		if (name[0] == '^' && strcmp(feat->name, name + 1) == 0) {
 			features->compat_ro_flags &= ~feat->compat_ro_flag;
 			features->incompat_flags &= ~feat->incompat_flag;
 			features->runtime_flags &= ~feat->runtime_flag;
 			found = 1;
-		} else if (!strcmp(feat->name, name)) {
+		} else if (strcmp(feat->name, name) == 0) {
 			features->compat_ro_flags |= feat->compat_ro_flag;
 			features->incompat_flags |= feat->incompat_flag;
 			features->runtime_flags |= feat->runtime_flag;

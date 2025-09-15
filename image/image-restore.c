@@ -1774,7 +1774,7 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 	FILE *in = NULL;
 	int ret = 0;
 
-	if (!strcmp(input, "-")) {
+	if (strcmp(input, "-") == 0) {
 		in = stdin;
 	} else {
 		in = fopen(input, "r");

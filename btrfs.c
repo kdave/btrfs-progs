@@ -150,7 +150,7 @@ static void handle_help_options_next_level(const struct cmd_struct *cmd,
 	if (argc < 2)
 		return;
 
-	if (!strcmp(argv[1], "--help")) {
+	if (strcmp(argv[1], "--help") == 0) {
 		if (cmd->next) {
 			argc--;
 			argv++;
@@ -430,18 +430,18 @@ int main(int argc, char **argv)
 	else
 		bname = argv[0];
 
-	if (!strcmp(bname, "btrfsck")) {
+	if (strcmp(bname, "btrfsck") == 0) {
 		argv[0] = "check";
 #ifdef ENABLE_BOX
-	} else if (!strcmp(bname, "mkfs.btrfs")) {
+	} else if (strcmp(bname, "mkfs.btrfs") == 0) {
 		return mkfs_main(argc, argv);
-	} else if (!strcmp(bname, "btrfs-image")) {
+	} else if (strcmp(bname, "btrfs-image") == 0) {
 		return image_main(argc, argv);
-	} else if (!strcmp(bname, "btrfs-convert")) {
+	} else if (strcmp(bname, "btrfs-convert") == 0) {
 		return convert_main(argc, argv);
-	} else if (!strcmp(bname, "btrfstune")) {
+	} else if (strcmp(bname, "btrfstune") == 0) {
 		return btrfstune_main(argc, argv);
-	} else if (!strcmp(bname, "btrfs-find-root")) {
+	} else if (strcmp(bname, "btrfs-find-root") == 0) {
 		return find_root_main(argc, argv);
 #endif
 	} else {
