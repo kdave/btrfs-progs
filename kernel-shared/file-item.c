@@ -203,7 +203,6 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 	if (ret == -EFBIG) {
 		u32 item_size;
 
-		/* printf("item not big enough for bytenr %llu\n", bytenr); */
 		/* we found one, but it isn't big enough yet */
 		leaf = path->nodes[0];
 		item_size = btrfs_item_size(leaf, path->slots[0]);
