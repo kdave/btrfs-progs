@@ -1,0 +1,5 @@
+[MASTER]
+extension-pkg-allow-list=btrfsutil
+
+[FORMAT]
+max-line-length=120

@@ -75,6 +75,7 @@
 !.github
 !.readthedocs.yaml
 !.codespellrc
+!.pylintrc
 
 /ci/images/*/devel.tar.gz
 
