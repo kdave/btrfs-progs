@@ -104,7 +104,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 	     this_char = strtok_r(NULL, ",", &save_ptr)) {
 		if ((value = strchr(this_char, '=')) != NULL)
 			*value++ = 0;
-		if (!strcmp(this_char, "profiles")) {
+		if (strcmp(this_char, "profiles") == 0) {
 			if (!value || !*value) {
 				error("the profiles filter requires an argument");
 				return 1;
@@ -114,7 +114,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_PROFILES;
-		} else if (!strcmp(this_char, "usage")) {
+		} else if (strcmp(this_char, "usage") == 0) {
 			if (!value || !*value) {
 				error("the usage filter requires an argument");
 				return 1;
@@ -142,7 +142,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				args->flags |= BTRFS_BALANCE_ARGS_USAGE;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_USAGE;
-		} else if (!strcmp(this_char, "devid")) {
+		} else if (strcmp(this_char, "devid") == 0) {
 			if (!value || !*value) {
 				error("the devid filter requires an argument");
 				return 1;
@@ -152,7 +152,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_DEVID;
-		} else if (!strcmp(this_char, "drange")) {
+		} else if (strcmp(this_char, "drange") == 0) {
 			if (!value || !*value) {
 				error("the drange filter requires an argument");
 				return 1;
@@ -162,7 +162,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_DRANGE;
-		} else if (!strcmp(this_char, "vrange")) {
+		} else if (strcmp(this_char, "vrange") == 0) {
 			if (!value || !*value) {
 				error("the vrange filter requires an argument");
 				return 1;
@@ -172,7 +172,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_VRANGE;
-		} else if (!strcmp(this_char, "convert")) {
+		} else if (strcmp(this_char, "convert") == 0) {
 			if (!value || !*value) {
 				error("the convert option requires an argument");
 				return 1;
@@ -182,9 +182,9 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_CONVERT;
-		} else if (!strcmp(this_char, "soft")) {
+		} else if (strcmp(this_char, "soft") == 0) {
 			args->flags |= BTRFS_BALANCE_ARGS_SOFT;
-		} else if (!strcmp(this_char, "limit")) {
+		} else if (strcmp(this_char, "limit") == 0) {
 			if (!value || !*value) {
 				error("the limit filter requires an argument");
 				return 1;
@@ -202,7 +202,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				args->flags &= ~BTRFS_BALANCE_ARGS_LIMIT_RANGE;
 				args->flags |= BTRFS_BALANCE_ARGS_LIMIT;
 			}
-		} else if (!strcmp(this_char, "stripes")) {
+		} else if (strcmp(this_char, "stripes") == 0) {
 			if (!value || !*value) {
 				error("the stripes filter requires an argument");
 				return 1;

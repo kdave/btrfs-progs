@@ -532,7 +532,7 @@ void help_command_group(const struct cmd_group *grp, int argc, char **argv)
 	bool full = false;
 
 	if (argc > 1) {
-		if (!strcmp(argv[1], "--full"))
+		if (strcmp(argv[1], "--full") == 0)
 			full = 1;
 		/* The option --box is handled in the caller */
 	}

@@ -82,9 +82,9 @@ static int prop_read_only(enum prop_object_type type,
 		bool is_ro = false;
 		bool do_clear_received_uuid = false;
 
-		if (!strcmp(value, "true")) {
+		if (strcmp(value, "true") == 0) {
 			read_only = true;
-		} else if (!strcmp(value, "false")) {
+		} else if (strcmp(value, "false") == 0) {
 			read_only = false;
 		} else {
 			error("invalid value for property: %s", value);
@@ -273,7 +273,7 @@ static int parse_prop(const char *arg, const struct prop_handler *props,
 	const struct prop_handler *prop = props;
 
 	for (; prop->name; prop++) {
-		if (!strcmp(prop->name, arg)) {
+		if (strcmp(prop->name, arg) == 0) {
 			*prop_ret = prop;
 			return 0;
 		}
@@ -321,7 +321,7 @@ static int check_is_root(const char *object)
 		ret = -errno;
 		goto out;
 	}
-	if (!strcmp(rp, "/")) {
+	if (strcmp(rp, "/") == 0) {
 		ret = 0;
 		goto out;
 	}
@@ -541,16 +541,16 @@ static int parse_args(const struct cmd_struct *cmd, int argc, char **argv,
 
 	*types = 0;
 	if (type_str) {
-		if (!strcmp(type_str, "s") || !strcmp(type_str, "subvol")) {
+		if (strcmp(type_str, "s") == 0 || strcmp(type_str, "subvol") == 0) {
 			*types = prop_object_subvol;
-		} else if (!strcmp(type_str, "f") ||
-			   !strcmp(type_str, "filesystem")) {
+		} else if (strcmp(type_str, "f") == 0 ||
+			   strcmp(type_str, "filesystem") == 0) {
 			*types = prop_object_root;
-		} else if (!strcmp(type_str, "i") ||
-			   !strcmp(type_str, "inode")) {
+		} else if (strcmp(type_str, "i") == 0 ||
+			   strcmp(type_str, "inode") == 0) {
 			*types = prop_object_inode;
-		} else if (!strcmp(type_str, "d") ||
-			   !strcmp(type_str, "device")) {
+		} else if (strcmp(type_str, "d") == 0 ||
+			   strcmp(type_str, "device") == 0) {
 			*types = prop_object_dev;
 		} else {
 			error("invalid object type: %s", type_str);

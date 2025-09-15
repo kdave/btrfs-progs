@@ -2069,8 +2069,8 @@ symlink_path(const char *name1, pathname_t *name)
 	char		buf[NAME_MAX + 1];
 	pathname_t	newname;
 	int		rval;
-        
-        if (!strcmp(name1, name->path)) {
+
+        if (strcmp(name1, name->path) == 0) {
             printf("yikes! %s %s\n", name1, name->path);
             return 0;
         }
