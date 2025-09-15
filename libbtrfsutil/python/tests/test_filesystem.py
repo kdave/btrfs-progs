@@ -19,7 +19,7 @@ import os
 import time
 
 import btrfsutil
-from tests import BtrfsTestCase, HAVE_PATH_LIKE
+from tests import BtrfsTestCase
 
 
 def touch(path):
