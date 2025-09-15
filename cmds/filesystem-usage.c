@@ -673,8 +673,7 @@ static int print_filesystem_usage_overall(int fd, const struct array *chunkinfos
 
 exit:
 
-	if (sargs)
-		free(sargs);
+	free(sargs);
 
 	return ret;
 }

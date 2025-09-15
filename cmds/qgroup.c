@@ -970,8 +970,7 @@ static void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
 		list_del(&list->next_member);
 		free(list);
 	}
-	if (bq->path)
-		free((void *)bq->path);
+	free((void *)bq->path);
 	free(bq);
 }
 
