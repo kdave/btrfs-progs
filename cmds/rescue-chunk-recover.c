@@ -1495,7 +1495,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 		goto out_devices;
 	}
 
-	UASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
+	UASSERT(memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE) == 0);
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
@@ -1507,9 +1507,9 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	features = btrfs_super_incompat_flags(disk_super);
 
 	if (features & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
-		UASSERT(!memcmp(disk_super->metadata_uuid,
+		UASSERT(memcmp(disk_super->metadata_uuid,
 			       fs_info->fs_devices->metadata_uuid,
-			       BTRFS_FSID_SIZE));
+			       BTRFS_FSID_SIZE) == 0);
 
 	btrfs_setup_root(fs_info->chunk_root, fs_info,
 			 BTRFS_CHUNK_TREE_OBJECTID);

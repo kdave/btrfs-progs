@@ -294,8 +294,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 			btrfs_super_magic(&disk_super) != BTRFS_MAGIC_TEMPORARY)
 		goto out;
 
-	if (!memcmp(disk_super.fsid, root->fs_info->super_copy->fsid,
-		    BTRFS_FSID_SIZE))
+	if (memcmp(disk_super.fsid, root->fs_info->super_copy->fsid, BTRFS_FSID_SIZE) == 0)
 		ret = 1;
 out:
 	return ret;

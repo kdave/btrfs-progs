@@ -581,7 +581,7 @@ static int find_and_copy_seed(struct btrfs_fs_devices *seed,
 	struct btrfs_fs_devices *cur_fs;
 
 	list_for_each_entry(cur_fs, fs_uuids, fs_list)
-		if (!memcmp(seed->fsid, cur_fs->fsid, BTRFS_FSID_SIZE))
+		if (memcmp(seed->fsid, cur_fs->fsid, BTRFS_FSID_SIZE) == 0)
 			return copy_fs_devices(copy, cur_fs);
 
 	return 1;
