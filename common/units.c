@@ -169,47 +169,47 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 	int arg_end;
 
 	for (arg_i = 0; arg_i < *argc; arg_i++) {
-		if (!strcmp(argv[arg_i], "--"))
+		if (strcmp(argv[arg_i], "--") == 0)
 			break;
 
-		if (!strcmp(argv[arg_i], "--raw")) {
+		if (strcmp(argv[arg_i], "--raw") == 0) {
 			unit_mode = UNITS_RAW;
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "--human-readable")) {
+		if (strcmp(argv[arg_i], "--human-readable") == 0) {
 			unit_mode = UNITS_HUMAN_BINARY;
 			argv[arg_i] = NULL;
 			continue;
 		}
 
-		if (!strcmp(argv[arg_i], "--iec")) {
+		if (strcmp(argv[arg_i], "--iec") == 0) {
 			units_set_mode(&unit_mode, UNITS_BINARY);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "--si")) {
+		if (strcmp(argv[arg_i], "--si") == 0) {
 			units_set_mode(&unit_mode, UNITS_DECIMAL);
 			argv[arg_i] = NULL;
 			continue;
 		}
 
-		if (!strcmp(argv[arg_i], "--kbytes")) {
+		if (strcmp(argv[arg_i], "--kbytes") == 0) {
 			units_set_base(&unit_mode, UNITS_KBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "--mbytes")) {
+		if (strcmp(argv[arg_i], "--mbytes") == 0) {
 			units_set_base(&unit_mode, UNITS_MBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "--gbytes")) {
+		if (strcmp(argv[arg_i], "--gbytes") == 0) {
 			units_set_base(&unit_mode, UNITS_GBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "--tbytes")) {
+		if (strcmp(argv[arg_i], "--tbytes") == 0) {
 			units_set_base(&unit_mode, UNITS_TBYTES);
 			argv[arg_i] = NULL;
 			continue;
@@ -218,37 +218,37 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 		if (!df_mode)
 			continue;
 
-		if (!strcmp(argv[arg_i], "-b")) {
+		if (strcmp(argv[arg_i], "-b") == 0) {
 			unit_mode = UNITS_RAW;
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-h")) {
+		if (strcmp(argv[arg_i], "-h") == 0) {
 			unit_mode = UNITS_HUMAN_BINARY;
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-H")) {
+		if (strcmp(argv[arg_i], "-H") == 0) {
 			unit_mode = UNITS_HUMAN_DECIMAL;
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-k")) {
+		if (strcmp(argv[arg_i], "-k") == 0) {
 			units_set_base(&unit_mode, UNITS_KBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-m")) {
+		if (strcmp(argv[arg_i], "-m") == 0) {
 			units_set_base(&unit_mode, UNITS_MBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-g")) {
+		if (strcmp(argv[arg_i], "-g") == 0) {
 			units_set_base(&unit_mode, UNITS_GBYTES);
 			argv[arg_i] = NULL;
 			continue;
 		}
-		if (!strcmp(argv[arg_i], "-t")) {
+		if (strcmp(argv[arg_i], "-t") == 0) {
 			units_set_base(&unit_mode, UNITS_TBYTES);
 			argv[arg_i] = NULL;
 			continue;

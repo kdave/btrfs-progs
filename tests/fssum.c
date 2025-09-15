@@ -426,8 +426,8 @@ static void
 check_match(char *fn, char *local_m, char *remote_m,
 	    char *local_c, char *remote_c)
 {
-	int match_m = !strcmp(local_m, remote_m);
-	int match_c = !strcmp(local_c, remote_c);
+	int match_m = (strcmp(local_m, remote_m) == 0);
+	int match_c = (strcmp(local_c, remote_c) == 0);
 
 	if (match_m && !match_c) {
 		printf("data mismatch in %s\n", fn);
@@ -540,7 +540,7 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		exit(-1);
 	}
 	while((de = readdir(d))) {
-		if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
+		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
 			continue;
 		if (entries == alloclen) {
 			void *tmp;
