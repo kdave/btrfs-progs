@@ -16,7 +16,7 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 021110-1307, USA.
 #
-import sys, os, signal, time, commands, tempfile, random
+import sys, os, random
 
 # numpy seems to override random() with something else.  Instantiate our
 # own here
@@ -25,7 +25,6 @@ randgen.seed(50)
 
 from optparse import OptionParser
 from matplotlib import rcParams
-from matplotlib.font_manager import fontManager, FontProperties
 import numpy
 
 rcParams['numerix'] = 'numpy'

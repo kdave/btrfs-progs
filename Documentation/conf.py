@@ -17,7 +17,7 @@
 import pathlib
 from docutils import nodes
 from docutils.utils import unescape
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import Directive
 from sphinx.util.nodes import split_explicit_title, set_source_info
 
 # -- Project information -----------------------------------------------------
