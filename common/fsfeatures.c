@@ -613,7 +613,7 @@ static bool check_supported_sectorsize(u32 sectorsize)
 		 * Also check the terminal '\0' to handle cases like
 		 * "4096" and "40960".
 		 */
-		if (!strncmp(this_char, sectorsize_buf, strlen(sectorsize_buf) + 1))
+		if (strncmp(this_char, sectorsize_buf, strlen(sectorsize_buf) + 1) == 0)
 			return true;
 	}
 	return false;

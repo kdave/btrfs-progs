@@ -228,7 +228,7 @@ static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 
 	search_len = min(search_len, BTRFS_UUID_UNPARSED_SIZE);
 	uuid_unparse(fsid, uuidbuf);
-	if (!strncmp(uuidbuf, search, search_len))
+	if (strncmp(uuidbuf, search, search_len) == 0)
 		return 1;
 
 	if (*label && strcmp(label, search) == 0)
@@ -249,7 +249,7 @@ static int uuid_search(struct btrfs_fs_devices *fs_devices, const char *search)
 
 	search_len = min(search_len, BTRFS_UUID_UNPARSED_SIZE);
 	uuid_unparse(fs_devices->fsid, uuidbuf);
-	if (!strncmp(uuidbuf, search, search_len))
+	if (strncmp(uuidbuf, search, search_len) == 0)
 		return 1;
 
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
