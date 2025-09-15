@@ -200,4 +200,7 @@ enum common_error {
 __attribute__ ((format (printf, 2, 3)))
 void error_msg(enum common_error error, const char *msg, ...);
 
+/* Shortcuts for most common errors. */
+#define error_mem(...)	error_msg(ERROR_MSG_MEMORY, ##__VA_ARGS__)
+
 #endif
