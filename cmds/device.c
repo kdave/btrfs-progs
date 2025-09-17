@@ -231,8 +231,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	/* Scan device arguments for 'cancel', that must be the only "device" */
 	for (i = optind; i < argc - 1; i++) {
 		if (cancel) {
-			error("cancel requested but another device specified: %s\n",
-				argv[i]);
+			error("cancel requested but another device specified: %s", argv[i]);
 			close(fdmnt);
 			return 1;
 		}

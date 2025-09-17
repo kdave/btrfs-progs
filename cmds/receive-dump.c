@@ -35,7 +35,7 @@
 ({									\
 	ret = path_cat_out(outpath, path1, path2);			\
 	if (ret < 0) {							\
-		error("%s: path invalid: %s\n", function_name, path2);	\
+		error("%s: path invalid: %s", function_name, path2);	\
 		return ret;						\
 	}								\
 })

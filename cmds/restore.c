@@ -198,7 +198,7 @@ static int decompress_zstd(const char *inbuf, char *outbuf, u64 compress_len,
 
 	zret = ZSTD_decompressStream(strm, &out, &in);
 	if (ZSTD_isError(zret)) {
-		error("zstd decompress failed %s\n", ZSTD_getErrorName(zret));
+		error("zstd decompress failed %s", ZSTD_getErrorName(zret));
 		ret = -1;
 		goto out;
 	}
