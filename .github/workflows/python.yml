@@ -1,0 +1,41 @@
+# Run python tests on various version
+#
+# NOTE: The minimum compatible version is 3.6 but the CI base image does not provide it.
+# NOTE: The recent python versions (3.12 and up) fail to set up due to old python3-setuptools in the image
+# NOTE: The workflow could still pass even if the individual tests fail (FIXME)
+
+name: Python bindings tests
+run-name: Python bindings tests
+on:
+  push:
+    branches:
+      - "ci/**"
+      - devel
+      - release-test
+      - master
+jobs:
+  python-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.6 not available since 22.04
+        # 3.12 broken on 24.04 (no setuptools found during build despite being installed, FIXME)
+        # 3.13 not available on 24.04
+        python-version: ["3.9", "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qqq
+      - run: sudo apt-get install -y pkg-config gcc liblzo2-dev libzstd-dev libblkid-dev uuid-dev zlib1g-dev libext2fs-dev e2fsprogs libudev-dev python3-sphinx libaio-dev liburing-dev python3-setuptools
+      - name: Set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -c "import sys; print(sys.version)"
+      - name: Configure
+        run: ./autogen.sh && ./configure --disable-documentation --disable-programs --disable-static
+      - name: Make
+        # With --disable-programs most of the tools are not built, but the tests still need mkfs
+        run: make V=1 -j 4 all mkfs.btrfs
+      - name: Test python
+        run: sudo make test-libbtrfsutil
