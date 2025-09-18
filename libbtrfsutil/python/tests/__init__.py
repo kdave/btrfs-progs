@@ -76,7 +76,8 @@ class BtrfsTestCase(unittest.TestCase):
         else:
             mkfs = 'mkfs.btrfs'
         try:
-            subprocess.check_call([mkfs, '-q', image])
+            verbosity = '-q'
+            subprocess.check_call([mkfs, verbosity, image])
             subprocess.check_call(
                 [
                     'mount',
