@@ -481,8 +481,8 @@ Until kernel 6.12 the *CONFIG_OPTION_DEBUG* was used to hide features that
 still need some work and should not be exposed to users in general. With
 the increasing number of such features or functionality this started to conflict
 with regular debugging features. Currently the following is behind
-the experimental option. Use with caution and if you find problems or have
-feedback please report that to the mailing list.
+the experimental option *CONFIG_BTRFS_EXPERIMENTAL*. Use with caution and if
+you find problems or have feedback please report that to the mailing list.
 
 .. list-table::
    :header-rows: 1
@@ -511,3 +511,6 @@ feedback please report that to the mailing list.
    * - Extent tree v2
      - ...
      - Incomplete implementation.
+   * - Large folio support
+     - ...
+     -
