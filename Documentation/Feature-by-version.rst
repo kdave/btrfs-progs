@@ -35,6 +35,9 @@ features see :doc:`Status<Status>` page.
         is logged. The information is also accessible in
         :file:`/sys/fs/btrfs/FSID/checksum`.
 
+6.1 (stable)
+------------
+
 6.1 - sysfs support to temporarily skip exact qgroup accounting
         Allow user override of qgroup accounting and make it temporarily out
         of date e.g. in case when there are several subvolumes deleted and the
@@ -92,6 +95,9 @@ features see :doc:`Status<Status>` page.
         Utimes for directories are emitted into the send stream only when
         finalizing the directory, the cache also gains significant speedups (up
         to 10x).
+
+6.6 (stable)
+------------
 
 6.7 - raid-stripe-tree
         New tree for logical mapping, allows some RAID modes for zoned mode.
@@ -168,7 +174,10 @@ features see :doc:`Status<Status>` page.
         reads. The direct io is still locked but this should not be mixed with
         buffered writes.
 
-6.12 - cancellable discard/TRIM
+6.12 (stable)
+-------------
+
+-6.12 - cancellable discard/TRIM
         Add more points where the discard can be interrupted by signals before
         it finishes the whole operation.
 
@@ -228,6 +237,9 @@ features see :doc:`Status<Status>` page.
         The defrag ioctl also accepts the negative zstd levels that can be set as
         mount option.
 
+6.17 (latest)
+-------------
+
 6.17 - track current commit duration in commit_stats
         Add entry to :file:`commit_stats` to detect commit stalls, for
         debugging or monitoring purposes.
@@ -276,6 +288,9 @@ features see :doc:`Status<Status>` page.
         Verify metadata blocks before submitting them to the devices. This can
         catch consistency problems or bitflips.
 
+5.4 (stable)
+------------
+
 5.5 - more checksums
         New checksum algorithms: xxhash (64b), SHA256 (256b), BLAKE2b (256b).
 
@@ -311,6 +326,9 @@ features see :doc:`Status<Status>` page.
 
 5.9 - FS_INFO ioctl
         Export more information: checksum type, checksum size, generation, metadata_uuid
+
+5.10 (stable)
+-------------
 
 5.10 - exclusive ops in sysfs
         Export which filesystem exclusive operation is running (balance,
@@ -348,6 +366,9 @@ features see :doc:`Status<Status>` page.
         value and reset it to default. This affects *btrfs.compression* where
         value *no* sets NOCOMPRESS bit while empty value resets all compression
         settings (either compression or NOCOMPRESS bit).
+
+5.15 (stable)
+-------------
 
 5.15 - fsverity
         The fs-verity is a support layer that filesystems can hook into to
