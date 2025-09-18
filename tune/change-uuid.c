@@ -300,9 +300,9 @@ int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	/* Now fsid change is done */
 	pr_verbose(LOG_DEFAULT, "Clear superblock flag CHANGING_FSID\n");
 	ret = change_fsid_done(fs_info);
-	fs_info->new_chunk_tree_uuid = NULL;
 	pr_verbose(LOG_DEFAULT, "Fsid change finished\n");
 out:
+	fs_info->new_chunk_tree_uuid = NULL;
 	return ret;
 }
 
