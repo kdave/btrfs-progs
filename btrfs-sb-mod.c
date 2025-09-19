@@ -95,7 +95,7 @@ enum field_op {
 };
 
 struct fspec {
-	const char *name;
+	char *name;
 	enum field_op fop;
 	u64 value;
 };
@@ -427,6 +427,7 @@ int main(int argc, char **argv)
 		sb_edit(sb, &spec[i]);
 		if (op_is_write(spec[i].fop))
 			changed = 1;
+		free(spec[i].name);
 	}
 
 	if (changed) {
