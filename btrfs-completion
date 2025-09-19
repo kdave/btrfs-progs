@@ -24,7 +24,7 @@ _btrfs()
 
 	commands='subvolume filesystem balance device scrub check rescue restore inspect-internal property send receive quota qgroup replace help version'
 	commands_subvolume='create delete list snapshot find-new get-default set-default show sync'
-	commands_filesystem='defragment sync resize show df du label usage mkswapfile'
+	commands_filesystem='defragment sync resize show df du label usage mkswapfile commit-stats'
 	commands_balance='start pause cancel resume status'
 	commands_device='scan add delete remove ready stats usage'
 	commands_scrub='start cancel resume status'
