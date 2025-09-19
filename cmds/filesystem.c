@@ -1970,6 +1970,125 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(filesystem_mkswapfile, "mkswapfile");
 
+static const char * const cmd_filesystem_commit_stats_usage[] = {
+	"btrfs filesystem commit-stats <file>",
+	"Print number of commits and time stats since mount",
+	"",
+	OPTLINE("-z|--reset", "print stats and reset 'max_commit_ms' (needs root)"),
+	NULL
+};
+
+static int cmd_filesystem_commit_stats(const struct cmd_struct *cmd, int argc, char **argv)
+{
+	int ret;
+	int fd = -1;
+	int sysfs_fd = -1;
+	char buf[64 * 1024];
+	char *tmp, *ptr, *savepos = NULL;
+	uuid_t fsid;
+	bool opt_reset = false;
+	static const struct {
+		const char *key;
+		const char *desc;
+		const char *units;
+	} str2str[] = {
+		{ "commits", "Total commits:", NULL },
+		{ "last_commit_ms", "Last commit duration:", "ms" },
+		{ "max_commit_ms", "Max commit duration:", "ms" },
+		{ "total_commit_ms", "Total time spent in commit:", "ms" },
+	};
+
+	optind = 0;
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{ "reset", no_argument, NULL, 'z' },
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "c", long_options, NULL);
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'z':
+			opt_reset = true;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+
+	if (check_argc_min(argc - optind, 1))
+		return 1;
+
+	fd = btrfs_open_dir(argv[optind]);
+	if (fd < 0)
+		return 1;
+
+	sysfs_fd = sysfs_open_fsid_file(fd, "commit_stats");
+	if (sysfs_fd < 0) {
+		error("no commit_stats file in sysfs");
+		goto out;
+	}
+
+	ret = sysfs_read_file(sysfs_fd, buf, sizeof(buf));
+	if (ret < 0) {
+		error("cannot read commit_stats: %m");
+		goto out;
+	}
+
+	ret = get_fsid_fd(fd, fsid);
+	/* Don't fail, sysfs_open_fsid_file() calls that as well. */
+	if (ret == 0) {
+		char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
+
+		uuid_unparse(fsid, fsid_str);
+		pr_verbose(LOG_DEFAULT, "UUID: %s\n", fsid_str);
+	}
+	ptr = buf;
+	pr_verbose(LOG_DEFAULT, "Commit stats since mount:\n");
+	while (1) {
+		const char *units = NULL;
+
+		tmp = strtok_r(ptr, " \n", &savepos);
+		ptr = NULL;
+		if (!tmp)
+			break;
+
+		for (int i = 0; i < ARRAY_SIZE(str2str); i++) {
+			if (strcmp(tmp, str2str[i].key) == 0) {
+				tmp = (char *)str2str[i].desc;
+				units = str2str[i].units;
+				break;
+			}
+		}
+		/* Print unknown as-is */
+		pr_verbose(LOG_DEFAULT, "  %-28s", tmp);
+
+		tmp = strtok_r(ptr, " \n", &savepos);
+		if (!tmp)
+			break;
+		pr_verbose(LOG_DEFAULT, "%8s%s", tmp, (units ?: ""));
+		putchar('\n');
+	}
+
+	if (opt_reset) {
+		close(sysfs_fd);
+		ret = sysfs_write_fsid_file_u64(fd, "commit_stats", 0);
+		if (ret < 0)
+			warning("cannot reset stats: %m");
+		else
+			pr_verbose(LOG_DEFAULT, "NOTE: Max commit duration has been reset\n");
+	}
+
+out:
+	close(sysfs_fd);
+	close(fd);
+
+	return 0;
+}
+static DEFINE_SIMPLE_COMMAND(filesystem_commit_stats, "commit-stats");
+
 static const char filesystem_cmd_group_info[] =
 "overall filesystem tasks and information";
 
@@ -1978,6 +2097,7 @@ static const struct cmd_group filesystem_cmd_group = {
 		&cmd_struct_filesystem_df,
 		&cmd_struct_filesystem_du,
 		&cmd_struct_filesystem_show,
+		&cmd_struct_filesystem_commit_stats,
 		&cmd_struct_filesystem_sync,
 		&cmd_struct_filesystem_defrag,
 		&cmd_struct_filesystem_balance,

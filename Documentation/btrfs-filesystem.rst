@@ -334,6 +334,26 @@ show [options] [<path>|<uuid>|<device>|<label>]
         --tbytes
                 show sizes in TiB, or TB with --si
 
+commit-stats
+        Print number of commits and time stats since mount. This is also available
+        in :file:`/sys/fs/btrfs/FSID/commit_stats`. The stats are not persistent
+        and are collected since mount of the filesystem, one of them can be reset
+        to zero (*Max commit duration*).
+
+        .. code-block:: none
+
+		UUID: bd18ebe1-7e1d-414f-a3d5-2644388b51cc
+		Commit stats since mount:
+		  Total commits:                  1133
+		  Last commit duration:              0ms
+		  Max commit duration:              10ms
+		  Total time spent in commit:     4543ms
+
+        ``Options``
+
+        -z|--reset
+                print stats and reset 'max_commit_ms' (needs root)
+
 sync <path>
         Force a sync of the filesystem at *path*, similar to the :manref:`sync(1)` command. In
         addition, it starts cleaning of deleted subvolumes. To wait for the subvolume
