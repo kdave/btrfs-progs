@@ -60,6 +60,199 @@ File descriptors of regular files are obtained by ``int fd = open()``, directori
 opened as ``DIR *dir = opendir()`` can be converted to the corresponding
 file descriptor by ``fd = dirfd(dir)``.
 
+LIST OF IOCTLS
+--------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Data
+   * - :ref:`BTRFS_IOC_SNAP_CREATE<BTRFS_IOC_SNAP_CREATE>`
+     - (obsolete) create a snapshot of a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - BTRFS_IOC_DEFRAG
+     -
+     -
+   * - BTRFS_IOC_RESIZE
+     -
+     -
+   * - :ref:`BTRFS_IOC_SCAN_DEV<BTRFS_IOC_SCAN_DEV>`
+     - scan and register a given device path with filesystem module
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - :ref:`BTRFS_IOC_SYNC<BTRFS_IOC_SYNC>`
+     - Sync the filesystem, possibly process queued up work
+     - NULL
+   * - BTRFS_IOC_CLONE
+     -
+     -
+   * - :ref:`BTRFS_IOC_ADD_DEV<BTRFS_IOC_ADD_DEV>`
+     - add a device to the filesystem by path
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - :ref:`BTRFS_IOC_RM_DEV<BTRFS_IOC_RM_DEV>`
+     - delete a device from the filesystem by path
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - BTRFS_IOC_BALANCE
+     -
+     -
+   * - BTRFS_IOC_CLONE_RANGE
+     -
+     -
+   * - :ref:`BTRFS_IOC_SUBVOL_CREATE<BTRFS_IOC_SUBVOL_CREATE>`
+     - (obsolete) create a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - :ref:`BTRFS_IOC_SNAP_DESTROY<BTRFS_IOC_SNAP_DESTROY>`
+     - (obsolete) delete a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
+   * - BTRFS_IOC_DEFRAG_RANGE
+     -
+     -
+   * - BTRFS_IOC_TREE_SEARCH
+     -
+     -
+   * - BTRFS_IOC_TREE_SEARCH_V2
+     -
+     -
+   * - :ref:`BTRFS_IOC_INO_LOOKUP<BTRFS_IOC_INO_LOOKUP>`
+     - resolve inode number to path, or lookup containing subvolume id
+     - :ref:`struct btrfs_ioctl_ino_lookup_args<struct_btrfs_ioctl_ino_lookup_args>`
+   * - :ref:`BTRFS_IOC_DEFAULT_SUBVOL<BTRFS_IOC_DEFAULT_SUBVOL>`
+     - set the default subvolume id
+     - uint64_t
+   * - BTRFS_IOC_SPACE_INFO
+     -
+     -
+   * - BTRFS_IOC_START_SYNC
+     -
+     -
+   * - BTRFS_IOC_WAIT_SYNC
+     -
+     -
+   * - :ref:`BTRFS_IOC_SNAP_CREATE_V2<BTRFS_IOC_SNAP_CREATE_V2>`
+     - create a snapshot of a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
+   * - :ref:`BTRFS_IOC_SUBVOL_CREATE_V2<BTRFS_IOC_SUBVOL_CREATE_V2>`
+     - create a subvolume
+     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
+   * - :ref:`BTRFS_IOC_SUBVOL_GETFLAGS<BTRFS_IOC_SUBVOL_GETFLAGS>`
+     - get flags of a subvolume
+     - uint64_t
+   * - :ref:`BTRFS_IOC_SUBVOL_SETFLAGS<BTRFS_IOC_SUBVOL_SETFLAGS>`
+     - set flags of a subvolume
+     - uint64_t
+   * - BTRFS_IOC_SCRUB
+     -
+     -
+   * - BTRFS_IOC_SCRUB_CANCEL
+     -
+     -
+   * - BTRFS_IOC_SCRUB_PROGRESS
+     -
+     -
+   * - BTRFS_IOC_DEV_INFO
+     -
+     -
+   * - :ref:`BTRFS_IOC_FS_INFO<BTRFS_IOC_FS_INFO>`
+     - get information about filesystem (device count, fsid, ...)
+     - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
+   * - BTRFS_IOC_BALANCE_V2
+     -
+     -
+   * - BTRFS_IOC_BALANCE_CTL
+     -
+     -
+   * - BTRFS_IOC_BALANCE_PROGRESS
+     -
+     -
+   * - BTRFS_IOC_INO_PATHS
+     -
+     -
+   * - BTRFS_IOC_LOGICAL_INO
+     -
+     -
+   * - BTRFS_IOC_SET_RECEIVED_SUBVOL
+     -
+     -
+   * - BTRFS_IOC_SEND
+     -
+     -
+   * - BTRFS_IOC_DEVICES_READY
+     -
+     -
+   * - BTRFS_IOC_QUOTA_CTL
+     -
+     -
+   * - BTRFS_IOC_QGROUP_ASSIGN
+     -
+     -
+   * - BTRFS_IOC_QGROUP_CREATE
+     -
+     -
+   * - BTRFS_IOC_QGROUP_LIMIT
+     -
+     -
+   * - BTRFS_IOC_QUOTA_RESCAN
+     -
+     -
+   * - BTRFS_IOC_QUOTA_RESCAN_STATUS
+     -
+     -
+   * - BTRFS_IOC_QUOTA_RESCAN_WAIT
+     -
+     -
+   * - :ref:`BTRFS_IOC_GET_FSLABEL<BTRFS_IOC_GET_FSLABEL>`
+     - read filesystem label
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
+   * - :ref:`BTRFS_IOC_SET_FSLABEL<BTRFS_IOC_SET_FSLABEL>`
+     - set the filesystem label
+     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
+   * - BTRFS_IOC_GET_DEV_STATS
+     -
+     -
+   * - BTRFS_IOC_DEV_REPLACE
+     -
+     -
+   * - BTRFS_IOC_FILE_EXTENT_SAME
+     -
+     -
+   * - BTRFS_IOC_GET_FEATURES
+     -
+     -
+   * - BTRFS_IOC_SET_FEATURES
+     -
+     -
+   * - BTRFS_IOC_GET_SUPPORTED_FEATURES
+     -
+     -
+   * - BTRFS_IOC_RM_DEV_V2
+     -
+     -
+   * - BTRFS_IOC_LOGICAL_INO_V2
+     -
+     -
+   * - :ref:`BTRFS_IOC_GET_SUBVOL_INFO<BTRFS_IOC_GET_SUBVOL_INFO>`
+     - get information about a subvolume
+     - :ref:`struct btrfs_ioctl_get_subvol_info_args<struct_btrfs_ioctl_get_subvol_info_args>`
+   * - BTRFS_IOC_GET_SUBVOL_ROOTREF
+     -
+     -
+   * - BTRFS_IOC_INO_LOOKUP_USER
+     -
+     -
+   * - :ref:`BTRFS_IOC_SNAP_DESTROY_V2<BTRFS_IOC_SNAP_DESTROY_V2>`
+     - destroy a (snapshot or regular) subvolume
+     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
+   * - BTRFS_IOC_ENCODED_READ
+     -
+     -
+   * - BTRFS_IOC_ENCODED_WRITE
+     -
+     -
+   * - :ref:`BTRFS_IOC_SUBVOL_SYNC_WAIT<BTRFS_IOC_SUBVOL_SYNC_WAIT>`
+     - Wait until a deleted subvolume is cleaned or query the state.
+     - :ref:`struct btrfs_ioctl_subvol_wait<struct_btrfs_ioctl_subvol_wait>`
+
 DATA STRUCTURES AND DEFINITIONS
 -------------------------------
 
@@ -276,199 +469,6 @@ DATA STRUCTURES AND DEFINITIONS
      - 256
    * - BTRFS_FIRST_FREE_OBJECTID
      - 256
-
-LIST OF IOCTLS
---------------
-
-.. list-table::
-   :header-rows: 1
-
-   * - Name
-     - Description
-     - Data
-   * - :ref:`BTRFS_IOC_SNAP_CREATE<BTRFS_IOC_SNAP_CREATE>`
-     - (obsolete) create a snapshot of a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - BTRFS_IOC_DEFRAG
-     -
-     -
-   * - BTRFS_IOC_RESIZE
-     -
-     -
-   * - :ref:`BTRFS_IOC_SCAN_DEV<BTRFS_IOC_SCAN_DEV>`
-     - scan and register a given device path with filesystem module
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - :ref:`BTRFS_IOC_SYNC<BTRFS_IOC_SYNC>`
-     - Sync the filesystem, possibly process queued up work
-     - NULL
-   * - BTRFS_IOC_CLONE
-     -
-     -
-   * - :ref:`BTRFS_IOC_ADD_DEV<BTRFS_IOC_ADD_DEV>`
-     - add a device to the filesystem by path
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - :ref:`BTRFS_IOC_RM_DEV<BTRFS_IOC_RM_DEV>`
-     - delete a device from the filesystem by path
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - BTRFS_IOC_BALANCE
-     -
-     -
-   * - BTRFS_IOC_CLONE_RANGE
-     -
-     -
-   * - :ref:`BTRFS_IOC_SUBVOL_CREATE<BTRFS_IOC_SUBVOL_CREATE>`
-     - (obsolete) create a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - :ref:`BTRFS_IOC_SNAP_DESTROY<BTRFS_IOC_SNAP_DESTROY>`
-     - (obsolete) delete a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args<struct_btrfs_ioctl_vol_args>`
-   * - BTRFS_IOC_DEFRAG_RANGE
-     -
-     -
-   * - BTRFS_IOC_TREE_SEARCH
-     -
-     -
-   * - BTRFS_IOC_TREE_SEARCH_V2
-     -
-     -
-   * - :ref:`BTRFS_IOC_INO_LOOKUP<BTRFS_IOC_INO_LOOKUP>`
-     - resolve inode number to path, or lookup containing subvolume id
-     - :ref:`struct btrfs_ioctl_ino_lookup_args<struct_btrfs_ioctl_ino_lookup_args>`
-   * - :ref:`BTRFS_IOC_DEFAULT_SUBVOL<BTRFS_IOC_DEFAULT_SUBVOL>`
-     - set the default subvolume id
-     - uint64_t
-   * - BTRFS_IOC_SPACE_INFO
-     -
-     -
-   * - BTRFS_IOC_START_SYNC
-     -
-     -
-   * - BTRFS_IOC_WAIT_SYNC
-     -
-     -
-   * - :ref:`BTRFS_IOC_SNAP_CREATE_V2<BTRFS_IOC_SNAP_CREATE_V2>`
-     - create a snapshot of a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
-   * - :ref:`BTRFS_IOC_SUBVOL_CREATE_V2<BTRFS_IOC_SUBVOL_CREATE_V2>`
-     - create a subvolume
-     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
-   * - :ref:`BTRFS_IOC_SUBVOL_GETFLAGS<BTRFS_IOC_SUBVOL_GETFLAGS>`
-     - get flags of a subvolume
-     - uint64_t
-   * - :ref:`BTRFS_IOC_SUBVOL_SETFLAGS<BTRFS_IOC_SUBVOL_SETFLAGS>`
-     - set flags of a subvolume
-     - uint64_t
-   * - BTRFS_IOC_SCRUB
-     -
-     -
-   * - BTRFS_IOC_SCRUB_CANCEL
-     -
-     -
-   * - BTRFS_IOC_SCRUB_PROGRESS
-     -
-     -
-   * - BTRFS_IOC_DEV_INFO
-     -
-     -
-   * - :ref:`BTRFS_IOC_FS_INFO<BTRFS_IOC_FS_INFO>`
-     - get information about filesystem (device count, fsid, ...)
-     - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
-   * - BTRFS_IOC_BALANCE_V2
-     -
-     -
-   * - BTRFS_IOC_BALANCE_CTL
-     -
-     -
-   * - BTRFS_IOC_BALANCE_PROGRESS
-     -
-     -
-   * - BTRFS_IOC_INO_PATHS
-     -
-     -
-   * - BTRFS_IOC_LOGICAL_INO
-     -
-     -
-   * - BTRFS_IOC_SET_RECEIVED_SUBVOL
-     -
-     -
-   * - BTRFS_IOC_SEND
-     -
-     -
-   * - BTRFS_IOC_DEVICES_READY
-     -
-     -
-   * - BTRFS_IOC_QUOTA_CTL
-     -
-     -
-   * - BTRFS_IOC_QGROUP_ASSIGN
-     -
-     -
-   * - BTRFS_IOC_QGROUP_CREATE
-     -
-     -
-   * - BTRFS_IOC_QGROUP_LIMIT
-     -
-     -
-   * - BTRFS_IOC_QUOTA_RESCAN
-     -
-     -
-   * - BTRFS_IOC_QUOTA_RESCAN_STATUS
-     -
-     -
-   * - BTRFS_IOC_QUOTA_RESCAN_WAIT
-     -
-     -
-   * - :ref:`BTRFS_IOC_GET_FSLABEL<BTRFS_IOC_GET_FSLABEL>`
-     - read filesystem label
-     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
-   * - :ref:`BTRFS_IOC_SET_FSLABEL<BTRFS_IOC_SET_FSLABEL>`
-     - set the filesystem label
-     - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
-   * - BTRFS_IOC_GET_DEV_STATS
-     -
-     -
-   * - BTRFS_IOC_DEV_REPLACE
-     -
-     -
-   * - BTRFS_IOC_FILE_EXTENT_SAME
-     -
-     -
-   * - BTRFS_IOC_GET_FEATURES
-     -
-     -
-   * - BTRFS_IOC_SET_FEATURES
-     -
-     -
-   * - BTRFS_IOC_GET_SUPPORTED_FEATURES
-     -
-     -
-   * - BTRFS_IOC_RM_DEV_V2
-     -
-     -
-   * - BTRFS_IOC_LOGICAL_INO_V2
-     -
-     -
-   * - :ref:`BTRFS_IOC_GET_SUBVOL_INFO<BTRFS_IOC_GET_SUBVOL_INFO>`
-     - get information about a subvolume
-     - :ref:`struct btrfs_ioctl_get_subvol_info_args<struct_btrfs_ioctl_get_subvol_info_args>`
-   * - BTRFS_IOC_GET_SUBVOL_ROOTREF
-     -
-     -
-   * - BTRFS_IOC_INO_LOOKUP_USER
-     -
-     -
-   * - :ref:`BTRFS_IOC_SNAP_DESTROY_V2<BTRFS_IOC_SNAP_DESTROY_V2>`
-     - destroy a (snapshot or regular) subvolume
-     - :ref:`struct btrfs_ioctl_vol_args_v2<struct_btrfs_ioctl_vol_args_v2>`
-   * - BTRFS_IOC_ENCODED_READ
-     -
-     -
-   * - BTRFS_IOC_ENCODED_WRITE
-     -
-     -
-   * - :ref:`BTRFS_IOC_SUBVOL_SYNC_WAIT<BTRFS_IOC_SUBVOL_SYNC_WAIT>`
-     - Wait until a deleted subvolume is cleaned or query the state.
-     - :ref:`struct btrfs_ioctl_subvol_wait<struct_btrfs_ioctl_subvol_wait>`
 
 DETAILED DESCRIPTION
 --------------------
