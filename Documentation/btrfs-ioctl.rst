@@ -17,6 +17,48 @@ over time and in some cases get promoted to a VFS-level ioctl once other
 filesystems adopt the functionality. Backward compatibility is maintained
 and a formerly private ioctl number could become available on the VFS level.
 
+OVERVIEW
+--------
+
+The ioctls are defined by a number and associated with a data structure that
+contains further information. All ioctls use file descriptor (*fd*) as a reference
+point, it could be the filesystem or a directory inside the filesystem.
+
+An ioctl can be used in the following schematic way:
+
+.. code-block:: c
+
+   struct btrfs_ioctl_args args;
+
+   memset(&args, 0, sizeof(args));
+   args.key = value;
+   ret = ioctl(fd, BTRFS_IOC_NUMBER, &args);
+
+The *fd* is the entry point to the filesystem and for most ioctls it does not
+matter which directory is that. A distinction between files and directories sometimes
+matter, when it matters it's explicitly mentioned. The *args* is the
+associated data structure for the request. It's strongly recommended to
+initialize the whole structure to zeros as this is future-proof when the ioctl
+gets further extensions. Not doing that could lead to mismatch of old userspace
+and new kernel versions, or vice versa.  The *BTRFS_IOC_NUMBER* is says which
+operation should be done on the given arguments. Some ioctls take a specific
+data structure, some of them share a common one, no argument structure ioctls
+exist too.  The data passed to an ioctl can be input, output or both.
+
+The library *libbtrfsutil* wraps a few ioctls for convenience. Using raw ioctls
+is not discouraged but may be cumbersome though it does not need additional
+library dependency. Backward compatibility is guaranteed and incompatible
+changes usually lead to a new version of the ioctl. Enhancements of existing
+ioctls can happen and depend on additional flags to be set. Zeroed unused
+space is commonly understood as a mechanism to communicate the compatibility
+between kernel and userspace and thus *zeroing is really important*. In exceptional
+cases this is not enough and further flags need to be passed to distinguish
+between zero as implicit unused initialization and a valid zero value. Such
+cases are documented.
+
+File descriptors of regular files are obtained by ``int fd = open()``, directories
+opened as ``DIR *dir = opendir()`` can be converted to the corresponding
+file descriptor by ``fd = dirfd(dir)``.
 
 DATA STRUCTURES AND DEFINITIONS
 -------------------------------
@@ -234,48 +276,6 @@ DATA STRUCTURES AND DEFINITIONS
      - 256
    * - BTRFS_FIRST_FREE_OBJECTID
      - 256
-
-OVERVIEW
---------
-
-The ioctls are defined by a number and associated with a data structure that
-contains further information. All ioctls use file descriptor (fd) as a reference
-point, it could be the filesystem or a directory inside the filesystem.
-
-An ioctl can be used in the following schematic way:
-
-.. code-block:: c
-
-   struct btrfs_ioctl_args args;
-
-   memset(&args, 0, sizeof(args));
-   args.key = value;
-   ret = ioctl(fd, BTRFS_IOC_NUMBER, &args);
-
-The 'fd' is the entry point to the filesystem and for most ioctls it does not
-matter which file or directory is that. Where it matters it's explicitly
-mentioned. The 'args' is the associated data structure for the request. It's
-strongly recommended to initialize the whole structure to zeros as this is
-future-proof when the ioctl gets further extensions. Not doing that could lead
-to mismatch of old userspace and new kernel versions, or vice versa.
-The 'BTRFS_IOC_NUMBER' is says which operation should be done on the given
-arguments. Some ioctls take a specific data structure, some of them share a
-common one, no argument structure ioctls exist too.
-
-The library *libbtrfsutil* wraps a few ioctls for convenience. Using raw ioctls
-is not discouraged but may be cumbersome though it does not need additional
-library dependency. Backward compatibility is guaranteed and incompatible
-changes usually lead to a new version of the ioctl. Enhancements of existing
-ioctls can happen and depend on additional flags to be set. Zeroed unused
-space is commonly understood as a mechanism to communicate the compatibility
-between kernel and userspace and thus *zeroing is really important*. In exceptional
-cases this is not enough and further flags need to be passed to distinguish
-between zero as implicit unused initialization and a valid zero value. Such
-cases are documented.
-
-File descriptors of regular files are obtained by ``int fd = open()``, directories
-opened as ``DIR *dir = opendir()`` can be converted to the corresponding
-file descriptor by ``fd = dirfd(dir)``.
 
 LIST OF IOCTLS
 --------------
