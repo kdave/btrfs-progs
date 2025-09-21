@@ -150,9 +150,9 @@ LIST OF IOCTLS
    * - BTRFS_IOC_SCRUB_PROGRESS
      -
      -
-   * - BTRFS_IOC_DEV_INFO
-     -
-     -
+   * - :ref:`BTRFS_IOC_DEV_INFO<BTRFS_IOC_DEV_INFO>`
+     - get information about a device (UUIDs, used size, total size)
+     - :ref:`struct btrfs_ioctl_dev_info_args<struct_btrfs_ioctl_dev_info_args>`
    * - :ref:`BTRFS_IOC_FS_INFO<BTRFS_IOC_FS_INFO>`
      - get information about filesystem (device count, fsid, ...)
      - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
@@ -216,15 +216,15 @@ LIST OF IOCTLS
    * - BTRFS_IOC_FILE_EXTENT_SAME
      -
      -
-   * - BTRFS_IOC_GET_FEATURES
-     -
-     -
-   * - BTRFS_IOC_SET_FEATURES
-     -
-     -
-   * - BTRFS_IOC_GET_SUPPORTED_FEATURES
-     -
-     -
+   * - :ref:`BTRFS_IOC_GET_FEATURES<BTRFS_IOC_GET_FEATURES>`
+     - get features set on the filesystem
+     - :ref:`struct btrfs_ioctl_feature_flags<struct_btrfs_ioctl_feature_flags>`
+   * - :ref:`BTRFS_IOC_SET_FEATURES<BTRFS_IOC_SET_FEATURES>`
+     - set features on the filesystem
+     - :ref:`struct btrfs_ioctl_feature_flags<struct_btrfs_ioctl_feature_flags>`
+   * - :ref:`BTRFS_IOC_GET_SUPPORTED_FEATURES<BTRFS_IOC_GET_SUPPORTED_FEATURES>`
+     - get available filesystem feature sets
+     - :ref:`struct btrfs_ioctl_feature_flags[3]<struct_btrfs_ioctl_feature_flags>`
    * - BTRFS_IOC_RM_DEV_V2
      -
      -
@@ -290,6 +290,48 @@ DATA STRUCTURES AND DEFINITIONS
                         __u64 devid;
                         __u64 subvolid;
                 };
+        };
+
+
+.. _struct_btrfs_ioctl_feature_flags:
+
+.. code-block:: c
+
+	#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE         (1ULL << 0)
+	/*
+	 * Older kernels (< 4.9) on big-endian systems produced broken free space tree
+	 * bitmaps, and btrfs-progs also used to corrupt the free space tree (versions
+	 * < 4.7.3).  If this bit is clear, then the free space tree cannot be trusted.
+	 * btrfs-progs can also intentionally clear this bit to ask the kernel to
+	 * rebuild the free space tree, however this might not work on older kernels
+	 * that do not know about this bit. If not sure, clear the cache manually on
+	 * first mount when booting older kernel versions.
+	 */
+	#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID   (1ULL << 1)
+	#define BTRFS_FEATURE_COMPAT_RO_VERITY                  (1ULL << 2)
+	#define BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE        (1ULL << 3)
+
+	#define BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF            (1ULL << 0)
+	#define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL           (1ULL << 1)
+	#define BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS             (1ULL << 2)
+	#define BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO             (1ULL << 3)
+	#define BTRFS_FEATURE_INCOMPAT_COMPRESS_ZSTD            (1ULL << 4)
+	#define BTRFS_FEATURE_INCOMPAT_BIG_METADATA             (1ULL << 5)
+	#define BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF            (1ULL << 6)
+	#define BTRFS_FEATURE_INCOMPAT_RAID56                   (1ULL << 7)
+	#define BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA          (1ULL << 8)
+	#define BTRFS_FEATURE_INCOMPAT_NO_HOLES                 (1ULL << 9)
+	#define BTRFS_FEATURE_INCOMPAT_METADATA_UUID            (1ULL << 10)
+	#define BTRFS_FEATURE_INCOMPAT_RAID1C34                 (1ULL << 11)
+	#define BTRFS_FEATURE_INCOMPAT_ZONED                    (1ULL << 12)
+	#define BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2           (1ULL << 13)
+	#define BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE         (1ULL << 14)
+	#define BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA             (1ULL << 16)
+
+        struct btrfs_ioctl_feature_flags {
+                __u64 compat_flags;
+                __u64 compat_ro_flags;
+                __u64 incompat_flags;
         };
 
 .. _struct_btrfs_ioctl_get_subvol_info_args:
@@ -384,6 +426,29 @@ DATA STRUCTURES AND DEFINITIONS
 		__u64 rsv_rfer;
 		__u64 rsv_excl;
 	};
+
+.. _struct_btrfs_ioctl_dev_info_args:
+
+.. code-block:: c
+
+        struct btrfs_ioctl_dev_info_args {
+             __u64 devid;                            /* in/out */
+             __u8 uuid[BTRFS_UUID_SIZE];             /* in/out */
+             __u64 bytes_used;                       /* out */
+             __u64 total_bytes;                      /* out */
+             /*
+              * Optional, out.
+              *
+              * Showing the fsid of the device, allowing user space to check if this
+              * device is a seeding one.
+              *
+              * Introduced in v6.3, thus user space still needs to check if kernel
+              * changed this value.  Older kernel will not touch the values here.
+              */
+             __u8 fsid[BTRFS_UUID_SIZE];
+             __u64 unused[377];                      /* pad to 4k */
+             __u8 path[BTRFS_DEVICE_PATH_NAME_MAX];  /* out */
+        };
 
 .. _struct_btrfs_ioctl_fs_info_args:
 
@@ -850,6 +915,23 @@ Required permissions: CAP_SYS_ADMIN
    * - ioctl args
      - char buffer[:ref:`BTRFS_LABEL_SIZE<constants-table>`]
 
+.. _BTRFS_IOC_DEV_INFO:
+
+BTRFS_IOC_DEV_INFO
+~~~~~~~~~~~~~~~~~~
+
+Read some basic information about a device, requested by the *devid* or *device UUID*.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of any file/directory in the filesystem
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_dev_info_args<struct_btrfs_ioctl_dev_info_args>`
+
 .. _BTRFS_IOC_FS_INFO:
 
 BTRFS_IOC_FS_INFO
@@ -869,6 +951,78 @@ depending on the flags set.
      - file descriptor of any file/directory in the filesystem
    * - ioctl args
      - :ref:`struct btrfs_ioctl_fs_info_args<struct_btrfs_ioctl_fs_info_args>`
+
+.. _BTRFS_IOC_GET_FEATURES:
+
+BTRFS_IOC_GET_FEATURES
+~~~~~~~~~~~~~~~~~~~~~~
+
+Get the actually set feature bits on the filesystem (the bits are stored in the
+super block).  There are three sets related to backward compatibility:
+
+- incompat: not backward compatible, mount on older kernel will fail.
+- compat_ro: backward compatible for read-only mount.
+- compat: backward compatible with read-write support, only marked as as individual feature.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to examine
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_feature_flags<struct_btrfs_ioctl_feature_flags>`
+
+If a bit is set then there may be some data structures on the filesystem of the
+related feature, but not necessarily.
+
+Some of the features are turned on automatically when used,
+e.g. compression or when a balance filter converts to yet unused block group
+profile. In some cases the feature can be turned on or off by :doc:`btrfstune`.
+
+.. _BTRFS_IOC_SET_FEATURES:
+
+BTRFS_IOC_SET_FEATURES
+~~~~~~~~~~~~~~~~~~~~~~
+
+Set a feature bit on the filesystem if possible. Some features may require
+extensive changes, new data structures or conversion (like free-space-tree).
+Bits representing possible existence of data structures related to the feature
+can be set without actually creating anything, e.g. ZSTD compressed extents.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to examine
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_feature_flags<struct_btrfs_ioctl_feature_flags>`
+
+.. _BTRFS_IOC_GET_SUPPORTED_FEATURES:
+
+BTRFS_IOC_GET_SUPPORTED_FEATURES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Get feature sets supported by the kernel module, in three groups:
+
+- supported: (index 0) all supported compat/compat_ro/incompat features
+- safe to set: (index 1) features that can be enabled on a mounted filesystem
+- safe to clear: (index 2) features that can be disabled on a mounted filesystem
+
+The features are also listed in :file:`/sys/fs/btrfs/features`.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ioctl fd
+     - file descriptor of the subvolume to examine
+   * - ioctl args
+     - :ref:`struct btrfs_ioctl_feature_flags[3]<struct_btrfs_ioctl_feature_flags>`
 
 .. _BTRFS_IOC_GET_SUBVOL_INFO:
 
