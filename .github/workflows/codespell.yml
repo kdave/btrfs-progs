@@ -1,4 +1,7 @@
-# Check for typos on devel and pull rquests
+# Check for typos on release and on-demand branches
+#
+# NOTE: this is not run on devel or pull requests
+#
 # - codespell configuration is within .codespellrc
 # - the workflow can be run separately from other workflows that trigger on
 #   ci/* branches, use codespell/* as the prefix
@@ -9,13 +12,8 @@ run-name: Codespell
 on:
   push:
     branches:
-      - devel
-      - 'ci/**'
+      - release-test
       - 'codespell/**'
-  pull_request:
-    branches:
-      - devel
-      - 'ci/**'
 
 permissions:
   contents: read
