@@ -1439,6 +1439,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	u64 generation;
+	u8 level;
 	int ret;
 
 	btrfs_setup_root(fs_info->chunk_root, fs_info,
@@ -1448,8 +1449,6 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	if (ret)
 		return ret;
 
-	generation = btrfs_super_chunk_root_generation(sb);
-
 	if (chunk_root_bytenr && !IS_ALIGNED(chunk_root_bytenr,
 					    fs_info->sectorsize)) {
 		warning("chunk_root_bytenr %llu is unaligned to %u, ignore it",
@@ -1457,13 +1456,28 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 		chunk_root_bytenr = 0;
 	}
 
-	if (!chunk_root_bytenr)
-		chunk_root_bytenr = btrfs_super_chunk_root(sb);
-	else
+	if (chunk_root_bytenr) {
+		struct extent_buffer *eb;
+		struct btrfs_tree_parent_check check = { 0 };
+
 		generation = 0;
+		eb = read_tree_block(fs_info, chunk_root_bytenr, &check);
+		if (IS_ERR(eb)) {
+			ret = PTR_ERR(eb);
+			errno = -ret;
+			error("unable to read tree block at %llu: %m", chunk_root_bytenr);
+			return ret;
+		}
+		level = btrfs_header_level(eb);
+		free_extent_buffer(eb);
+	} else {
+		chunk_root_bytenr = btrfs_super_chunk_root(sb);
+		generation = btrfs_super_chunk_root_generation(sb);
+		level = btrfs_super_chunk_root_level(sb);
+	}
 
 	ret = read_root_node(fs_info, fs_info->chunk_root, chunk_root_bytenr,
-			     generation, btrfs_super_chunk_root_level(sb));
+			     generation, level);
 	if (ret) {
 		if (fs_info->ignore_chunk_tree_error) {
 			warning("cannot read chunk root, continue anyway");
