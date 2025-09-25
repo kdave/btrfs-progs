@@ -663,7 +663,7 @@ again:
 			++state;
 			fallthrough;
 		case 2: /* start of line, skip space */
-			while (isspace(l[i]) && i < avail) {
+			while (i < avail && isspace(l[i])) {
 				if (l[i] == '\n')
 					++lineno;
 				++i;
