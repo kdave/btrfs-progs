@@ -456,8 +456,8 @@ static void print_table_head(void)
 		max_len = btrfs_qgroup_columns[i].max_len;
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		if ((i == BTRFS_QGROUP_QGROUPID) | (i == BTRFS_QGROUP_PARENT) |
-			(i == BTRFS_QGROUP_CHILD))
+		if ((i == BTRFS_QGROUP_QGROUPID) || (i == BTRFS_QGROUP_PARENT) ||
+		    (i == BTRFS_QGROUP_CHILD))
 			printf("%-*s", max_len, btrfs_qgroup_columns[i].column_name);
 		else
 			printf("%*s", max_len, btrfs_qgroup_columns[i].column_name);
@@ -468,8 +468,8 @@ static void print_table_head(void)
 		max_len = btrfs_qgroup_columns[i].max_len;
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		if ((i == BTRFS_QGROUP_QGROUPID) | (i == BTRFS_QGROUP_PARENT) |
-			(i == BTRFS_QGROUP_CHILD)) {
+		if ((i == BTRFS_QGROUP_QGROUPID) || (i == BTRFS_QGROUP_PARENT) ||
+		    (i == BTRFS_QGROUP_CHILD)) {
 			len = strlen(btrfs_qgroup_columns[i].column_name);
 			while (len--)
 				printf("-");
