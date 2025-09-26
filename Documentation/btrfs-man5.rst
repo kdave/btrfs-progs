@@ -7,22 +7,23 @@ DESCRIPTION
 This document describes topics related to BTRFS that are not specific to the
 tools.  Currently covers:
 
-#. mount options
-#. filesystem features
-#. checksum algorithms
-#. compression
-#. sysfs interface
-#. filesystem exclusive operations
-#. filesystem limits
-#. bootloader support
-#. file attributes
-#. zoned mode
-#. control device
-#. filesystems with multiple block group profiles
-#. seeding device
-#. RAID56 status and recommended practices
-#. glossary
-#. storage model, hardware considerations
+#. :ref:`mount options <man-btrfs5-mount-options>`
+#. :ref:`filesystem features <man-btrfs5-filesystem-features>`
+#. :ref:`swapfile support <man-btrfs5-swapfile-support>`
+#. :ref:`checksum algorithms <man-btrfs5-checksum-algorithms>`
+#. :ref:`compression <man-btrfs5-compression>`
+#. :ref:`sysfs interface <man-btrfs5-sysfs-interface>`
+#. :ref:`filesystem exclusive operations <man-btrfs5-filesystem-exclusive-operations>`
+#. :ref:`filesystem limits <man-btrfs5-filesystem-limits>`
+#. :ref:`bootloader support <man-btrfs5-bootloader-support>`
+#. :ref:`file attributes <man-btrfs5-file-attributes>`
+#. :ref:`zoned mode <man-btrfs5-zoned-mode>`
+#. :ref:`control device <man-btrfs5-control-device>`
+#. :ref:`filesystems with multiple block group profiles <man-btrfs5-filesystem-with-multiple-profiles>`
+#. :ref:`seeding device <man-btrfs5-seeding-device>`
+#. :ref:`RAID56 status and recommended practices <man-btrfs5-raid56-status>`
+#. :ref:`glossary <man-btrfs5-glossary>`
+#. :ref:`storage model, hardware considerations <man-btrfs5-storage-model>`
 
 .. _man-btrfs5-mount-options:
 
@@ -178,7 +179,7 @@ supported_checksums
 
         list of checksum algorithms supported by the kernel module, the respective
         modules or built-in implementing the algorithms need to be present to mount
-        the filesystem, see section :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`.
+        the filesystem, see section :ref:`CHECKSUM ALGORITHMS<man-btrfs5-checksum-algorithms>`.
 
 supported_sectorsizes
         (since: 5.13)
@@ -199,22 +200,28 @@ zoned
         allocation space is partitioned into fixed-size zones that must be updated
         sequentially, see section :ref:`ZONED MODE<man-btrfs5-zoned-mode>`
 
+.. _man-btrfs5-swapfile-support:
+
 SWAPFILE SUPPORT
 ----------------
 
 .. include:: ch-swapfile.rst
 
-.. _man-mkfs-checksum-algorithms:
+.. _man-btrfs5-checksum-algorithms:
 
 CHECKSUM ALGORITHMS
 -------------------
 
 .. include:: ch-checksumming.rst
 
+.. _man-btrfs5-compression:
+
 COMPRESSION
 -----------
 
 .. include:: ch-compression.rst
+
+.. _man-btrfs5-sysfs-interface:
 
 SYSFS INTERFACE
 ---------------
@@ -249,15 +256,21 @@ There's an exception when a paused balance allows to start a device add
 operation as they don't really collide and this can be used to add more space
 for the balance to finish.
 
+.. _man-btrfs5-filesystem-limits:
+
 FILESYSTEM LIMITS
 -----------------
 
 .. include:: ch-fs-limits.rst
 
+.. _man-btrfs5-bootloader-support:
+
 BOOTLOADER SUPPORT
 ------------------
 
 .. include:: ch-bootloaders.rst
+
+.. _man-btrfs5-file-attributes:
 
 FILE ATTRIBUTES
 ---------------
@@ -271,6 +284,7 @@ ZONED MODE
 
 .. include:: ch-zoned-intro.rst
 
+.. _man-btrfs5-control-device:
 
 CONTROL DEVICE
 --------------
@@ -388,6 +402,8 @@ SEEDING DEVICE
 
 .. include:: ch-seeding-device.rst
 
+.. _man-btrfs5-raid56-status:
+
 RAID56 STATUS AND RECOMMENDED PRACTICES
 ---------------------------------------
 
@@ -442,12 +458,14 @@ allocated), so in case a new device is added it may not be utilized
 immediately and would require a rebalance. A fixed configured stripe width is
 not implemented.
 
+.. _man-btrfs5-glossary:
 
 GLOSSARY
 --------
 
 .. include:: ch-glossary.rst
 
+.. _man-btrfs5-storage-model:
 
 STORAGE MODEL, HARDWARE CONSIDERATIONS
 --------------------------------------

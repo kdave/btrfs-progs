@@ -43,7 +43,7 @@ checksum
 
         The checksum used for the mounted filesystem.
         This includes both the checksum type (see section
-        :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`)
+        :ref:`CHECKSUM ALGORITHMS<man-btrfs5-checksum-algorithms>`)
         and the implemented driver (mostly shows if it's hardware accelerated).
 
 clone_alignment

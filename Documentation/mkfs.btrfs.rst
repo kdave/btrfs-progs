@@ -36,7 +36,7 @@ OPTIONS
 --csum <type>, --checksum <type>
         Specify the checksum algorithm. Default is *crc32c*. Valid values are *crc32c*,
         *xxhash*, *sha256* or *blake2*. To mount such filesystem kernel must support the
-        checksums as well. See section :ref:`CHECKSUM ALGORITHMS<man-mkfs-checksum-algorithms>`
+        checksums as well. See section :ref:`CHECKSUM ALGORITHMS<man-btrfs5-checksum-algorithms>`
         in :doc:`btrfs-man5`.
 
 -d|--data <profile>
