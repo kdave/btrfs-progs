@@ -69,8 +69,6 @@ static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
 #define BTRFS_MIN_BLOCKSIZE	(SZ_4K)
 #endif
 
-#define BTRFS_LEAF_DATA_SIZE(fs_info) (fs_info->leaf_data_size)
-
 #define BTRFS_SUPER_INFO_OFFSET			(65536)
 #define BTRFS_SUPER_INFO_SIZE			(4096)
 
@@ -401,7 +399,6 @@ struct btrfs_fs_info {
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
-	u32 leaf_data_size;
 
 	/*
 	 * For open_ctree_fs_info() to hold the initial fd until close.
@@ -425,6 +422,11 @@ struct btrfs_fs_info {
 
 	struct super_block *sb;
 };
+
+static inline u32 BTRFS_LEAF_DATA_SIZE(const struct btrfs_fs_info *fs_info)
+{
+	return __BTRFS_LEAF_DATA_SIZE(fs_info->nodesize);
+}
 
 static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)
 {
