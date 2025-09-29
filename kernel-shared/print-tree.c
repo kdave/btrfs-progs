@@ -1915,6 +1915,7 @@ static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 static struct readable_flag_entry compat_ro_flags_array[] = {
 	DEF_COMPAT_RO_FLAG_ENTRY(FREE_SPACE_TREE),
 	DEF_COMPAT_RO_FLAG_ENTRY(FREE_SPACE_TREE_VALID),
+	DEF_COMPAT_RO_FLAG_ENTRY(VERITY),
 	DEF_COMPAT_RO_FLAG_ENTRY(BLOCK_GROUP_TREE),
 };
 static const int compat_ro_flags_num = ARRAY_SIZE(compat_ro_flags_array);
