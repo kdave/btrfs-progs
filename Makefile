@@ -155,15 +155,34 @@ CRYPTO_OBJECTS =
 
 ifeq ($(HAVE_CFLAG_msse2),1)
 crypto_blake2b_sse2_cflags = -msse2
+crypto_blake3_sse2_cflags = -msse2
+CRYPTO_OBJECTS += crypto/blake3_sse2.o
+else
+CRYPTO_CFLAGS += -DBLAKE3_NO_SSE2
 endif
 ifeq ($(HAVE_CFLAG_msse41),1)
 crypto_blake2b_sse41_cflags = -msse4.1
+crypto_blake3_sse41_cflags = -msse4.1
+CRYPTO_OBJECTS += crypto/blake3_sse41.o
+else
+CRYPTO_CFLAGS += -DBLAKE3_NO_SSE41
 endif
 ifeq ($(HAVE_CFLAG_mavx2),1)
 crypto_blake2b_avx2_cflags = -mavx2
+crypto_blake3_avx2_cflags = -mavx2
+CRYPTO_OBJECTS += crypto/blake3_avx2.o
+else
+CRYPTO_CFLAGS += -DBLAKE3_NO_AVX2
 endif
 ifeq ($(HAVE_CFLAG_msha),1)
 crypto_sha256_x86_cflags = -msse4.1 -msha
+endif
+
+ifeq ($(HAVE_CFLAG_mavx512_f_vl),1)
+crypto_blake3_avx512_cflags = -mavx512f -mavx512vl
+CRYPTO_OBJECTS += crypto/blake3_avx512.o
+else
+CRYPTO_CFLAGS += -DBLAKE3_NO_AVX512
 endif
 
 LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
@@ -248,6 +267,7 @@ objects = \
 	crypto/crc32c.o	\
 	crypto/hash.o	\
 	crypto/xxhash.o	\
+	crypto/blake3.o crypto/blake3_portable.o crypto/blake3_dispatch.o \
 	$(CRYPTO_OBJECTS)	\
 	libbtrfsutil/stubs.o	\
 	libbtrfsutil/subvolume.o
@@ -408,9 +428,9 @@ btrfs_convert_cflags += -DBTRFSCONVERT_REISERFS=$(BTRFSCONVERT_REISERFS)
 cmds_restore_cflags = -DCOMPRESSION_LZO=$(COMPRESSION_LZO) -DCOMPRESSION_ZSTD=$(COMPRESSION_ZSTD)
 
 ifeq ($(CRYPTOPROVIDER_BUILTIN),1)
-CRYPTO_OBJECTS = crypto/sha224-256.o crypto/blake2b-ref.o crypto/blake2b-sse2.o \
+CRYPTO_OBJECTS += crypto/sha224-256.o crypto/blake2b-ref.o crypto/blake2b-sse2.o \
 		 crypto/blake2b-sse41.o crypto/blake2b-avx2.o crypto/sha256-x86.o
-CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
+CRYPTO_CFLAGS += -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
 ifeq ($(TARGET_CPU),x86_64)
@@ -420,6 +440,10 @@ ifeq ($(HAVE_GLIBC),1)
 CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
 ASFLAGS += -fPIC
 endif
+endif
+
+ifeq ($(TARGET_CPU),aarch64)
+CRYPTO_OBJECTS += crypto/blake3_neon.o
 endif
 
 CHECKER_FLAGS += $(btrfs_convert_cflags)

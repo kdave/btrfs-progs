@@ -58,6 +58,10 @@ AS_IF([test "x$target_cpu" = 'xx86_64'], [
 	AC_SUBST([HAVE_CFLAG_mavx2])
 	AC_DEFINE_UNQUOTED([HAVE_CFLAG_mavx2], [$HAVE_CFLAG_mavx2], [Compiler supports -mavx2])
 
+	AX_CHECK_COMPILE_FLAG([-mavx512f -mavx512vl], [HAVE_CFLAG_mavx512_f_vl=1], [HAVE_CFLAG_mavx512_f_vl=0])
+	AC_SUBST([HAVE_CFLAG_mavx512_f_vl])
+	AC_DEFINE_UNQUOTED([HAVE_CFLAG_mavx512_f_vl], [$HAVE_CFLAG_mavx512_f_vl], [Compiler supports -mavx512 modes: f vl])
+
 	AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
 	AC_SUBST([HAVE_CFLAG_msha])
 	AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
