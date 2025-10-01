@@ -53,6 +53,7 @@ static const struct btrfs_csums {
 	[BTRFS_CSUM_TYPE_SHA256] = { .size = 32, .name = "sha256" },
 	[BTRFS_CSUM_TYPE_BLAKE2] = { .size = 32, .name = "blake2b",
 				     .driver = "blake2b-256" },
+	[BTRFS_CSUM_TYPE_BLAKE3] = { .size = 32, .name = "blake3" },
 };
 
 /*

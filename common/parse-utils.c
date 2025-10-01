@@ -255,6 +255,8 @@ enum btrfs_csum_type parse_csum_type(const char *s)
 	} else if (strcasecmp(s, "blake2b") == 0 ||
 		   strcasecmp(s, "blake2") == 0) {
 		return BTRFS_CSUM_TYPE_BLAKE2;
+	} else if (strcasecmp(s, "blake3") == 0) {
+		return BTRFS_CSUM_TYPE_BLAKE3;
 	} else {
 		error("unknown csum type %s", s);
 		exit(1);

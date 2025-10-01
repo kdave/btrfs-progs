@@ -27,6 +27,7 @@ int hash_xxhash(const u8 *buf, size_t length, u8 *out);
 int hash_xxh3(const u8 *buf, size_t length, u8 *out);
 int hash_sha256(const u8 *buf, size_t length, u8 *out);
 int hash_blake2b(const u8 *buf, size_t length, u8 *out);
+int hash_blake3(const u8 *buf, size_t length, u8 *out);
 
 void hash_init_accel(void);
 void hash_init_crc32c(void);
