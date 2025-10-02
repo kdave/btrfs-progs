@@ -414,6 +414,7 @@ CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
 ifeq ($(TARGET_CPU),x86_64)
+CRYPTO_OBJECTS += crypto/xxh_x86dispatch.o
 # FIXME: linkage is broken on musl for some reason
 ifeq ($(HAVE_GLIBC),1)
 CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
