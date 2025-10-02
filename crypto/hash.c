@@ -18,6 +18,7 @@
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/xxhash.h"
+#include "crypto/xxh_x86dispatch.h"
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
 

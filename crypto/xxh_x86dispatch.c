@@ -48,6 +48,8 @@
  * @{
  */
 
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 #if defined (__cplusplus)
 extern "C" {
 #endif
