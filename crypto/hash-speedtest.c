@@ -224,6 +224,8 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE3-auto", .digest = hash_blake3, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 	};
 	int units = UNITS_CYCLES;
 
