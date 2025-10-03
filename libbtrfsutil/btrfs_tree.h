@@ -358,6 +358,7 @@
 #define BTRFS_CSUM_TYPE_XXHASH	1
 #define BTRFS_CSUM_TYPE_SHA256	2
 #define BTRFS_CSUM_TYPE_BLAKE2	3
+#define BTRFS_CSUM_TYPE_XXH3	4
 
 /*
  * flags definitions for directory entry item type

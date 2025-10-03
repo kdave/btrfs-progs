@@ -50,6 +50,16 @@ int hash_xxhash(const u8 *buf, size_t length, u8 *out)
 	return 0;
 }
 
+int hash_xxh3(const u8 *buf, size_t length, u8 *out)
+{
+	XXH64_hash_t hash;
+
+	hash = XXH3_64bits(buf, length);
+	put_unaligned_le64(hash, out);
+
+	return 0;
+}
+
 /*
  * Implementations of cryptographic primitives
  */

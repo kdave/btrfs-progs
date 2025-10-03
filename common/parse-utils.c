@@ -248,6 +248,8 @@ enum btrfs_csum_type parse_csum_type(const char *s)
 	} else if (strcasecmp(s, "xxhash64") == 0 ||
 		   strcasecmp(s, "xxhash") == 0) {
 		return BTRFS_CSUM_TYPE_XXHASH;
+	} else if (strcasecmp(s, "xxh3") == 0) {
+		return BTRFS_CSUM_TYPE_XXH3;
 	} else if (strcasecmp(s, "sha256") == 0) {
 		return BTRFS_CSUM_TYPE_SHA256;
 	} else if (strcasecmp(s, "blake2b") == 0 ||
