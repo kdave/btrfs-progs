@@ -38,6 +38,36 @@ XXH_PUBLIC_API __attribute__((__weak__)) int XXH_featureTest(void)
 	return save_XXH_VECTOR;
 }
 
+const char *hash_describe_auto_select(int type)
+{
+	if (type == CRYPTO_HASH_BLAKE3) {
+		size_t blake3_autoselect = blake3_simd_degree();
+
+		return  blake3_autoselect == 16 ? "AVX512" :
+			blake3_autoselect ==  8 ? "AVX2" :
+			blake3_autoselect == 4 && !BLAKE3_USE_NEON ? "SSE41" :
+			blake3_autoselect == 4 && BLAKE3_USE_NEON ? "NEON" :
+			"portable";
+	}
+
+	if (type == CRYPTO_HASH_XXH3) {
+		int xxh3_autoselect = XXH_featureTest();
+
+		return  xxh3_autoselect == XXH_SCALAR ? "portable" :
+			xxh3_autoselect == XXH_SSE2   ? "SSE2" :
+			xxh3_autoselect == XXH_AVX2   ? "AVX2" :
+			xxh3_autoselect == XXH_AVX512 ? "AVX512" :
+			xxh3_autoselect == XXH_NEON   ? "NEON" :
+			xxh3_autoselect == XXH_VSX    ? "VSX" :
+			xxh3_autoselect == XXH_SVE    ? "SVE" :
+			xxh3_autoselect == XXH_LSX    ? "LSX" :
+			xxh3_autoselect == XXH_LASX   ? "LASX" :
+			xxh3_autoselect == XXH_RVV    ? "RVV" :
+			"unknown";
+	}
+	return "TODO";
+}
+
 void hash_init_crc32c(void)
 {
 	crc32c_init_accel();

@@ -864,6 +864,7 @@ int main(int argc, char **argv) {
 	hash_init_accel();
 
 	printf("Implementation: %s\n", CRYPTOPROVIDER);
+	hash_describe_auto_select();
 	for (i = 0; i < ARRAY_SIZE(test_spec); i++)
 		test_hash(&test_spec[i]);
 

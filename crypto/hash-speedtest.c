@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_PCLMUL },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
-		{ .name = "XXH3-auto", .digest = hash_xxh3, .digest_size = 8 },
+		{ .name = "XXH3", .digest = hash_xxh3, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "SHA256-gcrypt", .digest = hash_sha256, .digest_size = 32,
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
-		{ .name = "BLAKE3-auto", .digest = hash_blake3, .digest_size = 32,
+		{ .name = "BLAKE3", .digest = hash_blake3, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 	};
 	int units = UNITS_CYCLES;
@@ -296,9 +296,11 @@ int main(int argc, char **argv) {
 		u64 start, end;
 		u64 tstart, tend;
 		u64 total = 0;
+		char name[sizeof(c->name)];
 
+		strcpy(name, c->name);
 		if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
-			printf("%14s: no CPU support\n", c->name);
+			printf("%14s: no CPU support\n", name);
 			continue;
 		}
 		/* Backend not compiled in */
@@ -307,10 +309,18 @@ int main(int argc, char **argv) {
 
 		if (c->digest == hash_null_memcpy)
 			/* Always run NULL-MEMCPY to warm up memory. */;
-		else if (filter && fnmatch(filter, c->name, FNM_CASEFOLD) != 0)
+		else if (filter && fnmatch(filter, name, FNM_CASEFOLD) != 0)
 			continue;
 
-		printf("%14s: ", c->name);
+		if (c->digest == hash_xxh3) {
+			snprintf(name, sizeof(name), "%s-%s", c->name,
+				 hash_describe_auto_select(CRYPTO_HASH_XXH3));
+		} else if (c->digest == hash_blake3) {
+			snprintf(name, sizeof(name), "%s-%s", c->name,
+				 hash_describe_auto_select(CRYPTO_HASH_BLAKE3));
+		}
+
+		printf("%14s: ", name);
 		fflush(stdout);
 
 		if (c->cpu_flag) {

@@ -22,6 +22,17 @@
 
 #define CRYPTO_HASH_SIZE_MAX	32
 
+/* Only for internal use. */
+enum {
+	CRYPTO_HASH_NONE,
+	CRYPTO_HASH_CRC32C,
+	CRYPTO_HASH_XXHASH,
+	CRYPTO_HASH_XXH3,
+	CRYPTO_HASH_SHA256,
+	CRYPTO_HASH_BLAKE2,
+	CRYPTO_HASH_BLAKE3,
+};
+
 int hash_crc32c(const u8 *buf, size_t length, u8 *out);
 int hash_xxhash(const u8 *buf, size_t length, u8 *out);
 int hash_xxh3(const u8 *buf, size_t length, u8 *out);
@@ -31,5 +42,6 @@ int hash_blake3(const u8 *buf, size_t length, u8 *out);
 
 void hash_init_accel(void);
 void hash_init_crc32c(void);
+const char *hash_describe_auto_select(int type);
 
 #endif
