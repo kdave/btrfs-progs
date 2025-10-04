@@ -1250,7 +1250,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	uuid_unparse(cctx.fs_uuid, fsid_str);
 	printf("  UUID:           %s\n", fsid_str);
 	printf("Target filesystem:\n");
-	printf("  Label:          %s\n", fslabel);
+	printf("  Label:          %s\n", (convert_flags & CONVERT_FLAG_COPY_LABEL) ? cctx.label : fslabel);
 	printf("  Blocksize:      %u\n", blocksize);
 	printf("  Nodesize:       %u\n", nodesize);
 	printf("  UUID:           %s\n", mkfs_cfg.fs_uuid);
