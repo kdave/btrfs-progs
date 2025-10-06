@@ -4749,7 +4749,12 @@ out:
 		error(
 		"device extent[%llu, %llu, %llu] did not find the related chunk",
 			devext_key.objectid, devext_key.offset, length);
-		return REFERENCER_MISSING;
+		ret = -ENOENT;
+		if (opt_check_repair)
+			ret = btrfs_remove_dev_extent(gfs_info, devext_key.objectid,
+						      devext_key.offset);
+		if (ret < 0)
+			return REFERENCER_MISSING;
 	}
 	return 0;
 }

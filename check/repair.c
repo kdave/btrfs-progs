@@ -31,7 +31,9 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/tree-checker.h"
+#include "kernel-shared/volumes.h"
 #include "common/extent-cache.h"
+#include "common/messages.h"
 #include "check/repair.h"
 
 int opt_check_repair = 0;
@@ -351,6 +353,82 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 	ret = 0;
 out:
 	extent_io_tree_release(&used);
+	return ret;
+}
+
+int btrfs_remove_dev_extent(struct btrfs_fs_info *fs_info, u64 devid, u64 physical)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_key key = {
+		.objectid = devid,
+		.type = BTRFS_DEV_EXTENT_KEY,
+		.offset = physical,
+	};
+	struct btrfs_path path = { 0 };
+	struct btrfs_dev_extent *dext;
+	struct btrfs_device *dev;
+	u64 length;
+	int ret;
+
+	dev = btrfs_find_device_by_devid(fs_info->fs_devices, devid, 0);
+	if (!dev) {
+		ret = -ENOENT;
+		error("failed to find devid %llu", devid);
+		return ret;
+	}
+	trans = btrfs_start_transaction(dev_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
+	ret = btrfs_search_slot(trans, dev_root, &key, &path, -1, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate dev extent, devid %llu physical %llu: %m",
+		      devid, physical);
+		goto abort;
+	}
+	dext = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dev_extent);
+	length = btrfs_dev_extent_length(path.nodes[0], dext);
+	ret = btrfs_del_item(trans, dev_root, &path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to delete dev extent, devid %llu physical %llu: %m",
+		      devid, physical);
+		goto abort;
+	}
+	btrfs_release_path(&path);
+	if (dev->bytes_used < length) {
+		warning("devid %llu has bytes_used %llu, smaller than %llu",
+			devid, dev->bytes_used, length);
+		dev->bytes_used = 0;
+	} else {
+		dev->bytes_used -= length;
+	}
+	ret = btrfs_update_device(trans, dev);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to update device, devid %llu: %m", devid);
+		goto abort;
+	}
+	ret = btrfs_commit_transaction(trans, dev_root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+	} else {
+		printf("removed orphan dev extent, devid %llu physical %llu length %llu\n",
+			devid, physical, length);
+	}
+	return ret;
+
+abort:
+	btrfs_release_path(&path);
+	btrfs_abort_transaction(trans, ret);
 	return ret;
 }
 
