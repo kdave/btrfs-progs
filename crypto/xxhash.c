@@ -40,3 +40,9 @@
 #define XXH_IMPLEMENTATION      /* access definitions */
 
 #include "xxhash.h"
+
+/*
+ * When XXH_IMPLEMENTATION is defined we can see the XXH_VECTOR and use it for
+ * better descriptions.
+ */
+int save_XXH_VECTOR = XXH_VECTOR;

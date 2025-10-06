@@ -18,9 +18,25 @@
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/xxhash.h"
+#ifdef __x86_64__
 #include "crypto/xxh_x86dispatch.h"
+#endif
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
+#include "crypto/blake3.h"
+#include "crypto/blake3_impl.h"
+
+/*
+ * The dispatcher and feature test is available only on x86_64, use fall back
+ * that extracts the implementation that's found during xxhash setup.
+ */
+XXH_PUBLIC_API __attribute__((__weak__)) int XXH_featureTest(void);
+XXH_PUBLIC_API __attribute__((__weak__)) int XXH_featureTest(void)
+{
+	extern int save_XXH_VECTOR;
+
+	return save_XXH_VECTOR;
+}
 
 void hash_init_crc32c(void)
 {
