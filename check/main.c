@@ -8601,7 +8601,11 @@ int check_chunks(struct cache_tree *chunk_cache,
 				dext_rec->objectid,
 				dext_rec->offset,
 				dext_rec->length);
-		if (!ret)
+		err = -ENOENT;
+		if (opt_check_repair)
+			err = btrfs_remove_dev_extent(gfs_info, dext_rec->objectid,
+						      dext_rec->offset);
+		if (err && !ret)
 			ret = 1;
 	}
 	return ret;

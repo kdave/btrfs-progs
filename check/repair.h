@@ -48,6 +48,7 @@ int btrfs_mark_used_tree_blocks(struct btrfs_fs_info *fs_info,
 				struct extent_io_tree *tree);
 int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
 			   struct extent_io_tree *tree);
+int btrfs_remove_dev_extent(struct btrfs_fs_info *fs_info, u64 devid, u64 physical);
 enum btrfs_tree_block_status btrfs_check_block_for_repair(struct extent_buffer *eb,
 							  struct btrfs_key *first_key);
 void btrfs_set_item_key_unsafe(struct btrfs_root *root, struct btrfs_path *path,
