@@ -58,8 +58,9 @@ cause noticeable performance drops.
    $ btrfs filesystem defrag -czstd file
 
 The command above will start defragmentation of the whole *file* and apply
-the compression, regardless of the mount option. (Note: specifying level is not
-yet implemented). The compression algorithm is not persistent and applies only
+the compression, regardless of the mount option. The compression level can be
+also specified with the ``--level`` or ``-L`` argument as of version ``6.14``.
+The compression algorithm is not persistent and applies only
 to the defragmentation command, for any other writes other compression settings
 apply.
 
