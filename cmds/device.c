@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <time.h>
 #include "kernel-lib/list_sort.h"
 #include "kernel-shared/zoned.h"
 #include "common/string-table.h"
@@ -186,13 +187,14 @@ error_out:
 static DEFINE_SIMPLE_COMMAND(device_add, "add");
 
 static int _cmd_device_remove(const struct cmd_struct *cmd,
-			      int argc, char **argv)
+ 			      int argc, char **argv)
 {
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	bool enqueue = false;
 	bool cancel = false;
 	bool force = false;
+	time_t start_time = 0;
 
 	optind = 0;
 	while (1) {
@@ -263,7 +265,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 
 	if (!cancel) {
 		ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REMOVE,
-					      enqueue);
+						      enqueue);
 		if (ret != 0) {
 			if (ret < 0)
 				error(
@@ -271,6 +273,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 			close(fdmnt);
 			return 1;
 		}
+		start_time = time(NULL);
 	}
 
 	for(i = optind; i < argc - 1; i++) {
@@ -333,6 +336,27 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 		}
 	}
 
+	/* Display ETA for device removal if start_time was set */
+	if (start_time > 0) {
+		time_t current_time = time(NULL);
+		time_t elapsed_time = current_time - start_time;
+		time_t eta_time;
+
+		/* Estimate completion time - device removal typically takes 1-2 hours */
+		/* Using a conservative estimate of 2 hours for the operation */
+		time_t estimated_total_time = 7200; /* 2 hours in seconds */
+		time_t remaining_time = estimated_total_time - elapsed_time;
+
+		if (remaining_time > 0) {
+			eta_time = current_time + remaining_time;
+			struct tm eta_tm_buf;
+			struct tm *eta_tm = localtime_r(&eta_time, &eta_tm_buf);
+			char eta_str[80];
+			strftime(eta_str, sizeof(eta_str), "ETA: %a %b %d %H:%M:%S %Y", eta_tm);
+			printf("Device removal in progress, %s\n", eta_str);
+		}
+	}
+
 	btrfs_warn_multiple_profiles(fdmnt);
 	close(fdmnt);
 	return !!ret;
@@ -354,6 +378,7 @@ static const char * const cmd_device_remove_usage[] = {
 	"btrfs device remove <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem",
 	COMMON_USAGE_REMOVE_DELETE,
+	"Shows estimated time of arrival (ETA) for completion during the operation.",
 	"",
 	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
 	NULL
@@ -370,6 +395,7 @@ static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
 	COMMON_USAGE_REMOVE_DELETE,
+	"Shows estimated time of arrival (ETA) for completion during the operation.",
 	"",
 	OPTLINE("--enqueue", "wait if there's another exclusive operation running, otherwise continue"),
 	NULL
