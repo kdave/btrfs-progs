@@ -1777,7 +1777,6 @@ static int process_file_extent(struct btrfs_root *root,
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (extent_type == BTRFS_FILE_EXTENT_PREALLOC &&
 		    (btrfs_file_extent_compression(eb, fi) ||
-		     btrfs_file_extent_encryption(eb, fi) ||
 		     btrfs_file_extent_other_encoding(eb, fi)))
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (compression && rec->nodatasum)
@@ -6495,6 +6494,7 @@ static int run_next_block(struct btrfs_root *root,
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
 			unsigned long inline_offset;
+			size_t extra_size = 0;
 
 			inline_offset = offsetof(struct btrfs_file_extent_item,
 						 disk_bytenr);
@@ -6630,13 +6630,17 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 
 			/* Prealloc/regular extent must have fixed item size */
+			if (btrfs_file_extent_encryption(buf, fi))
+				extra_size = btrfs_file_extent_encryption_info_size(buf, fi) +
+						sizeof(struct btrfs_encryption_info);
+
 			if (btrfs_item_size(buf, i) !=
-			    sizeof(struct btrfs_file_extent_item)) {
+			    (sizeof(struct btrfs_file_extent_item) + extra_size)) {
 				ret = -EUCLEAN;
 				error(
 			"invalid file extent item size, have %u expect %zu",
 					btrfs_item_size(buf, i),
-					sizeof(struct btrfs_file_extent_item));
+					sizeof(struct btrfs_file_extent_item) + extra_size);
 				continue;
 			}
 			/* key.offset (file offset) must be aligned */
