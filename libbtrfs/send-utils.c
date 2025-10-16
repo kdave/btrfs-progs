@@ -777,8 +777,17 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 					goto out;
 				}
 				path = strdup(path_buf);
+				if (!path) {
+					ret = -ENOMEM;
+					goto out;
+				}
 
 				si = calloc(1, sizeof(*si));
+				if (!si) {
+					free(path);
+					ret = -ENOMEM;
+					goto out;
+				}
 				si->root_id = btrfs_search_header_objectid(sh);
 				memcpy(si->uuid, root_item.uuid,
 						BTRFS_UUID_SIZE);
