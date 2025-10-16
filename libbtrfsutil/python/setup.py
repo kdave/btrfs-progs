@@ -30,7 +30,7 @@ def get_version():
     try:
         import version
         version = version.btrfs_util_py_version
-    except:
+    except Exception:
         # Don't fail if this is only the 'clean' target or no command
         if 'clean' in sys.argv or len(sys.argv) == 1:
             version = '0.0'
