@@ -14,7 +14,7 @@ suitable for all use cases or workloads, for example performance.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 6.13**
+**The table is based on the latest released linux kernel: 6.17**
 
 Since kernel version 6.12 there's a config option *CONFIG_BTRFS_EXPERIMENTAL*
 that enables features that are in development and do not have stabilized
@@ -34,6 +34,13 @@ in following ways:
    that do not affect majority of users
 -  **Unstable**: do not use for other then testing purposes, known
    severe problems, missing implementation of some core parts
+
+Please open a github issue if:
+
+-  there's a known missing entry
+-  a particular feature combination that has a different status and is
+   worth mentioning separately
+-  you know of a bug that lowers the feature status
 
 .. role:: statusok
 .. role:: statusmok
@@ -299,13 +306,6 @@ Integration with other Linux features or external systems.
      - :statusok:`OK`
      - OK
      - compression, server-side copies, snapshots
-
-Please open an issue if:
-
--  there's a known missing entry
--  a particular feature combination that has a different status and is
-   worth mentioning separately
--  you know of a bug that lowers the feature status
 
 .. _status-subpage-block-size:
 
