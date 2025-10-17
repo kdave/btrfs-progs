@@ -218,7 +218,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		.compat_ro_flag	= BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
 		.sysfs_name	= "block_group_tree",
 		VERSION_TO_STRING2(compat, 6,1),
-		VERSION_NULL(safe),
+		VERSION_TO_STRING2(safe, 6,6),
 		VERSION_NULL(default),
 		.desc		= "block group tree, more efficient block group tracking to reduce mount time"
 	},
