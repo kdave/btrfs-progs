@@ -120,12 +120,21 @@ void path_cleanup(struct path_arg *path)
 }
 
 static PyMethodDef btrfsutil_methods[] = {
+	/* Aliases: sync, fs_sync */
 	{"sync", (PyCFunction)filesystem_sync,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "sync(path)\n\n"
 	 "Sync a specific Btrfs filesystem.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"fs_sync", (PyCFunction)filesystem_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "fs_sync(path)\n\n"
+	 "Sync a specific Btrfs filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases: start_sync, fs_start_sync */
 	{"start_sync", (PyCFunction)start_sync,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "start_sync(path) -> int\n\n"
@@ -133,6 +142,15 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "transaction ID.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"fs_start_sync", (PyCFunction)start_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "fs_start_sync(path) -> int\n\n"
+	 "Start a sync on a specific Btrfs filesystem and return the\n"
+	 "transaction ID.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases: wait_sync, fs_wait_sync */
 	{"wait_sync", (PyCFunction)wait_sync,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "wait_sync(path, transid=0)\n\n"
@@ -141,18 +159,44 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "transid -- int transaction ID to wait for, or zero for the current\n"
 	 "transaction"},
+	{"fs_wait_sync", (PyCFunction)wait_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "fs_wait_sync(path, transid=0)\n\n"
+	 "Wait for a transaction to sync.\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "transid -- int transaction ID to wait for, or zero for the current\n"
+	 "transaction"},
+
+	/* Aliases: is_subvolume, subvolume_is_valid */
 	{"is_subvolume", (PyCFunction)is_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "is_subvolume(path) -> bool\n\n"
 	 "Get whether a file is a subvolume.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_is_valid", (PyCFunction)is_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_is_valid(path) -> bool\n\n"
+	 "Get whether a file is a subvolume.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases: subvolume_id, subvolume_get_id */
 	{"subvolume_id", (PyCFunction)subvolume_id,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "subvolume_id(path) -> int\n\n"
 	 "Get the ID of the subvolume containing a file.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_get_id", (PyCFunction)subvolume_id,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_get_id(path) -> int\n\n"
+	 "Get the ID of the subvolume containing a file.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases: subvolume_path, subvolume_get_path */
 	{"subvolume_path", (PyCFunction)subvolume_path,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "subvolume_path(path, id=0) -> int\n\n"
@@ -161,6 +205,16 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "id -- if not zero, instead of returning the subvolume path of the\n"
 	 "given path, return the path of the subvolume with this ID"},
+	{"subvolume_get_path", (PyCFunction)subvolume_path,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_get_path(path, id=0) -> int\n\n"
+	 "Get the path of a subvolume relative to the filesystem root.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, instead of returning the subvolume path of the\n"
+	 "given path, return the path of the subvolume with this ID"},
+
+	/* Aliases: subvolume_info, subvolume_get_info */
 	{"subvolume_info", (PyCFunction)subvolume_info,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "subvolume_info(path, id=0) -> SubvolumeInfo\n\n"
@@ -169,12 +223,30 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "id -- if not zero, instead of returning information about the\n"
 	 "given path, return information about the subvolume with this ID"},
+	{"subvolume_get_info", (PyCFunction)subvolume_info,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_get_info(path, id=0) -> SubvolumeInfo\n\n"
+	 "Get information about a subvolume.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, instead of returning information about the\n"
+	 "given path, return information about the subvolume with this ID"},
+
+	/* Aliases get_subvolume_read_only, subvolume_get_read_only */
 	{"get_subvolume_read_only", (PyCFunction)get_subvolume_read_only,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "get_subvolume_read_only(path) -> bool\n\n"
 	 "Get whether a subvolume is read-only.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_get_read_only", (PyCFunction)get_subvolume_read_only,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_get_read_only(path) -> bool\n\n"
+	 "Get whether a subvolume is read-only.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases set_subvolume_read_only, subvolume_set_read_only */
 	{"set_subvolume_read_only", (PyCFunction)set_subvolume_read_only,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "set_subvolume_read_only(path, read_only=True)\n\n"
@@ -182,12 +254,29 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "read_only -- bool flag value"},
+	{"subvolume_set_read_only", (PyCFunction)set_subvolume_read_only,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_set_read_only(path, read_only=True)\n\n"
+	 "Set whether a subvolume is read-only.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "read_only -- bool flag value"},
+
+	/* Aliases get_default_subvolume, subvolume_get_default */
 	{"get_default_subvolume", (PyCFunction)get_default_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "get_default_subvolume(path) -> int\n\n"
 	 "Get the ID of the default subvolume of a filesystem.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_get_default", (PyCFunction)get_default_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_get_default(path) -> int\n\n"
+	 "Get the ID of the default subvolume of a filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
+	/* Aliases: set_default_subvolume, subvolume_set_default */
 	{"set_default_subvolume", (PyCFunction)set_default_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "set_default_subvolume(path, id=0)\n\n"
@@ -196,6 +285,16 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "id -- if not zero, set the default subvolume to the subvolume with\n"
 	 "this ID instead of the given path"},
+	{"subvolume_set_default", (PyCFunction)set_default_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_set_default(path, id=0)\n\n"
+	 "Set the default subvolume of a filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, set the default subvolume to the subvolume with\n"
+	 "this ID instead of the given path"},
+
+	/* Aliases: create_subvolume, subvolume_create */
 	{"create_subvolume", (PyCFunction)create_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_subvolume(path, async_=False, qgroup_inherit=None)\n\n"
@@ -205,6 +304,17 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "async_ -- no longer used\n"
 	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
 	 "inherit from"},
+	{"subvolume_create", (PyCFunction)create_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_create(path, async_=False, qgroup_inherit=None)\n\n"
+	 "Create a new subvolume.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "async_ -- no longer used\n"
+	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
+	 "inherit from"},
+
+	/* Aliases: create_snapshot, subvolume_snapshot */
 	{"create_snapshot", (PyCFunction)create_snapshot,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_snapshot(source, path, recursive=False, read_only=False,\n"
@@ -218,6 +328,21 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "async_ -- no longer used\n"
 	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
 	 "inherit from"},
+	{"subvolume_snapshot", (PyCFunction)create_snapshot,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_snapshot(source, path, recursive=False, read_only=False,\n"
+	 "                   async_=False, qgroup_inherit=None)\n\n"
+	 "Create a new snapshot.\n\n"
+	 "Arguments:\n"
+	 "source -- string, bytes, path-like object, or open file descriptor\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "recursive -- also snapshot child subvolumes\n"
+	 "read_only -- create a read-only snapshot\n"
+	 "async_ -- no longer used\n"
+	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
+	 "inherit from"},
+
+	/* Aliases: delete_subvolume, subvolume_delete */
 	{"delete_subvolume", (PyCFunction)delete_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "delete_subvolume(path, recursive=False)\n\n"
@@ -226,6 +351,16 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, or path-like object\n"
 	 "recursive -- if the given subvolume has child subvolumes, delete\n"
 	 "them instead of failing"},
+	{"subvolume_delete", (PyCFunction)delete_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_delete(path, recursive=False)\n\n"
+	 "Delete a subvolume or snapshot.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "recursive -- if the given subvolume has child subvolumes, delete\n"
+	 "them instead of failing"},
+
+	/* Aliases: deleted_subvolumes, subvolume_list_deleted */
 	{"deleted_subvolumes", (PyCFunction)deleted_subvolumes,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "deleted_subvolumes(path)\n\n"
@@ -233,6 +368,14 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "cleaned up\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_list_deleted", (PyCFunction)deleted_subvolumes,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolumes_list_deleted(path)\n\n"
+	 "Get the list of subvolume IDs which have been deleted but not yet\n"
+	 "cleaned up\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+
 	{},
 };
 
