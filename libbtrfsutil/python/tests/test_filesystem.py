@@ -46,12 +46,32 @@ class TestFilesystem(BtrfsTestCase):
                 self.assertGreater(new_generation, old_generation)
                 old_generation = new_generation
 
+    # Copy of test_sync
+    def test_fs_sync(self):
+        old_generation = self.super_generation()
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                touch(arg)
+                btrfsutil.fs_sync(arg)
+                new_generation = self.super_generation()
+                self.assertGreater(new_generation, old_generation)
+                old_generation = new_generation
+
     def test_start_sync(self):
         old_generation = self.super_generation()
         for arg in self.path_or_fd(self.mountpoint):
             with self.subTest(type=type(arg)):
                 touch(arg)
                 transid = btrfsutil.start_sync(arg)
+                self.assertGreater(transid, old_generation)
+
+    # Copy of test_start_sync
+    def test_fs_start_sync(self):
+        old_generation = self.super_generation()
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                touch(arg)
+                transid = btrfsutil.fs_start_sync(arg)
                 self.assertGreater(transid, old_generation)
 
     def test_wait_sync(self):
@@ -68,6 +88,24 @@ class TestFilesystem(BtrfsTestCase):
                 touch(arg)
                 btrfsutil.start_sync(arg)
                 btrfsutil.wait_sync(arg)
+                new_generation = self.super_generation()
+                self.assertGreater(new_generation, old_generation)
+                old_generation = new_generation
+
+    def test_fs_wait_sync(self):
+        old_generation = self.super_generation()
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                touch(arg)
+                transid = btrfsutil.fs_start_sync(arg)
+                btrfsutil.fs_wait_sync(arg, transid)
+                new_generation = self.super_generation()
+                self.assertGreater(new_generation, old_generation)
+                old_generation = new_generation
+
+                touch(arg)
+                btrfsutil.fs_start_sync(arg)
+                btrfsutil.fs_wait_sync(arg)
                 new_generation = self.super_generation()
                 self.assertGreater(new_generation, old_generation)
                 old_generation = new_generation
