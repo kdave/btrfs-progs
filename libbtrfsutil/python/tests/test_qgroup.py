@@ -41,6 +41,17 @@ class TestQgroup(BtrfsTestCase):
         btrfsutil.create_subvolume(subvol)
         btrfsutil.create_snapshot(subvol, snapshot, qgroup_inherit=inherit)
 
+    # Copy of test_snapshot_inherit
+    def test_snapshot_inherit(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        snapshot = os.path.join(self.mountpoint, 'snapshot')
+
+        inherit = btrfsutil.QgroupInherit()
+        inherit.add_group(5)
+
+        btrfsutil.subvolume_create(subvol)
+        btrfsutil.subvolume_snapshot(subvol, snapshot, qgroup_inherit=inherit)
+
 
 class TestQgroupInherit(unittest.TestCase):
     def test_new(self):
