@@ -321,7 +321,7 @@ static void print_find_root_result(struct cache_tree *result,
 }
 
 static const char * const btrfs_find_root_usage[] = {
-	"btrfs-find-usage [options] <device>",
+	"btrfs-find-root [options] <device>",
 	"Attempt to find tree roots on the device",
 	"",
 	OPTLINE("-a", "search through all metadata even if the root has been found"),
