@@ -948,8 +948,8 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
 			u64 cur_backup = cur;
 
 			len = min(max_chunk_size,
-				  round_up(cache->start + cache->size,
-					   BTRFS_STRIPE_LEN) - cur);
+				  round_down(cache->start + cache->size,
+					     BTRFS_STRIPE_LEN) - cur);
 			ret = btrfs_alloc_data_chunk(trans, fs_info, &cur_backup, len);
 			if (ret < 0)
 				break;
