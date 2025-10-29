@@ -177,7 +177,7 @@ features see :doc:`Status<Status>` page.
 6.12 (stable)
 -------------
 
--6.12 - cancellable discard/TRIM
+6.12 - cancellable discard/TRIM
         Add more points where the discard can be interrupted by signals before
         it finishes the whole operation.
 
@@ -237,6 +237,9 @@ features see :doc:`Status<Status>` page.
         The defrag ioctl also accepts the negative zstd levels that can be set as
         mount option.
 
+6.16 - *standalone mount option nologreplay removed*
+        Deprecated in 5.9 and replaced with *rescue=nologreplay*.
+
 6.17 (latest)
 -------------
 
@@ -260,6 +263,18 @@ features see :doc:`Status<Status>` page.
 6.17 - send (v2 protocol) uses fallocate for hole punching
         File holes, ranges not representing data, were emulated by a zero
         filled data. This is less efficient than puching holes.
+
+6.18 - *move rev-verify feature under CONFIG_BTRFS_DEBUG*
+        Config option CONFIG_BTRFS_FS_REF_VERIFY has been removed and the
+        debugging functionality of *ref-verify* moved under CONFIG_BTRFS_DEBUG.
+
+6.18 - *new mount option ref_tracker for reference tracking*
+        A debugging feature to track references (now implemented for delayed
+        refs) and report leaks eventually.
+
+6.18 - *experimental* enable block size > page size support
+        Initial support for *bs > ps* with limitations (no direct IO, raid56,
+        encoded read/write).
 
 5.x
 ---
