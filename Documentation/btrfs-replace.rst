@@ -37,6 +37,18 @@ start [options] <srcdev>|<devid> <targetdev> <path>
                 larger target device; this can be achieved with
                 ``btrfs filesystem resize <devid>:max /path``
 
+	.. note::
+		Device replace can be interrupted by various events after v6.19 kernel,
+		including but not limited to power management suspend/hibernate,
+		filesystem freezing, cgroup freezing (utilized by systemd for slice freezing)
+		and pending signals.
+
+		The running device replace will be cancelled after such interruption, and
+		the end user needs to restart the device replace from the beginning.
+
+		Thus it's recommended to inhibit suspend/hiberate before executing the
+		device replace operation.
+
         ``Options``
 
         -r
