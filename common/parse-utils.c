@@ -72,7 +72,7 @@ int parse_u64(const char *str, u64 *result)
  * Returned values are u64, value validation and interpretation should be done
  * by the caller.
  */
-int parse_range(const char *range, u64 *start, u64 *end)
+int parse_range_u64(const char *range, u64 *start, u64 *end)
 {
 	char *dots;
 	char *endptr;
@@ -135,7 +135,7 @@ int parse_range_u32(const char *range, u32 *start, u32 *end)
 	u64 tmp_start;
 	u64 tmp_end;
 
-	if (parse_range(range, &tmp_start, &tmp_end))
+	if (parse_range_u64(range, &tmp_start, &tmp_end))
 		return 1;
 
 	if (range_to_u32(tmp_start, tmp_end, start, end))
@@ -150,7 +150,7 @@ int parse_range_u32(const char *range, u32 *start, u32 *end)
  */
 int parse_range_strict(const char *range, u64 *start, u64 *end)
 {
-	if (parse_range(range, start, end) == 0) {
+	if (parse_range_u64(range, start, end) == 0) {
 		if (*start >= *end) {
 			error("range %llu..%llu not allowed", *start, *end);
 			return 1;
