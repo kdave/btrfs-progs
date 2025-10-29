@@ -24,7 +24,7 @@ enum btrfs_csum_type parse_csum_type(const char *s);
 int parse_u64(const char *str, u64 *result);
 int parse_u64_with_suffix(const char *s, u64 *value_ret);
 int parse_range_u32(const char *range, u32 *start, u32 *end);
-int parse_range(const char *range, u64 *start, u64 *end);
+int parse_range_u64(const char *range, u64 *start, u64 *end);
 int parse_range_strict(const char *range, u64 *start, u64 *end);
 int parse_bg_profile(const char *profile, u64 *flags);
 int parse_compress_type(const char *type);
