@@ -56,6 +56,14 @@ read-write mounted filesystem.
    To avoid any writes from scrub, one has to run read-only scrub on read-only
    filesystem.
 
+.. note::
+   Scrub can be interrupted by various events after v6.19 kernel, including
+   but not limited to power management suspend/hibernate, filesystem freezing,
+   cgroup freezing (utilized by systemd for slice freezing) and pending signals.
+
+   The running scrub will be cancelled after such interruption, and can be resumed
+   by :command:`btrfs scrub resume` command.
+
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but it could be less. The estimated device bandwidth
 utilization is about 80% on an idle filesystem.
