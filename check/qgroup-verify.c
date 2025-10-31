@@ -45,7 +45,6 @@ void qgroup_set_item_count_ptr(u64 *item_count_ptr)
 	qgroup_item_count = item_count_ptr;
 }
 
-/*#define QGROUP_VERIFY_DEBUG*/
 static unsigned long tot_extents_scanned = 0;
 
 static struct qgroup_count *find_count(u64 qgroupid);
@@ -157,7 +156,6 @@ struct ref {
 	struct rb_node		bytenr_node;
 };
 
-#ifdef QGROUP_VERIFY_DEBUG
 static void print_ref(struct ref *ref)
 {
 	printf("bytenr: %llu\t\tnum_bytes: %llu\t\t parent: %llu\t\t"
@@ -165,7 +163,7 @@ static void print_ref(struct ref *ref)
 	       ref->parent, ref->root);
 }
 
-static void print_all_refs(void)
+static void __maybe_unused print_all_refs(void)
 {
 	unsigned long count = 0;
 	struct ref *ref;
@@ -184,7 +182,6 @@ static void print_all_refs(void)
 	printf("%lu extents scanned with %lu refs in total.\n",
 	       tot_extents_scanned, count);
 }
-#endif
 
 /*
  * Store by bytenr in rbtree
@@ -490,14 +487,12 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 				count->info.exclusive_compressed += num_bytes;
 			}
 		}
-#ifdef QGROUP_VERIFY_DEBUG
-		printf("account (%llu, %llu), qgroup %llu/%llu, rfer %llu,"
+		pr_verbose(LOG_DEBUG, "account (%llu, %llu), qgroup %u/%llu, rfer %llu,"
 		       " excl %llu, refs %llu, roots %llu\n", bytenr, num_bytes,
 		       btrfs_qgroup_level(count->qgroupid),
 		       btrfs_qgroup_subvolid(count->qgroupid),
 		       count->info.referenced, count->info.exclusive, nr_refs,
 		       nr_roots);
-#endif
 	}
 
 	inc_qgroup_seq(roots->nnodes);
@@ -636,7 +631,6 @@ static void free_tree_blocks(void)
 	tree_blocks = NULL;
 }
 
-#ifdef QGROUP_VERIFY_DEBUG
 static void print_tree_block(u64 bytenr, struct tree_block *block)
 {
 	struct ref *ref;
@@ -656,7 +650,7 @@ static void print_tree_block(u64 bytenr, struct tree_block *block)
 	printf("\n");
 }
 
-static void print_all_tree_blocks(void)
+static void __maybe_unused print_all_tree_blocks(void)
 {
 	struct ulist_iterator uiter;
 	struct ulist_node *unode;
@@ -670,7 +664,6 @@ static void print_all_tree_blocks(void)
 	while ((unode = ulist_next(tree_blocks, &uiter)))
 		print_tree_block(unode_bytenr(unode), unode_tree_block(unode));
 }
-#endif
 
 static int add_refs_for_leaf_items(struct extent_buffer *eb, u64 ref_parent)
 {
