@@ -816,7 +816,18 @@ static struct scrub_progress *scrub_resumed_stats(struct scrub_progress *data,
 	_SCRUB_SUM(dest, data, malloc_errors);
 	_SCRUB_SUM(dest, data, uncorrectable_errors);
 	_SCRUB_SUM(dest, data, corrected_errors);
-	_SCRUB_COPY(dest, data, last_physical);
+	
+	/*
+	 * Preserve the maximum last_physical position from resumed or current data.
+	 * This handles the case where last_physical was reset to 0 due to device
+	 * disconnection but we still want to resume from the highest position
+	 * we actually reached.
+	 */
+	if (data->resumed->p.last_physical > data->scrub_args.progress.last_physical)
+		dest->scrub_args.progress.last_physical = data->resumed->p.last_physical;
+	else
+		dest->scrub_args.progress.last_physical = data->scrub_args.progress.last_physical;
+		
 	dest->stats.canceled = data->stats.canceled;
 	dest->stats.finished = data->stats.finished;
 	dest->stats.t_resumed = data->stats.t_start;
@@ -968,10 +979,23 @@ static void *scrub_one_dev(void *ctx)
 	sp->stats.duration = tv.tv_sec - sp->stats.t_start;
 	sp->stats.canceled = !!ret;
 	sp->ioctl_errno = errno;
+	
+	/*
+	 * For device disconnection errors, preserve the progress by marking
+	 * as interrupted rather than canceled, to allow resume to continue
+	 * from the last position
+	 */
+	if (ret && (errno == ENODEV || errno == ENOTCONN || errno == EIO)) {
+		sp->stats.canceled = 0;
+		sp->stats.finished = 0;  /* Mark as interrupted for resume */
+	} else {
+		sp->stats.canceled = !!ret;
+		sp->stats.finished = 1;
+	}
+	
 	ret = pthread_mutex_lock(&sp->progress_mutex);
 	if (ret)
 		return ERR_PTR(-ret);
-	sp->stats.finished = 1;
 	ret = pthread_mutex_unlock(&sp->progress_mutex);
 	if (ret)
 		return ERR_PTR(-ret);
@@ -1051,12 +1075,26 @@ static void *scrub_progress_cycle(void *ctx)
 		gettimeofday(&tv, NULL);
 		this = (this + 1)%2;
 		last = (last + 1)%2;
+		
 		for (i = 0; i < ndev; ++i) {
 			sp = &spc->progress[this * ndev + i];
 			sp_last = &spc->progress[last * ndev + i];
 			sp_shared = &spc->shared_progress[i];
+			
 			if (sp->stats.finished)
 				continue;
+			
+			/*
+			 * For devices with recent connection issues, try to
+			 * reconnect by retrying the progress ioctl a few times
+			 * in case the device comes back online
+			 */
+			int retry_count = 0;
+			if (sp_last->ioctl_errno == ENODEV || sp_last->ioctl_errno == ENOTCONN) {
+				retry_count = 3;
+			}
+			
+retry_progress:
 			progress_one_dev(sp);
 			sp->stats.duration = tv.tv_sec - sp->stats.t_start;
 			if (!sp->ret)
@@ -1066,11 +1104,27 @@ static void *scrub_progress_cycle(void *ctx)
 				ret = -sp->ioctl_errno;
 				goto out;
 			}
+			
+			/*
+			 * If device is temporarily unavailable and we have retries left,
+			 * wait a moment and try again
+			 */
+			if (retry_count > 0 && (sp->ioctl_errno == ENODEV || sp->ioctl_errno == ENOTCONN)) {
+				struct timespec sleep_time = {0, 500000000}; /* 0.5 seconds */
+				nanosleep(&sleep_time, NULL);
+				retry_count--;
+				goto retry_progress;
+			}
+			
 			/*
 			 * scrub finished or device removed, check the
 			 * finished flag. if unset, just use the last
 			 * result we got for the current write and go
 			 * on. flag should be set on next cycle, then.
+			 *
+			 * For device removal (ENODEV), preserve the last_physical
+			 * position in case this was caused by a temporary
+			 * disconnection like USB hub reset.
 			 */
 			perr = pthread_setcancelstate(
 					PTHREAD_CANCEL_DISABLE, &old);
@@ -1080,6 +1134,13 @@ static void *scrub_progress_cycle(void *ctx)
 			if (perr)
 				goto out;
 			if (!sp_shared->stats.finished) {
+				/*
+				 * Preserve the last_physical position to avoid
+				 * losing progress on temporary disconnections
+				 */
+				if (sp->ioctl_errno == ENODEV && sp_last->scrub_args.progress.last_physical > 0) {
+					sp_shared->scrub_args.progress.last_physical = sp_last->scrub_args.progress.last_physical;
+				}
 				perr = pthread_mutex_unlock(
 						&sp_shared->progress_mutex);
 				if (perr)
@@ -1120,8 +1181,24 @@ static void *scrub_progress_cycle(void *ctx)
 		}
 		if (!spc->do_record)
 			continue;
-		ret = scrub_write_progress(spc->write_mutex, fsid,
-					   &spc->progress[this * ndev], ndev);
+		
+		/*
+		 * Force progress saving more frequently if we have device issues
+		 * to prevent data loss during temporary disconnections
+		 */
+		int force_write = 0;
+		for (i = 0; i < ndev; ++i) {
+			struct scrub_progress *sp_check = &spc->progress[this * ndev + i];
+			if (sp_check->ioctl_errno == ENODEV || sp_check->ioctl_errno == ENOTCONN) {
+				force_write = 1;
+				break;
+			}
+		}
+		
+		if (force_write || (tv.tv_sec % 30) == 0) {
+			ret = scrub_write_progress(spc->write_mutex, fsid,
+						   &spc->progress[this * ndev], ndev);
+		}
 		if (ret)
 			goto out;
 	}
