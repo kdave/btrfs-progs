@@ -147,3 +147,7 @@ global:
 	btrfs_util_fs_wait_sync;
 	btrfs_util_fs_wait_sync_fd;
 } LIBBTRFSUTIL_1.2;
+
+LIBBTRFSUTIL_1.4 {
+	/* No change, keep version in sync due to python bindings. */
+} LIBBTRFSUTIL_1.3;
