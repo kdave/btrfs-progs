@@ -29,6 +29,7 @@
 #include <pthread.h>
 #include <uuid/uuid.h>
 #include <blkid/blkid.h>
+#include <linux/version.h>
 #include "kernel-lib/list.h"
 #include "kernel-lib/list_sort.h"
 #include "kernel-lib/rbtree.h"
@@ -2410,10 +2411,14 @@ raid_groups:
 		list_all_devices(root, opt_zoned);
 
 		if (mkfs_cfg.csum_type == BTRFS_CSUM_TYPE_SHA256) {
-			printf(
-"NOTE: you may need to manually load kernel module implementing accelerated SHA256 in case\n"
+			u32 kernel_version = get_running_kernel_version();
+
+			if (kernel_version < KERNEL_VERSION(6,16,0)) {
+				printf(
+"NOTE: in kernels < v6.16 you may need to manually load kernel module implementing accelerated SHA256 in case\n"
 "      the generic implementation is built-in, before mount. Check lsmod or /proc/crypto\n\n"
-);
+				);
+			}
 		}
 	}
 
