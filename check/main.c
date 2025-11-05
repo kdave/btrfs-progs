@@ -6131,7 +6131,7 @@ static int check_csum_root(struct btrfs_root *root)
 			errors++;
 		}
 		num_entries = btrfs_item_size(leaf, path.slots[0]) / csum_size;
-		data_len = num_entries * gfs_info->sectorsize;
+		data_len = (u64)num_entries * gfs_info->sectorsize;
 
 		if (num_entries > max_entries) {
 			error(
@@ -9816,7 +9816,7 @@ static int check_range_csummed(struct btrfs_root *root, u64 addr, u64 length)
 			break;
 
 		num_entries = btrfs_item_size(leaf, path.slots[0]) / gfs_info->csum_size;
-		data_len = num_entries * gfs_info->sectorsize;
+		data_len = (u64)num_entries * gfs_info->sectorsize;
 
 		if (addr >= key.offset && addr <= key.offset + data_len) {
 			u64 end = min(addr + length, key.offset + data_len);
