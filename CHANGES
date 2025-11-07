@@ -1,3 +1,27 @@
+btrfs-progs-7.3 (2026-10-23)
+----------------------------
+   * zoned mode: open host-managed devices with direct io, page cache cannot be
+     used for synchronization due to ordering
+   * convert: set creation and change time of the root subvolume
+   * mkfs:
+      * set creation and change time of the created subvolumes
+      * make -O mixed work same as --mixed, so it does not create split block
+	groups by mistake
+      * for reproducible builds, honor SOURCE_DATE_EPOCH, SEED and for --rootdir
+	order the files deterministically
+   * corrupt-block: allow inode and dir item corruption to use option --value
+   * check:
+      * detect file extents for wrong inode types
+      * on zoned filesystem, detect leaked active zones
+   * restore: handle inline extents larger than 4KiB, e.g. created on systems with
+     64KiB pages
+   * build:
+      * minimal version of util-linux is 2.31
+   * scrub limit: set to the original limit only after all devices finish
+   * other
+      * new and updated tests
+      * documentation updates
+
 btrfs-progs-7.2 (skipped)
 -------------------------
 
