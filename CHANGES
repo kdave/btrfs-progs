@@ -1,3 +1,37 @@
+btrfs-progs-6.19 (2025-02-13)
+-----------------------------
+   * mkfs:
+      * make block-group-tree default (support since linux 6.1), use -O ^bgt to
+      * unset it for backward compatibility
+      * speed up initial device discard by procesing the ranges in order
+      * disable block-grooup-tree feature if a dependent feature is explicitly
+        unselected (like disabling no-holes), instead of erroring out
+   * check:
+      * add ability to detect and fix missing orphan items in deleted subvolumes
+      * add ability to fix inode refs from directory items
+      * enhance detection on unknown inode keys
+   * libbtrfsutil:
+      * minor version update to 1.4.0
+      * add missing aliases for API updates done in 0.1.3, C and python
+   * libbtrfs:
+      * patchlevel version update 0.1.5
+      * error handling updates
+   * fixes:
+      * with DUP profile and mixed sequential and conventional zoned make sure
+        to track the right write pointers
+      * scrub: fix ETA wraparound calculations, when many files get deleted
+	during the operation bytes_scrubbed and bytes_total get too much out of
+	sync, the ETA will be 0
+   * corrupt-block: add ability to specify key value when corrupting item keys
+   * experimental features:
+      * initial remap tree support (new logical-to-logical mapping layer),
+        coming in linux 7.0
+   * other:
+      * error handling improvements
+      * CI updates
+      * code cleanups and refactoring
+      * documentation updates
+
 btrfs-progs-6.18 (skipped)
 --------------------------
 
