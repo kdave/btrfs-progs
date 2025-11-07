@@ -17,6 +17,20 @@ btrfs-progs-6.17 (2025-09-29)
       * cleanups, refactoring
       * documentation updates
 
+btrfs-progs-6.17.1 (2025-11-07)
+"""""""""""""""""""""""""""""""
+   * dump-tree: print compat-ro bit for fs-verity
+   * check: add ability to repair orphan device extents so kernel does not
+     refuse to mount such filesystem due to strict checks
+   * convert:
+      * print label if it's being copied from the source filesystem
+      * drop alignment check of chunk length, kernel workaround is in place
+   * scrub and device replace: document behaviour in 6.19+ that
+     freezing/suspend will cancel the operation
+   * other:
+      * documentation fixes and updates
+      * updated tests
+
 btrfs-progs-6.16 (2025-08-13)
 -----------------------------
    * mkfs:
