@@ -17,9 +17,9 @@ run-name: "CodeQL (Advanced)"
 
 on:
   push:
-    branches: [ "devel", "master" ]
-  pull_request:
-    branches: [ "devel" ]
+    branches:
+      - devel
+      - master
 
 jobs:
   analyze:
