@@ -8,9 +8,11 @@ run-name: Sanitizer checks
 on:
   push:
     branches:
-      - devel
       - sanitize-test
       - master
+  schedule:
+    - cron: '12 0 * * 1'
+
 jobs:
   build-ubsan:
     runs-on: ubuntu-24.04

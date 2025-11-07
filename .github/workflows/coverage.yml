@@ -7,6 +7,9 @@ on:
     branches:
       - coverage-test
       - master
+  schedule:
+    - cron: '12 0 * * 1'
+
 jobs:
   build:
     runs-on: ubuntu-24.04
