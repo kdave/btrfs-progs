@@ -10,7 +10,9 @@ name: Pull request build and tests
 run-name: Pull request build and tests
 on:
   pull_request:
-    branches: [ "devel", "master" ]
+    branches:
+      - devel
+      - master
 jobs:
   build:
     runs-on: ubuntu-24.04
