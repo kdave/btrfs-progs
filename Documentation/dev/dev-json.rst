@@ -21,6 +21,7 @@ Commands that support json output
 
 * :command:`btrfs device stats`
 * :command:`btrfs filesystem df`
+* :command:`btrfs filesystem show`
 * :command:`btrfs qgroup show`
 * :command:`btrfs subvolume get-default`
 * :command:`btrfs subvolume list`
