@@ -5569,9 +5569,16 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 	 * If this tree is a subvolume (not a reloc tree) and has no refs, there
 	 * should be an orphan item for it, or this subvolume will never be deleted.
 	 */
-	if (btrfs_root_refs(root_item) == 0 && is_fstree(btrfs_root_id(root))) {
-		if (!has_orphan_item(root->fs_info->tree_root,
-				     btrfs_root_id(root))) {
+	if (btrfs_root_refs(root_item) == 0 && is_fstree(btrfs_root_id(root)) &&
+	    !has_orphan_item(root->fs_info->tree_root, btrfs_root_id(root))) {
+		bool repaired = false;
+
+		if (opt_check_repair) {
+			ret = repair_subvol_orphan_item(root->fs_info, btrfs_root_id(root));
+			if (!ret)
+				repaired = true;
+		}
+		if (!repaired) {
 			error("missing orphan item for root %lld", btrfs_root_id(root));
 			err |= REFERENCER_MISSING;
 		}
