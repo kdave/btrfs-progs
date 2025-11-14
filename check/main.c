@@ -3550,6 +3550,11 @@ static int check_root_refs(struct btrfs_root *root,
 				 */
 				if (!rec->found_root_item)
 					continue;
+				if (opt_check_repair) {
+					ret = repair_subvol_orphan_item(gfs_info, rec->objectid);
+					if (!ret)
+						continue;
+				}
 				errors++;
 				fprintf(stderr, "fs tree %llu missing orphan item\n", rec->objectid);
 			}
