@@ -1672,3 +1672,36 @@ int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info)
 	printf("Successfully reset super num devices to %u\n", found_devs);
 	return 0;
 }
+
+int repair_subvol_orphan_item(struct btrfs_fs_info *fs_info, u64 rootid)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = { 0 };
+	int ret;
+
+	trans = btrfs_start_transaction(tree_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
+	ret = btrfs_add_orphan_item(trans, tree_root, &path, rootid);
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to insert orphan item for subvolume %llu: %m", rootid);
+		btrfs_abort_transaction(trans, ret);
+		btrfs_commit_transaction(trans, tree_root);
+		return ret;
+	}
+	ret = btrfs_commit_transaction(trans, tree_root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		return ret;
+	}
+	printf("Added back missing orphan item for subvolume %llu\n", rootid);
+	return 0;
+}
