@@ -1980,84 +1980,9 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 				    bytenr, num_bytes, parent,
 				    root_objectid, owner_objectid,
 				    owner_offset);
-	if (ret == 0) {
-		extent_slot = path->slots[0];
-		while (extent_slot >= 0) {
-			btrfs_item_key_to_cpu(path->nodes[0], &key,
-					      extent_slot);
-			if (key.objectid != bytenr)
-				break;
-			if (key.type == BTRFS_EXTENT_ITEM_KEY &&
-			    key.offset == num_bytes) {
-				found_extent = 1;
-				break;
-			}
-			if (key.type == BTRFS_METADATA_ITEM_KEY &&
-			    key.offset == owner_objectid) {
-				found_extent = 1;
-				break;
-			}
-			if (path->slots[0] - extent_slot > 5)
-				break;
-			extent_slot--;
-		}
-		if (!found_extent) {
-			BUG_ON(iref);
-			ret = remove_extent_backref(trans, extent_root, path,
-						    NULL, refs_to_drop,
-						    is_data);
-			BUG_ON(ret);
-			btrfs_release_path(path);
-
-			key.objectid = bytenr;
-
-			if (skinny_metadata) {
-				key.type = BTRFS_METADATA_ITEM_KEY;
-				key.offset = owner_objectid;
-			} else {
-				key.type = BTRFS_EXTENT_ITEM_KEY;
-				key.offset = num_bytes;
-			}
-
-			ret = btrfs_search_slot(trans, extent_root,
-						&key, path, -1, 1);
-			if (ret > 0 && skinny_metadata && path->slots[0]) {
-				path->slots[0]--;
-				btrfs_item_key_to_cpu(path->nodes[0],
-						      &key,
-						      path->slots[0]);
-				if (key.objectid == bytenr &&
-				    key.type == BTRFS_EXTENT_ITEM_KEY &&
-				    key.offset == num_bytes)
-					ret = 0;
-			}
-
-			if (ret > 0 && skinny_metadata) {
-				skinny_metadata = 0;
-				btrfs_release_path(path);
-				key.type = BTRFS_EXTENT_ITEM_KEY;
-				key.offset = num_bytes;
-				ret = btrfs_search_slot(trans, extent_root,
-							&key, path, -1, 1);
-			}
-
-			if (ret) {
-				printk(KERN_ERR "umm, got %d back from search"
-				       ", was looking for %llu\n", ret,
-				       (unsigned long long)bytenr);
-				btrfs_print_leaf(path->nodes[0]);
-			}
-			BUG_ON(ret);
-			extent_slot = path->slots[0];
-		}
-	} else {
-		printk(KERN_ERR "btrfs unable to find ref byte nr %llu "
-		       "parent %llu root %llu  owner %llu offset %llu\n",
-		       (unsigned long long)bytenr,
-		       (unsigned long long)parent,
-		       (unsigned long long)root_objectid,
-		       (unsigned long long)owner_objectid,
-		       (unsigned long long)owner_offset);
+	if (ret) {
+		error("unable to find ref byte nr %llu parent %llu root %llu  owner %llu offset %llu ret %d",
+		       bytenr, parent, root_objectid, owner_objectid, owner_offset, ret);
 		if (path->nodes[0]) {
 			printf("path->slots[0]: %d path->nodes[0]:\n", path->slots[0]);
 			btrfs_print_leaf(path->nodes[0]);
@@ -2065,7 +1990,68 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		ret = -EIO;
 		goto fail;
 	}
+	extent_slot = path->slots[0];
+	while (extent_slot >= 0) {
+		btrfs_item_key_to_cpu(path->nodes[0], &key, extent_slot);
+		if (key.objectid != bytenr)
+			break;
+		if (key.type == BTRFS_EXTENT_ITEM_KEY && key.offset == num_bytes) {
+			found_extent = 1;
+			break;
+		}
+		if (key.type == BTRFS_METADATA_ITEM_KEY && key.offset == owner_objectid) {
+			found_extent = 1;
+			break;
+		}
+		if (path->slots[0] - extent_slot > 5)
+			break;
+		extent_slot--;
+	}
+	if (!found_extent) {
+		BUG_ON(iref);
+		ret = remove_extent_backref(trans, extent_root, path, NULL,
+					    refs_to_drop, is_data);
+		BUG_ON(ret);
+		btrfs_release_path(path);
 
+		key.objectid = bytenr;
+
+		if (skinny_metadata) {
+			key.type = BTRFS_METADATA_ITEM_KEY;
+			key.offset = owner_objectid;
+		} else {
+			key.type = BTRFS_EXTENT_ITEM_KEY;
+			key.offset = num_bytes;
+		}
+
+		ret = btrfs_search_slot(trans, extent_root, &key, path, -1, 1);
+		if (ret > 0 && skinny_metadata && path->slots[0]) {
+			path->slots[0]--;
+			btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+			if (key.objectid == bytenr &&
+			    key.type == BTRFS_EXTENT_ITEM_KEY &&
+			    key.offset == num_bytes)
+				ret = 0;
+		}
+
+		if (ret > 0 && skinny_metadata) {
+			skinny_metadata = 0;
+			btrfs_release_path(path);
+			key.type = BTRFS_EXTENT_ITEM_KEY;
+			key.offset = num_bytes;
+			ret = btrfs_search_slot(trans, extent_root,
+						&key, path, -1, 1);
+		}
+
+		if (ret) {
+			printk(KERN_ERR "umm, got %d back from search"
+			       ", was looking for %llu\n", ret,
+			       (unsigned long long)bytenr);
+			btrfs_print_leaf(path->nodes[0]);
+		}
+		BUG_ON(ret);
+		extent_slot = path->slots[0];
+	}
 	leaf = path->nodes[0];
 	item_size = btrfs_item_size(leaf, extent_slot);
 	if (item_size < sizeof(*ei)) {
