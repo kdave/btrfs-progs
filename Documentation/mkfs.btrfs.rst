@@ -58,7 +58,7 @@ OPTIONS
 
         Default on a single device filesystem is *DUP* and is recommended for metadata
         in general. The duplication might not be necessary in some use cases and it's
-        up to the user to changed that at mkfs time or later. This depends on hardware
+        up to the user to change that at mkfs time or later. This depends on hardware
         that could potentially deduplicate the blocks again but this cannot be detected
         at mkfs time.
 
