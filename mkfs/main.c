@@ -1898,13 +1898,17 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	/* Block group tree feature requires no-holes and free-space-tree. */
+	/*
+	 * Block group tree feature requires no-holes and free-space-tree.
+	 * And if those dependency is disabled, also disable block-group-tree feature.
+	 */
 	if (features.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE &&
 	    (!(features.incompat_flags & BTRFS_FEATURE_INCOMPAT_NO_HOLES) ||
 	     !(features.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE))) {
-		error("block group tree requires no-holes and free-space-tree features");
-		exit(1);
+		warning("disabling block-group-tree feature due to missing no-holes and free-space-tree features");
+		features.compat_ro_flags &= ~BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE;
 	}
+
 	if (opt_zoned) {
 		const int blkid_version =  blkid_get_library_version(NULL, NULL);
 
