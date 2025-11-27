@@ -46,7 +46,8 @@ struct btrfs_mkfs_features {
 
 static const struct btrfs_mkfs_features btrfs_mkfs_default_features = {
 	.compat_ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
-			   BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID,
+			   BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID |
+			   BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE,
 	.incompat_flags	 = BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF |
 			   BTRFS_FEATURE_INCOMPAT_NO_HOLES |
 			   BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
