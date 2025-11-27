@@ -219,7 +219,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		.sysfs_name	= "block_group_tree",
 		VERSION_TO_STRING2(compat, 6,1),
 		VERSION_TO_STRING2(safe, 6,6),
-		VERSION_NULL(default),
+		VERSION_TO_STRING2(default, 6,19),
 		.desc		= "block group tree, more efficient block group tracking to reduce mount time"
 	},
 #if EXPERIMENTAL
