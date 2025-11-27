@@ -208,10 +208,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 			if (ret == 0)
 				count++;
 		}
-		if (count > fi_args->num_devices) {
-			printf("found more devices than fs_info\n");
+		if (count > fi_args->num_devices)
 			fi_args->num_devices = count;
-		}
 
 		/* We did not count devid 0, do another probe. */
 		ret = device_get_info(fd, 0, &tmp);
