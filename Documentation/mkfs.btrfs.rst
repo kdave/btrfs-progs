@@ -436,6 +436,11 @@ block-group-tree
         enabled at *mkfs* time is possible, see :doc:`btrfstune`. Online
         conversion is not possible.
 
+	.. note::
+		This feature requires ``no-holes`` and ``free-space-tree``
+		features, if these dependency features are disabled,
+		``block-group-tree`` feature will also be disabled automatically.
+
 .. _mkfs-feature-raid-stripe-tree:
 
 raid-stripe-tree
