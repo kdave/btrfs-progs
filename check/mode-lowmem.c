@@ -2808,8 +2808,9 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		case BTRFS_XATTR_ITEM_KEY:
 			break;
 		default:
-			error("ITEM[%llu %u %llu] UNKNOWN TYPE",
-			      key.objectid, key.type, key.offset);
+			error("ITEM[%llu %u %llu] UNKNOWN TYPE in leaf %llu",
+			      key.objectid, key.type, key.offset, node->start);
+			err |= UNKNOWN_KEY;
 		}
 	}
 
