@@ -48,6 +48,7 @@
 #define INVALID_GENERATION	(1U << 26)	/* Generation is too new */
 #define SUPER_BYTES_USED_ERROR	(1U << 27)	/* Super bytes_used is invalid */
 #define DUP_FILENAME_ERROR	(1U << 28)	/* DIR_ITEM contains duplicate names */
+#define UNKNOWN_KEY		(1U << 29)	/* Found unknown key type in fs trees */
 
 /*
  * Error bit for low memory mode check.

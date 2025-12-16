@@ -87,6 +87,7 @@ bool is_free_space_tree = false;
 bool init_extent_tree = false;
 bool check_data_csum = false;
 static bool found_free_ino_cache = false;
+static bool found_unknown_key = false;
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -1895,6 +1896,9 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 			ret = process_xattr_item(eb, i, &key, active_node);
 			break;
 		default:
+			error("unknown key (%llu %u %llu) found in leaf %llu",
+			      key.objectid, key.type, key.offset, eb->start);
+			found_unknown_key = true;
 			break;
 		};
 	}
@@ -4076,6 +4080,8 @@ out:
 		free_extent_cache_tree(&wc.shared);
 	if (!cache_tree_empty(&wc.shared))
 		fprintf(stderr, "warning line %d\n", __LINE__);
+	if (!err && found_unknown_key)
+		err = 1;
 
 	return err;
 }
