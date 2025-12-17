@@ -1016,6 +1016,17 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 	int ret = 0;
 
 	/*
+	 * We miss an INODE_REF, and we're checking DIR_ITEM and hasn't yet
+	 * find the DIR_INDEX, thus there is no reliable index.
+	 * Try to locate one, this can be slow as we need to locate the DIR_INDEX
+	 * item from the directory.
+	 */
+	if (index == (u64)-1 && (err & INODE_REF_MISSING)) {
+		ret = find_dir_index(root, dir_ino, ino, &index, name, name_len, filetype);
+		if (ret < 0)
+			err |= DIR_INDEX_MISSING;
+	}
+	/*
 	 * stage shall be one of following valild values:
 	 *	0: Fine, nothing to do.
 	 *	1: One of three is wrong, so add missing one.
