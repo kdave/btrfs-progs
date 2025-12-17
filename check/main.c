@@ -2351,6 +2351,42 @@ static int create_inode_item(struct btrfs_root *root,
 	return 0;
 }
 
+static int create_inode_ref(struct btrfs_root *root,
+			    struct inode_record *i_rec,
+			    struct inode_backref *backref)
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
+
+	ret = btrfs_insert_inode_ref(trans, root, backref->name, backref->namelen,
+				     i_rec->ino, backref->dir, backref->index);
+	if (ret < 0) {
+		btrfs_commit_transaction(trans, root);
+		return ret;
+	}
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret < 0) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		return ret;
+	}
+	backref->found_inode_ref = 1;
+	backref->errors &= ~REF_ERR_NO_INODE_REF;
+	printf("Added INODE_REF for root %lld ino %llu parent %llu index %llu name %.*s\n",
+		btrfs_root_id(root), i_rec->ino, backref->dir, backref->index,
+		backref->namelen, backref->name);
+	return 0;
+}
+
 static int repair_inode_backrefs(struct btrfs_root *root,
 				 struct inode_record *rec,
 				 struct cache_tree *inode_cache,
@@ -2375,6 +2411,21 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 		if (rec->ino == root_dirid && backref->index == 0)
 			continue;
 
+		/*
+		 * Have DIR_INDEX, DIR_ITEM and INODE_ITEM, and even nlinks
+		 * matches with only missing INODE_REF.
+		 */
+		if (!backref->found_inode_ref && backref->found_dir_item &&
+		    backref->found_dir_index && rec->found_inode_item &&
+		    rec->found_link == rec->nlink) {
+			ret = create_inode_ref(root, rec, backref);
+			if (ret)
+				break;
+			repaired++;
+			list_del(&backref->list);
+			free(backref);
+			continue;
+		}
 		if (delete &&
 		    ((backref->found_dir_index && !backref->found_inode_ref) ||
 		     (backref->found_dir_index && backref->found_inode_ref &&
