@@ -112,7 +112,7 @@ static const char * const corrupt_block_usage[] = {
 			"metadata block to corrupt (must also specify -f for the field to corrupt)"),
 	OPTLINE("-k|--keys"," corrupt block keys (set by --logical)"),
 	OPTLINE("-K|--key <u64,u8,u64>",
-		"corrupt the given key (must also specify -f for the field and optionally -r for the root)"),
+		"corrupt the given key (must also specify -f for the field, optionally -r for the root and -v for the value)"),
 	OPTLINE("-f|--field FIELD", "field name in the item to corrupt"),
 	OPTLINE("-I|--item", "corrupt an item corresponding to the passed key triplet "
 		"(must also specify the field, or a (bytes, offset, value) tuple to corrupt and root for the item)"),
@@ -557,7 +557,7 @@ out:
 }
 
 static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
-		       char *field)
+		       char *field, u64 bogus_value)
 {
 	enum btrfs_key_field corrupt_field = convert_key_field(field);
 	struct btrfs_path *path;
@@ -590,13 +590,26 @@ static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
 
 	switch (corrupt_field) {
 	case BTRFS_KEY_OBJECTID:
-		key->objectid = generate_u64(key->objectid);
+		if (bogus_value != (u64)-1)
+			key->objectid = bogus_value;
+		else
+			key->objectid = generate_u64(key->objectid);
 		break;
 	case BTRFS_KEY_TYPE:
-		key->type = generate_u8(key->type);
+		if (bogus_value != (u64)-1) {
+			if (bogus_value > UCHAR_MAX)
+				warning("value %llu is larger than U8_MAX, will be truncated for key.type",
+					bogus_value);
+			key->type = bogus_value;
+		} else {
+			key->type = generate_u8(key->type);
+		}
 		break;
 	case BTRFS_KEY_OFFSET:
-		key->offset = generate_u64(key->objectid);
+		if (bogus_value != (u64)-1)
+			key->offset = bogus_value;
+		else
+			key->offset = generate_u64(key->objectid);
 		break;
 	default:
 		error("invalid field %s, %d", field, corrupt_field);
@@ -1583,7 +1596,7 @@ int main(int argc, char **argv)
 		if (*field == 0)
 			usage(&corrupt_block_cmd, 1);
 
-		ret = corrupt_key(target_root, &key, field);
+		ret = corrupt_key(target_root, &key, field, bogus_value);
 		goto out_close;
 	}
 	if (block_group) {
