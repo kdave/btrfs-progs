@@ -2299,6 +2299,11 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root = fs_info->tree_root;
 
+	if (fs_info->transaction_aborted && fs_info->running_transaction) {
+		btrfs_cleanup_aborted_transaction(fs_info);
+		goto skip_commit;
+	}
+
 	if (fs_info->last_trans_committed !=
 	    fs_info->generation) {
 		BUG_ON(!root);

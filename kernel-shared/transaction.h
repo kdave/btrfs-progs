@@ -173,6 +173,7 @@ struct btrfs_pending_snapshot {
 
 bool __cold abort_should_print_stack(int error);
 
+void btrfs_cleanup_aborted_transaction(struct btrfs_fs_info *fs_info);
 void btrfs_abort_transaction(struct btrfs_trans_handle *trans, int error);
 int btrfs_end_transaction(struct btrfs_trans_handle *trans);
 struct btrfs_trans_handle *btrfs_start_transaction(struct btrfs_root *root,
