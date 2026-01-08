@@ -332,6 +332,21 @@ cleanup:
 	return ret;
 }
 
+void btrfs_cleanup_aborted_transaction(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans = fs_info->running_transaction;
+	int error = fs_info->transaction_aborted;
+
+	if (!error || !trans)
+		return;
+
+	btrfs_abort_transaction(trans, error);
+	clean_dirty_buffers(trans);
+	btrfs_destroy_delayed_refs(trans);
+	kfree(trans);
+	fs_info->running_transaction = NULL;
+}
+
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root)
 {
@@ -417,10 +432,7 @@ commit_tree:
 	}
 	return ret;
 error:
-	btrfs_abort_transaction(trans, ret);
-	clean_dirty_buffers(trans);
-	btrfs_destroy_delayed_refs(trans);
-	kfree(trans);
+	btrfs_cleanup_aborted_transaction(fs_info);
 	return ret;
 }
 
