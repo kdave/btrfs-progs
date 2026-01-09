@@ -635,22 +635,25 @@ out:
 	return ret;
 }
 
-static int discard_logical_range_mirror(struct btrfs_fs_info *fs_info, int mirror,
-					u64 start, u64 len)
+static int discard_logical_range(struct btrfs_fs_info *fs_info, u64 start, u64 len)
 {
-	struct btrfs_multi_bio *multi = NULL;
 	int ret;
 	u64 cur_offset = 0;
 	u64 cur_len;
 
 	while (cur_offset < len) {
+		struct btrfs_multi_bio *multi = NULL;
 		struct btrfs_device *device;
 
 		cur_len = len - cur_offset;
-		ret = btrfs_map_block(fs_info, READ, start + cur_offset, &cur_len,
-				      &multi, mirror, NULL);
+		ret = btrfs_map_block(fs_info, WRITE, start + cur_offset, &cur_len, &multi, 0, NULL);
 		if (ret)
 			return ret;
+
+		if (multi->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+			free(multi);
+			return 0;
+		}
 
 		cur_len = min(cur_len, len - cur_offset);
 
@@ -674,22 +677,6 @@ static int discard_logical_range_mirror(struct btrfs_fs_info *fs_info, int mirro
 		multi = NULL;
 		cur_offset += cur_len;
 	}
-
-	return 0;
-}
-
-static int discard_logical_range(struct btrfs_fs_info *fs_info, u64 start, u64 len)
-{
-	int ret, num_copies;
-
-	num_copies = btrfs_num_copies(fs_info, start, len);
-
-	for (int i = 0; i < num_copies; i++) {
-		ret = discard_logical_range_mirror(fs_info, i + 1, start, len);
-		if (ret < 0)
-			return ret;
-	}
-
 	return 0;
 }
 
