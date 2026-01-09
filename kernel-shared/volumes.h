@@ -39,6 +39,9 @@ struct btrfs_device {
 	struct btrfs_fs_devices *fs_devices;
 	struct btrfs_fs_info *fs_info;
 
+	/* Record the ranges that need to be discarded during mkfs. */
+	struct cache_tree discard;
+
 	u64 total_ios;
 
 	int fd;

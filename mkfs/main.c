@@ -1279,6 +1279,66 @@ cleanup:
 	return ret;
 }
 
+static int queue_discard_logical(struct btrfs_fs_info *fs_info, u64 start, u64 len)
+{
+	struct btrfs_multi_bio *multi = NULL;
+	int ret;
+	u64 cur_offset = 0;
+	u64 cur_len = 0;
+
+	while (cur_offset < len) {
+		struct btrfs_device *device;
+
+		cur_len = len - cur_offset;
+		ret = btrfs_map_block(fs_info, WRITE, start + cur_offset, &cur_len, &multi, 0, NULL);
+		if (ret)
+			return ret;
+
+		if (multi->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+			free(multi);
+			break;
+		}
+
+		cur_len = min(cur_len, len - cur_offset);
+
+		for (int i = 0; i < multi->num_stripes; i++) {
+			device = multi->stripes[i].dev;
+
+			ret = add_merge_cache_extent(&device->discard,
+					multi->stripes[i].physical, cur_len);
+			if (ret < 0) {
+				free(multi);
+				return ret;
+			}
+		}
+		free(multi);
+		multi = NULL;
+		cur_offset += cur_len;
+	}
+	return 0;
+}
+
+static int discard_all_devices(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_device *dev;
+
+	list_for_each_entry(dev, &fs_info->fs_devices->devices, dev_list) {
+		if (!dev->writeable)
+			continue;
+		for (struct cache_extent *cache = first_cache_extent(&dev->discard);
+		     cache; cache = next_cache_extent(cache)) {
+			int ret;
+
+			ret = device_discard_blocks(dev->fd, cache->start, cache->size);
+			if (ret == EOPNOTSUPP)
+				return 0;
+			if (ret < 0)
+				return ret;
+		}
+	}
+	return 0;
+}
+
 static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profile)
 {
 	struct btrfs_root *free_space_root;
@@ -1328,7 +1388,7 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 
 		if (key.type == BTRFS_FREE_SPACE_EXTENT_KEY) {
-			ret = discard_logical_range(fs_info, key.objectid, key.offset);
+			ret = queue_discard_logical(fs_info, key.objectid, key.offset);
 			if (ret < 0)
 				goto out;
 		} else if (key.type == BTRFS_FREE_SPACE_BITMAP_KEY) {
@@ -1357,7 +1417,7 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 				addr = key.objectid + (start_bit * fs_info->sectorsize);
 				length = (end_bit - start_bit) * fs_info->sectorsize;
 
-				ret = discard_logical_range(fs_info, addr, length);
+				ret = queue_discard_logical(fs_info, addr, length);
 				if (ret < 0) {
 					free(bitmap);
 					goto out;
@@ -1371,8 +1431,10 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 
 		path.slots[0]++;
 	}
+	btrfs_release_path(&path);
 
-	ret = 0;
+	/* Every discard range is properly queued. Now submit the real discard request. */
+	return discard_all_devices(fs_info);
 
 out:
 	btrfs_release_path(&path);
