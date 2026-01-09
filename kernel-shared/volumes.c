@@ -554,6 +554,7 @@ static int device_list_add(const char *path,
 			/* we can safely leave the fs_devices entry around */
 			return -ENOMEM;
 		}
+		cache_tree_init(&device->discard);
 		device->fd = -1;
 		device->devid = devid;
 		device->generation = found_transid;
@@ -643,6 +644,7 @@ again:
 		}
 		device->writeable = 0;
 		list_del(&device->dev_list);
+		free_extent_cache_tree(&device->discard);
 		/* free the memory */
 		kfree(device->name);
 		kfree(device->label);
@@ -2388,6 +2390,7 @@ static struct btrfs_device *fill_missing_device(u64 devid, const u8 *uuid)
 
 	device = kzalloc(sizeof(*device), GFP_NOFS);
 	device->devid = devid;
+	cache_tree_init(&device->discard);
 	memcpy(device->uuid, uuid, BTRFS_UUID_SIZE);
 	device->fd = -1;
 	return device;
@@ -2561,6 +2564,7 @@ static int read_one_dev(struct btrfs_fs_info *fs_info,
 		device = kzalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;
+		cache_tree_init(&device->discard);
 		device->fd = -1;
 		list_add(&device->dev_list,
 			 &fs_info->fs_devices->devices);
