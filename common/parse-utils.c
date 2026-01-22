@@ -427,6 +427,7 @@ static u64 tree_id_from_string(const char *str, const char **end)
 		{ "BLOCK-GROUP", BTRFS_BLOCK_GROUP_TREE_OBJECTID },
 		{ "RAID_STRIPE", BTRFS_RAID_STRIPE_TREE_OBJECTID },
 		{ "RAID-STRIPE", BTRFS_RAID_STRIPE_TREE_OBJECTID },
+		{ "REMAP", BTRFS_REMAP_TREE_OBJECTID },
 	};
 
 	if (strncasecmp("BTRFS_", str, strlen("BTRFS_")) == 0)

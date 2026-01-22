@@ -767,6 +767,9 @@ void print_key_type(FILE *stream, u64 objectid, u8 type)
 		[BTRFS_UUID_KEY_SUBVOL]		= "UUID_KEY_SUBVOL",
 		[BTRFS_UUID_KEY_RECEIVED_SUBVOL] = "UUID_KEY_RECEIVED_SUBVOL",
 		[BTRFS_RAID_STRIPE_KEY]		= "RAID_STRIPE",
+		[BTRFS_IDENTITY_REMAP_KEY]	= "IDENTITY_REMAP",
+		[BTRFS_REMAP_KEY]		= "REMAP",
+		[BTRFS_REMAP_BACKREF_KEY]	= "REMAP_BACKREF",
 	};
 
 	if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID) {
@@ -881,6 +884,9 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 		break;
 	case  BTRFS_RAID_STRIPE_TREE_OBJECTID:
 		fprintf(stream, "RAID_STRIPE_TREE");
+		break;
+	case BTRFS_REMAP_TREE_OBJECTID:
+		fprintf(stream, "REMAP_TREE");
 		break;
 	case (u64)-1:
 		fprintf(stream, "-1");
@@ -1939,6 +1945,7 @@ static struct readable_flag_entry incompat_flags_array[] = {
 	DEF_INCOMPAT_FLAG_ENTRY(EXTENT_TREE_V2),
 	DEF_INCOMPAT_FLAG_ENTRY(RAID_STRIPE_TREE),
 	DEF_INCOMPAT_FLAG_ENTRY(SIMPLE_QUOTA),
+	DEF_INCOMPAT_FLAG_ENTRY(REMAP_TREE),
 };
 static const int incompat_flags_num = ARRAY_SIZE(incompat_flags_array);
 
