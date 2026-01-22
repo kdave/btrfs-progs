@@ -677,6 +677,10 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
 
 #define BTRFS_RAID_STRIPE_KEY	230
 
+#define BTRFS_IDENTITY_REMAP_KEY	234
+#define BTRFS_REMAP_KEY			235
+#define BTRFS_REMAP_BACKREF_KEY		236
+
 #define BTRFS_BALANCE_ITEM_KEY	248
 
 /*
