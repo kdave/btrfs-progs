@@ -815,6 +815,9 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 	if (location->objectid == BTRFS_RAID_STRIPE_TREE_OBJECTID)
 		return fs_info->stripe_root ? fs_info->stripe_root : ERR_PTR(-ENOENT);
 
+	if (location->objectid == BTRFS_REMAP_TREE_OBJECTID)
+		return fs_info->remap_root ? fs_info->remap_root : ERR_PTR(-ENOENT);
+
 	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID);
 
 	node = rb_search(&fs_info->fs_root_tree, (void *)&objectid,
@@ -850,6 +853,9 @@ void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 	if (fs_info->stripe_root)
 		kfree(fs_info->stripe_root);
 
+	if (fs_info->remap_root)
+		kfree(fs_info->remap_root);
+
 	free_global_roots_tree(&fs_info->global_roots_tree);
 	kfree(fs_info->tree_root);
 	kfree(fs_info->chunk_root);
@@ -876,12 +882,13 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->uuid_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->stripe_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->block_group_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->remap_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
 
 	if (!fs_info->tree_root || !fs_info->chunk_root || !fs_info->dev_root ||
 	    !fs_info->quota_root || !fs_info->uuid_root ||
 	    !fs_info->block_group_root || !fs_info->super_copy ||
-	    !fs_info->stripe_root)
+	    !fs_info->stripe_root || !fs_info->remap_root)
 		goto free_all;
 
 	extent_buffer_init_cache(fs_info);
@@ -1226,6 +1233,21 @@ tree_root:
 		return -EIO;
 	}
 
+	if (btrfs_fs_incompat(fs_info, REMAP_TREE) && btrfs_super_remap_root(sb) != 0) {
+		bytenr = btrfs_super_remap_root(sb);
+		gen = btrfs_super_remap_root_generation(sb);
+		level = btrfs_super_remap_root_level(sb);
+
+		root = fs_info->remap_root;
+		btrfs_setup_root(root, fs_info, BTRFS_REMAP_TREE_OBJECTID);
+
+		ret = read_root_node(fs_info, root, bytenr, gen, level);
+		if (ret) {
+			btrfs_warn(fs_info, "couldn't read remap root");
+			return ret;
+		}
+	}
+
 	return 0;
 }
 
@@ -1365,6 +1387,8 @@ void btrfs_release_all_roots(struct btrfs_fs_info *fs_info)
 		free_extent_buffer(fs_info->uuid_root->node);
 	if (fs_info->stripe_root)
 		free_extent_buffer(fs_info->stripe_root->node);
+	if (fs_info->remap_root)
+		free_extent_buffer(fs_info->remap_root->node);
 }
 
 static void free_map_lookup(struct cache_extent *ce)
@@ -1648,6 +1672,11 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 	if (ret) {
 		error("zoned: failed to initialize zoned mode: %d", ret);
 		goto out_chunk;
+	}
+
+	if (btrfs_fs_incompat(fs_info, REMAP_TREE)) {
+		btrfs_setup_root(fs_info->remap_root, fs_info,
+				 BTRFS_REMAP_TREE_OBJECTID);
 	}
 
 	eb = fs_info->chunk_root->node;
