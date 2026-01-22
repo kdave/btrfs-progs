@@ -241,6 +241,11 @@ static void bg_flags_to_str(u64 flags, char *ret)
 			strncat(ret, "|", BG_FLAG_STRING_LEN);
 		strncat(ret, "SYSTEM", BG_FLAG_STRING_LEN);
 	}
+	if (flags & BTRFS_BLOCK_GROUP_METADATA_REMAP) {
+		if (!empty)
+			strncat(ret, "|", BG_FLAG_STRING_LEN);
+		strncat(ret, "METADATA_REMAP", BG_FLAG_STRING_LEN);
+	}
 	name = btrfs_bg_type_to_raid_name(flags);
 	if (!name) {
 		snprintf(profile, BG_FLAG_STRING_LEN, "UNKNOWN.0x%llx",
