@@ -2092,6 +2092,85 @@ error:
 	return ret;
 }
 
+static int btrfs_translate_remap(struct btrfs_fs_info *fs_info, u64 *logical, u64 *length)
+{
+	int ret;
+	struct btrfs_key key, found_key;
+	struct extent_buffer *leaf;
+	struct btrfs_remap_item *remap;
+	struct btrfs_path *path;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = *logical;
+	key.type = BTRFS_IDENTITY_REMAP_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_info->remap_root, &key, path, 0, 0);
+	if (ret < 0) {
+		btrfs_free_path(path);
+		return ret;
+	}
+
+	leaf = path->nodes[0];
+
+	if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+		ret = btrfs_next_leaf(fs_info->remap_root, path);
+		if (ret < 0) {
+			btrfs_free_path(path);
+			return ret;
+		}
+
+		leaf = path->nodes[0];
+	}
+
+	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+
+	if (found_key.objectid > *logical) {
+		if (path->slots[0] == 0) {
+			ret = btrfs_prev_leaf(fs_info->remap_root, path);
+			if (ret) {
+				if (ret == 1)
+					ret = -ENOENT;
+				return ret;
+			}
+
+			leaf = path->nodes[0];
+		} else {
+			path->slots[0]--;
+		}
+
+		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+	}
+
+	if (found_key.type != BTRFS_REMAP_KEY && found_key.type != BTRFS_IDENTITY_REMAP_KEY) {
+		btrfs_free_path(path);
+		return -ENOENT;
+	}
+
+	if (found_key.objectid > *logical || found_key.objectid + found_key.offset <= *logical) {
+		btrfs_free_path(path);
+		return -ENOENT;
+	}
+
+	if (*logical + *length > found_key.objectid + found_key.offset)
+		*length = found_key.objectid + found_key.offset - *logical;
+
+	if (found_key.type == BTRFS_IDENTITY_REMAP_KEY) {
+		btrfs_free_path(path);
+		return 0;
+	}
+
+	remap = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_remap_item);
+	*logical = *logical - found_key.objectid + btrfs_remap_address(leaf, remap);
+
+	btrfs_free_path(path);
+
+	return 0;
+}
+
 int __btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 		      u64 logical, u64 *length, u64 *type,
 		      struct btrfs_multi_bio **multi_ret, int mirror_num,
@@ -2127,13 +2206,38 @@ again:
 		return -ENOENT;
 	}
 
+	map = container_of(ce, struct map_lookup, ce);
+
+	if (map->type & BTRFS_BLOCK_GROUP_REMAPPED) {
+		int ret;
+		u64 new_logical = logical;
+
+		ret = btrfs_translate_remap(fs_info, &new_logical, length);
+		if (ret)
+			return ret;
+
+		if (new_logical != logical) {
+			ce = search_cache_extent(&map_tree->cache_tree, new_logical);
+			if (!ce) {
+				*length = (u64)-1;
+				return -ENOENT;
+			}
+			if (ce->start > new_logical) {
+				*length = ce->start - new_logical;
+				return -ENOENT;
+			}
+
+			map = container_of(ce, struct map_lookup, ce);
+			logical = new_logical;
+		}
+	}
+
 	if (multi_ret) {
 		multi = kzalloc(btrfs_multi_bio_size(stripes_allocated),
 				GFP_NOFS);
 		if (!multi)
 			return -ENOMEM;
 	}
-	map = container_of(ce, struct map_lookup, ce);
 	offset = logical - ce->start;
 
 	if (rw == WRITE) {
