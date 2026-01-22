@@ -294,6 +294,8 @@ struct btrfs_block_group {
 	bool zone_is_active;
 
 	u64 global_root_id;
+	u64 remap_bytes;
+	u32 identity_remap_count;
 };
 
 struct btrfs_device;
