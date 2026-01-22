@@ -204,10 +204,10 @@ static int create_free_space_tree(int fd, struct btrfs_mkfs_config *cfg,
 }
 
 static void write_block_group_item(struct extent_buffer *buf, u32 nr,
-				   u64 objectid, u64 offset, u64 used,
-				   u64 chunk_objectid, u32 itemoff)
+				   u64 objectid, u64 offset, bool have_remap_tree,
+				   u64 used, u64 chunk_objectid, u32 itemoff)
 {
-	struct btrfs_block_group_item *bg_item;
+	struct btrfs_block_group_item_v2 *bg_item;
 	struct btrfs_disk_key disk_key;
 
 	btrfs_set_disk_key_objectid(&disk_key, objectid);
@@ -215,12 +215,21 @@ static void write_block_group_item(struct extent_buffer *buf, u32 nr,
 	btrfs_set_disk_key_type(&disk_key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 	btrfs_set_item_key(buf, &disk_key, nr);
 	btrfs_set_item_offset(buf, nr, itemoff);
-	btrfs_set_item_size(buf, nr, sizeof(*bg_item));
 
-	bg_item = btrfs_item_ptr(buf, nr, struct btrfs_block_group_item);
-	btrfs_set_block_group_used(buf, bg_item, used);
-	btrfs_set_block_group_flags(buf, bg_item, BTRFS_BLOCK_GROUP_SYSTEM);
-	btrfs_set_block_group_chunk_objectid(buf, bg_item, chunk_objectid);
+	if (have_remap_tree)
+		btrfs_set_item_size(buf, nr, sizeof(*bg_item));
+	else
+		btrfs_set_item_size(buf, nr, sizeof(struct btrfs_block_group_item));
+
+	bg_item = btrfs_item_ptr(buf, nr, struct btrfs_block_group_item_v2);
+	btrfs_set_block_group_v2_used(buf, bg_item, used);
+	btrfs_set_block_group_v2_flags(buf, bg_item, BTRFS_BLOCK_GROUP_SYSTEM);
+	btrfs_set_block_group_v2_chunk_objectid(buf, bg_item, chunk_objectid);
+
+	if (have_remap_tree) {
+		btrfs_set_block_group_v2_remap_bytes(buf, bg_item, 0);
+		btrfs_set_block_group_v2_identity_remap_count(buf, bg_item, 0);
+	}
 }
 
 static int create_block_group_tree(int fd, struct btrfs_mkfs_config *cfg,
@@ -229,6 +238,8 @@ static int create_block_group_tree(int fd, struct btrfs_mkfs_config *cfg,
 {
 	int ret;
 	u64 chunk_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	bool have_remap_tree;
+	size_t bgi_size;
 
 	/*
 	 * For extent-tree-v2, chunk_objectid of block group item is reused
@@ -240,11 +251,19 @@ static int create_block_group_tree(int fd, struct btrfs_mkfs_config *cfg,
 	if (cfg->features.incompat_flags & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2)
 		chunk_objectid = 0;
 
+	have_remap_tree = cfg->features.incompat_flags & BTRFS_FEATURE_INCOMPAT_REMAP_TREE;
+
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
-	write_block_group_item(buf, 0, bg_offset, bg_size, bg_used,
-			       chunk_objectid, cfg->leaf_data_size -
-			       sizeof(struct btrfs_block_group_item));
+
+	if (have_remap_tree)
+		bgi_size = sizeof(struct btrfs_block_group_item_v2);
+	else
+		bgi_size = sizeof(struct btrfs_block_group_item);
+
+	write_block_group_item(buf, 0, bg_offset, bg_size,
+			       have_remap_tree, bg_used, chunk_objectid,
+			       cfg->leaf_data_size - bgi_size);
 	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_BLOCK_GROUP_TREE]);
 	btrfs_set_header_owner(buf, BTRFS_BLOCK_GROUP_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, 1);
@@ -396,6 +415,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 				   BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE);
 	bool extent_tree_v2 = !!(cfg->features.incompat_flags &
 				 BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2);
+	bool have_remap_tree = !!(cfg->features.incompat_flags &
+				 BTRFS_FEATURE_INCOMPAT_REMAP_TREE);
 
 	memcpy(blocks, default_blocks,
 	       sizeof(enum btrfs_mkfs_block) * ARRAY_SIZE(default_blocks));
@@ -485,6 +506,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	buf->len = cfg->nodesize;
 	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_ROOT_TREE]);
 	btrfs_set_header_generation(buf, 1);
+	btrfs_set_header_flags(buf, BTRFS_HEADER_FLAG_WRITTEN);
 	btrfs_set_header_backref_rev(buf, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(buf, BTRFS_ROOT_TREE_OBJECTID);
 	write_extent_buffer(buf, super.fsid, btrfs_header_fsid(),
@@ -508,10 +530,15 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 		/* Add the block group item for our temporary chunk. */
 		if (cfg->blocks[blk] > system_group_offset && add_block_group) {
-			itemoff -= sizeof(struct btrfs_block_group_item);
+			if (have_remap_tree)
+				itemoff -= sizeof(struct btrfs_block_group_item_v2);
+			else
+				itemoff -= sizeof(struct btrfs_block_group_item);
+
 			write_block_group_item(buf, nritems,
 					       system_group_offset,
-					       system_group_size, total_used,
+					       system_group_size,
+					       have_remap_tree, total_used,
 					       BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					       itemoff);
 			add_block_group = false;
