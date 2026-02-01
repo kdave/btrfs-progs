@@ -169,7 +169,7 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		bytes_per_sec = bytes_scrubbed;
 	else
 		bytes_per_sec = bytes_scrubbed / s->duration;
-	if (bytes_per_sec > 0)
+	if (bytes_per_sec > 0 && bytes_total >= bytes_scrubbed)
 		sec_left = (bytes_total - bytes_scrubbed) / bytes_per_sec;
 
 	err_cnt = p->read_errors +
