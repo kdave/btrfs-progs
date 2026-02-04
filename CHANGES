@@ -1,3 +1,6 @@
+btrfs-progs-6.18 (skipped)
+--------------------------
+
 btrfs-progs-6.17 (2025-09-29)
 -----------------------------
    * inspect list-chunks: more sorting keys, descending order
