@@ -29,6 +29,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/file-item.h"
+#include "kernel-shared/print-tree.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/clear-cache.h"
@@ -132,6 +133,128 @@ close_out:
 	return ret;
 }
 
+/*
+ * Return 0 if we found an fst entry in range [start, start + length), @path will
+ * be updated to pointing to that entry.
+ *
+ * Return >0 if we found no more fst entry in range [start, start + length).
+ *
+ * Return <0 for error.
+ */
+static int find_first_fst_entry(struct btrfs_root *root, struct btrfs_path *path,
+				u64 start, u64 length)
+{
+	struct btrfs_key key = {
+		.objectid = start
+	};
+	int ret;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (unlikely(ret < 0))
+		goto out;
+	if (unlikely(ret == 0)) {
+		ret = -EUCLEAN;
+		error("unexpected key found in slot %u", path->slots[0]);
+		btrfs_print_leaf(path->nodes[0]);
+		goto out;
+	}
+	while (true) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret)
+				goto out;
+		}
+		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		/* Beyond the range. No more entry. */
+		if (key.objectid >= start + length) {
+			ret = 1;
+			goto out;
+		}
+		/* In the range, return this one. */
+		if (key.objectid >= start && key.objectid < start + length)
+			break;
+
+		/* The current key is small than our range, continue searching. */
+		path->slots[0]++;
+	}
+
+	/* We found a key in our range. */
+	UASSERT(path->nodes[0]);
+	return 0;
+out:
+	UASSERT(ret != 0);
+	btrfs_release_path(path);
+	return ret;
+}
+
+static int remove_free_space_entries(struct btrfs_root *root, struct btrfs_path *path,
+				     const struct btrfs_key *space_info_key)
+{
+	struct btrfs_trans_handle *trans = NULL;
+	u64 start = space_info_key->objectid;
+	const u64 end = start + space_info_key->offset - 1;
+	u64 cur = start;
+	int ret;
+
+	while (cur <= end) {
+		struct btrfs_key found_key;
+		int found_slot;
+		int last_slot;
+
+		ret = find_first_fst_entry(root, path, cur, end + 1 - cur);
+		if (ret < 0)
+			goto error;
+		if (ret > 0)
+			break;
+
+		btrfs_item_key_to_cpu(path->nodes[0], &found_key, path->slots[0]);
+		btrfs_release_path(path);
+
+		trans = btrfs_start_transaction(root, 1);
+		if (IS_ERR(trans)) {
+			error_msg(ERROR_MSG_START_TRANS, "remove orphan fst entry");
+			return PTR_ERR(trans);
+		}
+		ret = btrfs_search_slot(trans, root, &found_key, path, -1, 1);
+		if (ret > 0)
+			ret = -ENOENT;
+		if (ret < 0)
+			goto error;
+
+		found_slot = path->slots[0];
+
+		/*
+		 * @last_slot will be the next slot of the last item which matches
+		 * our range.
+		 */
+		for (last_slot = found_slot + 1;
+		     last_slot < btrfs_header_nritems(path->nodes[0]); last_slot++) {
+			btrfs_item_key_to_cpu(path->nodes[0], &found_key, last_slot);
+			if (found_key.objectid >= start && found_key.objectid <= end)
+				cur = found_key.objectid;
+			else
+				break;
+		}
+		ret = btrfs_del_items(trans, root, path, found_slot, last_slot - found_slot);
+		if (ret < 0)
+			goto error;
+		btrfs_release_path(path);
+		ret = btrfs_commit_transaction(trans, root);
+		trans = NULL;
+		if (ret < 0) {
+			error_msg(ERROR_MSG_START_TRANS, "remove orphan fst entry");
+			goto error;
+		}
+	}
+	printf("deleted orphan fst entries for range [%llu, %llu)\n", start, end + 1);
+	return 0;
+error:
+	btrfs_release_path(path);
+	if (trans)
+		btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 static int check_free_space_tree(struct btrfs_root *root)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -167,10 +290,16 @@ static int check_free_space_tree(struct btrfs_root *root)
 
 		bg = btrfs_lookup_block_group(fs_info, key.objectid);
 		if (!bg) {
+			btrfs_release_path(&path);
 			fprintf(stderr,
 "Space key logical %llu length %llu has no corresponding block group\n",
 				key.objectid, key.offset);
-			found_orphan = true;
+			if (opt_check_repair)
+				ret = remove_free_space_entries(root, &path, &key);
+			else
+				ret = -EINVAL;
+			if (ret < 0)
+				found_orphan = true;
 		}
 
 		btrfs_release_path(&path);
