@@ -138,6 +138,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 	struct btrfs_key key = { 0 };
 	struct btrfs_path path = { 0 };
 	int ret = 0;
+	bool found_orphan = false;
 
 	while (1) {
 		struct btrfs_block_group *bg;
@@ -167,16 +168,19 @@ static int check_free_space_tree(struct btrfs_root *root)
 		bg = btrfs_lookup_block_group(fs_info, key.objectid);
 		if (!bg) {
 			fprintf(stderr,
-		"We have a space info key for a block group that doesn't exist\n");
-			ret = -EINVAL;
-			goto out;
+"Space key logical %llu length %llu has no corresponding block group\n",
+				key.objectid, key.offset);
+			found_orphan = true;
 		}
 
 		btrfs_release_path(&path);
 		key.objectid += key.offset;
 		key.offset = 0;
 	}
-	ret = 0;
+	if (found_orphan)
+		ret = -EINVAL;
+	else
+		ret = 0;
 out:
 	btrfs_release_path(&path);
 	return ret;
