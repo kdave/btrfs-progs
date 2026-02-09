@@ -53,9 +53,8 @@ struct btrfs_mapping_tree {
 
 static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 {
-	BUG_ON(num_stripes == 0);
-	return sizeof(struct btrfs_chunk) +
-		sizeof(struct btrfs_stripe) * (num_stripes - 1);
+	return offsetof(struct btrfs_chunk, stripe) +
+		sizeof(struct btrfs_stripe) * num_stripes;
 }
 
 static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
