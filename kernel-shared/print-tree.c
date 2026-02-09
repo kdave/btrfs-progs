@@ -721,6 +721,12 @@ static void print_raid_stripe_key(struct extent_buffer *eb,
 		       (unsigned long long)btrfs_raid_stride_physical_nr(eb, stripe, i));
 }
 
+static void print_remap_key(struct extent_buffer *leaf, u32 item_size,
+			    struct btrfs_remap_item *remap)
+{
+	printf("\t\taddress %llu\n", btrfs_remap_address(leaf, remap));
+}
+
 void print_key_type(FILE *stream, u64 objectid, u8 type)
 {
 	static const char* key_to_str[256] = {
@@ -1654,6 +1660,10 @@ void __btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			break;
 		case BTRFS_RAID_STRIPE_KEY:
 			print_raid_stripe_key(eb, item_size, ptr);
+			break;
+		case BTRFS_REMAP_KEY:
+		case BTRFS_REMAP_BACKREF_KEY:
+			print_remap_key(eb, item_size, ptr);
 			break;
 		case BTRFS_DEV_REPLACE_KEY:
 			print_dev_replace_item(eb, ptr);
