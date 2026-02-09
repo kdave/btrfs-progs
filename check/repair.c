@@ -276,6 +276,49 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 	return ret;
 }
 
+static int walk_remap_tree(struct btrfs_fs_info *fs_info, struct extent_buffer *node,
+			   struct extent_io_tree *io_tree)
+{
+	u64 bytenr;
+	struct extent_buffer *eb;
+	u8 level;
+	int ret;
+
+	level = btrfs_header_level(node);
+	set_extent_dirty(io_tree, node->start, node->start + fs_info->nodesize - 1, GFP_NOFS);
+
+	if (level == 0)
+		return 0;
+
+	for (int i = 0; i < btrfs_header_nritems(node); i++) {
+		bytenr = btrfs_node_blockptr(node, i);
+
+		if (level == 1) {
+			set_extent_dirty(io_tree, bytenr, bytenr + fs_info->nodesize - 1,
+					 GFP_NOFS);
+			continue;
+		}
+
+		struct btrfs_tree_parent_check check = {
+			.level = btrfs_header_level(node) - 1,
+		};
+
+		eb = read_tree_block(fs_info, bytenr, &check);
+
+		if (IS_ERR(eb))
+			return PTR_ERR(eb);
+
+		ret = walk_remap_tree(fs_info, eb, io_tree);
+
+		free_extent_buffer(eb);
+
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
 			   struct extent_io_tree *tree)
 {
@@ -294,6 +337,12 @@ int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
 		root = rb_entry(n, struct btrfs_root, rb_node);
 		if (root->root_key.objectid != BTRFS_EXTENT_TREE_OBJECTID)
 			break;
+	}
+
+	if (fs_info->remap_root->node) {
+		ret = walk_remap_tree(fs_info, fs_info->remap_root->node, tree);
+		if (ret)
+			return ret;
 	}
 
 	return ret;
