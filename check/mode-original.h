@@ -105,6 +105,7 @@ struct extent_record {
 	unsigned int bad_full_backref:1;
 	unsigned int crossing_stripes:1;
 	unsigned int wrong_chunk_type:1;
+	unsigned int remap_tree:1;
 };
 
 static inline struct extent_record* to_extent_record(struct list_head *entry)
