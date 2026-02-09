@@ -9,8 +9,8 @@ kernel. It does not tell anything about at which kernel version it is
 considered mature enough for production use. For an estimation on stability of
 features see :doc:`Status<Status>` page.
 
-7.1 (latest)
-------------
+7.x
+---
 
 7.0 - blocksize > page size, enable direct IO
 
@@ -49,6 +49,29 @@ features see :doc:`Status<Status>` page.
         shutdown or not if the redundancy allows that.
 
 7.1 - report filesystem shutdown using fserror mechanism
+
+7.2 (latest)
+------------
+
+7.2 - large folios enabled by default
+        No longer experimental (but not working on systems with HIGHMEM).
+
+7.2 - direct IO writes are not serialized
+	Missed update after port to new mount API caused unnecessary
+	synchronization, this can bring back about 50% of throughput.
+
+7.2 - more tree-checker verifications
+        Check root item refs and backrefs, free space items, inode references.
+
+7.2 - *(expermental)* huge folio support
+        Support folios of size 2MiB.
+
+7.2 - *(debug builds)* removed support for 2K block size on x86_64
+
+7.2 - new ioctl GET_CSUMS to read raw checksums
+        An unprivileged ioctl to read block checksums of a file.
+
+7.2 - add 32-bit compat ioctl for GET_SUBVOL_INFO
 
 6.x
 ---
