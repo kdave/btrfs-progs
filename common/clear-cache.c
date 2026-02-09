@@ -302,24 +302,166 @@ static int check_cache_range(struct btrfs_root *root,
 	return 0;
 }
 
+static int find_next_identity_remap_entry(struct btrfs_fs_info *fs_info,
+					  u64 *start, u64 *end)
+{
+	struct btrfs_key key;
+	struct btrfs_path path = { 0 };
+	struct extent_buffer *leaf;
+	int ret;
+
+	key.objectid = *start;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_info->remap_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		btrfs_release_path(&path);
+		return ret;
+	}
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(fs_info->remap_root, &path);
+			if (ret)
+				break;
+			leaf = path.nodes[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.type == BTRFS_IDENTITY_REMAP_KEY) {
+			*start = key.objectid;
+			*end = key.objectid + key.offset - 1;
+			btrfs_release_path(&path);
+			return 0;
+		}
+
+		path.slots[0]++;
+	}
+
+	btrfs_release_path(&path);
+
+	return -ENOENT;
+}
+
+static int find_next_remap_backref_entry(struct btrfs_fs_info *fs_info,
+					 u64 *start, u64 *end)
+{
+	struct btrfs_key key;
+	struct btrfs_path path = { 0 };
+	struct extent_buffer *leaf;
+	int ret;
+
+	key.objectid = *start;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_info->remap_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		btrfs_release_path(&path);
+		return ret;
+	}
+
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(fs_info->remap_root, &path);
+			if (ret)
+				break;
+			leaf = path.nodes[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+
+		if (key.type == BTRFS_REMAP_BACKREF_KEY) {
+			*start = key.objectid;
+			*end = key.objectid + key.offset - 1;
+			btrfs_release_path(&path);
+			return 0;
+		}
+
+		path.slots[0]++;
+	}
+
+	btrfs_release_path(&path);
+
+	return -ENOENT;
+}
+
 static int verify_space_cache(struct btrfs_root *root,
 			      struct btrfs_block_group *cache,
 			      struct extent_io_tree *used)
 {
-	u64 start, end, last_end, bg_end;
+	u64 start, end, last_end, bg_end, extent_start, extent_end;
+	u64 remap_start, remap_end;
 	int ret = 0;
 
 	start = cache->start;
 	bg_end = cache->start + cache->length;
 	last_end = start;
+	remap_end = 0;
 
 	while (start < bg_end) {
-		ret = find_first_extent_bit(used, cache->start, &start, &end,
-					    EXTENT_DIRTY, NULL);
-		if (ret || start >= bg_end) {
+		if (cache->flags & BTRFS_BLOCK_GROUP_REMAPPED) {
+			remap_start = start;
+
+			ret = find_next_identity_remap_entry(root->fs_info,
+						&remap_start, &remap_end);
+
+			if (ret)
+				remap_start = bg_end;
+
+			extent_start = bg_end;
+			extent_end = bg_end;
+		} else {
+			if (cache->remap_bytes != 0) {
+				remap_start = start;
+
+				ret = find_next_remap_backref_entry(root->fs_info,
+						&remap_start, &remap_end);
+
+				if (ret)
+					remap_start = bg_end;
+			} else {
+				remap_start = bg_end;
+				remap_end = bg_end;
+			}
+
+			extent_start = start;
+
+			ret = find_first_extent_bit(used, cache->start,
+						    &extent_start, &extent_end,
+						    EXTENT_DIRTY, NULL);
+
+			if (ret) {
+				extent_start = bg_end;
+				extent_end = bg_end;
+			}
+		}
+
+		if (extent_start >= bg_end && remap_start >= bg_end) {
 			ret = 0;
 			break;
 		}
+
+		if (remap_start < extent_start) {
+			start = remap_start;
+			end = remap_end;
+
+			if (extent_start == remap_end + 1)
+				end = extent_end;
+		} else {
+			start = extent_start;
+			end = extent_end;
+
+			if (remap_start == extent_end + 1)
+				end = remap_end;
+		}
+
 		if (last_end < start) {
 			ret = check_cache_range(root, cache, last_end,
 						start - last_end);
@@ -332,9 +474,12 @@ static int verify_space_cache(struct btrfs_root *root,
 		last_end = start;
 	}
 
-	if (last_end < bg_end)
+	if (last_end < bg_end) {
 		ret = check_cache_range(root, cache, last_end,
 					bg_end - last_end);
+	} else {
+		ret = 0;
+	}
 
 	if (!ret &&
 	    !RB_EMPTY_ROOT(&cache->free_space_ctl->free_space_offset)) {
@@ -388,6 +533,17 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 			}
 			ret = load_free_space_tree(fs_info, cache);
 			free_excluded_extents(fs_info, cache);
+
+			if (ret == 0 && cache->flags & BTRFS_BLOCK_GROUP_REMAPPED) {
+				fprintf(stderr,
+					"free space entries found in remapped block group\n");
+				error++;
+				continue;
+			}
+
+			if (cache->flags & BTRFS_BLOCK_GROUP_REMAPPED && ret == -ENOENT)
+				continue;
+
 			if (ret < 0) {
 				errno = -ret;
 				fprintf(stderr,
