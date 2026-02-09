@@ -210,7 +210,7 @@ features see :doc:`Status<Status>` page.
         Merkle tree, descriptor and signature blocks for fs-verity enabled
         files.
 
-6.14 - *experimental* read balancing policies
+6.14 - *(experimental)* read balancing policies
         Add more read balancing policies, configurable in :file:`/sys/fs/btrfs/FSID/read_policy`
         or as module parameter *read_policy*.  Newly added *round-robin*,
         *devid:N* (select a specific mirror number *N*).
@@ -240,14 +240,11 @@ features see :doc:`Status<Status>` page.
 6.16 - *standalone mount option nologreplay removed*
         Deprecated in 5.9 and replaced with *rescue=nologreplay*.
 
-6.17 (latest)
--------------
-
 6.17 - track current commit duration in commit_stats
         Add entry to :file:`commit_stats` to detect commit stalls, for
         debugging or monitoring purposes.
 
-6.17 - *experimental* large folio support
+6.17 - *(experimental)* large folio support
         Large folios abstract contiguous page ranges representing some filesystem
         data or metadata as one structure instead of several ones. This simplifies
         code and has a positive impact on performance. As it touches the core
@@ -272,9 +269,29 @@ features see :doc:`Status<Status>` page.
         A debugging feature to track references (now implemented for delayed
         refs) and report leaks eventually.
 
-6.18 - *experimental* enable block size > page size support
+6.18 - *(experimental)* enable block size > page size support
         Initial support for *bs > ps* with limitations (no direct IO, raid56,
         encoded read/write).
+
+6.19 (latest)
+-------------
+
+6.19 - *(experimental)* shutdown ioctl
+        Support ioctl to forcibly shut down filesystem operation
+        (same as XFS_IOC_GOINGDOWN or EXT4_IOC_SHUTDOWN)
+
+6.19 - cancel scrub if fs is being frozen
+        Check if there's a request to freeze the filesystem and cancel scrub if
+        it's running. This is a workaround so e.g. suspend/hibernate is not
+        blocked.
+
+6.19 - blocksize > page size updates
+        Support more operations: encoded read/write, raid56. The
+        free-space-tree feature is mandatory in this case.
+
+6.19 - *(experimental)* all checksum calculations in workqueues
+        Move all checksum calculations to workqueues, from the IO submission
+        time. This may increase IO latency for some workloads.
 
 5.x
 ---
