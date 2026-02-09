@@ -4957,6 +4957,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->parent_generation = tmpl->parent_generation;
 	rec->generation = tmpl->generation;
 	rec->level = tmpl->level;
+	rec->remap_tree = tmpl->remap_tree;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->dups);
 	INIT_LIST_HEAD(&rec->list);
@@ -6787,6 +6788,7 @@ static int run_next_block(struct btrfs_root *root,
 			tmpl.refs = 1;
 			tmpl.metadata = 1;
 			tmpl.max_size = size;
+			tmpl.remap_tree = ri->objectid == BTRFS_REMAP_TREE_OBJECTID ? 1 : 0;
 			ret = add_extent_rec(extent_cache, &tmpl);
 			if (ret < 0)
 				goto out;
@@ -6840,6 +6842,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 	tmpl.refs = 1;
 	tmpl.metadata = 1;
 	tmpl.max_size = buf->len;
+	tmpl.remap_tree = objectid == BTRFS_REMAP_TREE_OBJECTID ? 1 : 0;
 	add_extent_rec(extent_cache, &tmpl);
 
 	if (objectid == BTRFS_TREE_RELOC_OBJECTID ||
@@ -8382,14 +8385,21 @@ static int check_extent_refs(struct btrfs_root *root,
 			}
 		}
 
-		if (rec->metadata && rec->level != rec->info_level) {
+		if (rec->metadata && !rec->remap_tree &&
+		    rec->level != rec->info_level) {
 			fprintf(stderr,
 				"metadata level mismatch on [%llu, %llu]\n",
 				rec->start, rec->nr);
 			cur_err = 1;
 		}
 
-		if (rec->refs != rec->extent_item_refs) {
+		if (rec->remap_tree && rec->extent_item_refs != 0) {
+			fprintf(stderr, "ref mismatch on [%llu %llu] ",
+				rec->start, rec->nr);
+			fprintf(stderr, "extent item %llu, expected 0\n",
+				rec->extent_item_refs);
+			cur_err = 1;
+		} else if (!rec->remap_tree && rec->refs != rec->extent_item_refs) {
 			fprintf(stderr, "ref mismatch on [%llu %llu] ",
 				rec->start, rec->nr);
 			fprintf(stderr, "extent item %llu, found %llu\n",
