@@ -4227,6 +4227,7 @@ static void print_data_backref_error(struct extent_record *rec,
 static void print_tree_backref_error(struct extent_record *rec, struct tree_backref *tback)
 {
 	struct extent_backref *back = &tback->node;
+	u64 root = back->full_backref ? tback->parent : tback->root;
 
 	/*
 	 * For tree blocks, we only handle two cases here:
@@ -4237,20 +4238,28 @@ static void print_tree_backref_error(struct extent_record *rec, struct tree_back
 	 * The refs count check is done by the global backref check at
 	 * all_backpointers_checked().
 	 */
-	if (!back->found_extent_tree) {
-		fprintf(stderr,
+	if (root == BTRFS_REMAP_TREE_OBJECTID) {
+		if (back->found_extent_tree) {
+			fprintf(stderr,
+"tree extent[%llu, %llu] %s %llu has unexpected backref item in extent tree\n",
+				rec->start, rec->max_size,
+				(back->full_backref ? "parent" : "root"), root);
+			return;
+		}
+	} else {
+		if (!back->found_extent_tree) {
+			fprintf(stderr,
 "tree extent[%llu, %llu] %s %llu has no backref item in extent tree\n",
-			rec->start, rec->max_size,
-			(back->full_backref ? "parent" : "root"),
-			(back->full_backref ? tback->parent : tback->root));
-		return;
+				rec->start, rec->max_size,
+				(back->full_backref ? "parent" : "root"), root);
+			return;
+		}
 	}
 	if (!back->found_ref) {
 		fprintf(stderr,
 "tree extent[%llu, %llu] %s %llu has no tree block found\n",
 			rec->start, rec->max_size,
-			(back->full_backref ? "parent" : "root"),
-			(back->full_backref ? tback->parent : tback->root));
+			(back->full_backref ? "parent" : "root"), root);
 		return;
 	}
 }
@@ -4273,7 +4282,19 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 
 	rbtree_postorder_for_each_entry_safe(back, tmp,
 					     &rec->backref_tree, node) {
-		if (!back->found_extent_tree) {
+		bool remap_tree = false;
+
+		if (!back->is_data) {
+			struct tree_backref *tback = to_tree_backref(back);
+			u64 root = back->full_backref ? tback->parent : tback->root;
+
+			if (root == BTRFS_REMAP_TREE_OBJECTID)
+				remap_tree = true;
+		}
+
+		/* The remap tree doesn't have backrefs.  */
+		if ((!remap_tree && !back->found_extent_tree) ||
+		    (remap_tree && back->found_extent_tree)) {
 			err = 1;
 			if (!print_errs)
 				goto out;
