@@ -296,12 +296,6 @@ void print_chunk_item(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 	u32 chunk_item_size;
 	char chunk_flags_str[BG_FLAG_STRING_LEN] = {};
 
-	/* The chunk must contain at least one stripe */
-	if (num_stripes < 1) {
-		printf("invalid num_stripes: %u\n", num_stripes);
-		return;
-	}
-
 	chunk_item_size = btrfs_chunk_item_size(num_stripes);
 
 	if ((unsigned long)chunk + chunk_item_size > eb->len) {
