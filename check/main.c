@@ -6793,6 +6793,11 @@ static int run_next_block(struct btrfs_root *root,
 			if (ret < 0)
 				goto out;
 
+			if (tmpl.remap_tree) {
+				update_block_group_used(block_group_cache, ptr,
+							size);
+			}
+
 			ret = add_tree_backref(extent_cache, ptr, parent,
 					owner, 1);
 			if (ret < 0) {
@@ -6825,6 +6830,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 			       struct cache_tree *pending,
 			       struct cache_tree *seen,
 			       struct cache_tree *nodes,
+			       struct block_group_tree *block_group_cache,
 			       u64 objectid)
 {
 	struct extent_record tmpl;
@@ -6844,6 +6850,9 @@ static int add_root_to_pending(struct extent_buffer *buf,
 	tmpl.max_size = buf->len;
 	tmpl.remap_tree = objectid == BTRFS_REMAP_TREE_OBJECTID ? 1 : 0;
 	add_extent_rec(extent_cache, &tmpl);
+
+	if (tmpl.remap_tree)
+		update_block_group_used(block_group_cache, buf->start, buf->len);
 
 	if (objectid == BTRFS_TREE_RELOC_OBJECTID ||
 	    btrfs_header_backref_rev(buf) < BTRFS_MIXED_BACKREF_REV)
@@ -8938,7 +8947,8 @@ static int deal_root_from_list(struct list_head *list,
 			break;
 		}
 		ret = add_root_to_pending(buf, extent_cache, pending,
-				    seen, nodes, rec->objectid);
+				    seen, nodes, block_group_cache,
+				    rec->objectid);
 		if (ret < 0)
 			break;
 		/*
