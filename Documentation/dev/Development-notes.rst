@@ -513,7 +513,8 @@ Kernel config options for complete test coverage
 -  ``CONFIG_EXT4_FS=m`` or ``y``
 -  ``CONFIG_SCSI_DEBUG=m``
 -  ``CONFIG_BLK_DEV_ZONED=y`` for zoned mode test coverage
--  ``CONFIG_IO_URING==y``
+-  ``CONFIG_IO_URING=y``
+-  ``CONFIG_NUMA=y`` lack of *get_mempolicy()* syscall spills to test results
 
 
 Kernel config options for better bug reports
@@ -534,6 +535,8 @@ User space utilities and development library dependencies
 -  e2fsprogs
 -  fio
 -  fsverity-utils
+-  fscrypt
+-  keyctl
 -  libacl
 -  libaio
 -  libattr
@@ -551,19 +554,31 @@ Storage environment
 ^^^^^^^^^^^^^^^^^^^
 
 -  at least 4 identically sized partitions/disks/virtual disks, specified using
-   ``$SCRATCH_DEV_POOL``
--  some tests may require 8 equally sized ``SCRATCH_DEV_POOL`` partitions
+   ``$SCRATCH_DEV_POOL``, also the ``$SCRATCH_DEV`` must not be set at the same
+   time
+-  some tests may require 8 equally sized ``$SCRATCH_DEV_POOL`` partitions
 -  some tests need at least 10G of free space, as determined by ``df``, i.e.
    the size of the device may need to be larger, 12G should work
 -  some tests require ``$LOGWRITES_DEV``, yet another separate block device,
    for power fail testing
 -  for testing trim and discard, the devices must be capable of that (physical
    or virtual)
+-  zoned devices are automatically detected at mkfs time, some tests are
+   skipped as they cannot run on such devices but failures can still occur due
+   to feature incompatibility or lack of related features compiled (e.g.
+   raid-stripe-tree)
 
 Other requirements
 ^^^^^^^^^^^^^^^^^^
+
+The test device (``$TEST_DEV``) must be initialized before first run of fstests,
+e.g. using the config values :command:`mkfs.btrfs $MKFS_OPTIONS $TEST_DEV`.
 
 -  An ``fsgqa`` user and group must exist.
 -  An ``fsgqa2`` user and group must exist.
 -  The user ``nobody`` must exist.
 -  An ``123456-fsgqa`` user and group must exist.
+
+The *loopback* network interface may be needed for some tests. Device mapper
+devices rely on *udev* to wait until they're established (workarounds are
+possible on udev-less systems).
