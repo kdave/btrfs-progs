@@ -4890,7 +4890,8 @@ static void check_extent_type(struct extent_record *rec)
 
 	/* metadata extent, check the obvious case first */
 	if (!(bg_cache->flags & (BTRFS_BLOCK_GROUP_SYSTEM |
-				 BTRFS_BLOCK_GROUP_METADATA))) {
+				 BTRFS_BLOCK_GROUP_METADATA |
+				 BTRFS_BLOCK_GROUP_METADATA_REMAP))) {
 		rec->wrong_chunk_type = 1;
 		return;
 	}
@@ -4914,6 +4915,8 @@ static void check_extent_type(struct extent_record *rec)
 
 		if (tback->root == BTRFS_CHUNK_TREE_OBJECTID)
 			bg_type = BTRFS_BLOCK_GROUP_SYSTEM;
+		else if (tback->root == BTRFS_REMAP_TREE_OBJECTID)
+			bg_type = BTRFS_BLOCK_GROUP_METADATA_REMAP;
 		else
 			bg_type = BTRFS_BLOCK_GROUP_METADATA;
 		if (!(bg_cache->flags & bg_type))
