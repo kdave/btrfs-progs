@@ -50,9 +50,6 @@ features see :doc:`Status<Status>` page.
 
 7.1 - report filesystem shutdown using fserror mechanism
 
-7.2 (latest)
-------------
-
 7.2 - large folios enabled by default
         No longer experimental (but not working on systems with HIGHMEM).
 
@@ -72,6 +69,23 @@ features see :doc:`Status<Status>` page.
         An unprivileged ioctl to read block checksums of a file.
 
 7.2 - add 32-bit compat ioctl for GET_SUBVOL_INFO
+
+7.3 (latest)
+------------
+
+7.3 - free space v1 disabled by default
+        The v2 (free space tree) is mkfs default since 5.15, filesystems with
+        v1 still work but could be slightly slower due to lack of block group
+        caching.
+
+7.3 - mount option *rescue=usebackuproot* requires read-only mount
+
+7.3 - remove standalone mount option *usebackuproot*
+        This was deprecated in 5.9
+
+7.3 - blocks < page size also for non-4KiB pages
+        Remove arbitrary limitation of 4KiB for page size when allowing block
+        sizes smaller than page.
 
 6.x
 ---
