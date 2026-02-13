@@ -2216,6 +2216,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	    btrfs_bg_type_to_tolerated_failures(data_profile))
 		warning("metadata has lower redundancy than data!\n");
 
+	if (bconf.verbose) {
+		printf("NOTE: default settings have changed in version 6.19 (supported since linux 6.1):\n");
+		printf("      - enable block-group-tree (-O bgt)\n");
+		printf("\n");
+	}
+
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
 	memcpy(mkfs_cfg.dev_uuid, dev_uuid, sizeof(mkfs_cfg.dev_uuid));
