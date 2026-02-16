@@ -869,7 +869,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	if (!opt_offline) {
 		fdmnt = btrfs_open_mnt(dev_path);
 		if (fdmnt < 0) {
-			if (fdmnt == -ENOTDIR && !opt_offline)
+			if (fdmnt == -ENOTDIR)
 				error("to read device stats from a file image use --offline option");
 			return 1;
 		}
