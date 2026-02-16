@@ -796,7 +796,7 @@ static int get_fs_info_offline(struct btrfs_fs_info *fs_info,
 			 */
 			if (device->name)
 				strncpy_null((char *)di_args[i].path, device->name,
-					     BTRFS_DEVICE_PATH_NAME_MAX + 1);
+					     sizeof(di_args[i].path));
 			i++;
 		}
 	}
@@ -937,8 +937,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
 		int err2;
 
-		strncpy_null(path, (char *)di_args[i].path,
-			     BTRFS_DEVICE_PATH_NAME_MAX + 1);
+		strncpy_null(path, (char *)di_args[i].path, sizeof(path));
 
 		args.devid = di_args[i].devid;
 		args.nr_items = BTRFS_DEV_STAT_VALUES_MAX;
