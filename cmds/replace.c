@@ -267,7 +267,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		}
 	} else if (path_is_block_device(srcdev) > 0) {
 		strncpy_null((char *)start_args.start.srcdev_name, srcdev,
-			     BTRFS_DEVICE_PATH_NAME_MAX + 1);
+			     sizeof(start_args.start.srcdev_name));
 		start_args.start.srcdevid = 0;
 		ret = device_get_partition_size(srcdev, &srcdev_size);
 		if (ret < 0) {
@@ -303,7 +303,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	}
 
 	strncpy_null((char *)start_args.start.tgtdev_name, dstdev,
-		     BTRFS_DEVICE_PATH_NAME_MAX + 1);
+		     sizeof(start_args.start.tgtdev_name));
 	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
 			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
 			(discard ? PREP_DEVICE_DISCARD : 0) |

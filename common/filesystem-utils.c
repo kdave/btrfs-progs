@@ -104,7 +104,8 @@ static int set_label_unmounted(const char *dev, const char *label)
 		error_msg(ERROR_MSG_START_TRANS, "set label");
 		return PTR_ERR(trans);
 	}
-	strncpy_null(root->fs_info->super_copy->label, label, BTRFS_LABEL_SIZE);
+	strncpy_null(root->fs_info->super_copy->label, label,
+		     sizeof(root->fs_info->super_copy->label));
 
 	btrfs_commit_transaction(trans, root);
 
@@ -125,7 +126,7 @@ static int set_label_mounted(const char *mount_path, const char *labelp)
 	}
 
 	memset(label, 0, sizeof(label));
-	strncpy_null(label, labelp, BTRFS_LABEL_SIZE);
+	strncpy_null(label, labelp, sizeof(label));
 	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
 		error("unable to set label of %s: %m", mount_path);
 		close(fd);
