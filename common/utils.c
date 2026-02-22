@@ -375,19 +375,27 @@ struct mnt_entry {
 /*
  * Find first occurrence of up an option string (as "option=") in @options,
  * separated by comma. Return allocated string as "option=value"
+ *
+ * If NULL is returned, the caller needs to check errno to make sure it's not
+ * caused by memory allocation failure.
  */
 static char *find_option(const char *options, const char *option)
 {
-	char *tmp, *ret;
+	const char *tmp;
+	char *ret;
+	int i;
 
+	errno = 0;
 	tmp = strstr(options, option);
 	if (!tmp)
 		return NULL;
 	ret = strdup(tmp);
-	tmp = ret;
-	while (*tmp && *tmp != ',')
-		tmp++;
-	*tmp = 0;
+	if (!ret)
+		return NULL;
+	i = 0;
+	while (*(ret + i) && *(ret + i) != ',')
+		i++;
+	*(ret + i) = '\0';
 	return ret;
 }
 
@@ -600,6 +608,10 @@ int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount)
 			 * requested by the caller
 			 */
 			opt = find_option(ent.options2, "subvolid=");
+			if (!opt && errno) {
+				ret = -errno;
+				goto out;
+			}
 			if (!opt)
 				goto nextline;
 			value = opt + strlen("subvolid=");
