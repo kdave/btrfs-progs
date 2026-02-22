@@ -968,7 +968,7 @@ const char *bconf_param_value(const char *key)
 	return NULL;
 }
 
-void bconf_save_param(const char *str)
+void bconf_save_param(char *str)
 {
 	char *tmp;
 
