@@ -84,18 +84,17 @@ static void generic_err(const struct extent_buffer *eb, int slot,
 			const char *fmt, ...)
 {
 	const struct btrfs_fs_info *fs_info = eb->fs_info;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(fs_info,
-		"corrupt %s: root=%llu block=%llu slot=%d, %pV",
+		"corrupt %s: root=%llu block=%llu slot=%d, " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
-		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot, &vaf);
+		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
@@ -112,20 +111,19 @@ static void file_extent_err(const struct extent_buffer *eb, int slot,
 {
 	const struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct btrfs_key key;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(fs_info,
-	"corrupt %s: root=%llu block=%llu slot=%d ino=%llu file_offset=%llu, %pV",
+	"corrupt %s: root=%llu block=%llu slot=%d ino=%llu file_offset=%llu, " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
-		key.objectid, key.offset, &vaf);
+		key.objectid, key.offset, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
@@ -174,20 +172,19 @@ static void dir_item_err(const struct extent_buffer *eb, int slot,
 {
 	const struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct btrfs_key key;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(fs_info,
-		"corrupt %s: root=%llu block=%llu slot=%d ino=%llu, %pV",
+		"corrupt %s: root=%llu block=%llu slot=%d ino=%llu, " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
-		key.objectid, &vaf);
+		key.objectid, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
@@ -677,20 +674,19 @@ static void block_group_err(const struct extent_buffer *eb, int slot,
 {
 	const struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct btrfs_key key;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(fs_info,
-	"corrupt %s: root=%llu block=%llu slot=%d bg_start=%llu bg_len=%llu, %pV",
+	"corrupt %s: root=%llu block=%llu slot=%d bg_start=%llu bg_len=%llu, " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
-		key.objectid, key.offset, &vaf);
+		key.objectid, key.offset, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
@@ -797,7 +793,7 @@ static void chunk_err(const struct extent_buffer *leaf,
 {
 	const struct btrfs_fs_info *fs_info = leaf->fs_info;
 	bool is_sb;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 	int i;
 	int slot = -1;
@@ -819,18 +815,17 @@ static void chunk_err(const struct extent_buffer *leaf,
 		}
 	}
 	va_start(args, fmt);
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	if (is_sb)
 		btrfs_crit(fs_info,
-		"corrupt superblock syschunk array: chunk_start=%llu, %pV",
-			   logical, &vaf);
+		"corrupt superblock syschunk array: chunk_start=%llu, " PV_FMT,
+			   logical, PV_VAL(vaf));
 	else
 		btrfs_crit(fs_info,
-	"corrupt leaf: root=%llu block=%llu slot=%d chunk_start=%llu, %pV",
+	"corrupt leaf: root=%llu block=%llu slot=%d chunk_start=%llu, " PV_FMT,
 			   BTRFS_CHUNK_TREE_OBJECTID, leaf->start, slot,
-			   logical, &vaf);
+			   logical, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)leaf, 0);
@@ -1060,20 +1055,19 @@ static void dev_item_err(const struct extent_buffer *eb, int slot,
 			 const char *fmt, ...)
 {
 	struct btrfs_key key;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(eb->fs_info,
-	"corrupt %s: root=%llu block=%llu slot=%d devid=%llu %pV",
+	"corrupt %s: root=%llu block=%llu slot=%d devid=%llu " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
 		btrfs_header_owner(eb), btrfs_header_bytenr(eb), slot,
-		key.objectid, &vaf);
+		key.objectid, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
@@ -1308,7 +1302,7 @@ static void extent_err(const struct extent_buffer *eb, int slot,
 		       const char *fmt, ...)
 {
 	struct btrfs_key key;
-	struct va_format vaf;
+	DECLARE_PV(vaf);
 	va_list args;
 	u64 bytenr;
 	u64 len;
@@ -1323,13 +1317,12 @@ static void extent_err(const struct extent_buffer *eb, int slot,
 		len = key.offset;
 	va_start(args, fmt);
 
-	vaf.fmt = fmt;
-	vaf.va = &args;
+	PV_ASSIGN(vaf, fmt, args);
 
 	btrfs_crit(eb->fs_info,
-	"corrupt %s: block=%llu slot=%d extent bytenr=%llu len=%llu %pV",
+	"corrupt %s: block=%llu slot=%d extent bytenr=%llu len=%llu " PV_FMT,
 		btrfs_header_level(eb) == 0 ? "leaf" : "node",
-		eb->start, slot, bytenr, len, &vaf);
+		eb->start, slot, bytenr, len, PV_VAL(vaf));
 	va_end(args);
 
 	btrfs_print_tree((struct extent_buffer *)eb, 0);
