@@ -7,10 +7,10 @@ run-name: Static binaries
 on:
   push:
     branches:
-      - master
+      - devel-ci
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update -qqq
@@ -18,9 +18,9 @@ jobs:
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation
       - name: Make static
-        run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
+        run: make V=1 EXTRA_CFLAGS='-march=armv8-a' static
       - name: Make box.static
-        run: make V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
+        run: make V=1 EXTRA_CFLAGS='-march=armv8-a' btrfs.box.static
       - name: Strip binaries
         run: strip btrfs.static btrfs.box.static
       - name: Calculate SHA256 checksums
