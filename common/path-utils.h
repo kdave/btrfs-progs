@@ -31,7 +31,7 @@ int path_is_a_mount_point(const char *file);
 int path_exists(const char *file);
 int path_is_reg_file(const char *path);
 int path_is_dir(const char *path);
-int is_same_loop_file(const char *a, const char *b);
+int is_same_blk_file(const char* a, const char* b);
 int path_is_reg_or_block_device(const char *filename);
 int path_is_in_dir(const char *parent, const char *path);
 char *path_basename(char *path);

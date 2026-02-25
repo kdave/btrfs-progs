@@ -36,8 +36,7 @@
 #include "common/open-utils.h"
 
 /*
- * Check if a file is used (directly or indirectly via a loop device) by a
- * device in fs_devices
+ * Check if a file is used  by a device in fs_devices
  */
 static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 		const char* file)
@@ -46,7 +45,7 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 	struct btrfs_device *device;
 
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
-		if((ret = is_same_loop_file(device->name, file)))
+		if((ret = is_same_blk_file(device->name, file)))
 			return ret;
 	}
 
@@ -94,7 +93,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 			else if(!ret)
 				continue;
 
-			ret = is_same_loop_file(file, mnt->mnt_fsname);
+			ret = is_same_blk_file(file, mnt->mnt_fsname);
 		}
 
 		if(ret < 0)
