@@ -1297,7 +1297,7 @@ static int process_encoded_write(const char *path, const void *data, u64 offset,
 		if (ret >= 0)
 			return 0;
 		/* Fall back for these errors, fail hard for anything else. */
-		if (errno != ENOSPC && errno != ENOTTY && errno != EINVAL) {
+		if (errno != ENOSPC && errno != ENOTTY && errno != EINVAL && errno != EPERM) {
 			ret = -errno;
 			error("encoded_write: writing to %s failed: %m", path);
 			return ret;
