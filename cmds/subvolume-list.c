@@ -68,6 +68,7 @@ static const char * const cmd_subvolume_list_usage[] = {
 	OPTLINE("-u", "print the uuid of subvolumes (and snapshots)"),
 	OPTLINE("-q", "print the parent uuid of the snapshots"),
 	OPTLINE("-R", "print the uuid of the received snapshots"),
+	OPTLINE("-F", "print the flags of the subvolume"),
 	"",
 	"Type filtering:",
 	OPTLINE("-s", "list only snapshots"),
@@ -189,6 +190,7 @@ enum btrfs_list_column_enum {
 	BTRFS_LIST_PUUID,
 	BTRFS_LIST_RUUID,
 	BTRFS_LIST_UUID,
+	BTRFS_LIST_FLAGS,
 	BTRFS_LIST_PATH,
 	BTRFS_LIST_ALL,
 };
@@ -278,6 +280,11 @@ static struct {
 	{
 		.name		= "uuid",
 		.column_name	= "UUID",
+		.need_print	= 0,
+	},
+	{
+		.name		= "flags",
+		.column_name	= "Flags",
 		.need_print	= 0,
 	},
 	{
@@ -1193,6 +1200,13 @@ static void print_subvolume_column(struct root_info *subv,
 			uuid_unparse(subv->ruuid, uuidparse);
 		pr_verbose(LOG_DEFAULT, "%-36s", uuidparse);
 		break;
+	case BTRFS_LIST_FLAGS:
+		if (subv->flags & BTRFS_ROOT_SUBVOL_RDONLY)
+			strcpy(tstr, "readonly");
+		else
+			strcpy(tstr, "-");
+		pr_verbose(LOG_DEFAULT, "%s", tstr);
+		break;
 	case BTRFS_LIST_PATH:
 		BUG_ON(!subv->full_path);
 		pr_verbose(LOG_DEFAULT, "%s", subv->full_path);
@@ -1320,6 +1334,12 @@ static void print_subvol_json_key(struct format_ctx *fctx,
 		break;
 	case BTRFS_LIST_RUUID:
 		fmt_print(fctx, column_name, subv->ruuid);
+		break;
+	case BTRFS_LIST_FLAGS:
+		fmt_print_start_group(fctx, "flags", JSON_TYPE_ARRAY);
+		if (subv->flags & BTRFS_ROOT_SUBVOL_RDONLY)
+		    fmt_print(fctx, "flag-list-item", "readonly");
+		fmt_print_end_group(fctx, "flags");
 		break;
 	case BTRFS_LIST_PATH:
 		BUG_ON(!subv->full_path);
@@ -1610,7 +1630,7 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 		};
 
 		c = getopt_long(argc, argv,
-				    "acdgopqsurRG:C:t", long_options, NULL);
+				    "acdgopqsurRFG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -1653,6 +1673,9 @@ static int cmd_subvolume_list(const struct cmd_struct *cmd, int argc, char **arg
 			break;
 		case 'R':
 			btrfs_list_setup_print_column(BTRFS_LIST_RUUID);
+			break;
+		case 'F':
+			btrfs_list_setup_print_column(BTRFS_LIST_FLAGS);
 			break;
 		case 'r':
 			flags |= BTRFS_ROOT_SUBVOL_RDONLY;
