@@ -74,9 +74,9 @@ int parse_u64(const char *str, u64 *result)
  */
 int parse_range_u64(const char *range, u64 *start, u64 *end)
 {
-	char *dots;
-	char *endptr;
+	const char *dots;
 	const char *rest;
+	char *endptr;
 	int skipped = 0;
 
 	dots = strstr(range, "..");
