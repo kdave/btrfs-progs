@@ -151,9 +151,9 @@ static int create_one_subvolume(const char *dst, struct btrfs_util_qgroup_inheri
 	char *dstdir;
 	enum btrfs_util_error err;
 
-	strncpy_null(dupname, dst, PATH_MAX);
+	strncpy_null(dupname, dst, sizeof(dupname));
 	newname = path_basename(dupname);
-	strncpy_null(dupdir, dst, PATH_MAX);
+	strncpy_null(dupdir, dst, sizeof(dupdir));
 	dstdir = path_dirname(dupdir);
 
 	if (create_parents) {
