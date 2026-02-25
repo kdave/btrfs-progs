@@ -7,15 +7,15 @@ run-name: Devel build and tests
 on:
   push:
     branches:
-      - devel
-      - 'ci/**'
+      - devel-ci
 jobs:
   build-simple:
     name: Simple build tests, manual page build test
     strategy:
       matrix:
         compiler: [ gcc, clang ]
-    runs-on: ubuntu-24.04
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Get changed files
@@ -48,8 +48,10 @@ jobs:
             Documentation/man-preview.sh "$file" >> $GITHUB_STEP_SUMMARY
           done
       - name: Make static
+        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-24.04' }}
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
+        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-24.04' }}
         run: make V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
   build-musl:
     name: Build test on musl
@@ -62,7 +64,8 @@ jobs:
     strategy:
       matrix:
         compiler: [ gcc, clang ]
-    runs-on: ubuntu-24.04
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
@@ -88,7 +91,10 @@ jobs:
         run: make hash-vectest && ./hash-vectest
   test-mkfs:
     name: Test mkfs.btrfs
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
@@ -109,7 +115,10 @@ jobs:
           if-no-files-found: ignore
   test-check:
     name: Test btrfs check
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
@@ -132,7 +141,10 @@ jobs:
           if-no-files-found: ignore
   test-misc:
     name: Test misc
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
@@ -153,7 +165,10 @@ jobs:
           if-no-files-found: ignore
   test-convert:
     name: Test btrfs-convert
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
@@ -174,7 +189,10 @@ jobs:
           if-no-files-found: ignore
   test-other:
     name: Test cli, fuzz
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: sudo modprobe btrfs
