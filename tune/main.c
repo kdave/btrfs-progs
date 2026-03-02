@@ -131,6 +131,7 @@ static const char * const tune_usage[] = {
 	"",
 	"EXPERIMENTAL FEATURES:",
 	OPTLINE("--csum CSUM", "switch checksum for data and metadata to CSUM"),
+	OPTLINE("--convert-to-remap-tree", "convert filesystem to use the remap tree"),
 #endif
 	NULL
 };
@@ -165,6 +166,9 @@ enum btrfstune_group_enum {
 	/* Qgroup options */
 	QGROUP,
 
+	/* Remap tree. */
+	REMAP_TREE,
+
 	BTRFSTUNE_NR_GROUPS,
 };
 
@@ -197,6 +201,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	bool to_extent_tree = false;
 	bool to_bg_tree = false;
 	bool to_fst = false;
+	bool to_remap_tree = false;
 	int csum_type = -1;
 	char *new_fsid_str = NULL;
 	int ret;
@@ -217,6 +222,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		       GETOPT_VAL_ENABLE_FREE_SPACE_TREE,
 		       GETOPT_VAL_ENABLE_SIMPLE_QUOTA,
 		       GETOPT_VAL_REMOVE_SIMPLE_QUOTA,
+		       GETOPT_VAL_ENABLE_REMAP_TREE,
 		       GETOPT_VAL_VERSION,
 		};
 		static const struct option long_options[] = {
@@ -234,6 +240,8 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 				GETOPT_VAL_REMOVE_SIMPLE_QUOTA},
 #if EXPERIMENTAL
 			{ "csum", required_argument, NULL, GETOPT_VAL_CSUM },
+			{ "convert-to-remap-tree", no_argument, NULL,
+				GETOPT_VAL_ENABLE_REMAP_TREE},
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
@@ -310,6 +318,10 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			ctree_flags |= OPEN_CTREE_SKIP_CSUM_CHECK;
 			csum_type = parse_csum_type(optarg);
 			btrfstune_cmd_groups[CSUM_CHANGE] = true;
+			break;
+		case GETOPT_VAL_ENABLE_REMAP_TREE:
+			to_remap_tree = true;
+			btrfstune_cmd_groups[REMAP_TREE] = true;
 			break;
 #endif
 		case GETOPT_VAL_VERSION:
@@ -422,6 +434,24 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		goto out;
 	}
 
+	if (to_remap_tree) {
+		if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
+			if (to_extent_tree) {
+				error("remap tree option depends on the block-group tree");
+				ret = -EINVAL;
+				goto out;
+			} else {
+				printf("remap tree depends on block-group tree, enabling that also\n");
+				to_bg_tree = true;
+			}
+		}
+
+		if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE_VALID)) {
+			printf("remap tree depends on free-space tree, enabling that also\n");
+			to_fst = true;
+		}
+	}
+
  	if (to_bg_tree) {
 		if (to_extent_tree) {
 			error("option --convert-to-block-group-tree conflicts with --convert-from-block-group-tree");
@@ -443,7 +473,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 			error("failed to convert the filesystem to block group tree feature");
 			goto out;
 		}
-		goto out;
+
+		if (!to_remap_tree)
+			goto out;
 	}
 	if (to_fst) {
 		if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE_VALID)) {
@@ -454,7 +486,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		ret = convert_to_fst(fs_info);
 		if (ret < 0)
 			error("failed to convert the filesystem to free-space-tree feature");
-		goto out;
+
+		if (!to_remap_tree)
+			goto out;
 	}
 	if (to_extent_tree) {
 		if (to_bg_tree) {
@@ -493,6 +527,17 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		}
 
 		ret = update_seeding_flag(root, device, seeding_value, force);
+		goto out;
+	}
+	if (to_remap_tree) {
+		if (btrfs_fs_incompat(fs_info, REMAP_TREE)) {
+			error("filesystem already has remap-tree feature");
+			ret = -EINVAL;
+			goto out;
+		}
+		ret = convert_to_remap_tree(fs_info);
+		if (ret < 0)
+			error("failed to convert the filesystem to remap-tree feature");
 		goto out;
 	}
 

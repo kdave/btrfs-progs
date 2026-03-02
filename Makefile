@@ -289,7 +289,8 @@ mkfs_objects = mkfs/main.o mkfs/common.o mkfs/rootdir.o
 image_objects = image/main.o image/sanitize.o image/image-create.o image/common.o \
 		image/image-restore.o
 tune_objects = tune/main.o tune/seeding.o tune/change-uuid.o tune/change-metadata-uuid.o \
-	       tune/convert-bgt.o tune/change-csum.o common/clear-cache.o tune/quota.o
+	       tune/convert-bgt.o tune/change-csum.o common/clear-cache.o tune/quota.o \
+	       tune/convert-remap-tree.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(tune_objects) $(libbtrfsutil_objects)
 
