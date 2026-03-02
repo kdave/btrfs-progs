@@ -2269,6 +2269,7 @@ int write_ctree_super(struct btrfs_trans_handle *trans)
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
+	struct btrfs_root *remap_root = fs_info->remap_root;
 
 	if (fs_info->readonly)
 		return 0;
@@ -2285,6 +2286,15 @@ int write_ctree_super(struct btrfs_trans_handle *trans)
 					 btrfs_header_level(chunk_root->node));
 	btrfs_set_super_chunk_root_generation(fs_info->super_copy,
 				btrfs_header_generation(chunk_root->node));
+
+	if (btrfs_fs_incompat(fs_info, REMAP_TREE)) {
+		btrfs_set_super_remap_root(fs_info->super_copy,
+					   remap_root->node->start);
+		btrfs_set_super_remap_root_level(fs_info->super_copy,
+					btrfs_header_level(remap_root->node));
+		btrfs_set_super_remap_root_generation(fs_info->super_copy,
+				btrfs_header_generation(remap_root->node));
+	}
 
 	ret = write_all_supers(fs_info);
 	if (ret)
