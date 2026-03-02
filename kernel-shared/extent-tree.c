@@ -873,7 +873,7 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 				 u64 parent, u64 root_objectid,
 				 u64 owner, u64 offset, int insert)
 {
-	struct btrfs_key key;
+	struct btrfs_key key, orig_key;
 	struct extent_buffer *leaf;
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
@@ -892,6 +892,8 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = num_bytes;
+
+	orig_key = key;
 
 	want = extent_ref_type(parent, owner);
 	if (insert) {
@@ -939,7 +941,8 @@ again:
 	}
 
 	if (ret) {
-		printf("Failed to find [%llu, %u, %llu]\n", key.objectid, key.type, key.offset);
+		printf("Failed to find [%llu, %u, %llu]\n",
+		       orig_key.objectid, orig_key.type, orig_key.offset);
 		return -ENOENT;
 	}
 
