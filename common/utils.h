@@ -118,7 +118,7 @@ void btrfs_config_init(void);
 void bconf_be_verbose(void);
 void bconf_be_quiet(void);
 void bconf_add_param(const char *key, const char *value);
-void bconf_save_param(const char *str);
+void bconf_save_param(char *str);
 void bconf_set_dry_run(void);
 bool bconf_is_dry_run(void);
 const char *bconf_param_value(const char *key);
