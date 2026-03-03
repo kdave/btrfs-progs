@@ -1410,7 +1410,7 @@ int main(int argc, char **argv)
 				inode = arg_strtou64(optarg);
 				break;
 			case 'f':
-				strncpy_null(field, optarg, FIELD_BUF_LEN);
+				strncpy_null(field, optarg, sizeof(field));
 				break;
 			case 'x':
 				file_extent = arg_strtou64(optarg);

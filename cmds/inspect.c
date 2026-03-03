@@ -259,7 +259,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			if (name[0] == 0) {
 				path_ptr[-1] = '\0';
 				path_fd = fd;
-				strncpy_null(mount_path, full_path, PATH_MAX);
+				strncpy_null(mount_path, full_path, sizeof(mount_path));
 			} else {
 				char *mounted = NULL;
 				char subvol[PATH_MAX];
@@ -292,7 +292,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 					continue;
 				}
 
-				strncpy_null(mount_path, mounted, PATH_MAX);
+				strncpy_null(mount_path, mounted, sizeof(mount_path));
 				free(mounted);
 
 				path_fd = btrfs_open_dir(mount_path);
