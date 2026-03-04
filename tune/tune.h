@@ -37,4 +37,6 @@ int btrfs_change_csum_type(struct btrfs_fs_info *fs_info, u16 new_csum_type);
 int enable_quota(struct btrfs_fs_info *fs_info, bool simple);
 int remove_squota(struct btrfs_fs_info *fs_info);
 
+int convert_to_remap_tree(struct btrfs_fs_info *fs_info);
+
 #endif
