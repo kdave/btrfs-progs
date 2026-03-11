@@ -174,6 +174,8 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
                 (*parent* here means subvolume of which this subvolume is a snapshot).
         -R
                 print the UUID of the sent subvolume, where the subvolume is the result of a receive operation.
+        -F
+                print the flags of the subvolume.
 
         Type filtering:
 
