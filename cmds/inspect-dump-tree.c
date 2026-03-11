@@ -33,6 +33,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/tree-checker.h"
+#include "kernel-shared/volumes.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
@@ -194,6 +195,26 @@ static int dump_add_tree_block(struct cache_tree *tree, u64 bytenr)
 	return ret;
 }
 
+static int check_metadata_logical(struct btrfs_fs_info *fs_info, u64 logical)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+
+	ce = search_cache_extent(&fs_info->mapping_tree.cache_tree, logical);
+	if (!ce || ce->start > logical) {
+		error("no chunk map found for logical %llu", logical);
+		return -ENOENT;
+	}
+	map = container_of(ce, struct map_lookup, ce);
+	if (!(map->type & BTRFS_BLOCK_GROUP_METADATA)) {
+		error(
+"logical %llu is not in a metadata chunk, found chunk %llu len %llu flags 0x%llx",
+		      logical, ce->start, ce->size, map->type);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 /*
  * Print all tree blocks recorded.
  * All tree block bytenr record will also be freed in this function.
@@ -228,6 +249,9 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 			goto next;
 		}
 
+		ret = check_metadata_logical(fs_info, bytenr);
+		if (ret < 0)
+			goto next;
 		eb = read_tree_block(fs_info, bytenr, &check);
 		if (!extent_buffer_uptodate(eb)) {
 			error("failed to read tree block %llu", bytenr);
