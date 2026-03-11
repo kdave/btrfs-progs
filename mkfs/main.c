@@ -1711,7 +1711,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					exit(1);
 				break;
 			case 'U':
-				strncpy_null(fs_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
+				strncpy_null(fs_uuid, optarg, sizeof(fs_uuid));
 				break;
 			case 'K':
 				opt_discard = false;
@@ -1731,7 +1731,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				}
 				break;
 			case GETOPT_VAL_DEVICE_UUID:
-				strncpy_null(dev_uuid, optarg, BTRFS_UUID_UNPARSED_SIZE);
+				strncpy_null(dev_uuid, optarg, sizeof(dev_uuid));
 				break;
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;
