@@ -798,6 +798,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	bool datasum = true;
 	ssize_t comp_ret;
 	u64 flags = btrfs_stack_inode_flags(btrfs_inode);
+	off64_t next;
 
 	if (g_do_reflink || flags & BTRFS_INODE_NOCOMPRESS)
 		do_comp = false;
@@ -807,9 +808,38 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		do_comp = false;
 	}
 
-	buf_size = do_comp ? BTRFS_MAX_COMPRESSED : MAX_EXTENT_SIZE;
-	to_read = min(file_pos + buf_size, source->size) - file_pos;
+	next = lseek64(source->fd, file_pos, SEEK_DATA);
+	/* The current offset is inside a hole to the next of the file. */
+	if (next == (off64_t)-1 && errno == ENXIO)
+		next = round_up(source->size, sectorsize);
+	if (next != (off64_t)-1 && next > file_pos && IS_ALIGNED(next, sectorsize)) {
+		/*
+		 * Limit the hole size to 1G, this is to avoid overflow int type,
+		 * or a hole length >= 2G can be treated as an error.
+		 */
+		const u64 length = min_t(u64, next - file_pos, SZ_1G);
 
+		btrfs_set_stack_file_extent_num_bytes(&stack_fi, length);
+		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, length);
+		ret = btrfs_insert_file_extent(trans, root, objectid, file_pos, &stack_fi);
+		if (ret < 0) {
+			error("cannot insert hole for range [%llu, %llu)",
+			      file_pos, file_pos + length);
+			return ret;
+		}
+		return length;
+	}
+
+	/*
+	 * We have skippted to the next data, try to locate the next hole
+	 * to limit the read size.
+	 */
+	next = lseek64(source->fd, file_pos, SEEK_HOLE);
+	if (next == (off64_t)-1 || !IS_ALIGNED(next, sectorsize) || next > source->size)
+		next = source->size;
+
+	buf_size = do_comp ? BTRFS_MAX_COMPRESSED : MAX_EXTENT_SIZE;
+	to_read = min_t(u64, file_pos + buf_size, next) - file_pos;
 	bytes_read = 0;
 
 	while (bytes_read < to_read) {
@@ -874,7 +904,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 			btrfs_set_stack_inode_flags(btrfs_inode, flags);
 
 			buf_size = MAX_EXTENT_SIZE;
-			to_read = min(file_pos + buf_size, source->size) - file_pos;
+			to_read = min_t(u64, file_pos + buf_size, next) - file_pos;
 
 			while (bytes_read < to_read) {
 				ssize_t ret_read;
