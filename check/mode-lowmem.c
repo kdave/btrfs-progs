@@ -2817,7 +2817,10 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 			err |= ret;
 			break;
 		case BTRFS_XATTR_ITEM_KEY:
+		case BTRFS_VERITY_DESC_ITEM_KEY:
+		case BTRFS_VERITY_MERKLE_ITEM_KEY:
 			break;
+
 		default:
 			error("ITEM[%llu %u %llu] UNKNOWN TYPE in leaf %llu",
 			      key.objectid, key.type, key.offset, node->start);
