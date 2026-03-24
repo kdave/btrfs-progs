@@ -1895,6 +1895,9 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 		case BTRFS_XATTR_ITEM_KEY:
 			ret = process_xattr_item(eb, i, &key, active_node);
 			break;
+		case BTRFS_VERITY_DESC_ITEM_KEY:
+		case BTRFS_VERITY_MERKLE_ITEM_KEY:
+			break;
 		default:
 			error("unknown key (%llu %u %llu) found in leaf %llu",
 			      key.objectid, key.type, key.offset, eb->start);
