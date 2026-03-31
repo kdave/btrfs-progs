@@ -81,6 +81,8 @@ struct btrfs_receive
 	bool honor_end_cmd;
 
 	bool force_decompress;
+	bool fsync_on_close;
+	bool syncfs_on_finish;
 
 #if COMPRESSION_ZSTD
 	/* Reuse stream objects for encoded_write decompression fallback */
@@ -659,6 +661,38 @@ out:
 	return ret;
 }
 
+static int close_inode_for_write(struct btrfs_receive *rctx)
+{
+	int ret = 0;
+
+	if(rctx->write_fd == -1)
+		return 0;
+
+	/*
+	 * Encoded writes (used for compressed extents in send stream v2)
+	 * are asynchronous in the kernel — the ioctl returns success
+	 * before the data hits disk. If the bio fails (e.g. due to memory
+	 * corruption or hardware errors), the error is only stored on the
+	 * inode's address_space and is not reported to userspace unless
+	 * fsync() is called. Without this fsync, corrupted files with
+	 * zero-filled holes can be silently accepted by btrfs receive.
+	 */
+	if (rctx->fsync_on_close && fsync(rctx->write_fd) < 0) {
+		ret = -errno;
+		error("fsync on %s failed: %m", rctx->write_path);
+	}
+
+	if (close(rctx->write_fd) < 0) {
+		if (!ret) {
+			ret = -errno;
+			error("close on %s failed: %m", rctx->write_path);
+		}
+	}
+	rctx->write_fd = -1;
+	rctx->write_path[0] = 0;
+	return ret;
+}
+
 static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 {
 	int ret = 0;
@@ -666,8 +700,9 @@ static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 	if (rctx->write_fd != -1) {
 		if (strcmp(rctx->write_path, path) == 0)
 			goto out;
-		close(rctx->write_fd);
-		rctx->write_fd = -1;
+		ret = close_inode_for_write(rctx);
+		if (ret < 0)
+			goto out;
 	}
 
 	rctx->write_fd = open(path, O_RDWR);
@@ -680,16 +715,6 @@ static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 
 out:
 	return ret;
-}
-
-static void close_inode_for_write(struct btrfs_receive *rctx)
-{
-	if(rctx->write_fd == -1)
-		return;
-
-	close(rctx->write_fd);
-	rctx->write_fd = -1;
-	rctx->write_path[0] = 0;
 }
 
 static int process_write(const char *path, const void *data, u64 offset,
@@ -1418,13 +1443,16 @@ static int process_enable_verity(const char *path, u8 algorithm, u32 block_size,
 	 * Enabling verity denies write access, so it cannot be done with an
 	 * open writeable file descriptor.
 	 */
-	close_inode_for_write(rctx);
+	ret = close_inode_for_write(rctx);
+	if (ret < 0)
+		goto close_ioctl_fd;
 	ret = ioctl(ioctl_fd, FS_IOC_ENABLE_VERITY, &verity_args);
 	if (ret < 0) {
 		ret = -errno;
 		error("failed to enable verity on %s: %d", full_path, ret);
 	}
 
+close_ioctl_fd:
 	close(ioctl_fd);
 out:
 	return ret;
@@ -1593,7 +1621,9 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		if (ret > 0)
 			end = true;
 
-		close_inode_for_write(rctx);
+		ret = close_inode_for_write(rctx);
+		if (ret < 0)
+			goto out;
 		ret = finish_subvol(rctx);
 		if (ret < 0)
 			goto out;
@@ -1604,8 +1634,25 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 
 out:
 	if (rctx->write_fd != -1) {
-		close(rctx->write_fd);
-		rctx->write_fd = -1;
+		int err = close_inode_for_write(rctx);
+
+		if (!ret)
+			ret = err;
+	}
+
+	/*
+	 * syncfs on the destination filesystem to make sure all data is
+	 * persisted to disk. This catches any IO errors that happened
+	 * asynchronously, including those from encoded writes.
+	 */
+	if (rctx->syncfs_on_finish && rctx->dest_dir_fd != -1) {
+		if (syncfs(rctx->dest_dir_fd) < 0) {
+			int err = -errno;
+
+			error("syncfs on destination failed: %m");
+			if (!ret)
+				ret = err;
+		}
 	}
 
 	if (rctx->root_path != realmnt)
@@ -1660,6 +1707,10 @@ static const char * const cmd_receive_usage[] = {
 		"this file system is mounted."),
 	OPTLINE("--force-decompress", "if the stream contains compressed data, always "
 		"decompress it instead of writing it with encoded I/O"),
+	OPTLINE("--fsync", "perform fsync for each received file to make sure "
+		"the data is persisted to disk before finishing"),
+	OPTLINE("--syncfs", "perform syncfs on the destination filesystem after "
+		"receiving to make sure all data is persisted to disk"),
 	OPTLINE("--dump", "dump stream metadata, one line per operation, "
 		"does not require the MOUNT parameter"),
 	OPTLINE("-v", "deprecated, alias for global -v option"),
@@ -1720,6 +1771,8 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 		enum {
 			GETOPT_VAL_DUMP = GETOPT_VAL_FIRST,
 			GETOPT_VAL_FORCE_DECOMPRESS,
+			GETOPT_VAL_FSYNC,
+			GETOPT_VAL_SYNCFS,
 		};
 		static const struct option long_opts[] = {
 			{ "max-errors", required_argument, NULL, 'E' },
@@ -1727,6 +1780,8 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			{ "dump", no_argument, NULL, GETOPT_VAL_DUMP },
 			{ "quiet", no_argument, NULL, 'q' },
 			{ "force-decompress", no_argument, NULL, GETOPT_VAL_FORCE_DECOMPRESS },
+			{ "fsync", no_argument, NULL, GETOPT_VAL_FSYNC },
+			{ "syncfs", no_argument, NULL, GETOPT_VAL_SYNCFS },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -1771,6 +1826,12 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case GETOPT_VAL_FORCE_DECOMPRESS:
 			rctx.force_decompress = true;
+			break;
+		case GETOPT_VAL_FSYNC:
+			rctx.fsync_on_close = true;
+			break;
+		case GETOPT_VAL_SYNCFS:
+			rctx.syncfs_on_finish = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

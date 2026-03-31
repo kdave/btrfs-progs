@@ -62,6 +62,14 @@ A subvolume is made read-only after the receiving process finishes successfully 
         :doc:`btrfs-send`), always decompress it instead of writing it with
         encoded I/O
 
+--fsync
+        perform fsync for each received file to make sure the data is
+        persisted to disk before finishing
+
+--syncfs
+        perform syncfs on the destination filesystem after receiving to
+        make sure all data is persisted to disk
+
 --dump
         dump the stream metadata, one line per operation
 
