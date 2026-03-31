@@ -516,6 +516,7 @@ Kernel config options for complete test coverage
 -  ``CONFIG_IO_URING=y``
 -  ``CONFIG_NUMA=y`` lack of *get_mempolicy()* syscall spills to test results
 -  ``CONFIG_USER_NS=y``
+-  ``CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y``
 
 
 Kernel config options for better bug reports
