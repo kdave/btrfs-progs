@@ -515,6 +515,7 @@ Kernel config options for complete test coverage
 -  ``CONFIG_BLK_DEV_ZONED=y`` for zoned mode test coverage
 -  ``CONFIG_IO_URING=y``
 -  ``CONFIG_NUMA=y`` lack of *get_mempolicy()* syscall spills to test results
+-  ``CONFIG_USER_NS=y``
 
 
 Kernel config options for better bug reports
