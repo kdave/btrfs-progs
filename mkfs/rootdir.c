@@ -819,6 +819,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		 */
 		const u64 length = min_t(u64, next - file_pos, SZ_1G);
 
+		btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
 		btrfs_set_stack_file_extent_num_bytes(&stack_fi, length);
 		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, length);
 		ret = btrfs_insert_file_extent(trans, root, objectid, file_pos, &stack_fi);
