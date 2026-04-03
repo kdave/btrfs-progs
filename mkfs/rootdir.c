@@ -411,8 +411,7 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 	 * hole.  And hole extent has no size limit, no need to loop.
 	 */
 	if (disk_bytenr == 0)
-		return btrfs_insert_file_extent(trans, root, ino,
-					       file_pos, stack_fi);
+		return btrfs_insert_hole_extent(trans, root, ino, file_pos, num_bytes);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -819,10 +818,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 		 */
 		const u64 length = min_t(u64, next - file_pos, SZ_1G);
 
-		btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
-		btrfs_set_stack_file_extent_num_bytes(&stack_fi, length);
-		btrfs_set_stack_file_extent_ram_bytes(&stack_fi, length);
-		ret = btrfs_insert_file_extent(trans, root, objectid, file_pos, &stack_fi);
+		ret = btrfs_insert_hole_extent(trans, root, objectid, file_pos, length);
 		if (ret < 0) {
 			error("cannot insert hole for range [%llu, %llu)",
 			      file_pos, file_pos + length);
