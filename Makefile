@@ -553,7 +553,7 @@ test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum fsst
 	@echo "  TEST     misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
 
-test-mkfs: btrfs mkfs.btrfs
+test-mkfs: btrfs mkfs.btrfs fssum fsstress
 	@echo "  TEST     mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
