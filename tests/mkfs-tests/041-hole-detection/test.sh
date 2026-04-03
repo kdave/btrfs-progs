@@ -40,30 +40,36 @@ run_check dd if=/dev/urandom of="$tmp/middle_hole" bs=$blocksize count=1
 run_check dd if=/dev/urandom of="$tmp/middle_hole" bs=$blocksize count=1 seek=16
 middle_hole_before=$(run_check_stdout md5sum "$tmp/middle_hole" | awk '{print $1}')
 
-run_check_mkfs_test_dev -s $blocksize --rootdir "$tmp"
-run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
-run_check_mount_test_dev
+workload()
+{
+	run_check_mkfs_test_dev -s $blocksize --rootdir "$tmp" $@
+	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
+	run_check_mount_test_dev
 
-# There are only 3 blocks written, thus 'du' should only report such 3 blocks used.
-blocks=$(run_check_stdout du -B $blocksize "$TEST_MNT" | awk '{print $1}')
+	# There are only 3 blocks written, thus 'du' should only report such 3 blocks used.
+	blocks=$(run_check_stdout du -B $blocksize "$TEST_MNT" | awk '{print $1}')
 
-if [ "$blocks" != "3" ]; then
-	_fail "Unexpected number of blocks written, has $blocks expect 3"
-fi
+	if [ "$blocks" != "3" ]; then
+		_fail "Unexpected number of blocks written, has $blocks expect 3"
+	fi
 
-full_hole_after=$(run_check_stdout md5sum "$TEST_MNT/full_hole" | awk '{print $1}')
-middle_data_after=$(run_check_stdout md5sum "$TEST_MNT/middle_data" | awk '{print $1}')
-middle_hole_after=$(run_check_stdout md5sum "$TEST_MNT/middle_hole" | awk '{print $1}')
+	full_hole_after=$(run_check_stdout md5sum "$TEST_MNT/full_hole" | awk '{print $1}')
+	middle_data_after=$(run_check_stdout md5sum "$TEST_MNT/middle_data" | awk '{print $1}')
+	middle_hole_after=$(run_check_stdout md5sum "$TEST_MNT/middle_hole" | awk '{print $1}')
 
-if [ "$full_hole_before" != "$full_hole_after" ]; then
-	_fail "full_hole content changed"
-fi
-if [ "$middle_data_before" != "$middle_data_after" ]; then
-	_fail "middle_data content changed"
-fi
-if [ "$middle_hole_before" != "$middle_hole_after" ]; then
-	_fail "middle_hole content changed"
-fi
+	if [ "$full_hole_before" != "$full_hole_after" ]; then
+		_fail "full_hole content changed"
+	fi
+	if [ "$middle_data_before" != "$middle_data_after" ]; then
+		_fail "middle_data content changed"
+	fi
+	if [ "$middle_hole_before" != "$middle_hole_after" ]; then
+		_fail "middle_hole content changed"
+	fi
+	run_check_umount_test_dev
+}
 
-run_check_umount_test_dev
+workload -O no-holes
+workload -O ^no-holes
+
 run_check rm -rf -- "$tmp"
