@@ -263,6 +263,10 @@ int main(int argc, char **argv)
 				break;
 			case 'o':
 				output_file = strdup(optarg);
+				if (!output_file) {
+					error_mem(NULL);
+					return 1;
+				}
 				break;
 			default:
 				usage(&map_logical_cmd, 1);

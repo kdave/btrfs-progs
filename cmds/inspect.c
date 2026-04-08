@@ -1063,6 +1063,11 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 		case GETOPT_VAL_SORT:
 			free(sortmode);
 			sortmode = strdup(optarg);
+			if (!sortmode) {
+				ret = 1;
+				error_mem(NULL);
+				goto out;
+			}
 			break;
 		default:
 			usage_unknown_option(cmd, argv);

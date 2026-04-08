@@ -415,6 +415,11 @@ int main(int argc, char **argv)
 		f = &spec[specidx];
 		specidx++;
 		f->name = strdup(argv[i]);
+		if (!f->name) {
+			ret = 1;
+			error_mem(NULL);
+			goto out;
+		}
 		i++;
 		if (arg_to_op_value(argv[i], &f->fop, &f->value)) {
 			ret = 1;

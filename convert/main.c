@@ -1983,6 +1983,10 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				break;
 			case 'O': {
 				char *orig = strdup(optarg);
+				if (!orig) {
+					error_mem(NULL);
+					exit(1);
+				}
 				char *tmp = orig;
 
 				tmp = btrfs_parse_fs_features(tmp, &features);

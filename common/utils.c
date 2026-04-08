@@ -632,6 +632,10 @@ int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount)
 				goto out;
 			found = true;
 			*mount = strdup(ent.path);
+			if (!*mount) {
+				ret = -ENOMEM;
+				goto out;
+			}
 			ret = 0;
 			goto nextline;
 		}
@@ -952,8 +956,18 @@ void bconf_add_param(const char *key, const char *value)
 	if (!param)
 		return;
 	param->key = strdup(key);
-	if (value)
+	if (!param->key) {
+		free(param);
+		return;
+	}
+	if (value) {
 		param->value = strdup(value);
+		if (!param->value) {
+			free(param->key);
+			free(param);
+			return;
+		}
+	}
 	list_add(&param->list, &bconf.params);
 }
 
