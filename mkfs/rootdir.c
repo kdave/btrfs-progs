@@ -2048,6 +2048,24 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 	return 0;
 }
 
+static void add_data_size(const char *fpath, const struct stat *st)
+{
+	int fd;
+	off_t ret;
+
+	fd = open(fpath, O_RDONLY);
+	if (fd < 0)
+		goto fallback;
+	ret = lseek(fd, 0, SEEK_DATA);
+	if (ret < 0 && errno != ENXIO)
+		goto fallback;
+	ftw_data_size += round_up(st->st_blocks << SECTOR_SHIFT, fs_block_size);
+	close(fd);
+	return;
+fallback:
+	ftw_data_size += round_up(st->st_size, fs_block_size);
+	close(fd);
+}
 static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 			      int type, struct FTW *ftwbuf)
 {
@@ -2059,7 +2077,7 @@ static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 		return -EPERM;
 
 	if (S_ISREG(st->st_mode))
-		ftw_data_size += round_up(st->st_size, fs_block_size);
+		add_data_size(fpath, st);
 	ftw_meta_nr_inode++;
 
 	return 0;
