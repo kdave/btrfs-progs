@@ -110,6 +110,9 @@ DANGEROUS OPTIONS
                 *--force* to give users a chance to think twice before running repair, the
                 warnings in documentation have shown to be insufficient.
 
+	.. note::
+		Please finish/cancel the running replace/balance before using this command.
+
 --init-csum-tree
         create a new checksum tree and recalculate checksums in all files
 

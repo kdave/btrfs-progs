@@ -24,6 +24,7 @@
 #include "kernel-shared/file-item.h"
 #include "common/messages.h"
 #include "common/open-utils.h"
+#include "common/clear-cache.h"
 #include "cmds/rescue.h"
 
 /*
@@ -491,6 +492,14 @@ int btrfs_recover_fix_data_checksum(const char *path, enum btrfs_fix_data_checks
 	if (!fs_info) {
 		error("failed to open btrfs at %s", path);
 		return -EIO;
+	}
+	ret = has_running_replace_or_balance(fs_info);
+	if (ret < 0)
+		goto out_close;
+	if (ret > 0) {
+		error("please finish/cancel the running replace/balance before running this command");
+		ret = -EINVAL;
+		goto out_close;
 	}
 	csum_root = btrfs_csum_root(fs_info, 0);
 	if (!csum_root) {

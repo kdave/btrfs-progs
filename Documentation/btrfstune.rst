@@ -21,6 +21,10 @@ complete list of features and kernel version of their introduction at
 Some of the features could be also enabled on a mounted filesystem by other
 means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs-man5`.
 
+.. note::
+   :command:`btrfstune` requires the target fs to have no running replace nor balance.
+   Please finish/cancel the running replace/balance before using :command:`btrfstune`.
+
 OPTIONS
 -------
 

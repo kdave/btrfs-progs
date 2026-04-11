@@ -466,7 +466,17 @@ static int cmd_rescue_clear_uuid_tree(const struct cmd_struct *cmd,
 		goto out;
 	}
 
+	ret = has_running_replace_or_balance(fs_info);
+	if (ret < 0)
+		goto out_close;
+	if (ret > 0) {
+		error("please finish/cancel the running replace/balance before running this command");
+		ret = -EINVAL;
+		goto out_close;
+	}
+
 	ret = clear_uuid_tree(fs_info);
+out_close:
 	close_ctree(fs_info->tree_root);
 out:
 	return !!ret;
@@ -511,6 +521,14 @@ static int cmd_rescue_clear_ino_cache(const struct cmd_struct *cmd,
 		ret = -EIO;
 		goto out;
 	}
+	ret = has_running_replace_or_balance(fs_info);
+	if (ret < 0)
+		goto out_close;
+	if (ret > 0) {
+		error("please finish/cancel the running replace/balance before running this command");
+		ret = -EINVAL;
+		goto out_close;
+	}
 	ret = clear_ino_cache_items(fs_info);
 	if (ret < 0) {
 		errno = -ret;
@@ -518,6 +536,7 @@ static int cmd_rescue_clear_ino_cache(const struct cmd_struct *cmd,
 	} else {
 		pr_default("Successfully cleared ino cache\n");
 	}
+out_close:
 	close_ctree(fs_info->tree_root);
 out:
 	return !!ret;

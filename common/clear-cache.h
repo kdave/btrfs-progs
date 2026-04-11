@@ -26,5 +26,6 @@ int do_clear_free_space_cache(struct btrfs_fs_info *fs_info, int clear_version);
 int validate_free_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx);
 int truncate_free_ino_items(struct btrfs_root *root);
 int clear_ino_cache_items(struct btrfs_fs_info *fs_info);
+int has_running_replace_or_balance(struct btrfs_fs_info *fs_info);
 
 #endif

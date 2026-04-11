@@ -98,10 +98,67 @@ int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info)
 	return ret;
 }
 
+/*
+ * Return <0 for critical errors, mostly tree search failure.
+ * Return >0 if there is a running balance or replace.
+ * Return 0 if there is no running balance nor replace.
+ */
+int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	struct btrfs_dev_replace_item *dri;
+	u64 replace_state;
+	int ret;
+
+	key.objectid = BTRFS_BALANCE_OBJECTID;
+	key.type = BTRFS_TEMPORARY_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
+	btrfs_release_path(&path);
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
+		return 1;
+
+	key.objectid = 0;
+	key.type = BTRFS_DEV_REPLACE_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+	if (ret > 0) {
+		btrfs_release_path(&path);
+		return 0;
+	}
+	/*
+	 * We still need to check if the dev_replace item to determine if
+	 * there is a running replace.
+	 */
+	dri = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dev_replace_item);
+	replace_state = btrfs_dev_replace_replace_state(path.nodes[0], dri);
+	btrfs_release_path(&path);
+	if (replace_state == BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED ||
+	    replace_state == BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED)
+		return 1;
+	return 0;
+}
+
 int do_clear_free_space_cache(struct btrfs_fs_info *fs_info, int clear_version)
 {
 	int ret = 0;
 
+	ret = has_running_replace_or_balance(fs_info);
+	if (ret < 0)
+		return ret;
+	if (ret > 0) {
+		error("please finish/cancel the running replace/balance before running this command");
+		return -EINVAL;
+	}
 	if (clear_version == 1) {
 		if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
 			warning(

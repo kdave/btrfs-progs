@@ -415,6 +415,16 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 	fs_info = root->fs_info;
 
+	ret = has_running_replace_or_balance(fs_info);
+	if (ret < 0) {
+		ret = 1;
+		goto out;
+	}
+	if (ret > 0) {
+		error("please finish/cancel the running replace/balance before running this command");
+		ret = 1;
+		goto out;
+	}
 	/*
 	 * As we increment the generation number here, it is unlikely that the
 	 * missing device will have a higher generation number, and the kernel

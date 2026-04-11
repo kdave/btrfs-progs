@@ -10825,6 +10825,19 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		err |= !!ret;
 		goto err_out;
 	}
+	if (opt_check_repair) {
+		ret = has_running_replace_or_balance(gfs_info);
+		if (ret < 0) {
+			err |= !!ret;
+			goto close_out;
+		}
+		if (ret > 0) {
+			error("please finish/cacnel the running replace/balance before running this command");
+			ret = -EINVAL;
+			err |= !!ret;
+			goto close_out;
+		}
+	}
 
 	root = gfs_info->fs_root;
 	uuid_unparse(gfs_info->super_copy->fsid, uuidbuf);

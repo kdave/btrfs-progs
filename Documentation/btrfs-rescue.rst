@@ -12,6 +12,10 @@ DESCRIPTION
 A set of commands that are targeting to fix a specific problem and may not
 suitable for :doc`btrfs-check`.
 
+.. note::
+   All the subcommands can not handle an ongoing replace/balance, please finish/cancel
+   the replace/balance before using this command.
+
 SUBCOMMAND
 ----------
 
