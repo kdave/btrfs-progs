@@ -579,7 +579,7 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 			       type, seq, offset, btrfs_shared_data_ref_count(eb, sref));
 			break;
 		case BTRFS_EXTENT_OWNER_REF_KEY:
-			printf("\t\(%u 0x%llx) textent owner root %llu\n",
+			printf("\t\t(%u 0x%llx) extent owner root %llu\n",
 			       type, seq, offset);
 			break;
 		default:
