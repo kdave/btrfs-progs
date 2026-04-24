@@ -379,6 +379,10 @@ Code
 
    -  control flow of the function is changed due to error handling and it
       leads to *never-happens* errors like ``EUCLEAN``, ``EIO``
+   -  rare events that are usually followed by an error message (``btrfs_err``
+      etc, or ``DEBUG_WARN``)
+   -  consistency, even for staticly predictable conditions like "pointers are
+      are almost always not NULL" that are done by compiler
 
 Output
 ^^^^^^
