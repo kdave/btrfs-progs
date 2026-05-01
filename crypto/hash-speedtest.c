@@ -188,6 +188,8 @@ int main(int argc, char **argv) {
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
 		{ .name = "CRC32C-ref", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_NONE },
+		{ .name = "CRC32C-SSE42", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_SSE42 },
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_PCLMUL },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
