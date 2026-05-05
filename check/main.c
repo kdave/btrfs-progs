@@ -4208,14 +4208,14 @@ static void print_data_backref_error(struct extent_record *rec,
 	/* Extent item bytenr mismatch with found file extent item. */
 	if (dback->disk_bytenr != rec->start)
 		fprintf(stderr,
-"data extent[%llu, %llu] bytenr mimsmatch, extent item bytenr %llu file item bytenr %llu\n",
+"data extent[%llu, %llu] bytenr mismatch, extent item bytenr %llu file item bytenr %llu\n",
 			rec->start, rec->max_size, rec->start,
 			dback->disk_bytenr);
 
 	/* Extent item size mismatch with found file item. */
 	if (dback->bytes != rec->nr)
 		fprintf(stderr,
-"data extent[%llu, %llu] size mimsmatch, extent item size %llu file item size %llu\n",
+"data extent[%llu, %llu] size mismatch, extent item size %llu file item size %llu\n",
 			rec->start, rec->max_size, rec->nr, dback->bytes);
 
 	if (expected_refs != found_refs) {
