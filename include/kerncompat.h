@@ -31,6 +31,10 @@
 #include <endian.h>
 #include <byteswap.h>
 #include <assert.h>
+
+#ifndef static_assert
+#define static_assert(expr, str) _Static_assert(expr, str)
+#endif
 #include <stddef.h>
 #include <linux/types.h>
 #include <linux/const.h>
