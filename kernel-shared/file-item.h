@@ -92,6 +92,9 @@ int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     u64 ino, u64 file_pos,
 			     struct btrfs_file_extent_item *stack_fi);
+int btrfs_insert_file_block_csum(struct btrfs_trans_handle *trans, u64 logical,
+				 u64 csum_objectid, u32 csum_type,
+				 const u8 *csum_result);
 int btrfs_csum_file_block(struct btrfs_trans_handle *trans, u64 logical,
 			  u64 csum_objectid, u32 csum_type, const char *data);
 struct btrfs_csum_item *

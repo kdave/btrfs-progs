@@ -1348,6 +1348,45 @@ enum btrfs_err_code {
 #define BTRFS_IOC_SUBVOL_SYNC_WAIT _IOW(BTRFS_IOCTL_MAGIC, 65, \
 					struct btrfs_ioctl_subvol_wait)
 
+#ifndef BTRFS_IOC_GET_CSUMS
+
+/* Flags for struct btrfs_ioctl_get_csums_entry::type. */
+#define BTRFS_GET_CSUMS_HAS_CSUMS			(1U << 0)
+#define BTRFS_GET_CSUMS_ZEROED				(1U << 1)
+#define BTRFS_GET_CSUMS_NODATASUM			(1U << 2)
+#define BTRFS_GET_CSUMS_COMPRESSED			(1U << 3)
+#define BTRFS_GET_CSUMS_ENCRYPTED			(1U << 4)
+#define BTRFS_GET_CSUMS_INLINE				(1U << 5)
+
+struct btrfs_ioctl_get_csums_entry {
+	/* File offset of this range. */
+	__u64 offset;
+	/* Length in bytes. */
+	__u64 length;
+	/* One of BTRFS_GET_CSUMS_* types. */
+	__u32 type;
+	/* Padding, must be 0. */
+	__u32 reserved;
+};
+
+struct btrfs_ioctl_get_csums_args {
+	/* In/out: file offset in bytes. */
+	__u64 offset;
+	/* In/out: range length in bytes. */
+	__u64 length;
+	/* In/out: buffer capacity / bytes written. */
+	__u64 buf_size;
+	/* In: flags, must be 0 for now. */
+	__u64 flags;
+	/* Out: entries of type btrfs_ioctl_get_csums_entry + csum data */
+	__u8 buf[];
+};
+
+#define BTRFS_IOC_GET_CSUMS _IOWR(BTRFS_IOCTL_MAGIC, 66, \
+				  struct btrfs_ioctl_get_csums_args)
+
+#endif /* BTRFS_IOC_GET_CSUMS */
+
 #ifdef __cplusplus
 }
 #endif

@@ -39,6 +39,7 @@
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/accessors.h"
 #include "kernel-shared/uapi/btrfs_tree.h"
+#include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
@@ -160,6 +161,9 @@ static u64 default_subvol_id;
 static enum btrfs_compression_type g_compression;
 static u64 g_compression_level;
 static bool g_do_reflink;
+static int g_get_csums_supported = -1; /* -1 = unknown, 0 = no, 1 = yes */
+static dev_t g_last_csums_dev;
+static bool g_last_csums_dev_ok;
 
 static inline struct inode_entry *rootdir_path_last(struct rootdir_path *path)
 {
@@ -701,6 +705,7 @@ struct source_descriptor {
 	const char *path_name;
 	char *comp_buf;
 	char *wrkmem;
+	dev_t st_dev;
 };
 
 static int do_reflink_write(struct btrfs_fs_info *info,
@@ -915,6 +920,10 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	bool datasum = true;
 	u64 flags = btrfs_stack_inode_flags(btrfs_inode);
 	off_t next;
+	u8 *fetched_csums = NULL;
+	void *fetched_csums_buf = NULL;
+	u64 fetched_num_csums = 0;
+	u16 fetched_csum_size = 0;
 
 	if (g_do_reflink || flags & BTRFS_INODE_NOCOMPRESS)
 		do_comp = false;
@@ -973,6 +982,131 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 
 	buf_size = MAX_EXTENT_SIZE;
 	to_read = min_t(u64, file_pos + buf_size, next) - file_pos;
+
+	/*
+	 * Try to get csums from the source filesystem via BTRFS_IOC_GET_CSUMS
+	 * instead of computing them from the data.  This works when the source
+	 * is a btrfs filesystem using the same checksum algorithm, and the data
+	 * is not being compressed.
+	 *
+	 * For reflink, this is the fast path: we skip reading file data and
+	 * use the pre-computed csums directly.  For non-reflink, the data is
+	 * still read normally but we skip the checksum computation.
+	 */
+	if (datasum && !do_comp && g_get_csums_supported != 0) {
+		u16 csum_size = btrfs_csum_type_size(root->fs_info->csum_type);
+		u64 ioctl_len = round_up(to_read, sectorsize);
+		u64 num_csums = ioctl_len / sectorsize;
+		u64 csums_bytes = num_csums * csum_size;
+		size_t alloc_size = sizeof(struct btrfs_ioctl_get_csums_args) +
+				    sizeof(struct btrfs_ioctl_get_csums_entry) +
+				    csums_bytes;
+		struct btrfs_ioctl_get_csums_args *cargs;
+		struct btrfs_ioctl_get_csums_entry *entry;
+
+		/*
+		 * Check that the source file's filesystem uses the same
+		 * checksum algorithm as the destination.  Cache the result
+		 * per st_dev so we only call FS_INFO when crossing a mount
+		 * boundary.
+		 */
+		if (source->st_dev != g_last_csums_dev) {
+			struct btrfs_ioctl_fs_info_args fi;
+
+			g_last_csums_dev = source->st_dev;
+			memset(&fi, 0, sizeof(fi));
+			fi.flags = BTRFS_FS_INFO_FLAG_CSUM_INFO;
+
+			if (ioctl(source->fd, BTRFS_IOC_FS_INFO, &fi) == 0 &&
+			    fi.csum_type == root->fs_info->csum_type &&
+			    fi.sectorsize == root->fs_info->sectorsize)
+				g_last_csums_dev_ok = true;
+			else
+				g_last_csums_dev_ok = false;
+		}
+
+		if (!g_last_csums_dev_ok)
+			goto read_data;
+
+		cargs = calloc(1, alloc_size);
+		if (!cargs)
+			return -ENOMEM;
+
+		cargs->offset = file_pos;
+		cargs->length = ioctl_len;
+		cargs->buf_size = sizeof(struct btrfs_ioctl_get_csums_entry) +
+				  csums_bytes;
+
+		ret = ioctl(source->fd, BTRFS_IOC_GET_CSUMS, cargs);
+		if (ret < 0) {
+			free(cargs);
+			if (errno == ENOTTY) {
+				/* Kernel doesn't support the ioctl. */
+				g_get_csums_supported = 0;
+				goto read_data;
+			}
+			error("BTRFS_IOC_GET_CSUMS failed on %s: %m",
+			      source->path_name);
+			return -errno;
+		}
+
+		g_get_csums_supported = 1;
+
+		/*
+		 * Check that we got a single HAS_CSUMS entry covering the
+		 * whole range. If not, fall back to read+compute.
+		 */
+		entry = (struct btrfs_ioctl_get_csums_entry *)cargs->buf;
+
+		if (cargs->length != 0 || cargs->buf_size < sizeof(*entry) ||
+		    entry->type != BTRFS_GET_CSUMS_HAS_CSUMS ||
+		    entry->length != ioctl_len) {
+			free(cargs);
+			goto read_data;
+		}
+
+		/*
+		 * Save the pre-fetched csums.  They will be used instead of
+		 * computing checksums after the data is read and written.
+		 */
+		fetched_csums = cargs->buf + sizeof(*entry);
+		fetched_csums_buf = cargs;
+		fetched_num_csums = num_csums;
+		fetched_csum_size = csum_size;
+
+		if (g_do_reflink) {
+			/*
+			 * Reflink fast path: skip reading data entirely.
+			 * Only read the trailing partial sector if needed for
+			 * do_reflink_write()'s zero-padding.
+			 */
+			to_write = ioctl_len;
+			write_buf = source->buf;
+
+			if (to_read % sectorsize) {
+				u64 partial_off = round_down(to_read, sectorsize);
+				ssize_t ret_read;
+
+				memset(source->buf + partial_off, 0, sectorsize);
+				ret_read = pread(source->fd,
+						 source->buf + partial_off,
+						 to_read - partial_off,
+						 file_pos + partial_off);
+				if (ret_read < 0) {
+					error("cannot read %s at offset %llu: %m",
+					      source->path_name,
+					      file_pos + partial_off);
+					free(fetched_csums_buf);
+					fetched_csums_buf = NULL;
+					return -errno;
+				}
+			}
+
+			goto do_write;
+		}
+	}
+
+read_data:
 	ret = read_from_source(root->fs_info, source->path_name, source->fd,
 			       source->buf, file_pos, to_read);
 	if (ret < 0)
@@ -982,10 +1116,13 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	write_buf = source->buf;
 	memset(write_buf + to_read, 0, to_write - to_read);
 
+do_write:
 	ret = btrfs_reserve_extent(trans, root, to_write, 0, 0,
 				   (u64)-1, &key, 1);
-	if (ret)
+	if (ret) {
+		free(fetched_csums_buf);
 		return ret;
+	}
 
 	first_block = key.objectid;
 
@@ -998,19 +1135,62 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 
 	if (ret) {
 		error("failed to write %s", source->path_name);
+		free(fetched_csums_buf);
 		return ret;
 	}
 
 	if (datasum) {
-		for (unsigned int i = 0; i < to_write / sectorsize; i++) {
-			ret = btrfs_csum_file_block(trans, first_block + (i * sectorsize),
-					BTRFS_EXTENT_CSUM_OBJECTID,
-					root->fs_info->csum_type,
-					write_buf + (i * sectorsize));
-			if (ret)
-				return ret;
+		if (fetched_csums) {
+			unsigned int last_full = fetched_num_csums;
+
+			/*
+			 * For the trailing partial sector, compute the csum
+			 * from the data we actually wrote (zero-padded) rather
+			 * than from the ioctl.  The source extent may have
+			 * different data after the file end.
+			 */
+			if (to_read % sectorsize)
+				last_full = fetched_num_csums - 1;
+
+			for (unsigned int i = 0; i < last_full; i++) {
+				ret = btrfs_insert_file_block_csum(trans,
+						first_block + (i * sectorsize),
+						BTRFS_EXTENT_CSUM_OBJECTID,
+						root->fs_info->csum_type,
+						fetched_csums + (i * fetched_csum_size));
+				if (ret) {
+					free(fetched_csums_buf);
+					return ret;
+				}
+			}
+
+			if (last_full < fetched_num_csums) {
+				u64 partial_off = round_down(to_read, sectorsize);
+
+				ret = btrfs_csum_file_block(trans,
+						first_block + partial_off,
+						BTRFS_EXTENT_CSUM_OBJECTID,
+						root->fs_info->csum_type,
+						source->buf + partial_off);
+				if (ret) {
+					free(fetched_csums_buf);
+					return ret;
+				}
+			}
+		} else {
+			for (unsigned int i = 0; i < to_write / sectorsize; i++) {
+				ret = btrfs_csum_file_block(trans,
+						first_block + (i * sectorsize),
+						BTRFS_EXTENT_CSUM_OBJECTID,
+						root->fs_info->csum_type,
+						write_buf + (i * sectorsize));
+				if (ret)
+					return ret;
+			}
 		}
 	}
+
+	free(fetched_csums_buf);
 
 	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
 	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
@@ -1477,6 +1657,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	source.path_name = path_name;
 	source.comp_buf = comp_buf;
 	source.wrkmem = wrkmem;
+	source.st_dev = st->st_dev;
 
 	while (file_pos < st->st_size) {
 		ret = add_file_item_extent(trans, root, btrfs_inode, objectid,
