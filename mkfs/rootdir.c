@@ -709,7 +709,7 @@ struct source_descriptor {
 };
 
 static int do_reflink_write(struct btrfs_fs_info *info,
-			    const struct source_descriptor *source, u64 addr,
+			    const struct source_descriptor *source, u64 logical,
 			    u64 file_pos, u64 bytes, const void *buf)
 {
 	struct btrfs_multi_bio *multi = NULL;
@@ -729,9 +729,9 @@ static int do_reflink_write(struct btrfs_fs_info *info,
 		this_len = bytes_left;
 		dev_nr = 0;
 
-		ret = btrfs_map_block(info, WRITE, addr, &this_len, &multi, 0, NULL);
+		ret = btrfs_map_block(info, WRITE, logical, &this_len, &multi, 0, NULL);
 		if (ret) {
-			error("cannot map the block %llu", addr);
+			error("cannot map the block %llu", logical);
 			return -EIO;
 		}
 
@@ -763,7 +763,7 @@ static int do_reflink_write(struct btrfs_fs_info *info,
 		BUG_ON(bytes_left < this_len);
 
 		bytes_left -= this_len;
-		addr += this_len;
+		logical += this_len;
 		total_write += this_len;
 
 		kfree(multi);
@@ -778,7 +778,7 @@ static int do_reflink_write(struct btrfs_fs_info *info,
 	if (bytes % info->sectorsize) {
 		return write_data_to_disk(info,
 			(char *)buf + round_down(bytes, info->sectorsize),
-			addr, info->sectorsize);
+			logical, info->sectorsize);
 	}
 
 	return 0;
@@ -911,7 +911,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 {
 	int ret;
 	u32 sectorsize = root->fs_info->sectorsize;
-	u64 first_block, to_read, to_write;
+	u64 logical, to_read, to_write;
 	struct btrfs_key key;
 	struct btrfs_file_extent_item stack_fi = { 0 };
 	u64 buf_size;
@@ -1124,13 +1124,13 @@ do_write:
 		return ret;
 	}
 
-	first_block = key.objectid;
+	logical = key.objectid;
 
 	if (g_do_reflink) {
-		ret = do_reflink_write(root->fs_info, source, first_block, file_pos,
+		ret = do_reflink_write(root->fs_info, source, logical, file_pos,
 				       to_read, write_buf);
 	} else {
-		ret = write_data_to_disk(root->fs_info, write_buf, first_block, to_write);
+		ret = write_data_to_disk(root->fs_info, write_buf, logical, to_write);
 	}
 
 	if (ret) {
@@ -1154,7 +1154,7 @@ do_write:
 
 			for (unsigned int i = 0; i < last_full; i++) {
 				ret = btrfs_insert_file_block_csum(trans,
-						first_block + (i * sectorsize),
+						logical + (i * sectorsize),
 						BTRFS_EXTENT_CSUM_OBJECTID,
 						root->fs_info->csum_type,
 						fetched_csums + (i * fetched_csum_size));
@@ -1168,7 +1168,7 @@ do_write:
 				u64 partial_off = round_down(to_read, sectorsize);
 
 				ret = btrfs_csum_file_block(trans,
-						first_block + partial_off,
+						logical + partial_off,
 						BTRFS_EXTENT_CSUM_OBJECTID,
 						root->fs_info->csum_type,
 						source->buf + partial_off);
@@ -1180,7 +1180,7 @@ do_write:
 		} else {
 			for (unsigned int i = 0; i < to_write / sectorsize; i++) {
 				ret = btrfs_csum_file_block(trans,
-						first_block + (i * sectorsize),
+						logical + (i * sectorsize),
 						BTRFS_EXTENT_CSUM_OBJECTID,
 						root->fs_info->csum_type,
 						write_buf + (i * sectorsize));
@@ -1193,7 +1193,7 @@ do_write:
 	free(fetched_csums_buf);
 
 	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
-	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, first_block);
+	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, logical);
 	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, to_write);
 	btrfs_set_stack_file_extent_num_bytes(&stack_fi, round_up(to_read, sectorsize));
 	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, round_up(to_read, sectorsize));

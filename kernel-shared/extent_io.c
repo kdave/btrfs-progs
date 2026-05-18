@@ -479,7 +479,7 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
  * Such data will be written to all mirrors and RAID56 P/Q will also be
  * properly handled.
  */
-int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
+int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 logical,
 		       u64 bytes)
 {
 	struct btrfs_multi_bio *multi = NULL;
@@ -496,11 +496,11 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 		this_len = bytes_left;
 		dev_nr = 0;
 
-		ret = btrfs_map_block(info, WRITE, offset, &this_len, &multi,
+		ret = btrfs_map_block(info, WRITE, logical, &this_len, &multi,
 				      0, &raid_map);
 		if (ret) {
 			fprintf(stderr, "Couldn't map the block %llu\n",
-				offset);
+				logical);
 			return -EIO;
 		}
 
@@ -519,7 +519,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 			}
 
 			memset(eb, 0, sizeof(struct extent_buffer) + this_len);
-			eb->start = offset;
+			eb->start = logical;
 			eb->len = this_len;
 
 			memcpy(eb->data, buf + total_write, this_len);
@@ -562,7 +562,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, const void *buf, u64 offset,
 		BUG_ON(bytes_left < this_len);
 
 		bytes_left -= this_len;
-		offset += this_len;
+		logical += this_len;
 		total_write += this_len;
 
 		kfree(multi);
