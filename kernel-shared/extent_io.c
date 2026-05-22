@@ -324,6 +324,8 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 	const int tolerance = (multi->type & BTRFS_RAID_RAID6 ? 2 : 1);
 	const int num_stripes = multi->num_stripes;
 	const u64 full_stripe_start = raid_map[0];
+	const u64 stripe_start = full_stripe_start +
+				 round_down(logical - full_stripe_start, BTRFS_STRIPE_LEN);
 	void **pointers = NULL;
 	unsigned long *failed_stripe_bitmap = NULL;
 	int failed_a = -1;
@@ -336,7 +338,8 @@ static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
 	ASSERT(raid_map);
 
 	/* The read length should be inside one stripe */
-	ASSERT(len <= BTRFS_STRIPE_LEN);
+	ASSERT(logical >= stripe_start &&
+	       logical + len <= stripe_start + BTRFS_STRIPE_LEN);
 
 	pointers = calloc(num_stripes, sizeof(void *));
 	if (!pointers)
@@ -439,6 +442,15 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 
 	/* We need to rebuild from P/Q */
 	if (mirror > 1 && multi->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		u64 stripe_start;
+
+		/*
+		 * The returned @read_len is always BTRFS_STRIPE_LEN. We have to calcualte
+		 * the proper length to the stripe boundary.
+		 */
+		stripe_start = raid_map[0] + round_down(logical - raid_map[0], BTRFS_STRIPE_LEN);
+		read_len = min((stripe_start + BTRFS_STRIPE_LEN) - logical, read_len);
+
 		ret = read_raid56(info, buf, logical, read_len, mirror, multi,
 				  raid_map);
 		kfree(multi);
