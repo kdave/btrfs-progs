@@ -534,7 +534,7 @@ test-convert: btrfs btrfs-convert
 
 test-check: test-fsck
 test-check-lowmem: test-fsck
-test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune
+test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fsstress
 ifneq ($(MAKECMDGOALS),test-check-lowmem)
 	@echo "  TEST     fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
