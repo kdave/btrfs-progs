@@ -48,6 +48,7 @@
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 #include "common/messages.h"
+#include "common/reproducible.h"
 #include "common/utils.h"
 #include "common/defs.h"
 #include "common/open-utils.h"
@@ -155,7 +156,10 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	disk_super = (struct btrfs_super_block *)buf;
 	dev_item = &disk_super->dev_item;
 
-	uuid_generate(device->uuid);
+	reproducible_uuid_generate(super->fsid,
+				   REPRODUCIBLE_UUID_ROLE_DEVICE,
+				   btrfs_super_num_devices(super) + 1,
+				   device->uuid);
 	device->fs_info = fs_info;
 	device->devid = 0;
 	device->type = 0;
