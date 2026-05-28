@@ -18,7 +18,9 @@
 #define __BTRFS_PATH_UTILS_H__
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <linux/limits.h>
+#include <ftw.h>
 
 char *path_canonicalize_dm_name(const char *ptname);
 char *path_canonicalize(const char *path);
@@ -37,5 +39,31 @@ int path_is_in_dir(const char *parent, const char *path);
 char *path_basename(char *path);
 char *path_dirname(char *path);
 int path_readlink(char *dest, const char *src);
+
+/*
+ * Callback for path_sorted_walk(), matching nftw()'s callback signature
+ * so existing nftw() callbacks can be reused unchanged.
+ *
+ *   st     : lstat() result, or NULL when type == FTW_NS
+ *   type   : FTW_F, FTW_D (pre-order), FTW_SL (never followed),
+ *            FTW_DNR (unreadable directory) or FTW_NS (lstat failed)
+ *   ftwbuf : level (depth, 0 at the root) and base (basename offset)
+ *
+ * Return 0 to continue the walk, non-zero to abort it (that value is
+ * then returned by path_sorted_walk()).
+ */
+typedef int (*path_walk_cb)(const char *path, const struct stat *st,
+			    int type, struct FTW *ftwbuf);
+
+/*
+ * Walk a directory tree depth-first, pre-order, visiting the entries of
+ * each directory in byte-wise (strcmp) name order. Symlinks are never
+ * followed (FTW_PHYS). Sorting makes the walk order independent of the
+ * filesystem's readdir() order.
+ *
+ * Returns 0 on success, the callback's non-zero return value if it
+ * aborted, or -errno on I/O failure.
+ */
+int path_sorted_walk(const char *root, path_walk_cb cb);
 
 #endif
