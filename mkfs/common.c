@@ -36,6 +36,7 @@
 #include "common/messages.h"
 #include "common/device-utils.h"
 #include "common/open-utils.h"
+#include "common/reproducible.h"
 #include "common/string-utils.h"
 #include "mkfs/common.h"
 
@@ -121,7 +122,7 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 		btrfs_set_item_offset(buf, nritems, itemoff);
 		btrfs_set_item_size(buf, nritems, sizeof(root_item));
 		if (blk == MKFS_FS_TREE) {
-			time_t now = time(NULL);
+			time_t now = reproducible_now();
 
 			uuid_generate(uuid);
 			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
