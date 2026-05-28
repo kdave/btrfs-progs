@@ -59,6 +59,7 @@
 #include "common/units.h"
 #include "common/string-utils.h"
 #include "common/string-table.h"
+#include "common/reproducible.h"
 #include "common/root-tree-utils.h"
 #include "cmds/commands.h"
 #include "check/qgroup-verify.h"
@@ -1868,6 +1869,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			ret = 1;
 			goto error;
 		}
+	} else if (reproducible_is_deterministic()) {
+		error("DETERMINISTIC_SEED=1 requires -U/--uuid to be specified");
+		ret = 1;
+		goto error;
 	}
 
 	if (*dev_uuid) {
