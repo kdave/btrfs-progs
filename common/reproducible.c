@@ -17,7 +17,9 @@
 #include "kerncompat.h"
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <uuid/uuid.h>
 #include "common/messages.h"
 #include "common/parse-utils.h"
 #include "common/reproducible.h"
@@ -36,4 +38,27 @@ time_t reproducible_now(void)
 		exit(1);
 	}
 	return (time_t)val;
+}
+
+bool reproducible_is_deterministic(void)
+{
+	const char *v = getenv("DETERMINISTIC_SEED");
+
+	return v && strcmp(v, "1") == 0;
+}
+
+void reproducible_uuid_generate(const u8 fs_uuid[BTRFS_UUID_SIZE],
+				enum reproducible_uuid_role role, u64 key,
+				u8 out[BTRFS_UUID_SIZE])
+{
+	u8 name[sizeof(u32) + sizeof(u64)];
+
+	if (!reproducible_is_deterministic()) {
+		uuid_generate(out);
+		return;
+	}
+
+	put_unaligned_le32((u32)role, name);
+	put_unaligned_le64(key, name + sizeof(u32));
+	uuid_generate_sha1(out, fs_uuid, (const char *)name, sizeof(name));
 }
