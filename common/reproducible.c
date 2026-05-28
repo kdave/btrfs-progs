@@ -40,6 +40,13 @@ time_t reproducible_now(void)
 	return (time_t)val;
 }
 
+bool reproducible_has_source_date(void)
+{
+	const char *sde = getenv("SOURCE_DATE_EPOCH");
+
+	return sde && *sde;
+}
+
 bool reproducible_is_deterministic(void)
 {
 	const char *v = getenv("DETERMINISTIC_SEED");
