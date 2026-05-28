@@ -51,6 +51,7 @@
 #include "common/messages.h"
 #include "common/utils.h"
 #include "common/extent-tree-utils.h"
+#include "common/reproducible.h"
 #include "common/root-tree-utils.h"
 #include "common/path-utils.h"
 #include "common/rbtree-utils.h"
@@ -274,6 +275,18 @@ static void free_one_hardlink(struct rb_node *node)
 
 static void stat_to_inode_item(struct btrfs_inode_item *dst, const struct stat *st)
 {
+	bool use_sde = reproducible_has_source_date();
+	time_t now = use_sde ? reproducible_now() : 0;
+	time_t atime = st->st_atime;
+	time_t ctime = st->st_ctime;
+	time_t mtime = st->st_mtime;
+
+	if (use_sde) {
+		ctime = now;
+		mtime = st->st_mtime < now ? st->st_mtime : now;
+		atime = now;
+	}
+
 	/*
 	 * Do not touch size for directory inode, the size would be
 	 * automatically updated during btrfs_link_inode().
@@ -287,11 +300,11 @@ static void stat_to_inode_item(struct btrfs_inode_item *dst, const struct stat *
 	btrfs_set_stack_inode_mode(dst, st->st_mode);
 	btrfs_set_stack_inode_rdev(dst, 0);
 	btrfs_set_stack_inode_flags(dst, 0);
-	btrfs_set_stack_timespec_sec(&dst->atime, st->st_atime);
+	btrfs_set_stack_timespec_sec(&dst->atime, atime);
 	btrfs_set_stack_timespec_nsec(&dst->atime, 0);
-	btrfs_set_stack_timespec_sec(&dst->ctime, st->st_ctime);
+	btrfs_set_stack_timespec_sec(&dst->ctime, ctime);
 	btrfs_set_stack_timespec_nsec(&dst->ctime, 0);
-	btrfs_set_stack_timespec_sec(&dst->mtime, st->st_mtime);
+	btrfs_set_stack_timespec_sec(&dst->mtime, mtime);
 	btrfs_set_stack_timespec_nsec(&dst->mtime, 0);
 	btrfs_set_stack_timespec_sec(&dst->otime, 0);
 	btrfs_set_stack_timespec_nsec(&dst->otime, 0);
