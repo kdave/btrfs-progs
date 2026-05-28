@@ -29,6 +29,8 @@
  */
 time_t reproducible_now(void);
 
+bool reproducible_has_source_date(void);
+
 bool reproducible_is_deterministic(void);
 
 enum reproducible_uuid_role {
