@@ -54,6 +54,11 @@ bool reproducible_is_deterministic(void)
 	return v && strcmp(v, "1") == 0;
 }
 
+bool reproducible_is_enabled(void)
+{
+	return reproducible_has_source_date() && reproducible_is_deterministic();
+}
+
 void reproducible_uuid_generate(const u8 fs_uuid[BTRFS_UUID_SIZE],
 				enum reproducible_uuid_role role, u64 key,
 				u8 out[BTRFS_UUID_SIZE])
