@@ -123,8 +123,12 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 		btrfs_set_item_size(buf, nritems, sizeof(root_item));
 		if (blk == MKFS_FS_TREE) {
 			time_t now = reproducible_now();
+			u8 fs_uuid_bin[BTRFS_UUID_SIZE];
 
-			uuid_generate(uuid);
+			uuid_parse(cfg->fs_uuid, fs_uuid_bin);
+			reproducible_uuid_generate(fs_uuid_bin,
+				REPRODUCIBLE_UUID_ROLE_SUBVOL,
+				BTRFS_FS_TREE_OBJECTID, uuid);
 			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
 			btrfs_set_stack_timespec_sec(&root_item.otime, now);
 			btrfs_set_stack_timespec_sec(&root_item.ctime, now);
@@ -460,12 +464,15 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		uuid_parse(cfg->fs_uuid, super.fsid);
 	}
 	if (!*cfg->dev_uuid) {
-		uuid_generate(super.dev_item.uuid);
+		reproducible_uuid_generate(super.fsid, REPRODUCIBLE_UUID_ROLE_DEVICE,
+					   1, super.dev_item.uuid);
 		uuid_unparse(super.dev_item.uuid, cfg->dev_uuid);
 	} else {
 		uuid_parse(cfg->dev_uuid, super.dev_item.uuid);
 	}
-	uuid_generate(chunk_tree_uuid);
+	reproducible_uuid_generate(super.fsid,
+				   REPRODUCIBLE_UUID_ROLE_CHUNK_TREE, 0,
+				   chunk_tree_uuid);
 
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
