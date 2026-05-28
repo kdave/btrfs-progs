@@ -20,7 +20,9 @@
 #include <linux/kdev_t.h>
 #include <linux/loop.h>
 #include <linux/limits.h>
+#include <dirent.h>
 #include <fcntl.h>
+#include <ftw.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -507,4 +509,142 @@ int path_readlink(char *dest, const char *src)
 		return -ENAMETOOLONG;
 	dest[ret] = 0;
 	return ret;
+}
+
+struct path_walk_entry {
+	char *name;
+};
+
+static int path_walk_entry_cmp(const void *a, const void *b)
+{
+	const struct path_walk_entry *ea = a;
+	const struct path_walk_entry *eb = b;
+
+	return strcmp(ea->name, eb->name);
+}
+
+/*
+ * Emulate nftw()'s depth-first, preorder, FTW_PHYS walk, but visit each
+ * directory's entries in sorted name order. The struct FTW fields are filled
+ * the way nftw() reports them so existing nftw() callbacks work unchanged.
+ */
+static int path_sorted_walk_recursive(char *path, int level, path_walk_cb cb)
+{
+	struct stat st;
+	struct FTW ftwbuf;
+	struct path_walk_entry *entries = NULL;
+	size_t count = 0, cap = 0;
+	DIR *dir = NULL;
+	struct dirent *de;
+	const char *slash;
+	int ret;
+
+	slash = strrchr(path, '/');
+	ftwbuf.base = slash ? (int)(slash - path + 1) : 0;
+	ftwbuf.level = level;
+
+	if (lstat(path, &st) != 0)
+		return cb(path, NULL, FTW_NS, &ftwbuf);
+
+	if (!S_ISDIR(st.st_mode)) {
+		if (S_ISLNK(st.st_mode))
+			return cb(path, &st, FTW_SL, &ftwbuf);
+		return cb(path, &st, FTW_F, &ftwbuf);
+	}
+
+	/*
+	 * Open the directory before reporting it: one we can lstat() but not
+	 * open is reported once as FTW_DNR, not FTW_D then FTW_DNR.
+	 */
+	dir = opendir(path);
+	if (!dir)
+		return cb(path, &st, FTW_DNR, &ftwbuf);
+
+	ret = cb(path, &st, FTW_D, &ftwbuf);
+	if (ret)
+		goto cleanup;
+
+	/*
+	 * readdir() returns NULL at both end-of-stream and error; clear
+	 * errno before each call to tell them apart after the loop.
+	 */
+	while (1) {
+		errno = 0;
+		de = readdir(dir);
+		if (!de)
+			break;
+		if (strcmp(de->d_name, ".") == 0 ||
+		    strcmp(de->d_name, "..") == 0)
+			continue;
+		if (count == cap) {
+			struct path_walk_entry *new_entries;
+
+			cap = cap ? cap * 2 : 16;
+			new_entries = reallocarray(entries, cap,
+						   sizeof(*entries));
+			if (!new_entries) {
+				ret = -ENOMEM;
+				goto cleanup;
+			}
+			entries = new_entries;
+		}
+		entries[count].name = strndup(de->d_name, NAME_MAX);
+		if (!entries[count].name) {
+			ret = -ENOMEM;
+			goto cleanup;
+		}
+		count++;
+	}
+	if (errno != 0) {
+		ret = -errno;
+		goto cleanup;
+	}
+	closedir(dir);
+	dir = NULL;
+
+	if (count)
+		qsort(entries, count, sizeof(*entries), path_walk_entry_cmp);
+
+	for (size_t i = 0; i < count; i++) {
+		char *child = malloc(PATH_MAX);
+
+		if (!child) {
+			ret = -ENOMEM;
+			goto cleanup;
+		}
+		ret = path_cat_out(child, path, entries[i].name);
+		if (!ret)
+			ret = path_sorted_walk_recursive(child, level + 1, cb);
+		free(child);
+		if (ret)
+			goto cleanup;
+	}
+	ret = 0;
+
+cleanup:
+	if (dir)
+		closedir(dir);
+	for (size_t i = 0; i < count; i++)
+		free(entries[i].name);
+	free(entries);
+	return ret;
+}
+
+int path_sorted_walk(const char *root, path_walk_cb cb)
+{
+	char path[PATH_MAX];
+	size_t root_len = strlen(root);
+
+	/* glibc nftw() rejects an empty path with ENOENT and no callback. */
+	if (root_len == 0)
+		return -ENOENT;
+	if (root_len >= sizeof(path))
+		return -ENAMETOOLONG;
+	memcpy(path, root, root_len + 1);
+
+	/* Strip trailing slashes (but keep a lone "/"), matching nftw. */
+	while (root_len > 1 && path[root_len - 1] == '/')
+		path[--root_len] = '\0';
+
+	return path_sorted_walk_recursive(path, 0, cb);
 }

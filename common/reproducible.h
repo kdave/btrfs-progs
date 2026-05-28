@@ -33,6 +33,9 @@ bool reproducible_has_source_date(void);
 
 bool reproducible_is_deterministic(void);
 
+/* True when SOURCE_DATE_EPOCH is non-empty and DETERMINISTIC_SEED is "1". */
+bool reproducible_is_enabled(void);
+
 enum reproducible_uuid_role {
 	REPRODUCIBLE_UUID_ROLE_CHUNK_TREE,	/* singleton, key ignored */
 	REPRODUCIBLE_UUID_ROLE_SUBVOL,		/* key = subvolume objectid */
