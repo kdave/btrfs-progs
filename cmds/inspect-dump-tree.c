@@ -206,8 +206,9 @@ static int check_metadata_logical(struct btrfs_fs_info *fs_info, u64 logical)
 		return -ENOENT;
 	}
 	map = container_of(ce, struct map_lookup, ce);
-	if (!(map->type & BTRFS_BLOCK_GROUP_METADATA)) {
-		error("logical %llu is not in a metadata chunk, found chunk %llu len %llu flags 0x%llx",
+	if (!(map->type & (BTRFS_BLOCK_GROUP_METADATA |
+			   BTRFS_BLOCK_GROUP_SYSTEM))) {
+		error("logical %llu is not in a metadata/system chunk, found chunk %llu len %llu flags 0x%llx",
 		      logical, ce->start, ce->size, map->type);
 		return -EINVAL;
 	}
