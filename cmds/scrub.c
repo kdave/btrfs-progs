@@ -1727,7 +1727,7 @@ out:
 	if (nothing_to_resume)
 		return 2;
 	if (e_uncorrectable) {
-		error("there are %d uncorrectable errors", e_uncorrectable);
+		error("there are %d device(s) with uncorrectable errors", e_uncorrectable);
 		return 3;
 	}
 	if (e_correctable)
