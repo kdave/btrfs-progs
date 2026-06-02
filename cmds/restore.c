@@ -53,6 +53,7 @@
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "common/path-utils.h"
 #include "common/messages.h"
 #include "cmds/commands.h"
 
@@ -983,14 +984,22 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		type = btrfs_dir_ftype(leaf, dir_item);
 		btrfs_dir_item_key_to_cpu(leaf, dir_item, &location);
 
-		/* full path from root of btrfs being restored */
-		snprintf(fs_name, PATH_MAX, "%s/%s", in_dir, filename);
+		/* Full path from root of filesystem being restored. */
+		ret = path_cat_out(fs_name, in_dir, filename);
+		if (ret < 0) {
+			error("invalid file path %s/%s", in_dir, filename);
+			goto out;
+		}
 
 		if (mreg && REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
 			goto next;
 
-		/* full path from system root */
-		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, fs_name);
+		/* Full path from system root. */
+		ret = path_cat_out(path_name, output_rootdir, fs_name);
+		if (ret < 0) {
+			error("invalid full path %s%s", output_rootdir, fs_name);
+			goto out;
+		}
 
 		/*
 		 * Restore directories, files, symlinks and metadata.
@@ -1105,7 +1114,11 @@ next:
 	}
 
 	if ((restore_metadata || get_xattrs) && !dry_run) {
-		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, in_dir);
+		ret = path_cat_out(path_name, output_rootdir, in_dir);
+		if (ret < 0) {
+			error("invalid path %s%s", output_rootdir, in_dir);
+			goto out;
+		}
 		fd = open(path_name, O_RDONLY);
 		if (fd < 0) {
 			error("failed to access '%s' to restore metadata/xattrs: %m",

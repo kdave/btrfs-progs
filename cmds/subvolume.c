@@ -430,8 +430,12 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 			goto out;
 		}
 
-		/* Build new path using the volume name found */
-		sprintf(full_subvolpath, "%s/%s", path, subvol);
+		/* Build new path using the volume name found. */
+		ret = path_cat_out(full_subvolpath, path, subvol);
+		if (ret < 0) {
+			error("invalid subvolume path %s/%s", path, subvol);
+			goto out;
+		}
 		free(subvol);
 	}
 
