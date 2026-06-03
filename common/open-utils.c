@@ -53,7 +53,7 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 	return 0;
 }
 
-int check_mounted_where(int fd, const char *file, char *where, int size,
+int check_mounted_where(int fd, const char *file, char *where, size_t size,
 			struct btrfs_fs_devices **fs_dev_ret, unsigned sbflags,
 			bool noscan)
 {
