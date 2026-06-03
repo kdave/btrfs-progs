@@ -237,7 +237,7 @@ out:
 	return ret;
 }
 
-static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *len)
+static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, size_t *len)
 {
 	int ret;
 	struct btrfs_send_attribute *send_attr;
@@ -291,7 +291,7 @@ out:
 #define TLV_GET_INT(s, attr, bits, v) \
 	do { \
 		__le##bits *__tmp; \
-		int __len; \
+		size_t __len; \
 		TLV_GET(s, attr, (void**)&__tmp, &__len); \
 		TLV_CHECK_LEN(sizeof(*__tmp), __len); \
 		*v = get_unaligned_le##bits(__tmp); \
@@ -306,7 +306,7 @@ static int tlv_get_string(struct btrfs_send_stream *sctx, int attr, char **str)
 {
 	int ret;
 	void *data;
-	int len = 0;
+	size_t len = 0;
 
 	TLV_GET(sctx, attr, &data, &len);
 
@@ -328,7 +328,7 @@ static int tlv_get_timespec(struct btrfs_send_stream *sctx,
 			    int attr, struct timespec *ts)
 {
 	int ret;
-	int len;
+	size_t len;
 	struct btrfs_timespec *bts;
 
 	TLV_GET(sctx, attr, (void**)&bts, &len);
@@ -347,7 +347,7 @@ tlv_get_failed:
 static int tlv_get_uuid(struct btrfs_send_stream *sctx, int attr, u8 *uuid)
 {
 	int ret;
-	int len;
+	size_t len;
 	void *data;
 
 	TLV_GET(sctx, attr, &data, &len);
@@ -373,9 +373,9 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 	void *data = NULL;
 	u8 verity_algorithm;
 	u32 verity_block_size;
-	int verity_salt_len;
+	size_t verity_salt_len;
 	void *verity_salt = NULL;
-	int verity_sig_len;
+	size_t verity_sig_len;
 	void *verity_sig = NULL;
 	struct timespec at;
 	struct timespec ct;
@@ -397,8 +397,8 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 	u64 unencoded_len;
 	u64 unencoded_offset;
 	u64 fileattr;
-	int len;
-	int xattr_len;
+	size_t len;
+	size_t xattr_len;
 	int fallocate_mode;
 
 	ret = read_cmd(sctx);
