@@ -51,6 +51,8 @@ int array_init(struct array *arr, unsigned int capacity)
 /* Free internal data array. */
 void array_free(struct array *arr)
 {
+	if (!arr)
+		return;
 	free(arr->data);
 	arr->length = 0;
 	arr->capacity = 0;
@@ -62,6 +64,8 @@ void array_free_elements(struct array *arr)
 {
 	unsigned int i;
 
+	if (!arr)
+		return;
 	for (i = 0; i < arr->length; i++) {
 		free(arr->data[i]);
 		arr->data[i] = NULL;
@@ -72,6 +76,8 @@ void array_free_elements(struct array *arr)
 /* Reset all elements to NULL up to capacity. */
 void array_clear(struct array *arr)
 {
+	if (!arr)
+		return;
 	for (unsigned int i = 0; i < arr->capacity; i++)
 		arr->data[i] = NULL;
 }
@@ -79,12 +85,16 @@ void array_clear(struct array *arr)
 /* Use the whole capacity for elements. */
 void array_use_capacity(struct array *arr)
 {
+	if (!arr)
+		return;
 	arr->length = arr->capacity;
 }
 
 /* Append a new element (increase length), extend the array if needed. */
 int array_append(struct array *arr, void *element)
 {
+	if (!arr)
+		return 0;
 	if (arr->length == arr->capacity) {
 		void **tmp;
 
