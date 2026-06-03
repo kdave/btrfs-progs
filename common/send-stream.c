@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <kernel-lib/overflow.h>
 #include "kernel-shared/uapi/btrfs_tree.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "kernel-shared/send.h"
@@ -134,7 +135,11 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 	cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
 	cmd_len = get_unaligned_le32(&cmd_hdr->len);
 	cmd = get_unaligned_le16(&cmd_hdr->cmd);
-	buf_len = sizeof(*cmd_hdr) + cmd_len;
+	if (check_add_overflow(sizeof(*cmd_hdr), (size_t)cmd_len, &buf_len)) {
+		ret = -EOVERFLOW;
+		error("command length overflow");
+		goto out;
+	}
 	if (sctx->read_buf_size < buf_len) {
 		void *new_read_buf;
 
