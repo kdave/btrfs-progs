@@ -85,13 +85,13 @@ static void print_escaped(const char *str)
 
 static void fmt_indent1(int indent)
 {
-	while (indent--)
+	while (indent-- > 0)
 		putchar(' ');
 }
 
 static void fmt_indent2(int indent)
 {
-	while (indent--) {
+	while (indent-- > 0) {
 		putchar(' ');
 		putchar(' ');
 	}
