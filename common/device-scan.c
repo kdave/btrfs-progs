@@ -218,6 +218,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 out:
 	free(device->zone_info);
+	free(device->name);
 	free(device);
 	free(buf);
 	return ret;
