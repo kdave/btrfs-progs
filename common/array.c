@@ -88,6 +88,9 @@ int array_append(struct array *arr, void *element)
 	if (arr->length == arr->capacity) {
 		void **tmp;
 
+		if (arr->capacity + alloc_increment < arr->capacity)
+			return -1;
+
 		tmp = reallocarray(arr->data, arr->capacity + alloc_increment, sizeof(void *));
 		if (!tmp)
 			return -1;
