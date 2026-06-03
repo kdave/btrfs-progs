@@ -708,6 +708,48 @@ by large metadata blocks and space reservation strategy that allocates more
 than can fit into the filesystem.
 
 
+ENVIRONMENT
+-----------
+
+:command:`mkfs.btrfs` honors two environment variables that make image
+creation reproducible, so that the same inputs produce a byte-for-byte
+identical image.
+
+SOURCE_DATE_EPOCH
+        A decimal count of seconds since the Unix epoch
+        (`reproducible-builds.org <https://reproducible-builds.org>`_),
+        used in place of the current time for the timestamps written into
+        the image: the root-item and inode times of the created trees.
+        With *--rootdir*, each copied file's *ctime* and *atime* are set to
+        this value. Its *mtime* is taken from the source but clamped to it,
+        so nothing in the image is newer than the source date.
+
+        An empty value is treated as unset. A value that is not a
+        non-negative integer fitting in the platform time type is a hard
+        error.
+
+DETERMINISTIC_SEED
+        When set to *1*, the internal UUIDs that are otherwise random (the
+        chunk-tree UUID, each device UUID and each subvolume UUID) are
+        instead derived deterministically from the filesystem UUID. A fixed
+        filesystem UUID must be supplied with *-U*; without it
+        :command:`mkfs.btrfs` exits with an error rather than emit a random
+        image. Any value other than *1* leaves UUID generation random.
+
+To create a reproducible image, pin the filesystem UUID with *-U*, set
+``SOURCE_DATE_EPOCH`` and ``DETERMINISTIC_SEED``, normalize source ownership,
+and start with a fresh target file. :command:`mkfs.btrfs` copies *uid* and
+*gid* from the source tree and, like other mkfs tools, does not zero space it
+does not write:
+
+.. code-block:: bash
+
+        $ chown -R 0:0 ./rootdir
+        $ truncate -s 1G image.btrfs
+        $ SOURCE_DATE_EPOCH=1700000000 DETERMINISTIC_SEED=1 \
+                mkfs.btrfs -U <uuid> --rootdir ./rootdir image.btrfs
+
+
 AVAILABILITY
 ------------
 
