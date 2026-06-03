@@ -455,19 +455,6 @@ int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
 	return 0;
 }
 
-/* Subvolume helper functions */
-/*
- * test if name is a correct subvolume name
- * this function return
- * 0-> name is not a correct subvolume name
- * 1-> name is a correct subvolume name
- */
-int test_issubvolname(const char *name)
-{
-	return name[0] != '\0' && !strchr(name, '/') &&
-		strcmp(name, ".") && strcmp(name, "..");
-}
-
 /*
  * Unified GNU semantics basename helper, never changing the argument. Always
  * use this instead of basename().

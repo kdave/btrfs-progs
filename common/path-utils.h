@@ -37,6 +37,4 @@ int path_is_in_dir(const char *parent, const char *path);
 char *path_basename(char *path);
 char *path_dirname(char *path);
 
-int test_issubvolname(const char *name);
-
 #endif
