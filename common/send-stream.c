@@ -196,6 +196,11 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 		pos += sizeof(tlv_type);
 		data += sizeof(tlv_type);
+		if (cmd_len < pos) {
+			error("send stream is truncated");
+			ret = -EINVAL;
+			goto out;
+		}
 		if (sctx->version >= 2 && tlv_type == BTRFS_SEND_A_DATA) {
 			send_attr->tlv_len = cmd_len - pos;
 		} else {
@@ -208,7 +213,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 			pos += sizeof(__le16);
 			data += sizeof(__le16);
 		}
-		if (cmd_len - pos < send_attr->tlv_len) {
+		if (cmd_len < pos || cmd_len - pos < send_attr->tlv_len) {
 			error("send stream is truncated");
 			ret = -EINVAL;
 			goto out;
