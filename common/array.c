@@ -40,8 +40,10 @@ int array_init(struct array *arr, unsigned int capacity)
 		arr->capacity = alloc_increment;
 
 	tmp = calloc(arr->capacity, sizeof(void *));
-	if (!tmp)
+	if (!tmp) {
+		arr->capacity = 0;
 		return -1;
+	}
 	arr->data = tmp;
 	return 0;
 }
