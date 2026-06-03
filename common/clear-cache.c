@@ -693,8 +693,10 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 
 	extent_io_tree_init(fs_info, &used, 0);
 	ret = btrfs_mark_used_blocks(fs_info, &used);
-	if (ret)
-		return ret;
+	if (ret) {
+		error = ret;
+		goto out;
+	}
 
 	while (1) {
 		task_ctx->item_count++;
@@ -758,6 +760,7 @@ static int check_space_cache(struct btrfs_root *root, struct task_ctx *task_ctx)
 			error++;
 		}
 	}
+out:
 	extent_io_tree_release(&used);
 	return error ? -EINVAL : 0;
 }
