@@ -136,7 +136,8 @@ int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 	u32 imode;
 	int ret;
 
-	UASSERT(namelen && namelen <= BTRFS_NAME_LEN);
+	if (namelen <= 0 || namelen > BTRFS_NAME_LEN)
+		return -EINVAL;
 
 	/* Make sure @parent_dir is a directory. */
 	key.objectid = parent_dir;
