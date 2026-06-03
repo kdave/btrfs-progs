@@ -225,7 +225,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	if (!fi_args->num_devices)
 		goto out;
 
-	di_args = *di_ret = malloc((fi_args->num_devices) * sizeof(*di_args));
+	di_args = *di_ret = calloc(fi_args->num_devices, sizeof(*di_args));
 	if (!di_args) {
 		ret = -errno;
 		goto out;
