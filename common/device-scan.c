@@ -58,10 +58,11 @@ static int btrfs_scan_done = 0;
 
 /*
  * This function checks if the given input parameter is
- * an uuid or a path
- * return <0 : some error in the given input
+ * a UUID or a path:
+ *
+ * return <0:                   some error in the given input
  * return BTRFS_ARG_UNKNOWN:	unknown input
- * return BTRFS_ARG_UUID:	given input is uuid
+ * return BTRFS_ARG_UUID:	given input is UUID
  * return BTRFS_ARG_MNTPOINT:	given input is path
  * return BTRFS_ARG_REG:	given input is regular file
  * return BTRFS_ARG_BLKDEV:	given input is block device
@@ -85,12 +86,9 @@ int check_arg_type(const char *input)
 			return BTRFS_ARG_REG;
 
 		return BTRFS_ARG_UNKNOWN;
-	} else {
-		return -errno;
 	}
 
-	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) &&
-		!uuid_parse(input, uuid))
+	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) && uuid_parse(input, uuid) == 0)
 		return BTRFS_ARG_UUID;
 
 	return BTRFS_ARG_UNKNOWN;
