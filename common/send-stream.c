@@ -76,6 +76,8 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 
 		rbytes = read(sctx->fd, buf + pos, len - pos);
 		if (rbytes < 0) {
+			if (errno == EINTR)
+				continue;
 			ret = -errno;
 			error("read from stream failed: %m");
 			goto out;
