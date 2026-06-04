@@ -392,7 +392,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 					 unit_mode));
 
 	for (i = 0; i < fs_info->num_devices; i++) {
-		char *canonical_path;
+		char *canonical_path, *path;
 
 		tmp_dev_info = (struct btrfs_ioctl_dev_info_args *)&dev_info[i];
 
@@ -406,11 +406,14 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		}
 		close(fd);
 		canonical_path = path_canonicalize((char *)tmp_dev_info->path);
+		if (!canonical_path)
+			path = (char *)tmp_dev_info->path;
+		else
+			path = canonical_path;
 		pr_default("\tdevid %4llu size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size_mode(tmp_dev_info->total_bytes, unit_mode),
-			pretty_size_mode(tmp_dev_info->bytes_used, unit_mode),
-			canonical_path);
+			pretty_size_mode(tmp_dev_info->bytes_used, unit_mode), path);
 
 		free(canonical_path);
 	}
