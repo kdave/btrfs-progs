@@ -1025,8 +1025,8 @@ translate_flags(int flags, const char *delim,
 		if (!first && delim)
 			add_string(&flag_str, delim);
 
-		ret = snprintf(number, 11, "0x%x", flags) > 0;
-		if (ret > 0 && ret <= 11)
+		ret = snprintf(number, sizeof(number), "0x%x", flags) > 0;
+		if (ret > 0 && ret <= sizeof(number))
 			add_string(&flag_str, number);
 	}
 

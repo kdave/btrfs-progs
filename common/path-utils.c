@@ -174,7 +174,7 @@ static int resolve_loop_device(const char* loop_dev, char* loop_file,
 		return -errno;
 	}
 
-	snprintf(fmt, 20, "%%%i[^\n]", max_len - 1);
+	snprintf(fmt, sizeof(fmt), "%%%i[^\n]", max_len - 1);
 	ret = fscanf(f, fmt, loop_file);
 	fclose(f);
 	if (ret == EOF)

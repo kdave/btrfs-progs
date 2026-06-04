@@ -730,7 +730,7 @@ static int device_is_seed(int fd, const char *dev_path, u64 devid, const u8 *mnt
 	int ret = -1;
 	int sysfs_fd;
 
-	snprintf(devid_str, 20, "%llu", devid);
+	snprintf(devid_str, sizeof(devid_str), "%llu", devid);
 	/* devinfo/<devid>/fsid */
 	ret = path_cat3_out(fsid_path, "devinfo", devid_str, "fsid");
 	if (ret < 0)

@@ -633,7 +633,7 @@ static int print_device_stat_string(struct format_ctx *fctx,
 
 		snprintf(canonical_path, 32, "devid:%llu", args->devid);
 	}
-	snprintf(devid_str, 32, "%llu", args->devid);
+	snprintf(devid_str, sizeof(devid_str), "%llu", args->devid);
 	fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
 	/* Plain text does not print device info */
 	if (json) {
