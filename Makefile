@@ -249,7 +249,6 @@ objects = \
 	crypto/hash.o	\
 	crypto/xxhash.o	\
 	$(CRYPTO_OBJECTS)	\
-	libbtrfsutil/stubs.o	\
 	libbtrfsutil/subvolume.o
 
 cmds_objects = cmds/subvolume.o cmds/subvolume-list.o \
@@ -280,8 +279,7 @@ libbtrfsutil_minor := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-
 libbtrfsutil_patch := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_version := $(libbtrfsutil_major).$(libbtrfsutil_minor).$(libbtrfsutil_patch)
 libbtrfsutil_objects = libbtrfsutil/errors.o libbtrfsutil/filesystem.o \
-		       libbtrfsutil/subvolume.o libbtrfsutil/qgroup.o \
-		       libbtrfsutil/stubs.o
+		       libbtrfsutil/subvolume.o libbtrfsutil/qgroup.o
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  convert/source-ext2.o convert/source-reiserfs.o \
 		  mkfs/common.o common/clear-cache.o

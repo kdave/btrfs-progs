@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "stubs.h"
 
 #include "btrfsutil_internal.h"
 
