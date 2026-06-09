@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <mntent.h>
-#include <ctype.h>
 #include <limits.h>
 #include <strings.h>
 #include "kernel-lib/list.h"
@@ -1235,23 +1234,12 @@ int get_fs_exclop(int fd)
 {
 	int sysfs_fd;
 	char buf[32];
-	int ret;
 	int i;
 
-	sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
+	sysfs_fd = sysfs_read_fsid_file_clean_str(fd, "exclusive_operation", buf, sizeof(buf));
 	if (sysfs_fd < 0)
 		return BTRFS_EXCLOP_UNKNOWN;
 
-	memset(buf, 0, sizeof(buf));
-	ret = sysfs_read_file(sysfs_fd, buf, sizeof(buf));
-	close(sysfs_fd);
-	if (ret <= 0)
-		return BTRFS_EXCLOP_UNKNOWN;
-
-	i = strlen(buf) - 1;
-	while (i > 0 && isspace(buf[i])) i--;
-	if (i > 0)
-		buf[i + 1] = 0;
 	for (i = 0; i < ARRAY_SIZE(exclop_def); i++) {
 		if (strcmp(exclop_def[i], buf) == 0)
 			return i;
