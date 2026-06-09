@@ -358,18 +358,13 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 	int ret;
 	char buf[PATH_MAX];
 
-	ret = readlink(path_name, buf, sizeof(buf));
-	if (ret <= 0) {
+	ret = path_readlink(buf, path_name);
+	if (ret < 0) {
+		errno = -ret;
 		error("readlink failed for %s: %m", path_name);
 		goto fail;
 	}
-	if (ret >= sizeof(buf)) {
-		error("symlink too long for %s", path_name);
-		ret = -1;
-		goto fail;
-	}
 
-	buf[ret] = '\0'; /* readlink does not do it for us */
 	nbytes = ret + 1;
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0, buf, nbytes,
 					 BTRFS_COMPRESS_NONE, nbytes);
