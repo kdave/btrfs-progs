@@ -1166,14 +1166,18 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 				ctx.length++;
 
 				if (ctx.length == ctx.size) {
-					ctx.size += 1024;
-					ctx.stats = reallocarray(ctx.stats, ctx.size,
-								 sizeof(ctx.stats[0]));
-					if (!ctx.stats) {
+					struct list_chunks_entry *tmp;
+
+					tmp = reallocarray(ctx.stats, ctx.size + 1024,
+							   sizeof(ctx.stats[0]));
+					if (!tmp) {
 						ret = 1;
 						error_mem(NULL);
 						goto out;
 					}
+
+					ctx.size += 1024;
+					ctx.stats = tmp;
 				}
 			}
 
