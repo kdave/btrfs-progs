@@ -328,7 +328,13 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 	pr_default("  Enabled:                 %s\n", "yes");
 
 	fd = sysfs_open_fsid_file(fsfd, "qgroups/mode");
-	if (fd < 0) {
+	/*
+	 * The mode file was added in 6.7, before that only the 'qgroup' mode
+	 * can be assumed.
+	 */
+	if (fd == -ENOENT) {
+		strncpy_null(buf, "qgroup", sizeof(buf));
+	} else if (fd < 0) {
 		error("cannot open file qgroups/mode: %m");
 		goto out;
 	}
