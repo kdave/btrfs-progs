@@ -327,7 +327,7 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	pr_default("  Enabled:                 %s\n", "yes");
 
-	fd = sysfs_open_fsid_file(fsfd, "qgroups/mode");
+	fd = sysfs_read_fsid_file_clean_str(fsfd, "qgroups/mode", buf, sizeof(buf));
 	/*
 	 * The mode file was added in 6.7, before that only the 'qgroup' mode
 	 * can be assumed.
@@ -335,18 +335,10 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 	if (fd == -ENOENT) {
 		strncpy_null(buf, "qgroup", sizeof(buf));
 	} else if (fd < 0) {
-		error("cannot open file qgroups/mode: %m");
-		goto out;
-	}
-	ret = sysfs_read_file(fd, buf, sizeof(buf));
-	if (fd < 0) {
 		error("cannot read file qgroups/mode: %m");
 		goto out;
 	}
-	while (isspace(buf[strlen(buf) - 1]))
-		buf[strlen(buf) - 1] = 0;
 	pr_default("  Mode:                    %s (%s)\n", buf, describe_mode(buf));
-	close(fd);
 
 	ret = sysfs_read_fsid_file_u64(fsfd, "qgroups/inconsistent", &num);
 	if (ret < 0) {
