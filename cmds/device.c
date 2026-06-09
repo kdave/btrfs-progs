@@ -774,7 +774,7 @@ static int get_fs_info_offline(struct btrfs_fs_info *fs_info,
 		}
 	}
 
-	di_args = malloc(fi_args->num_devices * sizeof(*di_args));
+	di_args = calloc(fi_args->num_devices, sizeof(*di_args));
 	if (!di_args)
 		return -ENOMEM;
 
