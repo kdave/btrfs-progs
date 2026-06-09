@@ -31,5 +31,6 @@ int sysfs_read_file(int fd, char *buf, size_t size);
 int sysfs_write_file(int fd, const char *buf, size_t size);
 int sysfs_read_file_u64(const char *name, u64 *value);
 int sysfs_write_file_u64(const char *name, u64 value);
+int sysfs_read_fsid_file_clean_str(int fd, const char *name, char *buf, size_t size);
 
 #endif

@@ -17,6 +17,7 @@
 #include "kerncompat.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
 #include <uuid/uuid.h>
 #include "common/sysfs-utils.h"
 #include "common/path-utils.h"
@@ -199,6 +200,42 @@ int sysfs_write_fsid_file_u64(int fd, const char *name, u64 value)
 
 	ret = snprintf(str, sizeof(str), "%llu", value);
 	ret = sysfs_write_file(fd, str, ret);
+	close(fd);
+	return ret;
+}
+
+int sysfs_read_fsid_file_clean_str(int fd, const char *name, char *buf, size_t size)
+{
+	int ret;
+	size_t end;
+
+	fd = sysfs_open_fsid_file(fd, name);
+	if (fd < 0)
+		return fd;
+
+	ret = sysfs_read_file(fd, buf, size);
+	if (ret < 0)
+		goto out;
+
+	end = strlen(buf);
+	/* Remove trailing space (newlines). */
+	while (end >= 1) {
+		if (isspace(buf[end - 1])) {
+			end--;
+		} else {
+			buf[end] = 0;
+			break;
+		}
+	}
+
+	/* The whole string was whitespace. */
+	if (end == 0)
+		buf[0] = 0;
+
+	/* Remove prefix space (almost all lines have none). */
+	while (buf[0] != 0 && isspace(buf[0]))
+		memmove(buf, buf + 1, end);
+out:
 	close(fd);
 	return ret;
 }
