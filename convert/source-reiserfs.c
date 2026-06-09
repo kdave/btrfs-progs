@@ -165,8 +165,8 @@ static int insert_cached_objectid(reiserfs_filsys_t fs, u64 objectid)
 	struct reiserfs_convert_info *info = fs->fs_vp;
 
 	if (info->used_slots + 1 >= info->alloced_slots) {
-		u64 *objectids = realloc(info->objectids,
-				    (info->alloced_slots + 1000) * sizeof(u64));
+		u64 *objectids = reallocarray(info->objectids,
+					      info->alloced_slots + 1000, sizeof(u64));
 
 		if (!objectids)
 			return -ENOMEM;

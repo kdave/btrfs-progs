@@ -648,7 +648,7 @@ again:
 			}
 			++curr;
 			tmp = p;
-			p = realloc(p, (curr + 2) * sizeof(*p));
+			p = reallocarray(p, curr + 2, sizeof(*p));
 			if (!p) {
 				free_history(tmp);
 				return ERR_PTR(-errno);

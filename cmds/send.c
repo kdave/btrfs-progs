@@ -188,8 +188,9 @@ static int add_clone_source(struct btrfs_send *sctx, u64 root_id)
 	void *tmp;
 
 	tmp = sctx->clone_sources;
-	sctx->clone_sources = realloc(sctx->clone_sources,
-		sizeof(*sctx->clone_sources) * (sctx->clone_sources_count + 1));
+	sctx->clone_sources = reallocarray(sctx->clone_sources,
+					   sctx->clone_sources_count + 1,
+					   sizeof(*sctx->clone_sources));
 
 	if (!sctx->clone_sources) {
 		free(tmp);

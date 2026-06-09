@@ -1167,8 +1167,8 @@ static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
 
 				if (ctx.length == ctx.size) {
 					ctx.size += 1024;
-					ctx.stats = realloc(ctx.stats, ctx.size
-						* sizeof(ctx.stats[0]));
+					ctx.stats = reallocarray(ctx.stats, ctx.size,
+								 sizeof(ctx.stats[0]));
 					if (!ctx.stats) {
 						ret = 1;
 						error_mem(NULL);
@@ -1287,7 +1287,7 @@ static int read_chunk_tree(int fd, struct chunk **chunks, size_t *num_chunks)
 				capacity = 1;
 			else
 				capacity *= 2;
-			tmp = realloc(*chunks, capacity * sizeof(**chunks));
+			tmp = reallocarray(*chunks, capacity, sizeof(**chunks));
 			if (!tmp) {
 				perror("realloc");
 				return -1;
