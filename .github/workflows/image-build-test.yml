@@ -45,23 +45,23 @@ jobs:
       - name: CI Leap 16.0
         run: sudo docker run kdave/ci-opensuse-leap-16.0-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-zoned
   check-musl:
-    name: CI Musl
+    name: CI Alpine/Musl
     runs-on: ubuntu-24.04
     steps:
-      - name: CI Musl
+      - name: CI Alpine/Musl
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
-      - name: CI Musl (experimental)
+      - name: CI Alpine/Musl (experimental)
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-musl-32bit:
-    name: CI Musl (32bit)
+    name: CI Alpine/Musl (32bit)
     # Pin the version, on 24.04 it fails:
     #  make: *** pselect jobs pipe: Function not implemented.  Stop.
     #  make: *** Waiting for unfinished jobs....
     runs-on: ubuntu-22.04
     steps:
-      - name: CI Musl (32bit)
+      - name: CI Alpine/Musl (32bit)
         run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
-      - name: CI Musl (32bit) (experimental)
+      - name: CI Alpine/Musl (32bit) (experimental)
         run: sudo docker run kdave/ci-musl-i386 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev --enable-experimental
   check-tumbleweed:
     name: CI Tumbleweed
