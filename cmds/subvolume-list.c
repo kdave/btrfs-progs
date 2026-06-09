@@ -391,13 +391,13 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 
 		size = set->total + BTRFS_LIST_NCOMPS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_list_comparer);
-		tmp = set;
-		set = realloc(set, size);
-		if (!set) {
+		tmp = realloc(set, size);
+		if (!tmp) {
 			error_mem(NULL);
-			free(tmp);
+			free(set);
 			exit(1);
 		}
+		set = tmp;
 
 		memset(&set->comps[set->total], 0,
 		       BTRFS_LIST_NCOMPS_INCREASE *
@@ -1051,13 +1051,13 @@ static void btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 
 		size = set->total + BTRFS_LIST_NFILTERS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_list_filter);
-		tmp = set;
-		set = realloc(set, size);
-		if (!set) {
+		tmp = realloc(set, size);
+		if (!tmp) {
 			error_mem(NULL);
-			free(tmp);
+			free(set);
 			exit(1);
 		}
+		set = tmp;
 
 		memset(&set->filters[set->total], 0,
 		       BTRFS_LIST_NFILTERS_INCREASE *

@@ -647,12 +647,12 @@ again:
 				continue;
 			}
 			++curr;
-			tmp = p;
-			p = reallocarray(p, curr + 2, sizeof(*p));
-			if (!p) {
-				free_history(tmp);
+			tmp = reallocarray(p, curr + 2, sizeof(*p));
+			if (!tmp) {
+				free_history(p);
 				return ERR_PTR(-errno);
 			}
+			p = tmp;
 			p[curr] = malloc(sizeof(**p));
 			if (!p[curr]) {
 				free_history(p);

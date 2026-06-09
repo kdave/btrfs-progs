@@ -185,17 +185,15 @@ out:
 
 static int add_clone_source(struct btrfs_send *sctx, u64 root_id)
 {
-	void *tmp;
+	u64 *tmp;
 
-	tmp = sctx->clone_sources;
-	sctx->clone_sources = reallocarray(sctx->clone_sources,
-					   sctx->clone_sources_count + 1,
-					   sizeof(*sctx->clone_sources));
-
-	if (!sctx->clone_sources) {
-		free(tmp);
+	tmp = reallocarray(sctx->clone_sources, sctx->clone_sources_count + 1,
+			   sizeof(*sctx->clone_sources));
+	if (!tmp) {
+		free(sctx->clone_sources);
 		return -ENOMEM;
 	}
+	sctx->clone_sources = tmp;
 	sctx->clone_sources[sctx->clone_sources_count++] = root_id;
 
 	return 0;

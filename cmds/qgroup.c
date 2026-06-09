@@ -686,14 +686,13 @@ static int qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 		void *tmp;
 
 		size = set->total + BTRFS_QGROUP_NCOMPS_INCREASE;
-		size = sizeof(*set) +
-		       size * sizeof(struct btrfs_qgroup_comparer);
-		tmp = set;
-		set = realloc(set, size);
-		if (!set) {
-			free(tmp);
+		size = sizeof(*set) + size * sizeof(struct btrfs_qgroup_comparer);
+		tmp = realloc(set, size);
+		if (!tmp) {
+			free(set);
 			return -ENOMEM;
 		}
+		set = tmp;
 
 		memset(&set->comps[set->total], 0,
 		       BTRFS_QGROUP_NCOMPS_INCREASE *
@@ -1097,14 +1096,14 @@ static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 
 		size = set->total + BTRFS_QGROUP_NFILTERS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_qgroup_filter);
-
-		tmp = set;
-		set = realloc(set, size);
-		if (!set) {
+		tmp = realloc(set, size);
+		if (!tmp) {
 			error_mem(NULL);
-			free(tmp);
+			free(set);
 			exit(1);
 		}
+		set = tmp;
+
 		memset(&set->filters[set->total], 0,
 		       BTRFS_QGROUP_NFILTERS_INCREASE *
 		       sizeof(struct btrfs_qgroup_filter));
