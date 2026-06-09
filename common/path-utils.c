@@ -482,3 +482,29 @@ char *path_dirname(char *path)
 {
 	return dirname(path);
 }
+
+/*
+ * Read contents of symlink @src and store it to @dest (assuming PATH_MAX buffer).
+ * Makes sure it's a null terminated string.
+ *
+ * Return number of bytes written to @dest, or negative error.
+ */
+int path_readlink(char *dest, const char *src)
+{
+	int ret;
+
+	/* Readlink does not add the final null byte and can fill the whole buffer. */
+	ret = readlink(src, dest, PATH_MAX);
+	if (ret < 0)
+		return -errno;
+	/*
+	 * Extend the meaning of EINVAL which is either negative buffer size or
+	 * the named file is not a symbolic link. Zero-sized symlink cannot exist.
+	 */
+	if (ret == 0)
+		return -EINVAL;
+	if (ret >= PATH_MAX)
+		return -ENAMETOOLONG;
+	dest[ret] = 0;
+	return ret;
+}

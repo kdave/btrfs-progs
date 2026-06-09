@@ -36,5 +36,6 @@ int path_is_reg_or_block_device(const char *filename);
 int path_is_in_dir(const char *parent, const char *path);
 char *path_basename(char *path);
 char *path_dirname(char *path);
+int path_readlink(char *dest, const char *src);
 
 #endif
