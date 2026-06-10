@@ -207,9 +207,9 @@ label [<device>|<mountpoint>] [<newlabel>]
                 The maximum allowable length shall be less than 256 chars and must not contain
                 a newline. The trailing newline is stripped automatically.
 
-mkswapfile [-s size] file
+mkswapfile [-s size] [-p pagesize] file
         Create a new file that's suitable and formatted as a swapfile. Default
-        size is 2GiB, fixed page size 4KiB, minimum size is 40KiB.
+        size is 2GiB (minimum size is 40KiB), default page size is from running kernel.
 
         A swapfile must be created in a specific way: NOCOW and preallocated.
         Subvolume containing a swapfile cannot be snapshotted and blocks of an
@@ -222,9 +222,13 @@ mkswapfile [-s size] file
 
         .. note::
                 The command is a simplified version of 'mkswap', if you want to set
-                label, page size, or other parameters please use 'mkswap' proper.
+                label or other parameters please use 'mkswap' proper.
 
         ``Options``
+
+	-p|--pagesize SIZE
+                specify page size (k/m/g/e/p suffix), default is from running
+                kernel, must be power of two, in the range 4K..64K
 
         -s|--size SIZE
                 Create swapfile of a given size SIZE (accepting k/m/g/e/p

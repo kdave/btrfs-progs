@@ -1805,6 +1805,7 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
         "Create a new file that's suitable and formatted as a swapfile. Default",
         "size is 2GiB, minimum size is 40KiB.",
 	"",
+	OPTLINE("-p, --pagesize SIZE", "specify page size (k/m/g/e/p suffix), default is from running kernel, must be power of two, 4K..64K"),
 	OPTLINE("-s, --size SIZE", "create file of SIZE (accepting k/m/g/e/p suffix)"),
 	OPTLINE("-U, --uuid UUID", "specify UUID to use, or a special value: clear (all zeros), random, time (time-based random)"),
 	HELPINFO_INSERT_GLOBALS,
@@ -1812,6 +1813,9 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
 	HELPINFO_INSERT_QUIET,
 	NULL
 };
+
+#define MKSWAPFILE_PAGE_MIN				SZ_4K
+#define MKSWAPFILE_PAGE_MAX				SZ_64K
 
 /*
  * Swap signature in the first 4KiB, v2, no label:
@@ -1824,32 +1828,28 @@ static const char * const cmd_filesystem_mkswapfile_usage[] = {
  *               uuid 8B
  * 00000ff0 .. = 00 00 00 00 00 00 53 57  41 50 53 50 41 43 45 32
  *                                  S  W   A  P  S  P  A  C  E  2
+ *
+ * The signature is at the last 16 bytes of the page-sized block.
+ *
+ * 0x400             0x01
+ * 0x404  .. 0x407   number of pages (little-endian)
+ * 0x408  .. 0x40b   number of bad pages (unused)
+ * 0x40c  .. 0x42b   UUID
+ * ...
+ * 0x??f6 .. 0x??ff  signature
  */
-static int write_swap_signature(int fd, u32 page_count, const uuid_t uuid)
+static int write_swap_signature(int fd, u32 page_size, u32 page_count, const uuid_t uuid)
 {
 	int ret;
-	static unsigned char swap[SZ_4K] = {
-		[0x400] = 0x01,
-		/* 0x404 .. 0x407 number of pages (little-endian) */
-		/* 0x408 .. 0x40b number of bad pages (unused) */
-		/* 0x40c .. 0x42b UUID */
-		/* Last bytes of the page */
-		[0xff6] = 'S',
-		[0xff7] = 'W',
-		[0xff8] = 'A',
-		[0xff9] = 'P',
-		[0xffa] = 'S',
-		[0xffb] = 'P',
-		[0xffc] = 'A',
-		[0xffd] = 'C',
-		[0xffe] = 'E',
-		[0xfff] = '2',
-	};
+	static const char signature[] = "SWAPSPACE2";
+	static unsigned char swap[MKSWAPFILE_PAGE_MAX] = { 0 };
 	u32 *pages = (u32 *)&swap[0x404];
 
+	swap[0x400] = 0x01;
 	*pages = cpu_to_le32(page_count);
 	memcpy(&swap[0x40c], uuid, 16);
-	ret = pwrite(fd, swap, SZ_4K, 0);
+	memcpy(swap + page_size - strlen(signature), signature, strlen(signature));
+	ret = pwrite(fd, swap, page_size, 0);
 
 	return ret;
 }
@@ -1862,23 +1862,43 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 	unsigned long flags;
 	u64 size = SZ_2G;
 	u64 page_count;
+	u32 page_size;
+	const u32 system_page_size = getpagesize();
 	uuid_t uuid;
 
 	uuid_generate(uuid);
+	page_size = system_page_size;
+
 	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
+			{ "pagesize", required_argument, NULL, 'p' },
 			{ "size", required_argument, NULL, 's' },
 			{ "uuid", required_argument, NULL, 'U' },
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "s:U:", long_options, NULL);
+		c = getopt_long(argc, argv, "p:s:U:", long_options, NULL);
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'p':
+			page_size = arg_strtou64_with_suffix(optarg);
+			/*
+			 * Mkswap allows creating from 2K to 1M (or larger values),
+			 * but common hardware supports 4K-64K pages.
+			 */
+			if (page_size < MKSWAPFILE_PAGE_MIN || page_size > MKSWAPFILE_PAGE_MAX) {
+				error("page size %u out of range [4K, 64K]", page_size);
+				return 1;
+			}
+			if (!is_power_of_two_u64(page_size)) {
+				error("page size %u not power of two", page_size);
+				return 1;
+			}
+			break;
 		case 's':
 			size = arg_strtou64_with_suffix(optarg);
 			/* Minimum limit reported by mkswap */
@@ -1931,7 +1951,7 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		ret = 1;
 		goto out;
 	}
-	page_count = size / SZ_4K;
+	page_count = size / page_size;
 	if (page_count <= 10) {
 		error("file too short");
 		ret = 1;
@@ -1944,9 +1964,9 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		ret = 1;
 		goto out;
 	}
-	size = round_down(size, SZ_4K);
+	size = round_down(size, page_size);
 	pr_info("fallocate to size %llu, page size %u, %llu pages\n",
-			size, SZ_4K, page_count);
+			size, page_size, page_count);
 	ret = fallocate(fd, 0, 0, size);
 	if (ret < 0) {
 		error("cannot fallocate file: %m");
@@ -1954,14 +1974,19 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 		goto out;
 	}
 	pr_info("write swap signature\n");
-	ret = write_swap_signature(fd, page_count, uuid);
+	ret = write_swap_signature(fd, page_size, page_count, uuid);
 	if (ret < 0) {
 		error("cannot write swap signature: %m");
 		ret = 1;
 		goto out;
 	}
-	pr_default("create swapfile %s size %s (%llu)\n",
-			fname, pretty_size_mode(size, UNITS_HUMAN), size);
+	if (page_size != system_page_size)
+		pr_default("NOTE: specified page size %u different from system value %u\n",
+			   page_size, system_page_size);
+
+	pr_default("create swapfile %s size %s (%llu) page size %u\n",
+			fname, pretty_size_mode(size, UNITS_HUMAN), size,
+			page_size);
 out:
 	close(fd);
 
