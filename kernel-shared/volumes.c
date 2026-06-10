@@ -648,7 +648,7 @@ again:
 		/* free the memory */
 		kfree(device->name);
 		kfree(device->label);
-		kfree(device->zone_info);
+		btrfs_free_zoned_device_info(device->zone_info);
 		kfree(device);
 	}
 

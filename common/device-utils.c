@@ -302,12 +302,12 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 		goto err;
 	}
 
-	free(zinfo);
+	btrfs_free_zoned_device_info(zinfo);
 	*byte_count_ret = byte_count;
 	return 0;
 
 err:
-	free(zinfo);
+	btrfs_free_zoned_device_info(zinfo);
 	return 1;
 }
 

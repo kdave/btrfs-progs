@@ -1464,7 +1464,7 @@ int btrfs_get_zone_info(int fd, const char *file,
 	/* Get zone information */
 	ret = report_zones(fd, file, zinfo);
 	if (ret != 0) {
-		kfree(zinfo);
+		btrfs_free_zoned_device_info(zinfo);
 		return ret;
 	}
 	*zinfo_ret = zinfo;

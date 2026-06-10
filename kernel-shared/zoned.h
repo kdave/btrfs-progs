@@ -83,6 +83,16 @@ enum btrfs_zoned_model zoned_model(const char *file);
 u64 zone_size(const char *file);
 int btrfs_get_zone_info(int fd, const char *file,
 			struct btrfs_zoned_device_info **zinfo);
+
+static inline void btrfs_free_zoned_device_info(struct btrfs_zoned_device_info *zinfo)
+{
+	if (!zinfo)
+		return;
+	free(zinfo->zones);
+	free(zinfo->active_zones);
+	free(zinfo);
+}
+
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info);
 int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info);
 
