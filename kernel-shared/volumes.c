@@ -2396,8 +2396,10 @@ again:
 
 			ret = btrfs_stripe_tree_logical_to_physical(fs_info, logical,
 								    &multi->stripes[i]);
-			if (ret)
+			if (ret) {
+				kfree(multi);
 				return ret;
+			}
 		} else {
 			multi->stripes[i].physical =
 				map->stripes[stripe_index].physical +
