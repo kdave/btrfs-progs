@@ -1302,6 +1302,7 @@ out:
 	if (!ret)
 		cache->write_offset = cache->alloc_offset;
 
+	kfree(active);
 	kfree(zone_info);
 	return ret;
 }
