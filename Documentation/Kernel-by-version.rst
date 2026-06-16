@@ -6,8 +6,63 @@ Summary of kernel changes for each version.
 7.3 (Oct 2026)
 --------------
 Pull requests:
+`v7.3-rc1 <https://git.kernel.org/linus/50c44fea13ec339d0d457079b254e8c8420d6511>`__,
+`v7.3-rc2 <https://git.kernel.org/linus/d9d80a859bc45ca022abc13afdd11d1c812a1034>`__,
+`v7.3-rc3 <https://git.kernel.org/linus/95deca8dd9a91063babb2ef3a69f5248b1fa824e>`__,
+`v7.3-rc4 <https://git.kernel.org/linus/518e5b794c06c0f0eb40df3e202274a66202c137>`__,
+`v7.3-rc7 <https://git.kernel.org/linus/7b63ef2d55f24519e7e9e5f4d15dbea03f126e40>`__
 
-TBD
+User visible changes:
+
+- free space v1 disabled by default; the v2 (free space tree) is mkfs default
+  since 5.15, filesystems with v1 still work but could be slightly slower due
+  to lack of block group caching
+
+- mount option 'rescue=usebackuproot' requires read-only mount, it's too risky
+  to allow writable mount
+
+- remove standalone mount option 'usebackuproot', deprecated in 5.9
+
+- preserve constraints of NODATASUM and NODATACOW when chattr and mount options
+  may change the attributes
+
+- remove arbitrary limitation of 4KiB for page size when allowing block sizes
+  smaller than page
+
+- print messages when pinned block groups affect swap activation
+
+Performance improvements:
+
+- use iomap bounce buffer for direct IO instead of a fall back to buffered IO;
+  past correctness vs speed trade-offs dropped performance to ~50% of
+  theoretical maximum, now it's ~95%, effectively doubled
+
+- replace xarray with local LRU list for tracking inhibited extent buffers,
+  restored performance to pre-inhibition state (relatively ~3x)
+
+- remove unnecessary 1 jiffy delay in "non-SSD" mode with multiple logging
+  tasks, decrease latency, throughput increased ~5x on sample workload
+
+- skip hole detection during full fsync for files without holes and lots of
+  extents, reduce run time ~5x on sample workload (microsecond ranges)
+
+- reduce locking around extent readahead so it does not slow down other tasks
+  using an overlapping range
+
+- enhance extent buffer allocation modes to allow NOWAIT semantics in some
+  cases
+
+Notable fixes:
+
+- write-protect folios during writeback, prevent concurrent mmap and
+  compress/checksumming/etc undesired interactions
+
+- in zoned mode, handle transient overcommit full instead of going read-only
+
+- fix possible deadlock between defragmentation and delayed allocation
+  reservations
+
+- retry reading verity data colliding with up-to-date status changes
 
 7.2 (Aug 2026)
 --------------
