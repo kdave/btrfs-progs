@@ -14,7 +14,7 @@ suitable for all use cases or workloads, for example performance.
 Combination of features can vary in performance, the table does not
 cover all possibilities.
 
-**The table is based on the latest released linux kernel: 7.1**
+**The table is based on the latest released linux kernel: 7.2**
 
 Since kernel version 6.12 there's a config option *CONFIG_BTRFS_EXPERIMENTAL*
 that enables features that are in development and do not have stabilized
