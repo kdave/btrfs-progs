@@ -62,11 +62,6 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_CHUNK_ROOT_ONLY	= OPEN_CTREE_PARTIAL +
 					  OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS +
 					  __OPEN_CTREE_RETURN_CHUNK_ROOT,
-	/*
-	 * TODO: cleanup: Split the open_ctree_flags into more independent
-	 * Tree bits.
-	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
-	 */
 
 	/* Ignore UUID mismatches */
 	OPEN_CTREE_IGNORE_FSID_MISMATCH	= (1U << 10),

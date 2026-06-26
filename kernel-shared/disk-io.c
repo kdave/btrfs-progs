@@ -796,7 +796,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 	if (location->objectid == BTRFS_CHUNK_TREE_OBJECTID)
 		return fs_info->chunk_root;
 	if (location->objectid == BTRFS_DEV_TREE_OBJECTID)
-		return fs_info->dev_root;
+		return fs_info->dev_root ? fs_info->dev_root : ERR_PTR(-ENOENT);
 	if (location->objectid == BTRFS_CSUM_TREE_OBJECTID)
 		return btrfs_global_root(fs_info, location);
 	if (location->objectid == BTRFS_UUID_TREE_OBJECTID)
@@ -999,7 +999,8 @@ static int read_root_or_create_block(struct btrfs_fs_info *fs_info,
 			error("could not setup %s tree", str);
 			return -EIO;
 		}
-		warning("could not setup %s tree, skipping it", str);
+		warning("could not setup %s tree, skipping (partial open)",
+			str);
 		/*
 		 * Need a blank node here just so we don't screw up in the
 		 * million of places that assume a root has a valid ->node
@@ -1044,8 +1045,15 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 
 	ret = btrfs_search_slot(NULL, tree_root, &key, path, 0, 0);
 	if (ret < 0) {
-		error("could not find %s tree", str);
-		return ret;
+		if (!(flags & OPEN_CTREE_PARTIAL)) {
+			error("could not find %s tree", str);
+			return ret;
+		}
+		warning("could not find %s tree, skipping (partial open)",
+			str);
+		btrfs_release_path(path);
+		ret = 0;
+		goto create_synthetic;
 	}
 	ret = 0;
 
@@ -1105,6 +1113,7 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 	}
 	btrfs_release_path(path);
 
+create_synthetic:
 	/*
 	 * We didn't find all of our roots, create empty ones if we have PARTIAL
 	 * set.
@@ -1117,7 +1126,8 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 			return -EIO;
 		}
 
-		warning("could not setup %s tree, skipping it", str);
+		warning("could not setup %s tree, skipping (partial open)",
+			str);
 		for (i = found; i < fs_info->nr_global_roots; i++) {
 			root = calloc(1, sizeof(*root));
 			if (!root) {
@@ -1273,11 +1283,17 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 				BTRFS_BLOCK_GROUP_TREE_OBJECTID,
 				fs_info->block_group_root);
 		if (ret) {
-			error("couldn't load block group tree");
-			return -EIO;
+			if (!(flags & OPEN_CTREE_PARTIAL)) {
+				error("couldn't load block group tree");
+				return -EIO;
+			}
+			warning("couldn't load block group tree, skipping (partial open)");
+			kfree(fs_info->block_group_root);
+			fs_info->block_group_root = NULL;
+		} else {
+			set_bit(BTRFS_ROOT_TRACK_DIRTY,
+				&fs_info->block_group_root->state);
 		}
-		set_bit(BTRFS_ROOT_TRACK_DIRTY,
-			&fs_info->block_group_root->state);
 	}
 
 	ret = btrfs_find_and_setup_root(root, fs_info,
@@ -1285,9 +1301,13 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 					fs_info->dev_root);
 	if (ret) {
 		printk("Couldn't setup device tree\n");
-		return -EIO;
+		if (!(flags & OPEN_CTREE_PARTIAL))
+			return -EIO;
+		kfree(fs_info->dev_root);
+		fs_info->dev_root = NULL;
+	} else {
+		set_bit(BTRFS_ROOT_TRACK_DIRTY, &fs_info->dev_root->state);
 	}
-	set_bit(BTRFS_ROOT_TRACK_DIRTY, &fs_info->dev_root->state);
 
 	ret = btrfs_find_and_setup_root(root, fs_info,
 					BTRFS_UUID_TREE_OBJECTID,
@@ -1336,9 +1356,12 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		 * anything else is error
 		 */
 		if (ret < 0 && ret != -ENOENT) {
-			errno = -ret;
-			error("failed to read block groups: %m");
-			return ret;
+			if (!(flags & OPEN_CTREE_PARTIAL)) {
+				errno = -ret;
+				error("failed to read block groups: %m");
+				return ret;
+			}
+			warning("failed to read block groups, skipping (partial open)");
 		}
 	}
 
@@ -2193,11 +2216,14 @@ static void backup_super_roots(struct btrfs_fs_info *info)
 			       btrfs_header_level(info->fs_root->node));
 	}
 
-	btrfs_set_backup_dev_root(root_backup, info->dev_root->node->start);
-	btrfs_set_backup_dev_root_gen(root_backup,
-			       btrfs_header_generation(info->dev_root->node));
-	btrfs_set_backup_dev_root_level(root_backup,
+	if (info->dev_root && info->dev_root->node) {
+		btrfs_set_backup_dev_root(root_backup,
+						 info->dev_root->node->start);
+		btrfs_set_backup_dev_root_gen(root_backup,
+				       btrfs_header_generation(info->dev_root->node));
+		btrfs_set_backup_dev_root_level(root_backup,
 				       btrfs_header_level(info->dev_root->node));
+	}
 
 	btrfs_set_backup_total_bytes(root_backup,
 			     btrfs_super_total_bytes(info->super_copy));
