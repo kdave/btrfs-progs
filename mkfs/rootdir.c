@@ -1164,9 +1164,6 @@ fallback:
 	btrfs_set_stack_file_extent_num_bytes(&stack_fi, round_up(to_read, sectorsize));
 	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, round_up(to_read, sectorsize));
 
-	if (do_comp)
-		btrfs_set_stack_file_extent_compression(&stack_fi, g_compression);
-
 	ret = insert_reserved_file_extent(trans, root, objectid, btrfs_inode,
 					  file_pos, &stack_fi);
 	if (ret)
