@@ -71,11 +71,6 @@ static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
 #define BTRFS_SUPER_INFO_OFFSET			(65536)
 #define BTRFS_SUPER_INFO_SIZE			(4096)
 
-/*
- * The FREE_SPACE_TREE and FREE_SPACE_TREE_VALID compat_ro bits must not be
- * added here until read-write support for the free space tree is implemented in
- * btrfs-progs.
- */
 #define BTRFS_FEATURE_COMPAT_RO_SUPP			\
 	(BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |	\
 	 BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID | \
