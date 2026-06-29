@@ -1451,13 +1451,16 @@ static bool is_bad_qgroup(struct qgroup_count *count)
 }
 
 /*
- * Verify all qgroup numbers.
+ * Load qgroup items and optionally verify qgroup numbers.
+ *
+ * @check_accounting true: verify referenced/exclusive accounting.
+ * @check_accounting false: only load qgroup status/info/relation items.
  *
  * Return <0 for fatal errors (e.g. ENOMEM or failed to read quota tree)
- * Return 0 if all qgroup numbers are correct or no need to check (under rescan)
- * Return >0 if qgroup numbers are inconsistent.
+ * Return 0 if requested checks pass or accounting mismatches are ignored.
+ * Return >0 if qgroup numbers are inconsistent and not ignored.
  */
-int qgroup_verify_all(struct btrfs_fs_info *info)
+int qgroup_verify(struct btrfs_fs_info *info, bool check_accounting)
 {
 	struct rb_node *n;
 	int ret;
@@ -1485,6 +1488,9 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 	if (counts.qgroup_inconsist && !counts.rescan_running &&
 	    counts.rescan_running == 0)
 		skip_err = true;
+
+	if (!check_accounting)
+		goto out;
 
 	/*
 	 * Put all extent refs into our rbtree

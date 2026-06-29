@@ -58,6 +58,16 @@ SAFE OR ADVISORY OPTIONS
         This expects that the filesystem is otherwise OK, and is basically an offline
         *scrub* that does not repair data from spare copies.
 
+--skip-qgroup-accounting
+        skip verification of qgroup referenced/exclusive accounting.
+
+        Qgroup status, info and relation items are still loaded from the quota
+        tree. This option cannot be used with *--repair* or *--qgroup-report*.
+
+        This can significantly reduce runtime on filesystems with many snapshots
+        or reflinked files, as full qgroup accounting verification can require
+        extensive backref walks.
+
 --chunk-root <bytenr>
         use the given offset *bytenr* for the chunk tree root
 
