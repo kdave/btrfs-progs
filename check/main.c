@@ -86,6 +86,7 @@ bool no_holes = false;
 bool is_free_space_tree = false;
 bool init_extent_tree = false;
 bool check_data_csum = false;
+static bool check_qgroup_accounting = true;
 static bool found_free_ino_cache = false;
 static bool found_unknown_key = false;
 struct cache_tree *roots_info_cache = NULL;
@@ -217,7 +218,9 @@ static void print_status_check_line(void *p)
 		"[5/7] checking csums against data             " :
 		"[5/7] checking csums (without verifying data) ",
 		"[6/7] checking root refs                      ",
-		"[7/7] checking quota groups                   ",
+		check_qgroup_accounting ?
+		"[7/7] checking quota groups                   " :
+		"[7/7] checking qgroups (no accounting verify) ",
 	};
 	time_t elapsed;
 	int hours;
@@ -10593,6 +10596,7 @@ static const char * const cmd_check_usage[] = {
 	"",
 	"Check and reporting options:",
 	OPTLINE("--check-data-csum", "verify checksums of data blocks"),
+	OPTLINE("--skip-qgroup-accounting", "skip quota group accounting verification"),
 	OPTLINE("-Q, --qgroup-report", "print a report on qgroup consistency"),
 	OPTLINE("-E, --subvol-extents SUBVOLID", "print subvolume extents and sharing state"),
 	OPTLINE("-p, --progress", "indicate progress"),
@@ -10632,7 +10636,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
 			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
-			GETOPT_VAL_FORCE };
+			GETOPT_VAL_FORCE, GETOPT_VAL_SKIP_QGROUP_ACCOUNTING };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -10643,6 +10647,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				GETOPT_VAL_INIT_EXTENT },
 			{ "check-data-csum", no_argument, NULL,
 				GETOPT_VAL_CHECK_CSUM },
+			{ "skip-qgroup-accounting", no_argument, NULL,
+				GETOPT_VAL_SKIP_QGROUP_ACCOUNTING },
 			{ "backup", no_argument, NULL, 'b' },
 			{ "subvol-extents", required_argument, NULL, 'E' },
 			{ "qgroup-report", no_argument, NULL, 'Q' },
@@ -10715,6 +10721,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = true;
 				break;
+			case GETOPT_VAL_SKIP_QGROUP_ACCOUNTING:
+				check_qgroup_accounting = false;
+				break;
 			case GETOPT_VAL_MODE:
 				check_mode = parse_check_mode(optarg);
 				if (check_mode == CHECK_MODE_UNKNOWN) {
@@ -10755,6 +10764,15 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	/* This check is the only reason for --readonly to exist */
 	if (readonly && opt_check_repair) {
 		error("repair options are not compatible with --readonly");
+		exit(1);
+	}
+
+	if (!check_qgroup_accounting && opt_check_repair) {
+		error("--skip-qgroup-accounting is not compatible with --repair");
+		exit(1);
+	}
+	if (!check_qgroup_accounting && qgroup_report) {
+		error("--skip-qgroup-accounting is not compatible with --qgroup-report");
 		exit(1);
 	}
 
@@ -10878,7 +10896,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (qgroup_report) {
 		printf("Print quota groups report for %s\nUUID: %s\n", argv[optind], uuidbuf);
-		ret = qgroup_verify_all(gfs_info);
+		ret = qgroup_verify(gfs_info, true);
 		err |= !!ret;
 		if (ret >= 0)
 			report_qgroups(1);
@@ -11139,26 +11157,32 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (gfs_info->quota_enabled) {
 		if (!g_task_ctx.progress_enabled) {
-			fprintf(stderr, "[8/8] checking quota groups\n");
+			if (check_qgroup_accounting)
+				fprintf(stderr, "[8/8] checking quota groups\n");
+			else
+				fprintf(stderr,
+			"[8/8] checking quota groups (without verifying accounting)\n");
 		} else {
 			g_task_ctx.tp = TASK_QGROUPS;
 			task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 		}
-		qgroup_verify_ret = qgroup_verify_all(gfs_info);
+		qgroup_verify_ret = qgroup_verify(gfs_info, check_qgroup_accounting);
 		task_stop(g_task_ctx.info);
 		if (qgroup_verify_ret < 0) {
 			error("failed to check quota groups");
 			err |= !!qgroup_verify_ret;
 			goto out;
 		}
-		report_qgroups(0);
-		ret = repair_qgroups(gfs_info, &qgroups_repaired, false);
-		if (ret) {
-			error("failed to repair quota groups");
-			goto out;
+		if (check_qgroup_accounting) {
+			report_qgroups(0);
+			ret = repair_qgroups(gfs_info, &qgroups_repaired, false);
+			if (ret) {
+				error("failed to repair quota groups");
+				goto out;
+			}
+			if (qgroup_verify_ret && (!qgroups_repaired || ret))
+				err |= !!qgroup_verify_ret;
 		}
-		if (qgroup_verify_ret && (!qgroups_repaired || ret))
-			err |= !!qgroup_verify_ret;
 		ret = 0;
 	} else {
 		fprintf(stderr,

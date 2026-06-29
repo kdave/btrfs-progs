@@ -24,7 +24,7 @@
 
 struct btrfs_fs_info;
 
-int qgroup_verify_all(struct btrfs_fs_info *info);
+int qgroup_verify(struct btrfs_fs_info *info, bool check_accounting);
 void report_qgroups(int all);
 int repair_qgroups(struct btrfs_fs_info *info, int *repaired, bool silent);
 

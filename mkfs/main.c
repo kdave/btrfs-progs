@@ -1046,7 +1046,7 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	 * Qgroup is setup but with wrong info, use qgroup-verify
 	 * infrastructure to repair them.  (Just acts as offline rescan)
 	 */
-	ret = qgroup_verify_all(fs_info);
+	ret = qgroup_verify(fs_info, true);
 	if (ret < 0) {
 		errno = -ret;
 		error("qgroup rescan failed: %m");
