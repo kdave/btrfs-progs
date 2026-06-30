@@ -17,9 +17,14 @@ has a detached checksum stored in the checksum tree.
 
    To avoid this, kernel starting with version 6.14 will force a direct
    write to fall back to buffered, if the inode requires a data checksum.
-   This will bring a small performance penalty. If you require true zero-copy
+   This will bring an observable performance penalty. If you require true zero-copy
    direct writes, then set the ``NODATASUM`` flag for the inode and make
    sure the direct IO buffer is fully aligned to block size.
+
+   The kernel starting with version 7.3 will address the unstable buffer by bouncing
+   the buffer if the inode requires data checksums.
+   Although this is not true zero-copy, it's still better than falling back to buffered,
+   achieving 95% of true zero-copy performance.
 
 There are several checksum algorithms supported. The default and backward
 compatible algorithm is *crc32c*. Since kernel 5.5 there are three more with different

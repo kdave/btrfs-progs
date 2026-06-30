@@ -171,16 +171,19 @@ Compatibility
 Compression requires both data checksums and COW, so either *nodatasum* or
 *nodatasum* mount option/inode flag will result in no compression.
 
-Direct IO reads of compressed data will always fallback to buffered reads.
+Direct IO reads of compressed data will always falls back to buffered reads.
 
-Direct IO write behavior depends on the inode flag.
-For inodes with data checksum, direct IO writes always fallback to buffered
-writes, thus can generate compressed data if the mount option/inode flags
-allows that.
+Direct IO write behavior depends on the inode flag and kernel version.
+
+Before v7.3, for inodes with data checksums, direct IO writes always fallback
+to buffered writes, thus can generate compressed data if the mount option/inode
+flags allow that.
 
 For inodes without data checksums, direct IO writes will not populate page cache,
 and since the inode has no data checksums, no compressed data will be generated
 anyway.
+
+Starting with kernel v7.3, no compression is performed, no matter if the inode has data checksums or not.
 
 The compression algorithms have been added over time so the version
 compatibility should be also considered, together with other tools that may
