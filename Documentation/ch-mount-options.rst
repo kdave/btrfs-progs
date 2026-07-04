@@ -462,14 +462,14 @@ treelog, notreelog
         a mounted filesystem if the log is not replayed.
 
 usebackuproot
-        (since: 4.6, default: off)
+        (since: 4.6, removed since: 7.3, default: off)
 
         Enable autorecovery attempts if a bad tree root is found at mount time.
         Currently this scans a backup list of several previous tree roots and tries to
         use the first readable. This can be used with read-only mounts as well.
 
         .. note::
-                This option has replaced *recovery* which has been deprecated.
+		This option has been deprecated in v5.9. This option is fully removed since v7.3.
 
 user_subvol_rm_allowed
         (default: off)
