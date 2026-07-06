@@ -206,8 +206,6 @@ static int hardlink_compare_nodes(const struct rb_node *node1,
 
 	entry1 = rb_entry(node1, struct hardlink_entry, node);
 	entry2 = rb_entry(node2, struct hardlink_entry, node);
-	UASSERT(entry1->root);
-	UASSERT(entry2->root);
 
 	if (entry1->st_dev < entry2->st_dev)
 		return -1;
@@ -2220,10 +2218,28 @@ static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 	if (type == FTW_DNR || type == FTW_NS)
 		return -EPERM;
 
-	if (S_ISREG(st->st_mode))
-		add_data_size(fpath, st);
 	ftw_meta_nr_inode++;
 
+	if (S_ISREG(st->st_mode) && st->st_size > 0) {
+		/*
+		 * Skip hard links whose backing inode has already been
+		 * accounted for to avoid overestimating the data size.
+		 */
+		if (st->st_nlink > 1) {
+			int ret;
+
+			ret = add_hard_link(NULL, 0, st);
+			if (ret == -EEXIST)
+				return 0;
+			if (ret < 0) {
+				errno = -ret;
+				error("failed to add hard link record for '%s': %m",
+				       fpath);
+				return ret;
+			}
+		}
+		add_data_size(fpath, st);
+	}
 	return 0;
 }
 
@@ -2252,6 +2268,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	 * follow them here.
 	 */
 	ret = nftw(dir_name, ftw_add_entry_size, 10, FTW_PHYS);
+	rb_free_nodes(&hardlink_root, free_one_hardlink);
 	if (ret < 0) {
 		error("ftw subdir walk of %s failed: %m", dir_name);
 		exit(1);
