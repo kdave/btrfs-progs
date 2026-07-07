@@ -1896,6 +1896,8 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 			break;
 		case BTRFS_VERITY_DESC_ITEM_KEY:
 		case BTRFS_VERITY_MERKLE_ITEM_KEY:
+		case BTRFS_FSCRYPT_INODE_CTX_KEY:
+		case BTRFS_FSCRYPT_CTX_KEY:
 			break;
 		default:
 			error("unknown key (%llu %u %llu) found in leaf %llu",
