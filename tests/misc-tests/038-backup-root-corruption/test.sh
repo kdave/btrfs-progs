@@ -10,6 +10,18 @@ check_prereq btrfs-corrupt-block
 setup_root_helper
 prepare_test_dev
 
+supported_opts="/sys/fs/btrfs/features/supported_rescue_options"
+# Make sure the current kernel has "rescue=usebackuproot" support.
+# Since v7.3 the standalone "usebackuproot" mount option is completely
+# removed.
+if [ ! -f "$supported_opts" ]; then
+	_not_run "No sysfs file for supported_rescue_options"
+fi
+
+if ! grep -q usebackuproot "$supported_opts"; then
+	_not_run "No \"rescue=usebackuproot\" support"
+fi
+
 # Create a file and unmount to commit some backup roots
 run_check_mkfs_test_dev
 run_check_mount_test_dev
@@ -55,7 +67,7 @@ run_mustfail "Unexpected successful mount" \
 	$SUDO_HELPER mount "$TEST_DEV" "$TEST_MNT"
 
 # Cycle mount with the backup to force rewrite of slot 3
-run_check_mount_test_dev -o usebackuproot
+run_check_mount_test_dev -o rescue=usebackuproot,ro
 run_check_umount_test_dev
 
 main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
