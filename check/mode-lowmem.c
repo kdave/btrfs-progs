@@ -2171,11 +2171,12 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		search_len = disk_num_bytes;
 	}
 	ret = count_csum_range(search_start, search_len, &csum_found);
-	if (csum_found > 0 && nodatasum) {
-		err |= ODD_CSUM_ITEM;
-		error("root %llu EXTENT_DATA[%llu %llu] nodatasum shouldn't have datasum",
-		      root->objectid, fkey.objectid, fkey.offset);
-	} else if (extent_type == BTRFS_FILE_EXTENT_REG && !nodatasum &&
+	/*
+	 * NODATASUM controls whether new extents get checksums.  A checksummed
+	 * extent can still be referenced by a NODATASUM inode after reflinking
+	 * from a checksummed inode, so the presence of a checksum is valid here.
+	 */
+	if (extent_type == BTRFS_FILE_EXTENT_REG && !nodatasum &&
 		   !is_hole && (ret < 0 || csum_found < search_len)) {
 		err |= CSUM_ITEM_MISSING;
 		error("root %llu EXTENT_DATA[%llu %llu] csum missing, have: %llu, expected: %llu",
@@ -2196,9 +2197,8 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	}
 
 	/*
-	 * Extra check for compressed extents:
-	 * Btrfs doesn't allow NODATASUM and compressed extent co-exist, thus
-	 * all compressed extents should have a checksum.
+	 * A compressed extent may be referenced by a NODATASUM inode after a
+	 * reflink, but the extent itself must still have a checksum.
 	 */
 	if (compressed && csum_found < search_len) {
 		error(
@@ -2206,12 +2206,6 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		      root->objectid, fkey.objectid, fkey.offset, csum_found,
 		      search_len);
 		err |= CSUM_ITEM_MISSING;
-	}
-	if (compressed && nodatasum) {
-		error(
-"root %llu EXTENT_DATA[%llu %llu] is compressed, but inode flag doesn't allow it",
-		      root->objectid, fkey.objectid, fkey.offset);
-		err |= FILE_EXTENT_ERROR;
 	}
 
 	/* Check EXTENT_DATA hole */

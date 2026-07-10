@@ -881,8 +881,10 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 	}
 
 	if (S_ISREG(rec->imode) || S_ISLNK(rec->imode)) {
-		if (rec->found_csum_item && rec->nodatasum)
-			rec->errors |= I_ERR_ODD_CSUM_ITEM;
+		/*
+		 * A NODATASUM inode may reference a checksummed extent cloned
+		 * from a checksummed inode.  NODATASUM only affects new extents.
+		 */
 		if (rec->some_csum_missing && !rec->nodatasum)
 			rec->errors |= I_ERR_SOME_CSUM_MISSING;
 	}
@@ -1094,8 +1096,6 @@ skip_backrefs:
 		dst->found_dir_item = 1;
 	if (src->found_file_extent)
 		dst->found_file_extent = 1;
-	if (src->found_csum_item)
-		dst->found_csum_item = 1;
 	if (src->some_csum_missing)
 		dst->some_csum_missing = 1;
 	if (first_extent_gap(&dst->holes) > first_extent_gap(&src->holes)) {
@@ -1786,8 +1786,6 @@ static int process_file_extent(struct btrfs_root *root,
 		    (btrfs_file_extent_compression(eb, fi) ||
 		     btrfs_file_extent_other_encoding(eb, fi)))
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
-		if (compression && rec->nodatasum)
-			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (disk_bytenr > 0)
 			rec->found_size += num_bytes;
 		/*
@@ -1823,8 +1821,6 @@ static int process_file_extent(struct btrfs_root *root,
 		if (ret < 0)
 			return ret;
 		if (extent_type == BTRFS_FILE_EXTENT_REG) {
-			if (found > 0)
-				rec->found_csum_item = 1;
 			if (found < num_bytes)
 				rec->some_csum_missing = 1;
 			if (compression && found < num_bytes)

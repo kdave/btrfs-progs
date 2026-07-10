@@ -205,7 +205,6 @@ struct inode_record {
 	unsigned int found_inode_item:1;
 	unsigned int found_dir_item:1;
 	unsigned int found_file_extent:1;
-	unsigned int found_csum_item:1;
 	unsigned int some_csum_missing:1;
 	unsigned int nodatasum:1;
 	int errors;
