@@ -21,6 +21,7 @@
 #include "inject-error.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #ifdef INJECT
 
@@ -33,6 +34,7 @@ static bool cookie_enabled(unsigned long cookie) {
 	if (inj == NULL || inj[0] == 0)
 		return false;
 
+	errno = 0;
 	envcookie = strtoul(inj, NULL, 0);
 	if (envcookie == cookie)
 		return true;
