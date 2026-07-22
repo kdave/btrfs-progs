@@ -728,6 +728,8 @@ static int resolve_root(struct rb_root *rl, struct root_info *ri,
 			len += add_len + 1;
 		} else {
 			full_path = strdup(found->path);
+			if (!full_path)
+				return -ENOMEM;
 			len = add_len;
 		}
 		if (!ri->top_id)

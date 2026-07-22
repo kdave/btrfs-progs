@@ -479,6 +479,10 @@ check_manifest(char *fn, char *m, char *c, int last_call)
 
 			/* final cs */
 			checksum = strdup(l);
+			if (!checksum) {
+				fprintf(stderr, "allocating checksum\n");
+				exit(1);
+			}
 			break;
 		}
 		if (rem_c == l) {
@@ -502,8 +506,20 @@ malformed:
 		} else if (cmp > 0) {
 			excess_file(fn);
 			prev_fn = strdup(l);
+			if (!prev_fn) {
+				fprintf(stderr, "memory allocation error\n");
+				exit(1);
+			}
 			prev_m = strdup(rem_m);
+			if (!prev_m) {
+				fprintf(stderr, "memory allocation error\n");
+				exit(1);
+			}
 			prev_c = strdup(rem_c); 
+			if (!prev_c) {
+				fprintf(stderr, "memory allocation error\n");
+				exit(1);
+			}
 			return;
 		}
 		missing_file(l);
@@ -836,6 +852,10 @@ main(int argc, char *argv[])
 			if (checksum)
 				free(checksum);
 			checksum = strdup(p);
+			if (!checksum) {
+				fprintf(stderr, "memory allocation error\n");
+				exit(1);
+			}
 		} else {
 			fprintf(stderr, "invalid input file format\n");
 			exit(-1);
