@@ -665,7 +665,8 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 {
 	char	*subvol, *dst;
 	int	res, retval;
-	char	*dstdir = NULL;
+	int ret;
+	char dest_dir[PATH_MAX];
 	enum btrfs_util_error err;
 	struct btrfs_util_qgroup_inherit *inherit = NULL;
 	int flags = 0;
@@ -729,28 +730,17 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		}
 		newname = path_basename(dupname);
 
-		dstdir = malloc(strlen(dst) + 1 + strlen(newname) + 1);
-		if (!dstdir) {
-			error_mem(NULL);
-			free(dupname);
-			goto out;
-		}
-
-		dstdir[0] = 0;
-		strcpy(dstdir, dst);
-		strcat(dstdir, "/");
-		strcat(dstdir, newname);
-
+		ret = path_cat_out(dest_dir, dst, newname);
 		free(dupname);
-	} else {
-		dstdir = strdup(dst);
-		if (!dstdir) {
-			error_mem(NULL);
+		if (ret < 0) {
+			error("path too long");
 			goto out;
 		}
+	} else {
+		strncpy_null(dest_dir, dst, PATH_MAX);
 	}
 
-	err = btrfs_util_subvolume_snapshot(subvol, dstdir, flags, NULL, inherit);
+	err = btrfs_util_subvolume_snapshot(subvol, dest_dir, flags, NULL, inherit);
 	if (err) {
 		error_btrfs_util(err);
 		goto out;
@@ -759,14 +749,11 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 	retval = 0;	/* success */
 
 	if (flags & BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY)
-		pr_default("Create readonly snapshot of '%s' in '%s'\n",
-			   subvol, dstdir);
+		pr_default("Create readonly snapshot of '%s' in '%s'\n", subvol, dest_dir);
 	else
-		pr_default("Create snapshot of '%s' in '%s'\n",
-			   subvol, dstdir);
+		pr_default("Create snapshot of '%s' in '%s'\n", subvol, dest_dir);
 
 out:
-	free(dstdir);
 	btrfs_util_qgroup_inherit_destroy(inherit);
 
 	return retval;
