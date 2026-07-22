@@ -168,12 +168,12 @@ int sysfs_write_file_u64(const char *name, u64 value)
 	return ret;
 }
 
-int sysfs_read_fsid_file_u64(int fd, const char *name, u64 *value)
+int sysfs_read_fsid_file_u64(int fs_fd, const char *name, u64 *value)
 {
-	int ret;
+	int ret, fd;
 	char str[32] = { 0 };
 
-	fd = sysfs_open_fsid_file(fd, name);
+	fd = sysfs_open_fsid_file(fs_fd, name);
 	if (fd < 0)
 		return fd;
 
@@ -189,12 +189,12 @@ out:
 	return ret;
 }
 
-int sysfs_write_fsid_file_u64(int fd, const char *name, u64 value)
+int sysfs_write_fsid_file_u64(int fs_fd, const char *name, u64 value)
 {
-	int ret;
+	int ret, fd;
 	char str[32] = { 0 };
 
-	fd = sysfs_open_fsid_file_rw(fd, name);
+	fd = sysfs_open_fsid_file_rw(fs_fd, name);
 	if (fd < 0)
 		return fd;
 
@@ -204,12 +204,12 @@ int sysfs_write_fsid_file_u64(int fd, const char *name, u64 value)
 	return ret;
 }
 
-int sysfs_read_fsid_file_clean_str(int fd, const char *name, char *buf, size_t size)
+int sysfs_read_fsid_file_clean_str(int fs_fd, const char *name, char *buf, size_t size)
 {
-	int ret;
+	int ret, fd;
 	size_t end;
 
-	fd = sysfs_open_fsid_file(fd, name);
+	fd = sysfs_open_fsid_file(fs_fd, name);
 	if (fd < 0)
 		return fd;
 
