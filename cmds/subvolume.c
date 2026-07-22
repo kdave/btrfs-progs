@@ -1808,9 +1808,8 @@ static int cmd_subvolume_sync(const struct cmd_struct *cmd, int argc, char **arg
 			const char *arg;
 
 			arg = argv[optind + i];
-			errno = 0;
-			id = strtoull(arg, NULL, 10);
-			if (errno) {
+			ret = parse_u64(arg, &id);
+			if (ret < 0) {
 				error("unrecognized subvolume id %s", arg);
 				ret = 1;
 				goto out;
