@@ -457,8 +457,18 @@ again:
 		goto out;
 	}
 	dupdname = strdup(cpath);
+	if (!dupdname) {
+		error_mem("duplicate path");
+		ret = -ENOMEM;
+		goto out;
+	}
 	dname = path_dirname(dupdname);
 	dupvname = strdup(cpath);
+	if (!dupvname) {
+		error_mem("duplicate path");
+		ret = -ENOMEM;
+		goto out;
+	}
 	vname = path_basename(dupvname);
 	free(cpath);
 
@@ -713,6 +723,10 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		const char *newname;
 
 		dupname = strdup(subvol);
+		if (!dupname) {
+			error_mem("duplicate subvolume");
+			goto out;
+		}
 		newname = path_basename(dupname);
 
 		dstdir = malloc(strlen(dst) + 1 + strlen(newname) + 1);
@@ -730,6 +744,10 @@ static int cmd_subvolume_snapshot(const struct cmd_struct *cmd, int argc, char *
 		free(dupname);
 	} else {
 		dstdir = strdup(dst);
+		if (!dstdir) {
+			error_mem(NULL);
+			goto out;
+		}
 	}
 
 	err = btrfs_util_subvolume_snapshot(subvol, dstdir, flags, NULL, inherit);
@@ -1621,6 +1639,11 @@ static int cmd_subvolume_show(const struct cmd_struct *cmd, int argc, char **arg
 	if (subvol.id == BTRFS_FS_TREE_OBJECTID) {
 		free(subvol_path);
 		subvol_path = strdup("/");
+		if (!subvol_path) {
+			error_mem(NULL);
+			ret = -ENOMEM;
+			goto out;
+		}
 		subvol_name = "<FS_TREE>";
 	} else {
 		subvol_name = path_basename(subvol_path);

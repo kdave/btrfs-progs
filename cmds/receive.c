@@ -1560,6 +1560,10 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		if (bconf.verbose > BTRFS_BCONF_QUIET)
 			fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
 		rctx->root_path = strdup("/");
+		if (!rctx->root_path) {
+			ret = -ENOMEM;
+			goto out;
+		}
 		rctx->dest_dir_path = rctx->root_path;
 	} else {
 		/*

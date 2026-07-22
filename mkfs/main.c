@@ -1634,6 +1634,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					exit(1);
 				}
 				label = strdup(optarg);
+				if (!label) {
+					error_mem("option label");
+					exit(1);
+				}
 				break;
 			case 'm':
 				ret = parse_bg_profile(optarg, &metadata_profile);
@@ -1649,6 +1653,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'O': {
 				char *orig = strdup(optarg);
 				char *tmp = orig;
+
+				if (!orig) {
+					error_mem("option features");
+					ret = 1;
+					goto error;
+				}
 
 				tmp = btrfs_parse_fs_features(tmp, &features);
 				if (tmp) {
@@ -1669,6 +1679,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'R': {
 				char *orig = strdup(optarg);
 				char *tmp = orig;
+
+				if (!orig) {
+					error_mem("option runtime features");
+					ret = 1;
+					goto error;
+				}
 
 				warning("runtime features are deprecated, use -O, --features instead");
 				tmp = btrfs_parse_runtime_features(tmp,
@@ -1704,6 +1720,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'r':
 				free(source_dir);
 				source_dir = strdup(optarg);
+				if (!source_dir) {
+					error_mem("option source directory");
+					ret = 1;
+					goto error;
+				}
 				break;
 			case 'u':
 				ret = parse_subvolume(optarg, &subvols, &has_default_subvol);
