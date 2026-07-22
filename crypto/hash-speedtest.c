@@ -257,6 +257,10 @@ int main(int argc, char **argv) {
 		case 'f':
 			free(filter);
 			filter = strdup(optarg);
+			if (!filter) {
+				error_mem("filter");
+				return 1;
+			}
 			printf("Use filter: %s\n", filter);
 			break;
 		case 't':
