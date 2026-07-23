@@ -718,6 +718,11 @@ static int process_write(const char *path, const void *data, u64 offset,
 	while (pos < len) {
 		w = pwrite(rctx->write_fd, (char*)data + pos, len - pos,
 				offset + pos);
+		if (w == 0) {
+			ret = -EIO;
+			error("writing to %s failed (zero bytes written)", path);
+			goto out;
+		}
 		if (w < 0) {
 			ret = -errno;
 			error("writing to %s failed: %m", path);
@@ -1237,6 +1242,11 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 
 		w = pwrite(rctx->write_fd, unencoded_data + unencoded_offset,
 			   unencoded_file_len - written, offset);
+		if (w == 0) {
+			ret = -EIO;
+			error("writing unencoded data failed (zero bytes written)");
+			goto out;
+		}
 		if (w < 0) {
 			ret = -errno;
 			error("writing unencoded data failed: %m");
