@@ -218,12 +218,10 @@ int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	ret = pwrite(fp, &disk_super, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
-		if (ret < 0) {
-			errno = ret;
+		if (ret < 0)
 			error("cannot write superblock: %m");
-		} else {
+		else
 			error("cannot write superblock");
-		}
 		ret = -EIO;
 		goto out;
 	}

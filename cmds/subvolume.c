@@ -178,7 +178,7 @@ static int create_one_subvolume(const char *dst, struct btrfs_util_qgroup_inheri
 			} else if (ret <= 0) {
 				if (ret == 0)
 					ret = -EEXIST;
-				errno = ret ;
+				errno = -ret ;
 				error("failed to check directory %s before creation: %m", p);
 				goto out;
 			}
