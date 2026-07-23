@@ -156,11 +156,11 @@ static int prop_label(enum prop_object_type type,
 	int ret;
 
 	if (value) {
-		ret = set_label((char *) object, (char *) value);
+		ret = set_label(object, value);
 	} else {
 		char label[BTRFS_LABEL_SIZE];
 
-		ret = get_label((char *) object, label);
+		ret = get_label(object, label);
 		if (!ret)
 			pr_default("label=%s\n", label);
 	}
