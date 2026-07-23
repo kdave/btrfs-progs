@@ -345,7 +345,7 @@ static int cmd_subvolume_delete(const struct cmd_struct *cmd, int argc, char **a
 	u8 fsid[BTRFS_FSID_SIZE];
 	u64 subvolid = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
-	char full_subvolpath[BTRFS_SUBVOL_NAME_MAX];
+	char full_subvolpath[PATH_MAX];
 	struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = { NULL, };
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 	enum btrfs_util_error err;
