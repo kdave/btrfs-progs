@@ -699,7 +699,6 @@ static int process_write(const char *path, const void *data, u64 offset,
 	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 	u64 pos = 0;
-	int w;
 
 	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
@@ -716,6 +715,8 @@ static int process_write(const char *path, const void *data, u64 offset,
 			path, offset, len);
 
 	while (pos < len) {
+		ssize_t w;
+
 		w = pwrite(rctx->write_fd, (char*)data + pos, len - pos,
 				offset + pos);
 		if (w == 0) {
