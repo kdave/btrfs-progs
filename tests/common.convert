@@ -3,8 +3,7 @@
 
 # mount image of converted filesystem of a given type
 # $1: type of the filesystem
-run_check_mount_convert_dev()
-{
+run_check_mount_convert_dev() {
 	local fstype
 	local loop_opt
 
@@ -12,10 +11,10 @@ run_check_mount_convert_dev()
 
 	fstype="$1"
 	shift
-	if [ -z "$fstype" ]; then
+	if [[ -z "$fstype" ]]; then
 		_fail "Missing source filesystem type"
 	fi
-	if [ "$fstype" = 'btrfs' ]; then
+	if [[ "$fstype" = 'btrfs' ]]; then
 		_fail "Incorrect type for converted filesystem: btrfs"
 	fi
 
@@ -27,9 +26,9 @@ run_check_mount_convert_dev()
 		_fail "Invalid \$TEST_DEV: $TEST_DEV"
 	fi
 
-	[[ -d "$TEST_MNT" ]] || {
+	if ! [[ -d "$TEST_MNT" ]]; then
 		_fail "Invalid \$TEST_MNT: $TEST_MNT"
-	}
+	fi
 
 	run_check $SUDO_HELPER mount $loop_opt -t "$fstype" "$@" "$TEST_DEV" "$TEST_MNT"
 }
@@ -50,7 +49,7 @@ convert_test_preamble() {
 	msg="$2"
 	shift 3
 	echo "    [TEST/conv]     $msg, btrfs" "${features:-defaults}"
-	echo "creating test image with: $@" >> "$RESULTS"
+	echo "creating test image with: $*" >> "$RESULTS"
 }
 
 #  prepare TEST_DEV before conversion, create filesystem and mount it, image
@@ -67,7 +66,7 @@ convert_test_prep_fs() {
 	shift
 	# Use device size that was set before, or the default 512M
 	oldsize=$(stat --format=%s "$TEST_DEV")
-	if [ -z "$oldsize" ]; then
+	if [[ -z "$oldsize" ]]; then
 		oldssize=512M
 	fi
 	# TEST_DEV not removed as the file might have special permissions, eg.
@@ -108,6 +107,7 @@ convert_test_gen_checksums() {
 		count=1 status=noxfer >/dev/null 2>&1
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -exec md5sum {} \+ > "$1"
 }
+
 # list $TEST_MNT data set file permissions.
 # $1: path where the permissions will be stored
 convert_test_perm() {
@@ -127,11 +127,12 @@ convert_test_perm() {
 	done
 	$SUDO_HELPER rm -- "$FILES_LIST"
 }
+
 # list acls of files on $TEST_MNT
 # $1: path where the acls will be stored
 convert_test_acl() {
-	local ACLSTMP
-	ACLTMP="$1"
+	local ACLTMP="$1"
+
 	FILES_LIST=$($SUDO_HELPER mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
 
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT/acls" -type f -fprint "$FILES_LIST"
@@ -149,7 +150,7 @@ convert_test_acl() {
 # #3: (optional) filesystem type, default: btrfs
 convert_test_do_convert() {
 	export BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT=y
-	if [ "$3" = "ntfs" ]; then
+	if [[ "$3" = "ntfs" ]]; then
 		# Features and nodesize are not supported
 		run_check "ntfs2btrfs" "$TEST_DEV"
 	else
@@ -174,8 +175,7 @@ convert_test_post_check_permissions() {
 	btrfs_perm=$(md5sum "$BTRFS_PERMTMP" | cut -f1 -d' ')
 	ext_perm=$(md5sum "$EXT_PERMTMP" | cut -f1 -d' ')
 
-	if [ "$btrfs_perm" != "$ext_perm" ];
-	then
+	if [[ "$btrfs_perm" != "$ext_perm" ]]; then
 		btrfs_perm_file=$(md5sum "$BTRFS_PERMTMP" | cut -f2 -d' ')
 		ext_perm_file=$(md5sum "$EXT_PERMTMP" | cut -f2 -d' ')
 		_fail "file permission failed. Mismatched BTRFS:$btrfs_perm_file:$btrfs_perm EXT:$ext_perm_file:$ext_perm"
@@ -183,6 +183,7 @@ convert_test_post_check_permissions() {
 
 	rm -- "$BTRFS_PERMTMP"
 }
+
 # post conversion check, compare BTRFS file acls against EXT.
 # $1: file with ext acls.
 convert_test_post_check_acl() {
@@ -197,8 +198,7 @@ convert_test_post_check_acl() {
 	btrfs_acl=$(md5sum "$BTRFS_ACLTMP" | cut -f1 -d' ')
 	ext_acl=$(md5sum "$EXT_ACLTMP" | cut -f1 -d' ')
 
-	if [ "$btrfs_acl" != "$ext_acl" ]
-	then
+	if [[ "$btrfs_acl" != "$ext_acl" ]]; then
 		btrfs_acl_file=$(md5sum "$BTRFS_ACLTMP" | cut -f2 -d' ')
 		ext_acl_file=$(md5sum "$EXT_ACLTMP" | cut -f2 -d' ')
 		_fail "file acl failed. Mismatched BTRFS:$btrfs_acl_file:$btrfs_acl EXT:$ext_acl_file:$ext_acl"
@@ -219,14 +219,14 @@ convert_test_post_check_checksums() {
 convert_can_mount() {
 	local features="$1"
 
-	if [ "$features" = 'block-group-tree' ]; then
-		if ! [ -f "/sys/fs/btrfs/features/block_group_tree" ]; then
+	if [[ "$features" = 'block-group-tree' ]]; then
+		if ! [[ -f "/sys/fs/btrfs/features/block_group_tree" ]]; then
 			_log "Skip mount checks due to missing support of block-group-tree"
 			return 1
 		fi
 	fi
-	if [ "$features" = 'raid-stripe-tree' ]; then
-		if ! [ -f "/sys/fs/btrfs/features/raid_stripe_tree" ]; then
+	if [[ "$features" = 'raid-stripe-tree' ]]; then
+		if ! [[ -f "/sys/fs/btrfs/features/raid_stripe_tree" ]]; then
 			_log "Skip mount checks due to missing support of raid-stripe-tree"
 			return 1
 		fi
@@ -267,7 +267,7 @@ convert_test_post_rollback() {
 	local types
 
 	run_check "$TOP/btrfs-convert" --rollback "$TEST_DEV"
-	if [ -z "$1" ]; then
+	if [[ -z "$1" ]]; then
 		_fail "missing filesystem type to check"
 	fi
 	case "$1" in
@@ -321,13 +321,11 @@ convert_test() {
 	convert_test_post_rollback "$fstype"
 }
 
-load_module_reiserfs()
-{
+load_module_reiserfs() {
 	$SUDO_HELPER modprobe reiserfs
 }
 
-check_kernel_support_reiserfs()
-{
+check_kernel_support_reiserfs() {
 	if ! grep -iq 'reiserfs' /proc/filesystems; then
 		echo "WARNING: reiserfs filesystem not listed in /proc/filesystems, some tests might be skipped"
 		return 1
@@ -335,14 +333,12 @@ check_kernel_support_reiserfs()
 	return 0
 }
 
-load_module_ntfs()
-{
+load_module_ntfs() {
 	# Load NTFS3 that has write support
 	$SUDO_HELPER modprobe ntfs3
 }
 
-check_kernel_support_ntfs()
-{
+check_kernel_support_ntfs() {
 	if ! grep -iq 'ntfs' /proc/filesystems; then
 		echo "WARNING: ntfs filesystem not listed in /proc/filesystems, some tests might be skipped"
 		return 1
