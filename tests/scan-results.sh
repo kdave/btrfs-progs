@@ -26,7 +26,7 @@ scan_log() {
 }
 
 # Scan only the given file
-if [ -n "$1" ]; then
+if [[ -n "$1" ]]; then
 	scan_log "$1"
 	exit "$ret"
 fi

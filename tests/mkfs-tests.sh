@@ -4,7 +4,7 @@
 
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-if [ -z "$TOP" ]; then
+if [[ -z "$TOP" ]]; then
 	TOP=$(readlink -f "$SCRIPT_DIR/../")
 	if [ -f "$TOP/configure.ac" ]; then
 		# inside git
@@ -21,7 +21,7 @@ else
 	TEST_TOP="$SCRIPT_DIR"
 	INTERNAL_BIN="$TEST_TOP"
 fi
-if ! [ -x "$TOP/btrfs" ]; then
+if ! [[ -x "$TOP/btrfs" ]]; then
 	echo "ERROR: cannot execute btrfs from TOP=$TOP"
 	exit 1
 fi
@@ -53,23 +53,23 @@ for i in $(find "$TEST_TOP/mkfs-tests" -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
 	name=$(basename "$i")
-	if ! [ -z "$TEST_FROM" ]; then
-		if [ "$test_found" == 0 ]; then
+	if ! [[ -z "$TEST_FROM" ]]; then
+		if [[ "$test_found" = 0 ]]; then
 			case "$name" in
 				$TEST_FROM) test_found=1;;
 			esac
 		fi
-		if [ "$test_found" == 0 ]; then
+		if [[ "$test_found" = 0 ]]; then
 			printf "    [TEST/mkfs]   %-32s (SKIPPED)\n" "$name"
 			continue
 		fi
 	fi
 	cd "$i"
-	if [ -x test.sh ]; then
+	if [[ -x test.sh ]]; then
 		echo "=== START TEST $i" >> "$RESULTS"
 		echo "    [TEST/mkfs]   $name"
 		./test.sh
-		if [ $? -ne 0 ]; then
+		if [[ $? -ne 0 ]]; then
 			if [[ $TEST_LOG =~ dump ]]; then
 				cat "$RESULTS"
 			fi
