@@ -11,7 +11,7 @@ declare -a cmd_array
 _test_config() {
 	local feature="$1"
 
-	if "$TOP/btrfs" --version | grep -q "+${feature}"; then
+	if [[ $("$TOP/btrfs" --version) =~ +${feature} ]]; then
 		return 0
 	fi
 	return 1
@@ -222,7 +222,7 @@ run_check() {
 
 	"${cmd_array[@]}" >> "$RESULTS" 2>&1
 	if [[ $? -ne 0 ]]; then
-		if echo "${cmd_array[*]}" | grep -q mount; then
+		if [[ "${cmd_array[*]}" =~ mount ]]; then
 			$SUDO_HELPER dmesg | tail -n 15 >> "$RESULTS"
 		fi
 		_fail "failed: ${cmd_array[*]}"
