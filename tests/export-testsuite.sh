@@ -1,7 +1,7 @@
 #!/bin/bash
 # export the testsuite files to a separate tar
 
-if ! [ -f testsuite-files ]; then
+if ! [[ -f testsuite-files ]]; then
 	echo "ERROR: cannot find testsuite-files"
 	exit 1
 fi
@@ -46,7 +46,7 @@ done < testsuite-files > testsuite-files-all
 echo "create tar: $TESTSUITE_TAR"
 tar cz --sparse -f "$TESTSUITE_TAR" -T testsuite-files-all
 ret=$?
-if [ $ret -eq 0 ]; then
+if [[ $ret = 0 ]]; then
 	echo "tar created successfully"
 	cat testsuite-id
 	rm -f testsuite-files-all
