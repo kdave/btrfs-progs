@@ -4,9 +4,9 @@
 
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-if [ -z "$TOP" ]; then
+if [[ -z "$TOP" ]]; then
 	TOP=$(readlink -f "$SCRIPT_DIR/../")
-	if [ -f "$TOP/configure.ac" ]; then
+	if [[ -f "$TOP/configure.ac" ]]; then
 		# inside git
 		TEST_TOP="$TOP/tests"
 		INTERNAL_BIN="$TOP"
@@ -21,7 +21,7 @@ else
 	TEST_TOP="$SCRIPT_DIR"
 	INTERNAL_BIN="$TEST_TOP"
 fi
-if ! [ -x "$TOP/btrfs" ]; then
+if ! [[ -x "$TOP/btrfs" ]]; then
 	echo "ERROR: cannot execute btrfs from TOP=$TOP"
 	exit 1
 fi
@@ -56,13 +56,13 @@ run_one_test() {
 
 	testdir="$1"
 	testname=$(basename "$testdir")
-	if ! [ -z "$TEST_FROM" ]; then
-		if [ "$test_found" == 0 ]; then
+	if ! [[ -z "$TEST_FROM" ]]; then
+		if [[ "$test_found" = 0 ]]; then
 			case "$testname" in
 				$TEST_FROM) test_found=1;;
 			esac
 		fi
-		if [ "$test_found" == 0 ]; then
+		if [[ "$test_found" = 0 ]]; then
 			printf "    [TEST/fsck]   %-32s (SKIPPED)\n" "$testname"
 			return
 		fi
@@ -70,10 +70,10 @@ run_one_test() {
 	echo "    [TEST/fsck]   $(basename $testname)"
 	cd "$testdir"
 	echo "=== START TEST $testname" >> "$RESULTS"
-	if [ -x test.sh ]; then
+	if [[ -x test.sh ]]; then
 		# Type 2
 		./test.sh
-		if [ $? -ne 0 ]; then
+		if [[ $? -ne 0 ]]; then
 			if [[ $TEST_LOG =~ dump ]]; then
 				cat "$RESULTS"
 			fi

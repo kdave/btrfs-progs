@@ -16,7 +16,7 @@
 # - static version of all libs
 
 die() {
-	echo "ERROR: $@"
+	echo "ERROR: $*"
 	exit 1
 }
 
@@ -42,9 +42,9 @@ buildme() {
 }
 
 buildme_common() {
-	echo "::group::$CFLAGS configure $conf $@"
+	echo "::group::$CFLAGS configure $conf $*"
 	make clean-all
-	./autogen.sh && CFLAGS="$CFLAGS" ./configure "$conf" $1 || die "configure not working with: $@"
+	./autogen.sh && CFLAGS="$CFLAGS" ./configure "$conf" $1 || die "configure not working with: $*"
 	$make clean
 	$make $opts $target
 	check_result "$?"
@@ -95,7 +95,7 @@ fi
 
 make='make'
 jobs=16
-opts="-j${jobs} $@"
+opts="-j${jobs} $*"
 verdict=
 target=
 export CLFAGS
