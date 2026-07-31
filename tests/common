@@ -8,8 +8,7 @@ declare -a cmd_array
 
 # Check if a given option in config.h is set to 1
 # $1: config option name
-_test_config()
-{
+_test_config() {
 	local feature="$1"
 
 	if "$TOP/btrfs" --version | grep -q "+${feature}"; then
@@ -19,12 +18,11 @@ _test_config()
 }
 
 # assert that argument is not empty and is an existing path (file or directory)
-_assert_path()
-{
+_assert_path() {
 	local path
 
 	path="$1"
-	if [ -z "$path" ]; then
+	if [[ -z "$path" ]]; then
 		echo "ASSERTION FAIL: $path is not valid"
 		exit 1
 	fi
@@ -38,12 +36,11 @@ _assert_path()
 
 # $1: this string gets matched to files, absolute or relative path, or a
 # systemwide command available via $PATH
-_is_file_or_command()
-{
+_is_file_or_command() {
 	local msg
 
 	msg="$1"
-	if [ -z "$msg" ]; then
+	if [[ -z "$msg" ]]; then
 		return 1
 	fi
 
@@ -51,54 +48,48 @@ _is_file_or_command()
 		return 0
 	fi
 	msg=$(type -p -- "$msg")
-	if [ -f "$msg" ]; then
+	if [[ -f "$msg" ]]; then
 		return 0
 	fi
 	return 1
 }
 
-_fail()
-{
+_fail() {
 	echo "$*" | tee -a "$RESULTS"
 	exit 1
 }
 
 # log a message to the results file
-_log()
-{
+_log() {
 	echo "$*" >> "$RESULTS"
 }
 
 # copy stdout to log and pass to stdout, eg. another stdout consumer, commands
 # should redirect stderr to stdout if this is consmed by further commands
-_log_stdout()
-{
+_log_stdout() {
 	tee -a "$RESULTS"
 }
 
 # print a message to stdout and to log that something was skipped
-_log_skipped()
-{
+_log_skipped() {
 	echo "    [SKIPPED] $*" | tee -a "$RESULTS"
 	exit 0
 }
 
-_not_run()
-{
+_not_run() {
 	echo "    [NOTRUN] $*"
 	exit 0
 }
 
 # debugging helper
-_dump_args()
-{
+_dump_args() {
 	local i
 
 	i=1
 	echo "DUMP args for ${FUNCNAME[1]}:"
-	while [ $# -gt 0 ]; do
+	while [[ $# -gt 0 ]]; do
 		echo "ARG[$i]: $1"
-		i=$(($i+1))
+		i=$((i+1))
 		shift
 	done
 }
@@ -106,9 +97,8 @@ _dump_args()
 # read arguments, look if we're calling btrfs and if there's a known
 # subcommand, return argument index to insert, taking root helper into
 # consideration, returns 2 for unknown subcommand
-_get_spec_ins()
-{
-	if [ "$1" = 'root_helper' ]; then
+_get_spec_ins() {
+	if [[ "$1" = 'root_helper' ]]; then
 		if [[ $2 =~ /btrfs$ ]]; then
 			echo -n 4
 			return
@@ -139,12 +129,11 @@ _get_spec_ins()
 }
 
 # return command-specific arguments if enabled
-_cmd_spec()
-{
-	if [ "$TEST_ENABLE_OVERRIDE" = 'true' ]; then
+_cmd_spec() {
+	if [[ "$TEST_ENABLE_OVERRIDE" = 'true' ]]; then
 		# if defined via common.local, use it, otherwise pass make
 		# arguments
-		if [ "$(type -t _skip_spec)" = 'function' ]; then
+		if [[ "$(type -t _skip_spec)" = 'function' ]]; then
 			if _skip_spec "$@"; then
 				return
 			fi
@@ -159,8 +148,7 @@ _cmd_spec()
 
 # Check if $1 is a known command that may need parameter injection or some
 # special handling regarding $INSTRUMENT
-_is_target_command()
-{
+_is_target_command() {
 	[[ $1 =~ /btrfs$ ]] && return 0
 	[[ $1 =~ /mkfs.btrfs$ ]] && return 0
 	[[ $1 =~ /btrfs-convert$ ]] && return 0
@@ -181,19 +169,18 @@ _is_target_command()
 # - Add extra arguments for 'btrfs check/mkfs.btrfs/btrfs-convert'
 #   This allows us to test certain functionality like lowmem mode for 'btrfs
 #   check'
-expand_command()
-{
+expand_command() {
 	local command_index
 	local ins
 	local spec
 	local i
 
 	ins=$(_get_spec_ins "$@")
-	spec=$(($ins-1))
+	spec=$((ins-1))
 	spec=$(_cmd_spec "${@:$spec}")
 	cmd_array=()
 
-	if [ "$1" = 'root_helper' ] && _is_target_command "$2" ; then
+	if [[ "$1" = 'root_helper' ]] && _is_target_command "$2" ; then
 		command_index=2
 	elif _is_target_command "$1"  ; then
 		command_index=1
@@ -226,18 +213,19 @@ expand_command()
 # The root helper is recognized.  Unrecognized subcommands or external tools
 # are not affected.
 
-run_check()
-{
+run_check() {
 	expand_command "$@"
-	echo "====== RUN CHECK ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: ${cmd_array[@]}" > /dev/tty; fi
+	echo "====== RUN CHECK ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD: ${cmd_array[*]}" > /dev/tty
+	fi
 
 	"${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [ "$?" -ne 0 ]; then
-		if echo "${cmd_array[@]}" | grep -q mount; then
+	if [[ $? -ne 0 ]]; then
+		if echo "${cmd_array[*]}" | grep -q mount; then
 			$SUDO_HELPER dmesg | tail -n 15 >> "$RESULTS"
 		fi
-		_fail "failed: ${cmd_array[@]}"
+		_fail "failed: ${cmd_array[*]}"
 	fi
 }
 
@@ -246,34 +234,34 @@ run_check()
 #
 # NOTE: If this function is called on btrfs related commands, caller should
 #	filter the output, as INSTRUMENT can easily pollute the output.
-run_check_stdout()
-{
+run_check_stdout() {
 	expand_command "$@"
-	echo "====== RUN CHECK ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): ${cmd_array[@]}" \
-		> /dev/tty; fi
+	echo "====== RUN CHECK ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD(stdout): ${cmd_array[*]}" > /dev/tty
+	fi
 	"${cmd_array[@]}" 2>&1 | tee -a "$RESULTS"
-	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-		_fail "failed: $@"
+	if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+		_fail "failed: $*"
 	fi
 }
 
 # same as run_check but does not fail the test if it's handled gracefully by
 # the tool, unexpected failure like segfault or abort will exit forcibly
 # output is logged
-run_mayfail()
-{
+run_mayfail() {
 	expand_command "$@"
-	echo "====== RUN MAYFAIL ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): ${cmd_array[@]}" \
-		> /dev/tty; fi
+	echo "====== RUN MAYFAIL ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD(mayfail): ${cmd_array[*]}" > /dev/tty
+	fi
 	"${cmd_array[@]}" >> "$RESULTS" 2>&1
 	ret=$?
-	if [ $ret != 0 ]; then
-		echo "failed (ignored, ret=$ret): $@" >> "$RESULTS"
-		if [ $ret == 139 ]; then
+	if [[ $ret != 0 ]]; then
+		echo "failed (ignored, ret=$ret): $*" >> "$RESULTS"
+		if [[ $ret == 139 ]]; then
 			_fail "mayfail: returned code 139 (SEGFAULT), not ignored"
-		elif [ $ret == 134 ]; then
+		elif [[ $ret == 134 ]]; then
 			_fail "mayfail: returned code 134 (SIGABRT), not ignored"
 		fi
 		return $ret
@@ -287,14 +275,14 @@ run_mayfail()
 # NOTE: we don't use pipefail to avoid disturbing the rest of the caller
 # script, so here we use a temporary output file.  Pipes are not supported,
 # store the output to a variable for further processing.
-run_mayfail_stdout()
-{
+run_mayfail_stdout() {
 	tmp_output=$(mktemp --tmpdir btrfs-progs-mayfail-stdout.XXXXXX)
 
 	expand_command "$@"
-	echo "====== RUN MAYFAIL ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): ${cmd_array[@]}" \
-		> /dev/tty; fi
+	echo "====== RUN MAYFAIL ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD(mayfail): ${cmd_array[*]}" > /dev/tty
+	fi
 	"${cmd_array[@]}" 2>&1 > "$tmp_output"
 	ret=$?
 
@@ -302,11 +290,11 @@ run_mayfail_stdout()
 	cat "$tmp_output"
 	rm -- "$tmp_output"
 
-	if [ "$ret" != 0 ]; then
-		echo "failed (ignored, ret=$ret): $@" >> "$RESULTS"
-		if [ "$ret" == 139 ]; then
+	if [[ "$ret" != 0 ]]; then
+		echo "failed (ignored, ret=$ret): $*" >> "$RESULTS"
+		if [[ "$ret" == 139 ]]; then
 			_fail "mayfail: returned code 139 (SEGFAULT), not ignored"
-		elif [ "$ret" == 134 ]; then
+		elif [[ "$ret" == 134 ]]; then
 			_fail "mayfail: returned code 134 (SIGABRT), not ignored"
 		fi
 		return "$ret"
@@ -318,11 +306,9 @@ run_mayfail_stdout()
 
 # first argument is error message to print if it fails, otherwise
 # same as run_check but expects the command to fail, output is logged
-run_mustfail()
-{
-	local msg
+run_mustfail() {
+	local msg="$1"
 
-	msg="$1"
 	shift
 
 	if _is_file_or_command "$msg"; then
@@ -330,19 +316,18 @@ run_mustfail()
 		exit 1
 	fi
 
-
 	expand_command "$@"
-	echo "====== RUN MUSTFAIL ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): ${cmd_array[@]}" \
-		> /dev/tty; fi
+	echo "====== RUN MUSTFAIL ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD(mustfail): ${cmd_array[*]}" > /dev/tty
+	fi
 	"${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [ $? != 0 ]; then
-		echo "failed (expected): $@" >> "$RESULTS"
+	if [[ $? != 0 ]]; then
+		echo "failed (expected): $*" >> "$RESULTS"
 		return 0
 	else
-		echo "succeeded (unexpected!): $@" >> "$RESULTS"
+		echo "succeeded (unexpected!): $*" >> "$RESULTS"
 		_fail "unexpected success: $msg"
-		return 1
 	fi
 }
 
@@ -351,8 +336,7 @@ run_mustfail()
 # NOTE: we don't use pipefail to avoid disturbing other script, so here we
 # use a temporary output file.
 # So it doesn't support pipeline in the @cmd
-run_mustfail_stdout()
-{
+run_mustfail_stdout() {
 	local msg
 	local ret
 	local tmp_output
@@ -368,9 +352,10 @@ run_mustfail_stdout()
 	fi
 
 	expand_command "$@"
-	echo "====== RUN MUSTFAIL ${cmd_array[@]}" >> "$RESULTS" 2>&1
-	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): ${cmd_array[@]}" \
-		> /dev/tty; fi
+	echo "====== RUN MUSTFAIL ${cmd_array[*]}" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then
+		echo "CMD(mustfail): ${cmd_array[*]}" > /dev/tty
+	fi
 	"${cmd_array[@]}" 2>&1 > "$tmp_output"
 	ret=$?
 
@@ -378,62 +363,56 @@ run_mustfail_stdout()
 	cat "$tmp_output"
 	rm "$tmp_output"
 
-	if [ "$ret" != 0 ]; then
-		echo "failed (expected): $@" >> "$RESULTS"
+	if [[ "$ret" != 0 ]]; then
+		echo "failed (expected): $*" >> "$RESULTS"
 		return 0
 	else
-		echo "succeeded (unexpected!): $@" >> "$RESULTS"
+		echo "succeeded (unexpected!): $*" >> "$RESULTS"
 		_fail "unexpected success: $msg"
-		return 1
 	fi
 }
 
-check_experimental_build()
-{
+check_experimental_build() {
 	if ! _test_config "EXPERIMENTAL"; then
 		_not_run "This test requires experimental build"
 	fi
 }
 
-check_regular_build()
-{
+check_regular_build() {
 	if _test_config "EXPERIMENTAL"; then
 		_not_run "This test requires non-experimental build"
 	fi
 }
 
-check_injection()
-{
+check_injection() {
 	if ! _test_config "INJECT"; then
 		_not_run "This test requires error injection support (make D=1)"
 	fi
 }
 
-check_prereq()
-{
+check_prereq() {
 	# Internal tools for testing, not shipped with the package
 	case "$1" in
 	btrfs-corrupt-block|btrfs-find-root|btrfs-select-super|fssum|btrfs-sb-mod)
-		if ! [ -f "$INTERNAL_BIN/$1" ]; then
+		if ! [[ -f "$INTERNAL_BIN/$1" ]]; then
 			_fail "Failed prerequisites: $INTERNAL_BIN/$1";
 		fi
 		;;
 	*)
 		bin="$TOP/$1"
-		if [ "$TEST_FLAVOR" = 'static' ]; then
+		if [[ "$TEST_FLAVOR" = 'static' ]]; then
 			bin="${bin}.static"
 		fi
-		if ! [ -f "$bin"  ]; then
+		if ! [[ -f "$bin"  ]]; then
 			_fail "Failed prerequisites: $bin";
 		fi
 		;;
 	esac
 }
 
-check_global_prereq()
-{
+check_global_prereq() {
 	type -p "$1" &> /dev/null
-	if [ $? -ne 0 ]; then
+	if [[ $? -ne 0 ]]; then
 		_fail "Failed system wide prerequisites: $1";
 	fi
 }
@@ -444,26 +423,25 @@ check_global_prereq()
 #
 # $1: the target name, expectind module dm-$1
 # $2: optional name or alias, if specified, fail
-check_dm_target_support()
-{
+check_dm_target_support() {
 	local target="$1"
 	local secondary="$2"
 
 	setup_root_helper
 
 	type -p dmsetup &> /dev/null
-	if [ $? -ne 0 ]; then
+	if [[ $? -ne 0 ]]; then
 		_not_run "This test requires dmsetup tool";
 	fi
 
 	$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
 	$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
-	if [ $? -ne 0 ]; then
+	if [[ $? -ne 0 ]]; then
 		# Try the other name
-		if ! [ -z "$secondary" ]; then
+		if ! [[ -z "$secondary" ]]; then
 			$SUDO_HELPER modprobe "dm-$secondary" >/dev/null 2>&1
 			$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$secondary"
-			if [ $? -eq 0 ]; then
+			if [[ $? -eq 0 ]]; then
 				return 0
 			fi
 		fi
@@ -471,8 +449,7 @@ check_dm_target_support()
 	fi
 }
 
-check_image()
-{
+check_image() {
 	local image
 	local tmp_output
 
@@ -502,8 +479,7 @@ check_image()
 # - meta-dump images with suffix .img
 # - dtto compressed by XZ, suffix .img.xz
 # - compressed send stream, .stream.xz
-extract_image()
-{
+extract_image() {
 	local image
 	local cleanme
 
@@ -536,28 +512,22 @@ extract_image()
 		;;
 	esac
 
-	if ! [ -f "$image.restored" ]; then
+	if ! [[ -f "$image.restored" ]]; then
 		echo "restoring image $(basename $image)" >> "$RESULTS"
-		"$TOP/btrfs-image" -r "$image" "$image.restored" \
-			&>> "$RESULTS" \
+		"$TOP/btrfs-image" -r "$image" "$image.restored" &>> "$RESULTS" \
 			|| _fail "failed to restore image $image" >&2
 	fi
 
-	[ -f "$cleanme" ] && rm -f "$cleanme"
+	[[ -f "$cleanme" ]] && rm -f "$cleanme"
 
 	echo "$image.restored"
 }
 
 # Process all image dumps in a given directory
-check_all_images()
-{
-	local dir
+check_all_images() {
+	local dir="${1:-.}"
 	local extracted
 
-	dir="$1"
-	if [ -z "$dir" ]; then
-		dir=.
-	fi
 	_assert_path "$dir"
 	for image in $(find "$dir" \( -iname '*.img' -o	\
 				-iname '*.img.xz' -o 	\
@@ -577,16 +547,15 @@ SUDO_HELPER=
 NEED_SUDO_VALIDATE=unknown
 export SUDO_HELPER
 export NEED_SUDO_VALIDATE
-root_helper()
-{
-	if [ $UID -eq 0 ]; then
+root_helper() {
+	if [[ $UID = 0 ]]; then
 		"$@"
 	else
-		if [ "$NEED_SUDO_VALIDATE" = 'yes' ]; then
+		if [[ "$NEED_SUDO_VALIDATE" = 'yes' ]]; then
 			sudo -v -n &>/dev/null || \
 				_not_run "Need to validate sudo credentials"
 			sudo -n "$@"
-		elif [ "$NEED_SUDO_VALIDATE" = 'no' ]; then
+		elif [[ "$NEED_SUDO_VALIDATE" = 'no' ]]; then
 			sudo -n /bin/true &> /dev/null || \
 				_not_run "Need to validate sudo user settings"
 			sudo -n "$@"
@@ -597,8 +566,7 @@ root_helper()
 	fi
 }
 
-setup_root_helper()
-{
+setup_root_helper() {
 	if [ $UID -eq 0 -o -n "$SUDO_HELPER" ]; then
 		return
 	fi
@@ -610,16 +578,15 @@ setup_root_helper()
 	# Newer sudo or default sudo setting
 	sudo -v -n &>/dev/null && NEED_SUDO_VALIDATE=yes
 
-	if [ "$NEED_SUDO_VALIDATE" = 'unknown' ]; then
+	if [[ "$NEED_SUDO_VALIDATE" = 'unknown' ]]; then
 		_not_run "Need to validate root privileges"
 	fi
 	SUDO_HELPER=root_helper
 }
 
 # Check if btrfs is compiled with CONFIG_BTRFS_FS_POSIX_ACL, may need TEST_DEV.
-check_kernel_support_acl()
-{
-	if [ -f /sys/fs/btrfs/features/acl ]; then
+check_kernel_support_acl() {
+	if [[ -f /sys/fs/btrfs/features/acl ]]; then
 		if grep -q 0 /sys/fs/btrfs/features/acl; then
 			_not_run "ACL is not compiled in"
 		fi
@@ -627,7 +594,7 @@ check_kernel_support_acl()
 	fi
 
 	# It is an older kernel without acl sysfs interface.
-	if [ -f /proc/config.gz ] && \
+	if [[ -f /proc/config.gz ]] && \
 	   ! zgrep -q "^CONFIG_BTRFS_FS_POSIX_ACL=y" /proc/config.gz; then
 		_not_run "ACL is not compiled in"
 	fi
@@ -643,13 +610,12 @@ check_kernel_support_acl()
 	run_check_umount_test_dev
 }
 
-prepare_test_dev()
-{
+prepare_test_dev() {
 	# num[K/M/G/T...]
 	local size="${1:-2G}"
 
 	# Still truncate it to new size
-	if [ -n "$TEST_DEV" ]; then
+	if [[ -n "$TEST_DEV" ]]; then
 		truncate -s 0 "$TEST_DEV"
 		truncate -s "$size" "$TEST_DEV"
 		return;
@@ -666,8 +632,7 @@ prepare_test_dev()
 # Create filesystem on $TEST_DEV with given options,
 # do not use for multi-device filesystem
 # $1-$n: optional, default is -f
-run_check_mkfs_test_dev()
-{
+run_check_mkfs_test_dev() {
 	setup_root_helper
 
 	# check accidental files/devices passed
@@ -680,8 +645,7 @@ run_check_mkfs_test_dev()
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@" "$TEST_DEV"
 }
 
-run_check_mount_test_dev()
-{
+run_check_mount_test_dev() {
 	setup_root_helper
 
 	local loop_opt
@@ -693,9 +657,9 @@ run_check_mount_test_dev()
 		_fail "Invalid \$TEST_DEV: $TEST_DEV"
 	fi
 
-	[[ -d "$TEST_MNT" ]] || {
+	if ! [[ -d "$TEST_MNT" ]]; then
 		_fail "Invalid \$TEST_MNT: $TEST_MNT"
-	}
+	fi
 
 	# Wait for loopdevs before mount as this could fail in the CI for some reason
 	cond_wait_for_loopdevs
@@ -704,17 +668,15 @@ run_check_mount_test_dev()
 }
 
 # $1-$n: optional paths to unmount, otherwise fallback to TEST_DEV
-run_check_umount_test_dev()
-{
+run_check_umount_test_dev() {
 	setup_root_helper
-	if [ "$#" = 0 ]; then
+	if [[ $# = 0 ]]; then
 		set -- "$TEST_DEV"
 	fi
 	run_check $SUDO_HELPER umount "$@"
 }
 
-check_kernel_support()
-{
+check_kernel_support() {
 	if ! grep -iq 'btrfs' /proc/filesystems; then
 		run_check $SUDO_HELPER modprobe btrfs
 			if ! grep -iq 'btrfs' /proc/filesystems; then
@@ -732,8 +694,7 @@ check_kernel_support()
 #
 # Return 0 if we meet the minimal version requirement.
 # Return 1 if not.
-check_min_kernel_version()
-{
+check_min_kernel_version() {
 	local unamemajor
 	local unameminor
 	local argmajor
@@ -747,25 +708,24 @@ check_min_kernel_version()
 	IFS=. read argmajor argminor tmp <<< "$1"
 	# If our major > target major, we definitely meet the requirement.
 	# If our major < target major, we definitely don't meet the requirement.
-	if [ "$unamemajor" -gt "$argmajor" ]; then
+	if [[ "$unamemajor" -gt "$argmajor" ]]; then
 		return 0
 	fi
-	if [ "$unamemajor" -lt "$argmajor" ]; then
+	if [[ "$unamemajor" -lt "$argmajor" ]]; then
 		return 1
 	fi
 
 	# Only when our major is the same as the target, we need to compare
 	# the minor number.
 	# In this case, if our minor >= target minor, we meet the requirement.
-	if [ "$unameminor" -ge "$argminor" ]; then
+	if [[ "$unameminor" -ge "$argminor" ]]; then
 		return 0;
 	fi
 	return 1
 }
 
 # Get subvolume id for specified path
-_get_subvolid()
-{
+_get_subvolid() {
 	# run_check_stdout may have INSTRUMENT polluting the output, we need to
 	# filter the output
 	run_check_stdout "$TOP/btrfs" inspect-internal rootid "$1" | \
@@ -867,34 +827,30 @@ generate_dataset() {
 # - loopdev_prefix -- file backed images starting with this string, 'img' by default
 #
 # $1: number of loop devices to be set up
-setup_loopdevs()
-{
+setup_loopdevs() {
 	if [ -z "$1" ]; then
 		_fail "setup_loopdevs needs a number"
 	fi
 	nloopdevs="$1"
 	loopdev_prefix=img
 	declare -a loopdevs
-
 }
 
 # create all loop devices from a given loopdev environment
-prepare_loopdevs()
-{
+prepare_loopdevs() {
 	for i in $(seq "$nloopdevs"); do
 		touch "$loopdev_prefix$i"
 		chmod a+rw "$loopdev_prefix$i"
 		truncate -s0 "$loopdev_prefix$i"
 		truncate -s2g "$loopdev_prefix$i"
 		run_check sync "$loopdev_prefix$i"
-		loopdevs[$i]=$(run_check_stdout $SUDO_HELPER losetup --find --show "$loopdev_prefix$i")
+		loopdevs[i]=$(run_check_stdout $SUDO_HELPER losetup --find --show "$loopdev_prefix$i")
 	done
 }
 
 # detach loop devices and reset their size to 0, delete the files afterwards
-cleanup_loopdevs()
-{
-	for dev in ${loopdevs[@]}; do
+cleanup_loopdevs() {
+	for dev in "${loopdevs[@]}"; do
 		run_check $SUDO_HELPER losetup -d "$dev"
 	done
 	for i in $(seq "$nloopdevs"); do
@@ -907,9 +863,8 @@ cleanup_loopdevs()
 # Loop devices may not be ready for mount after mkfs (observed in the CI), wait
 # for them explicitly. Errors are reported but tolerated, the mount could succeed
 # eventually or the whole test will fail anyway.
-wait_for_loopdevs()
-{
-	for dev in ${loopdevs[@]}; do
+wait_for_loopdevs() {
+	for dev in "${loopdevs[@]}"; do
 		run_mayfail $SUDO_HELPER "$TOP/btrfs" device ready "$dev"
 	done
 }
@@ -929,9 +884,8 @@ cond_wait_for_loopdevs() {
 # $1: number of nullb devices to be set up
 # $2: size of the devices
 # $3: zone size of the devices
-setup_nullbdevs()
-{
-	if [ "$#" -lt 3 ]; then
+setup_nullbdevs() {
+	if [[ $# -lt 3 ]]; then
 		_fail "setup_nullbdevs <number of device> <size> <zone size>"
 	fi
 
@@ -939,7 +893,7 @@ setup_nullbdevs()
 	local nullb="$TEST_TOP/nullb"
 
 	run_mayfail $SUDO_HELPER "$nullb" setup
-	if [ $? != 0 ]; then
+	if [[ $? != 0 ]]; then
 		_not_run "cannot setup nullb environment for zoned devices"
 	fi
 
@@ -950,8 +904,7 @@ setup_nullbdevs()
 }
 
 # Create all nullb devices from a given nullb environment
-prepare_nullbdevs()
-{
+prepare_nullbdevs() {
 	setup_root_helper
 	local nullb="$TEST_TOP/nullb"
 	local out
@@ -962,39 +915,36 @@ prepare_nullbdevs()
 	for i in $(seq "$nullb_count"); do
 		# Last line has the name of the device node path
 		out=$(run_check_stdout $SUDO_HELPER "$nullb" create -s "$nullb_size" -z "$nullb_zone_size")
-		if [ $? != 0 ]; then
+		if [[ $? != 0 ]]; then
 			_fail "cannot create nullb zoned device $i"
 		fi
 		dev=$(echo "$out" | tail -n 1)
-		nullb_devs[$i]="$dev"
+		nullb_devs[i]="$dev"
 	done
 
 	run_check $SUDO_HELPER "$nullb" ls
 }
 
 # Remove nullb devices
-cleanup_nullbdevs()
-{
+cleanup_nullbdevs() {
 	setup_root_helper
 	local nullb="$TEST_TOP/nullb"
 	local name
 
-	for dev in ${nullb_devs[@]}; do
+	for dev in "${nullb_devs[@]}"; do
 		name=$(basename "$dev")
 		run_check $SUDO_HELPER "$nullb" rm "$name"
 	done
 	unset nullb_devs
 }
 
-wait_for_nullbdevs()
-{
-	for dev in ${nullb_devs[@]}; do
+wait_for_nullbdevs() {
+	for dev in "${nullb_devs[@]}"; do
 		run_mayfail $SUDO_HELPER "$TOP/btrfs" device ready "$dev"
 	done
 }
 
-init_env()
-{
+init_env() {
 	TEST_MNT="${TEST_MNT:-$TEST_TOP/mnt}"
 	export TEST_MNT
 	mkdir -p "$TEST_MNT" || { echo "Failed mkdir -p $TEST_MNT"; exit 1; }
@@ -1010,8 +960,7 @@ init_env()
 }
 
 # Catch critical warning messages in test results
-check_test_results()
-{
+check_test_results() {
 	local results="$1"
 	local testname="$2"
 
@@ -1025,9 +974,8 @@ check_test_results()
 # $1: optional identifier that'll be part of the name
 _mktemp() {
 	local tmp
-	local name
+	local name="btrfs-progs${1:+-$1}.XXXXXX"
 
-	name="btrfs-progs${1:+-$1}.XXXXXX"
 	_log "Create temporary file $name"
 	tmp=$(mktemp --tmpdir "$name")
 	echo -n "$tmp"
@@ -1037,9 +985,8 @@ _mktemp() {
 # $1: optional identifier that'll be part of the name
 _mktemp_dir() {
 	local tmp
-	local name
+	local name="btrfs-progs${1:+-$1}.XXXXXX"
 
-	name="btrfs-progs${1:+-$1}.XXXXXX"
 	_log "Create temporary file $name"
 	tmp=$(mktemp -d --tmpdir "$name")
 	echo -n "$tmp"
@@ -1051,11 +998,9 @@ _mktemp_dir() {
 # $1: file name
 # $2: optional size (argument suitable for truncate)
 _mktemp_local() {
-	local name
-	local size
+	local name="$1"
+	local size="${2:-0}"
 
-	name="$1"
-	size="${2:-0}"
 	_log "Create local temporary file $name"
 	rm -f -- "$name"
 	run_check truncate -s "$size" -- "$name"
