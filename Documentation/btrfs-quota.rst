@@ -22,12 +22,23 @@ of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
 STABILITY AND PERFORMANCE IMPLICATIONS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The qgroup implementation is considered reasonably stable for daily use and has
-been enabled in various distributions.
+The qgroup mode is considered not recommended for daily usage, unless there is
+no planned new snapshot/subvolume creation and deletion.
 
-When quotas are activated, they affect all extent processing, which takes a
-performance hit. Activation of qgroups is not recommended unless the user
-intends to actually use them.
+The core design of qgroup mode and snapshot are not compatible from day one, and
+are the cause of all kinds of performance problems.
+
+When qgroup mode is activated, it affects all extent processing, which takes a
+performance hit. Operations that modify a whole subvolume/snapshot in one go,
+which include snapshot creation and subvolume deletion, are heavily affected and
+can cause a system hang due to the heavy load.
+
+Although the kernel is taking several workarounds, the problem is not fully resolved
+and has extra costs, e.g. marking qgroup inconsistent, breaking limits and
+requiring extra rescan.
+
+Activation of qgroups is not recommended unless the user intends to actually use them,
+and the usage does not involve new subvolume/snapshot.
 
 .. _man-quota-hierarchical-quota-group-concepts:
 
