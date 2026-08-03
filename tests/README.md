@@ -327,6 +327,9 @@ directory.
 * cleanup files an intermediate state (mount, loop devices, device mapper
   devices) a after successful test
 * use common helpers and variables where possible
+* in functions declare local variables, initialize by simple expressions
+* use `[[ ... ]]` instead of `[ .. ]`
+* use `$*` inside strings and `$@` for arrays (iterations)
 
 ## do not
 
