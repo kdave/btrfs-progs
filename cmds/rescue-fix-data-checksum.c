@@ -85,7 +85,7 @@ static int add_corrupted_block(struct btrfs_fs_info *fs_info, u64 logical,
 	/* The last entry is the same, just set update the error mirror bitmap. */
 	if (last->logical == logical) {
 		UASSERT(last->error_mirror_bitmap);
-		set_bit(mirror, last->error_mirror_bitmap);
+		set_bit(mirror - 1, last->error_mirror_bitmap);
 		return 0;
 	}
 add:
