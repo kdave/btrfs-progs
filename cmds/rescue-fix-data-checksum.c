@@ -16,6 +16,7 @@
 
 #include "kerncompat.h"
 #include <ctype.h>
+#include "kernel-lib/bitmap.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
@@ -91,7 +92,7 @@ add:
 	last = calloc(1, sizeof(*last));
 	if (!last)
 		return -ENOMEM;
-	last->error_mirror_bitmap = calloc(1, BITS_TO_LONGS(num_mirrors));
+	last->error_mirror_bitmap = bitmap_zalloc(num_mirrors);
 	if (!last->error_mirror_bitmap) {
 		free(last);
 		return -ENOMEM;
@@ -456,7 +457,7 @@ static void free_corrupted_blocks(void)
 
 		entry = list_entry(corrupted_blocks.next, struct corrupted_block, list);
 		list_del_init(&entry->list);
-		free(entry->error_mirror_bitmap);
+		bitmap_free(entry->error_mirror_bitmap);
 		free(entry);
 	}
 }
