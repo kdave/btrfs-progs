@@ -22,6 +22,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/uapi/btrfs.h"
 #include "common/array.h"
+#include "common/format-output.h"
 
 struct device_info {
 	u64	devid;
@@ -47,8 +48,10 @@ struct chunk_info {
 
 int load_chunk_and_device_info(int fd, struct array *chunkinfos, struct array *devinfos);
 void print_device_chunks(const struct device_info *devinfo,
-			 const struct array *chunkinfos, unsigned unit_mode);
-void print_device_sizes(const struct device_info *devinfo, unsigned unit_mode);
+			 const struct array *chunkinfos, unsigned unit_mode,
+			 struct format_ctx *fctx);
+void print_device_sizes(const struct device_info *devinfo, unsigned unit_mode,
+			struct format_ctx *fctx);
 int dev_to_fsid(const char *dev, u8 *fsid);
 
 #endif
