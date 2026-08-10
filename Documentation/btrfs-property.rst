@@ -36,26 +36,32 @@ Inode properties
 ^^^^^^^^^^^^^^^^
 
 compression
-        file data compression of an inode. The type and level are specified as *<TYPE>[=<LEVEL>]*
+        file data compression of an inode. The type and level are specified as *type[:level]*
         using the same format as the *compress* mount option, described in
-        :ref:`MOUNT OPTIONS<man-btrfs5-mount-options>` (level support since: 7.X).
+        :ref:`MOUNT OPTIONS<man-btrfs5-mount-options>` (level support since: 7.X). When applied to a
+        folder, it will be inherited by (copied to) new files created in it, leaving the already
+        existing ones unaffected.
 
         For more information on btrfs compression, see :doc:`Compression`.
 
-        *""* (empty string) sets the default value (use compression specified by mount options).
+        *""* (empty string) unsets this property (uses compression specified by mount options, if any).
 
-        .. note::
-             This has changed in version 5.18 of btrfs-progs and
-             requires kernel 5.14 or newer to work.
+           .. note::
+                This has changed in version 5.18 of btrfs-progs and
+                requires kernel 5.14 or newer to work.
 
-        TYPE can be one of *zlib*, *lzo*, or *zstd* to select a specific algorithm, or *no* or *none*
-        to disable compression. LEVEL can be in the range [1, 9] for *zlib* or [-15, 15] for *zstd*.
-        If level is omitted or set to 0, the level specified via mount options will be used if
-        the type matches. Otherwise, the type's default compression level will be used.
+        *type* can be one of *zlib*, *lzo*, or *zstd* to select a specific algorithm, or *no* or *none*
+        to disable compression (equivalent to :command:`chattr +m`).
+
+        *level* can be in the range [1, 9] for *zlib*, [-15, 15] for *zstd* and is ignored for *lzo*.
+
+        If *level* is omitted or set to 0 and *type* is the same as the one specified via mount options,
+        the latter will be used. Otherwise, the type's default compression level will be used.
 
         .. note::
             When the filesystem is mounted using a kernel older than 7.X, the level set in the
             property will be ignored.
+
 
 Subvolume properties
 ^^^^^^^^^^^^^^^^^^^^
