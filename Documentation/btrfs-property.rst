@@ -36,18 +36,26 @@ Inode properties
 ^^^^^^^^^^^^^^^^
 
 compression
-        compression algorithm set for an inode (it's not possible to set the
-        compression level this way), possible values:
+        file data compression of an inode. The type and level are specified as *<TYPE>[=<LEVEL>]*
+        using the same format as the *compress* mount option, described in
+        :ref:`MOUNT OPTIONS<man-btrfs5-mount-options>` (level support since: 7.X).
 
-        - *lzo*
-        - *zlib*
-        - *zstd*
-        - *no* or *none* - disable compression (equivalent to ``chattr +m``)
-        - *""* (empty string) - set the default value
+        For more information on btrfs compression, see :doc:`Compression`.
 
-           .. note::
-                This has changed in version 5.18 of btrfs-progs and
-                requires kernel 5.14 or newer to work.
+        *""* (empty string) sets the default value (use compression specified by mount options).
+
+        .. note::
+             This has changed in version 5.18 of btrfs-progs and
+             requires kernel 5.14 or newer to work.
+
+        TYPE can be one of *zlib*, *lzo*, or *zstd* to select a specific algorithm, or *no* or *none*
+        to disable compression. LEVEL can be in the range [1, 9] for *zlib* or [-15, 15] for *zstd*.
+        If level is omitted or set to 0, the level specified via mount options will be used if
+        the type matches. Otherwise, the type's default compression level will be used.
+
+        .. note::
+            When the filesystem is mounted using a kernel older than 7.X, the level set in the
+            property will be ignored.
 
 Subvolume properties
 ^^^^^^^^^^^^^^^^^^^^
