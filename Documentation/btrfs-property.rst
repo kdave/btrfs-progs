@@ -39,8 +39,8 @@ compression
         file data compression of an inode. The type and level are specified as *type[:level]*
         using the same format as the *compress* mount option, described in
         :ref:`MOUNT OPTIONS<man-btrfs5-mount-options>` (level support since: 7.X). When applied to a
-        folder, it will be inherited by (copied to) new files created in it, leaving the already
-        existing ones unaffected.
+        folder, it will be inherited by (copied to) new files/folders (but not subvolumes) created in
+        it, leaving the already existing ones unaffected.
 
         For more information on btrfs compression, see :doc:`Compression`.
 
