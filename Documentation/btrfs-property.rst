@@ -62,6 +62,12 @@ compression
             When the filesystem is mounted using a kernel version < 7.X, *[:level]* will be ignored. This
             applies also to the *type* check against the *compress* mount option.
 
+        The way this property works is a middle-ground between the *compress* mount option and the
+        *compress-force* mount option: it will try to compress every new extent of the file as *compress*
+        would, but will prevent the *NOCOMPRESS* flag from being set and won't limit extent size like
+        *compress-force* does. See :ref:`MOUNT OPTIONS<man-btrfs5-mount-options>` and
+        the **INCOMPRESSIBLE DATA** section of :ref:`COMPRESSION<man-btrfs5-compression>` for more information.
+
 
 Subvolume properties
 ^^^^^^^^^^^^^^^^^^^^
