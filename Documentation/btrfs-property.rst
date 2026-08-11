@@ -59,8 +59,14 @@ compression
         the latter's level will be used. Otherwise, the type's default compression level will be used.
 
         .. note::
-            When the filesystem is mounted using a kernel version < 7.X, *[:level]* will be ignored. This
-            applies also to the *type* check against the *compress* mount option.
+            When the filesystem is mounted using a kernel version < 7.X, *[:level]* will be ignored.
+
+        .. warning::
+            Furthermore, with kernels before 7.X, the level from the *compress* mount option always
+            carries through to this property, even if the type is different (but it will get clamped,
+            so it's still safe). This means that if e.g.  the filesystem was mounted with -o *compress=zstd:15*
+            and a file has this property set to *zlib*, the file data will actually be compressed at *zlib:9*
+            (the max supported level for *zlib*).  After 7.X, it will use the default, *zlib:3* in this case.
 
         The way this property works is a middle-ground between the *compress* mount option and the
         *compress-force* mount option: it will try to compress every new extent of the file as *compress*
