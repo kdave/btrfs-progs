@@ -180,6 +180,15 @@ degraded
         then the constraint of single/data is not satisfied and the filesystem
         cannot be mounted.
 
+	.. note::
+                During a degraded mount, if a new chunk is going to be
+                allocated and the existing devices cannot meet the requirements
+                for the current profile then mount will fall back to other profiles
+                like SINGLE.
+
+		It is recommended to check and balance chunks with unwanted profiles,
+		after a read-write degraded mount.
+
 .. duplabel:: mount-option-device
 
 device=<devicepath>
