@@ -180,6 +180,14 @@ degraded
         then the constraint of single/data is not satisfied and the filesystem
         cannot be mounted.
 
+	.. note::
+		During a degraded mount, if BTRFS is going to allocate a new chunk,
+		and the existing devices can not meet the requirement for the
+		current profile, BTRFS will fall back to other profiles like SINGLE.
+
+		It is recommended to check and balance chunks with unwanted profiles,
+		after an RW degraded mount.
+
 .. duplabel:: mount-option-device
 
 device=<devicepath>
