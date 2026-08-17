@@ -176,7 +176,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	if (crc != crc2) {
 		ret = -EINVAL;
-		error("crc32 mismatch in command");
+		error("crc32c mismatch in command");
 		goto out;
 	}
 

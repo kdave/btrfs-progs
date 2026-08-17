@@ -51,7 +51,7 @@ const struct dump_version dump_versions[] = {
 	 */
 	{ .version = 1,
 	  .max_pending_size = SZ_256M,
-	  .magic_cpu = 0x31765f506d55445fULL, /* ascii _DUmP_v1, no null */
+	  .magic_cpu = 0x31765f506d55445fULL, /* ASCII _DUmP_v1, no null */
 	  .extra_sb_flags = 0 },
 #endif
 };

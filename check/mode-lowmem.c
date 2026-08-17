@@ -476,7 +476,7 @@ static int is_chunk_almost_full(u64 start)
 
 	/*
 	 * if the free space in the chunk is less than %10 of total,
-	 * or not not enough for CoW once, we think the chunk is almost full.
+	 * or not not enough for COW once, we think the chunk is almost full.
 	 */
 	min_free = max_t(u64, (BTRFS_MAX_LEVEL + 1) * gfs_info->nodesize,
 			 div_factor(total, 1));
@@ -1027,7 +1027,7 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 			err |= DIR_INDEX_MISSING;
 	}
 	/*
-	 * stage shall be one of following valild values:
+	 * stage shall be one of following valid values:
 	 *	0: Fine, nothing to do.
 	 *	1: One of three is wrong, so add missing one.
 	 *	2: Two of three is wrong, so delete existed one.
@@ -1039,7 +1039,7 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 	if (err & (INODE_REF_MISSING))
 		stage++;
 
-	/* stage must be smllarer than 3 */
+	/* Stage must be smaller than 3. */
 	UASSERT(stage < 3);
 
 	trans = btrfs_start_transaction(root, 1);
@@ -2525,7 +2525,7 @@ static int repair_inode_nlinks_lowmem(struct btrfs_root *root,
 	}
 
 	btrfs_release_path(path);
-	/* if refs is 0, put it into lostfound */
+	/* If refs is 0, put it into lost+found. */
 	if (ref_count == 0) {
 		ret = link_inode_to_lostfound(trans, root, path, ino, namebuf,
 					      name_len, filetype, &ref_count);
@@ -3148,7 +3148,7 @@ static int check_tree_block_ref(struct btrfs_root *root,
 		/*
 		 * Due to the feature of shared tree blocks, if the upper node
 		 * is a fs root or shared node, the extent of checked node may
-		 * not be updated until the next CoW.
+		 * not be updated until the next COW.
 		 */
 		if (nrefs)
 			strict = should_check_extent_strictly(root, nrefs,
@@ -3291,7 +3291,7 @@ out:
  * If @err contains BACKREF_MISSING then add extent of the
  * file_extent_data_item.
  *
- * Returns error bits after reapir.
+ * Returns error bits after repair.
  */
 static int repair_extent_data_item(struct btrfs_root *root,
 				   struct btrfs_path *pathp,
@@ -3664,7 +3664,7 @@ out:
 }
 
 /*
- * Check a block group item with its referener (chunk) and its used space
+ * Check a block group item with its referencer (chunk) and its used space
  * with extent/metadata item
  */
 static int check_block_group_item(struct extent_buffer *eb, int slot)
@@ -4521,7 +4521,7 @@ static int check_extent_item(struct btrfs_path *path)
 	if (item_size < sizeof(*ei)) {
 		/*
 		 * COMPAT_EXTENT_TREE_V0 case, but it's already a super
-		 * old thing when on disk format is still un-determined.
+		 * old thing when on disk format is still undetermined.
 		 * No need to care about it anymore
 		 */
 		error("unsupported COMPAT_EXTENT_TREE_V0 detected");

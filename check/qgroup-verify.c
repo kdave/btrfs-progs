@@ -922,7 +922,7 @@ static void read_qgroup_status(struct btrfs_fs_info *info, struct extent_buffer 
 	if (ct->simple == 1)
 		ct->enable_gen = btrfs_qgroup_status_enable_gen(eb, status_item);
 	/*
-	 * Since qgroup_inconsist/rescan_running is just one bit,
+	 * Since qgroup_inconsistent/rescan_running is just one bit,
 	 * assign value directly won't work.
 	 */
 	ct->qgroup_inconsist = !!(flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
@@ -1397,7 +1397,7 @@ void report_qgroups(int all)
 	 */
 	if (counts.qgroup_inconsist && !counts.rescan_running)
 		printf(
-"Rescan hasn't been initialzied, a difference in qgroup accounting is expected\n");
+"Rescan hasn't been initialized, a difference in qgroup accounting is expected\n");
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);

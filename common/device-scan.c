@@ -248,8 +248,8 @@ int btrfs_register_one_device(const char *fname)
 }
 
 /*
- * Register all devices in the fs_uuid list created in the user
- * space. Ensure btrfs_scan_devices() is called before this func.
+ * Register all devices in the fs_uuid list created in the user space. Ensure
+ * btrfs_scan_devices() is called before this function is called.
  */
 int btrfs_register_all_devices(void)
 {
