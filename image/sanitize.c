@@ -485,4 +485,3 @@ void sanitize_name(enum sanitize_mode sanitize, struct rb_root *name_tree,
 	memcpy(dst + item_ptr_off, eb->data + item_ptr_off, item_ptr_size);
 	free(eb);
 }
-

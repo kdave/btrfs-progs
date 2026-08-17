@@ -1415,7 +1415,7 @@ static int __insert_block_group(struct btrfs_trans_handle *trans,
  * the extent item may also missing.
  * In that case, we fill the 'used' with the length of the block group to
  * ensure no write into the block group.
- * Btrfsck will hate it but we will inform user to call '--init-extent-tree'
+ * Btrfs check will hate it but we will inform user to call '--init-extent-tree'
  * if possible, or just salvage as much data as possible from the fs.
  */
 static int rebuild_block_group(struct btrfs_trans_handle *trans,
@@ -1696,7 +1696,7 @@ static int btrfs_calc_stripe_index(struct chunk_record *chunk, u64 logical)
 	return index;
 }
 
-/* calc the logical offset which is the start of the next stripe. */
+/* Calculate the logical offset which is the start of the next stripe. */
 static inline u64 btrfs_next_stripe_logical_offset(struct chunk_record *chunk,
 						   u64 logical)
 {

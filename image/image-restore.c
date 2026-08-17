@@ -866,7 +866,7 @@ static bool is_in_sys_chunks(struct mdrestore_struct *mdres, u64 start, u64 len)
 	if (!node)
 		return false;
 	entry = rb_entry(node, struct cache_extent, rb_node);
-	/* Now we have entry which is the nearst chunk around @start */
+	/* Now we have entry which is the nearest chunk around @start */
 	if (start > entry->start) {
 		prev = entry;
 		next = next_cache_extent(entry);

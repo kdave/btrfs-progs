@@ -90,7 +90,7 @@
 
 ## Developer documentation
 
-* internal APIs, describe puprose and scope, decide: docs/headers/auto-sync
+* internal APIs, describe purpose and scope, decide: docs/headers/auto-sync
 
 * image dump format, v1, v2
 

@@ -95,7 +95,7 @@ static const char * const cmd_inspect_dump_super_usage[] = {
 	"Deprecated syntax:",
 	OPTLINE("-s BYTENR", "specify alternate superblock offset, values other than 0, 1, 2 "
 		"will be interpreted as --bytenr for backward compatibility, "
-		"option renamed for consistency with other tools (eg. check)"),
+		"option renamed for consistency with other tools (e.g. check)"),
 	OPTLINE("-i NUMBER", "specify which copy to print out (values: 0, 1, 2), now moved to --super"),
 	NULL
 };
