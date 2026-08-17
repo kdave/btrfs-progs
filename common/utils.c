@@ -283,7 +283,7 @@ int get_fsid(const char *path, u8 *fsid, int silent)
 		return -errno;
 	}
 	/*
-	 * Open in non-blocking mode in case that path is a fifo or a special
+	 * Open in non-blocking mode in case that path is a FIFO or a special
 	 * character device where opening gets stuck (but is interruptible).
 	 */
 	if ((st.st_mode & S_IFMT) == S_IFCHR || (st.st_mode & S_IFMT) == S_IFIFO)
@@ -411,7 +411,7 @@ static void skip_nonsep(char **line)
 		(*line)++;
 }
 
-/* Advance @line skipping over all separator chars, setting them to nul char */
+/* Advance @line skipping over all separator chars, setting them to NUL char */
 static void skip_sep(char **line)
 {
 	while (**line && is_sep(**line)) {
@@ -427,7 +427,7 @@ static bool isoctal(char c)
 
 /*
  * Validate complete escape sequence used for mangling special chars in paths,
- * eg.  \012 == 10 == 0xa == '\n'.
+ * e.g.  \012 == 10 == 0xa == '\n'.
  * Mandatory format: backslash and 3 octal digits.
  */
 static bool valid_escape(const char *str)
@@ -450,7 +450,7 @@ static bool valid_escape(const char *str)
  * Read a path from @line, with potentially mangled special characters.
  * - the input is changed in-place when unmangling is done
  * - end of path is a space character (a valid space in the path is mangled)
- * - line is advanced to the final separator or nul character
+ * - line is advanced to the final separator or NUL character
  * - returned path is a valid string terminated by zero or whitespace separator
  */
 static char *read_path(char **line)
@@ -491,7 +491,7 @@ static char *read_path(char **line)
 0   1   2    3      4          5          6          7 8     9         10
 
  * Fields related to paths and options are parsed, @line is changed in place,
- * separators are replaced by nul char, paths could be unmangled.
+ * separators are replaced by NUL char, paths could be unmangled.
  */
 static void parse_mntinfo_line(char *line, struct mnt_entry *ent)
 {

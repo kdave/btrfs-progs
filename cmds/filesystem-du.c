@@ -61,7 +61,7 @@ struct shared_extent {
 
 /*
  * extent_tree_* functions are defined in the massive interval tree
- * macro below. This serves to illustrate the api in human-readable
+ * macro below. This serves to illustrate the API in human-readable
  * terms.
  */
 static void

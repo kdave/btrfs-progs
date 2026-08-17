@@ -328,7 +328,7 @@ void btrfs_assert_feature_buf_size(void)
 		total_size += strlen(mkfs_features[i].name) + 2;
 
 	if (BTRFS_FEATURE_STRING_BUF_SIZE < total_size) {
-		internal_error("string buffer for freature list too small: want %d\n",
+		internal_error("string buffer for feature list too small: want %d\n",
 			       total_size);
 		abort();
 	}
@@ -337,7 +337,7 @@ void btrfs_assert_feature_buf_size(void)
 	for (i = 0; i < ARRAY_SIZE(runtime_features); i++)
 		total_size += strlen(runtime_features[i].name) + 2;
 	if (BTRFS_FEATURE_STRING_BUF_SIZE < total_size) {
-		internal_error("string buffer for freature list too small: want %d\n",
+		internal_error("string buffer for feature list too small: want %d\n",
 			       total_size);
 		abort();
 	}
@@ -583,7 +583,7 @@ u32 get_running_kernel_version(void)
 		return (u32)-1;
 	version |= atoi(tmp) << 8;
 	tmp = strtok_r(NULL, ".", &saveptr);
-	/* Relaxed format accepts eg. 1.2.3+ */
+	/* Relaxed format accepts e.g. 1.2.3+ */
 	if (tmp && string_is_numerical(tmp))
 		version |= atoi(tmp);
 

@@ -78,7 +78,7 @@ static void shift_leaf_data(struct btrfs_trans_handle *trans,
  * ref of type OWNER_REF, shift that leaf to eliminate the owner ref.
  *
  * Note: we use a search_slot per leaf rather than find_next_leaf to get the
- * needed CoW-ing and rebalancing for each leaf and its path up to the root.
+ * needed COW-ing and rebalancing for each leaf and its path up to the root.
  */
 static int remove_owner_refs(struct btrfs_fs_info *fs_info)
 {

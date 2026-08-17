@@ -85,7 +85,7 @@ int sysfs_open_file_rw(const char *name)
 
 /*
  * Open a directory by name in fsid directory in sysfs and return the file
- * descriptor or error, filedescriptor suitable for fdreaddir. The @dirname
+ * descriptor or error, file descriptor suitable for fdreaddir. The @dirname
  * must be a directory name.
  */
 int sysfs_open_fsid_dir(int fd, const char *dirname)

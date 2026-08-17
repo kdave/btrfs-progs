@@ -2785,7 +2785,7 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 			type_recovered = 1;
 			filetype = BTRFS_FT_DIR;
 		} else{
-			printf("Can't determine the filetype for inode %llu, assume it is a normal file\n",
+			printf("Can't determine the file type for inode %llu, assume it is a normal file\n",
 			       rec->ino);
 			type_recovered = 1;
 			filetype = BTRFS_FT_REG_FILE;
@@ -7650,7 +7650,7 @@ static int delete_duplicate_records(struct btrfs_root *root,
 
 		if (tmp->start + tmp->nr < good->start + good->nr) {
 			fprintf(stderr,
-"Ok we have overlapping extents that aren't completely covered by each other, this is going to require more careful thought. The extents are [%llu-%llu] and [%llu-%llu]\n",
+"we have overlapping extents that aren't completely covered by each other, this is going to require more careful thought. The extents are [%llu-%llu] and [%llu-%llu]\n",
 				tmp->start, tmp->nr, good->start, good->nr);
 			abort();
 		}
@@ -8866,7 +8866,7 @@ static int check_devices(struct rb_root *dev_cache,
 		if (dev_rec->devid == gfs_info->super_copy->dev_item.devid) {
 			/*
 			 * This dev item mismatch between super and chunk tree
-			 * is not a criticl problem, and CI kernels do not receive
+			 * is not a critical problem, and CI kernels do not receive
 			 * needed backport so they will cause mismatch during RW mounts.
 			 *
 			 * SO here we didn't record the mismatch as an error.
@@ -9729,7 +9729,7 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans, bool pin)
 	 * extents we find.  Not hard but why do it if we don't have to?
 	 */
 	if (btrfs_fs_incompat(gfs_info, MIXED_GROUPS)) {
-		fprintf(stderr, "We don't support re-initing the extent tree "
+		fprintf(stderr, "We don't support reinitializing the extent tree "
 			"for mixed block groups yet, please notify a btrfs "
 			"developer you want to do this so they can add this "
 			"functionality.\n");
@@ -10856,7 +10856,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			goto close_out;
 		}
 		if (ret > 0) {
-			error("please finish/cacnel the running replace/balance before running this command");
+			error("please finish/cancel the running replace/balance before running this command");
 			ret = -EINVAL;
 			err |= !!ret;
 			goto close_out;

@@ -120,7 +120,7 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 				if (sh.len > buf_len) {
 					/* btrfs-progs is too old for kernel */
 					error(
-			"buf for read_root_item_raw() is too small, get newer btrfs tools");
+			"buffer for read_root_item_raw() is too small, get newer btrfs tools");
 					return -EOVERFLOW;
 				}
 				memcpy(buf, item, sh.len);

@@ -580,7 +580,7 @@ static int update_root(struct rb_root *root_lookup,
  *	      into the lookup tree.
  * root_id: object id of the root
  * ref_tree: object id of the referring root.
- * root_offset: offset value of the root'key
+ * root_offset: offset value of the root key
  * dir_id: inode id of the directory in ref_tree where this root can be found.
  * name: the name of root_id in that directory
  * name_len: the length of name
@@ -764,8 +764,8 @@ static int resolve_root(struct rb_root *rl, struct root_info *ri,
  * for a single root_info, ask the kernel to give us a path name
  * inside it's ref_root for the dir_id where it lives.
  *
- * This fills in root_info->path with the path to the directory and and
- * appends this root's name.
+ * This fills in root_info->path with the path to the directory and appends
+ * this root's name.
  */
 static int lookup_ino_path(int fd, struct root_info *ri)
 {

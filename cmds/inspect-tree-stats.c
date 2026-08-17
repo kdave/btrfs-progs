@@ -162,7 +162,7 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 			};
 			tmp = read_tree_block(root->fs_info, cur_blocknr, &check);
 			if (!extent_buffer_uptodate(tmp)) {
-				error("failed to read blocknr %llu",
+				error("failed to read block %llu",
 					btrfs_node_blockptr(b, i));
 				continue;
 			}

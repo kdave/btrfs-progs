@@ -403,7 +403,7 @@ int insert_inode_item(struct btrfs_trans_handle *trans,
 
 	warning("root %llu inode %llu recreating inode item, this may "
 		"be incomplete, please check permissions and content after "
-		"the fsck completes.\n",
+		"'btrfs check' completes.\n",
 		root->objectid, ino);
 
 	return 0;

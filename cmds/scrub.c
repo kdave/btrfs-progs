@@ -568,7 +568,7 @@ static int scrub_kvread(int *i, int len, int avail, const char *buf,
 
 #define _SCRUB_INVALID do {						\
 	if (report_errors)						\
-		warning("invalid data on line %d pos "			\
+		warning("invalid data on line %d position "		\
 			"%d state %d (near \"%.*s\") at %s:%d",		\
 			lineno, i, state, 20 > avail ? avail : 20,	\
 			l + i,	__FILE__, __LINE__);			\
@@ -1372,7 +1372,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	}
 
 	/*
-	 * Check for stale information in the status file, ie. if it's
+	 * Check for stale information in the status file, i.e. if it's
 	 * canceled=0, finished=0 but no scrub is running.
 	 */
 	if (!is_scrub_running_in_kernel(fdmnt, di_args, fi_args.num_devices))

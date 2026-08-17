@@ -28,7 +28,7 @@
 
 static const int alloc_increment = 32;
 
-/* Initialize new array, preallocate @capacity elemennts. */
+/* Initialize new array, preallocate @capacity elements. */
 int array_init(struct array *arr, unsigned int capacity)
 {
 	void *tmp;

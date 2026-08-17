@@ -228,7 +228,7 @@ out:
  *   Root, chunk, log
  * and the following generations:
  *   Root, chunk, uuid
- * Other gen/leven can only be read from its btrfs_tree_root if possible.
+ * Other gen/level can only be read from its btrfs_tree_root if possible.
  *
  * Currently we only believe things from superblock.
  */

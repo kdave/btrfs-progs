@@ -303,7 +303,7 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 		goto out;
 	}
 	pr_stderr(LOG_INFO, "BTRFS_IOC_SEND returned %d\n", ret);
-	pr_stderr(LOG_DEBUG, "joining genl thread\n");
+	pr_stderr(LOG_DEBUG, "joining main thread\n");
 
 	close(pipefd[1]);
 	pipefd[1] = -1;
@@ -515,7 +515,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 	outname[0] = 0;
 
 	/*
-	 * For send, verbose default is 1 (insteasd of 0) for historical reasons,
+	 * For send, verbose default is 1 (instead of 0) for historical reasons,
 	 * changing may break scripts that expect the 'At subvol' message. But do
 	 * it only when bconf.verbose is unset (-1) and also adjust the value,
 	 * if global verbose is already set.

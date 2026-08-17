@@ -44,7 +44,7 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 	if (ret < 0)
 		return ret;
 
-	/* Also need to change the metadatauuid of the fs info */
+	/* Also need to change the metadata_uuid of the fs info. */
 	memcpy(fs_info->fs_devices->metadata_uuid, new_fsid, BTRFS_FSID_SIZE);
 
 	/* also restore new chunk_tree_id into tree_root for restore */

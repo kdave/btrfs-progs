@@ -119,7 +119,7 @@ error:
 }
 
 /*
- * Link subvoume @subvol as @name under directory inode @parent_dir of
+ * Link subvolume @subvol as @name under directory inode @parent_dir of
  * subvolume @parent_root.
  */
 int btrfs_link_subvolume(struct btrfs_trans_handle *trans,

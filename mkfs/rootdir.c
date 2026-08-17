@@ -941,7 +941,7 @@ static int add_file_item_extent(struct btrfs_trans_handle *trans,
 	}
 
 	/*
-	 * We have skippted to the next data, try to locate the next hole
+	 * We have skipped to the next data, try to locate the next hole
 	 * to limit the read size.
 	 */
 	next = lseek(source->fd, file_pos, SEEK_HOLE);

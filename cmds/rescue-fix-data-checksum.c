@@ -400,7 +400,7 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 		bool has_printed = false;
 		int ret;
 
-		pr_default("logical=%llu corrtuped mirrors=", entry->logical);
+		pr_default("logical=%llu corrupted mirrors=", entry->logical);
 		/* Open coded bitmap print. */
 		for (int i = 0; i < entry->num_mirrors; i++) {
 			if (test_bit(i, entry->error_mirror_bitmap)) {
