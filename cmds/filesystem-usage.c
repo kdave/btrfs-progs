@@ -798,7 +798,7 @@ static int load_device_info(int fd, struct array *devinfos)
 		 * kernel is not patched to provide fsid from the sysfs).
 		 * And we will skip only if device_is_seed is successful and dev
 		 * is a seed device.
-		 * Ignore any other error including -EACCES, which is seen when
+		 * Ignore any other error including -EACCESS, which is seen when
 		 * a non-root process calls dev_to_fsid(path)->open(path).
 		 */
 		ret = device_is_seed(fd, (const char *)dev_info.path, i, fi_args.fsid);

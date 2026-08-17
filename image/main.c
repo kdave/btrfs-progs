@@ -57,7 +57,7 @@ static const char * const image_usage[] = {
 	OPTLINE("-d", "also dump data, conflicts with -w"),
 	"",
 	"General:",
-	OPTLINE("--version", "print the btrfs-image version, builtin featurues and exit"),
+	OPTLINE("--version", "print the btrfs-image version, builtin features and exit"),
 	OPTLINE("--help", "print this help and exit"),
 	"",
 	"In the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).",

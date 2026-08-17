@@ -1497,7 +1497,7 @@ static const char * const cmd_subvolume_show_usage[] = {
 	"looked up relative to the given path",
 	"",
 	OPTLINE("-r, --rootid ID", "root id of the subvolume"),
-	OPTLINE("-u, --uuid UUID", "UUID of the subvolum"),
+	OPTLINE("-u, --uuid UUID", "UUID of the subvolume"),
 	HELPINFO_UNITS_SHORT_LONG,
 #if EXPERIMENTAL
 	HELPINFO_INSERT_GLOBALS,

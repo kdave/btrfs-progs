@@ -1060,7 +1060,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	bool opt_nocomp = false;
 
 	/*
-	 * Kernel 4.19+ supports defragmention of files open read-only,
+	 * Kernel 4.19+ supports defragmentation of files open read-only,
 	 * otherwise it's an ETXTBSY error
 	 */
 	if (get_running_kernel_version() < KERNEL_VERSION(4,19,0))
