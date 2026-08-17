@@ -36,6 +36,10 @@ highlight the most frequently used tags and their expected meaning. This only
 briefly mentions the commonly used tags. You're encouraged to read the whole
 document and get familiar with it.
 
+With the recent increased flow of LLM-assisted bug fixes, please also follow the
+kernel documentation at https://docs.kernel.org/process/coding-assistants.html to
+properly disclose LLM usage for every patch.
+
 Signed-off-by:
 ^^^^^^^^^^^^^^
 
