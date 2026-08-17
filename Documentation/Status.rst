@@ -528,9 +528,15 @@ useful for users (e.g. internal).
      - ...
      - Incomplete implementation. Standalone features are carved out and added
        separately.
-   * - Large folio support
+   * - Remap tree
      - ...
-     -
-   * - Shutdown ioctl
-     - 6.19
-     - Will be available in 7.1
+     - Partial support for chunk types, except RAID56
+   * - Async checksums
+     - ...
+     - Asynchronous calculation of checksums, offloaded to threads.
+   * - Blocksize > pagesize
+     - ...
+     - Needs transparent hugepage support and no HIGHMEM
+   * - Huge folios
+     - ...
+     - Support folios of size 2MiB
