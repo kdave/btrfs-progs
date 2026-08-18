@@ -384,9 +384,6 @@ features see :doc:`Status<Status>` page.
         Verify metadata blocks before submitting them to the devices. This can
         catch consistency problems or bitflips.
 
-5.4 (stable)
-------------
-
 5.5 - more checksums
         New checksum algorithms: xxhash (64b), SHA256 (256b), BLAKE2b (256b).
 
