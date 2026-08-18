@@ -2093,8 +2093,8 @@ static int check_file_extent_inline(struct btrfs_root *root,
  * Return 0 if no error occurred.
  */
 static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
-			     unsigned int nodatasum, u64 isize, u64 *size,
-			     u64 *end)
+			     unsigned int nodatasum, u64 isize, u32 mode,
+			     u64 *size, u64 *end)
 {
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_key fkey;
@@ -2119,6 +2119,14 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
 	extent_type = btrfs_file_extent_type(node, fi);
 
+	/* Only regular and symlink can have file extents. */
+	if (is_valid_imode(mode) && !S_ISREG(mode) && !S_ISLNK(mode)) {
+		err |= FILE_EXTENT_ERROR;
+		error("root %llu ino %llu should not have file extent",
+			btrfs_root_id(root), fkey.objectid);
+		return err;
+	}
+
 	/* Check extent type */
 	if (extent_type != BTRFS_FILE_EXTENT_REG &&
 	    extent_type != BTRFS_FILE_EXTENT_PREALLOC &&
@@ -2126,6 +2134,13 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		err |= FILE_EXTENT_ERROR;
 		error("root %llu EXTENT_DATA[%llu %llu] type bad",
 		      root->objectid, fkey.objectid, fkey.offset);
+		return err;
+	}
+
+	if (S_ISLNK(mode) && extent_type != BTRFS_FILE_EXTENT_INLINE) {
+		err |= FILE_EXTENT_ERROR;
+		error("root %llu ino %llu should not have regular/prealloc file extent",
+		      root->objectid, fkey.objectid);
 		return err;
 	}
 
@@ -2807,12 +2822,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 			err |= ret;
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
-			if (dir) {
-				warning("root %llu DIR INODE[%llu] shouldn't EXTENT_DATA[%llu %llu]",
-					root->objectid, inode_id, key.objectid,
-					key.offset);
-			}
-			ret = check_file_extent(root, path, nodatasum, isize,
+			ret = check_file_extent(root, path, nodatasum, isize, mode,
 						&extent_size, &extent_end);
 			err |= ret;
 			break;

@@ -844,6 +844,11 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 	if (!rec->found_inode_item)
 		return;
 
+	/* If it's not REG or SYMLNK, there should be no file extent. */
+	if (is_valid_imode(rec->imode) && !S_ISREG(rec->imode) &&
+	    !S_ISLNK(rec->imode) && rec->found_file_extent)
+		rec->errors |= I_ERR_BAD_FILE_EXTENT;
+
 	filetype = imode_to_type(rec->imode);
 	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
 		if (backref->found_dir_item && backref->found_dir_index) {
