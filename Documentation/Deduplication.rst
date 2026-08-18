@@ -2,9 +2,9 @@ Deduplication
 =============
 
 Going by the definition in the context of filesystems, it's a process of
-looking up identical data blocks tracked separately and creating a shared
-logical link while removing one of the copies of the data blocks. This leads to
-data space savings while it increases metadata consumption.
+looking up identical data blocks tracked separately and replacing one of the
+copies of the data blocks with a shared logical link to the other.  This leads
+to data space savings while it may increase metadata consumption in some cases.
 
 There are two main deduplication types:
 
@@ -46,6 +46,11 @@ base image, source of a reflinked file. Optionally the tool could track a
 database of hashes and allow to deduplicate blocks from more files, or use that
 for repeated runs and update the database incrementally.
 
+With multiple block copies, the process can be repeated with pairs of copies until
+only one copy remains, i.e. all other copies have been replaced with references
+to the first.  The details are tool-specific, as there's no general rule
+for which copy is the better one to keep that covers all situations.
+
 Block based deduplication
 -------------------------
 
@@ -66,6 +71,11 @@ hash based comparison). Pages representing the extents in memory are locked
 prior to deduplication and prevent concurrent modification by buffered writes
 or mmapped writes. Blocks are compared byte by byte and not using any hash-based
 approach, i.e. the existing checksums are not used.
+
+Since kernel 7.2 the raw checksums can be read by an ioctl (with some
+exceptions given the file extent types, like compressed or inline). This can
+be used as an initial hint to the deduplication tool to identify blocks without
+actually reading them.
 
 Limitations, compatibility
 --------------------------
