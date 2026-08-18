@@ -183,3 +183,7 @@ for that there's
     ci/images/images-build-all
 
 Which is similar to running the `docker-build` command inside the directories.
+
+The Github CI pulls images from [docker hub namespace *kdave*](https://hub.docker.com/u/kdave).
+The images are regenerated weekly and require write access, using the script
+`ci/images-push-all`. This is required only for project level.
