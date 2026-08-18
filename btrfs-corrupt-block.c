@@ -694,14 +694,13 @@ out:
 }
 
 static int corrupt_inode(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root, u64 inode, char *field)
+			 struct btrfs_root *root, u64 inode, char *field,
+			 u64 bogus)
 {
 	struct btrfs_inode_item *ei;
 	struct btrfs_path *path;
 	struct btrfs_key key;
 	enum btrfs_inode_field corrupt_field = convert_inode_field(field);
-	u64 bogus;
-	u64 orig;
 	int ret;
 
 	if (corrupt_field == BTRFS_INODE_FIELD_BAD) {
@@ -741,49 +740,49 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 			    struct btrfs_inode_item);
 	switch (corrupt_field) {
 	case BTRFS_INODE_FIELD_ISIZE:
-		orig = btrfs_inode_size(path->nodes[0], ei);
-		bogus = generate_u64(orig);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(btrfs_inode_size(path->nodes[0], ei));
 		btrfs_set_inode_size(path->nodes[0], ei, bogus);
 		break;
 	case BTRFS_INODE_FIELD_NBYTES:
-		orig = btrfs_inode_nbytes(path->nodes[0], ei);
-		bogus = generate_u64(orig);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(btrfs_inode_nbytes(path->nodes[0], ei));
 		btrfs_set_inode_nbytes(path->nodes[0], ei, bogus);
 		break;
 	case BTRFS_INODE_FIELD_NLINK:
-		orig = btrfs_inode_nlink(path->nodes[0], ei);
-		bogus = generate_u32(orig);
-		btrfs_set_inode_nlink(path->nodes[0], ei, bogus);
+		if (bogus == (u64)-1)
+			bogus = generate_u32(btrfs_inode_nlink(path->nodes[0], ei));
+		btrfs_set_inode_nlink(path->nodes[0], ei, (u32)bogus);
 		break;
 	case BTRFS_INODE_FIELD_GENERATION:
-		orig = btrfs_inode_generation(path->nodes[0], ei);
-		bogus = generate_u64(orig);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(btrfs_inode_generation(path->nodes[0], ei));
 		btrfs_set_inode_generation(path->nodes[0], ei, bogus);
 		break;
 	case BTRFS_INODE_FIELD_TRANSID:
-		orig = btrfs_inode_transid(path->nodes[0], ei);
-		bogus = generate_u64(orig);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(btrfs_inode_transid(path->nodes[0], ei));
 		btrfs_set_inode_transid(path->nodes[0], ei, bogus);
 		break;
 	case BTRFS_INODE_FIELD_BLOCK_GROUP:
-		orig = btrfs_inode_block_group(path->nodes[0], ei);
-		bogus = generate_u64(orig);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(btrfs_inode_block_group(path->nodes[0], ei));
 		btrfs_set_inode_block_group(path->nodes[0], ei, bogus);
 		break;
 	case BTRFS_INODE_FIELD_MODE:
-		orig = btrfs_inode_mode(path->nodes[0], ei);
-		bogus = generate_u32(orig);
-		btrfs_set_inode_mode(path->nodes[0], ei, bogus);
+		if (bogus == (u64)-1)
+			bogus = generate_u32(btrfs_inode_mode(path->nodes[0], ei));
+		btrfs_set_inode_mode(path->nodes[0], ei, (u32)bogus);
 		break;
 	case BTRFS_INODE_FIELD_UID:
-		orig = btrfs_inode_uid(path->nodes[0], ei);
-		bogus = generate_u32(orig);
-		btrfs_set_inode_uid(path->nodes[0], ei, bogus);
+		if (bogus == (u64)-1)
+			bogus = generate_u32(btrfs_inode_uid(path->nodes[0], ei));
+		btrfs_set_inode_uid(path->nodes[0], ei, (u32)bogus);
 		break;
 	case BTRFS_INODE_FIELD_GID:
-		orig = btrfs_inode_gid(path->nodes[0], ei);
-		bogus = generate_u32(orig);
-		btrfs_set_inode_gid(path->nodes[0], ei, bogus);
+		if (bogus == (u64)-1)
+			bogus = generate_u32(btrfs_inode_gid(path->nodes[0], ei));
+		btrfs_set_inode_gid(path->nodes[0], ei, (u32)bogus);
 		break;
 	default:
 		ret = -EINVAL;
@@ -1542,7 +1541,7 @@ int main(int argc, char **argv)
 		BUG_ON(IS_ERR(trans));
 		if (file_extent == (u64)-1) {
 			printf("corrupting inode\n");
-			ret = corrupt_inode(trans, root, inode, field);
+			ret = corrupt_inode(trans, root, inode, field, bogus_value);
 		} else {
 			ret = corrupt_file_extent(trans, root, inode,
 						  file_extent, field, bogus_value);
