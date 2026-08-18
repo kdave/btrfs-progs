@@ -625,7 +625,7 @@ out:
 }
 
 static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
-			    char *field)
+			    char *field, u64 bogus)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dir_item *di;
@@ -636,7 +636,6 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	unsigned long name_ptr;
 	enum btrfs_dir_item_field corrupt_field =
 		convert_dir_item_field(field);
-	u64 bogus;
 	u16 name_len;
 	int ret;
 
@@ -677,7 +676,8 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 		goto out;
 	case BTRFS_DIR_ITEM_LOCATION_OBJECTID:
 		btrfs_dir_item_key_to_cpu(path->nodes[0], di, &location);
-		bogus = generate_u64(location.objectid);
+		if (bogus == (u64)-1)
+			bogus = generate_u64(location.objectid);
 		location.objectid = bogus;
 		btrfs_cpu_key_to_disk(&disk_key, &location);
 		btrfs_set_dir_item_key(path->nodes[0], di, &disk_key);
@@ -1558,7 +1558,7 @@ int main(int argc, char **argv)
 	if (corrupt_di) {
 		if (!key.objectid || *field == 0)
 			usage(&corrupt_block_cmd, 1);
-		ret = corrupt_dir_item(target_root, &key, field);
+		ret = corrupt_dir_item(target_root, &key, field, bogus_value);
 		goto out_close;
 	}
 	if (csum_bytenr) {
