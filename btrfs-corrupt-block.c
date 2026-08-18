@@ -343,6 +343,7 @@ enum btrfs_file_extent_field {
 enum btrfs_dir_item_field {
 	BTRFS_DIR_ITEM_NAME,
 	BTRFS_DIR_ITEM_LOCATION_OBJECTID,
+	BTRFS_DIR_ITEM_FLAGS,
 	BTRFS_DIR_ITEM_BAD,
 };
 
@@ -448,6 +449,8 @@ static enum btrfs_dir_item_field convert_dir_item_field(char *field)
 		return BTRFS_DIR_ITEM_NAME;
 	if (strncmp(field, "location_objectid", FIELD_BUF_LEN) == 0)
 		return BTRFS_DIR_ITEM_LOCATION_OBJECTID;
+	if (strncmp(field, "flags", FIELD_BUF_LEN) == 0)
+		return BTRFS_DIR_ITEM_FLAGS;
 	return BTRFS_DIR_ITEM_BAD;
 }
 
@@ -681,6 +684,12 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 		location.objectid = bogus;
 		btrfs_cpu_key_to_disk(&disk_key, &location);
 		btrfs_set_dir_item_key(path->nodes[0], di, &disk_key);
+		btrfs_mark_buffer_dirty(path->nodes[0]);
+		goto out;
+	case BTRFS_DIR_ITEM_FLAGS:
+		if (bogus == (u64)-1)
+			bogus = generate_u8(btrfs_dir_flags(path->nodes[0], di));
+		btrfs_set_dir_flags(path->nodes[0], di, bogus);
 		btrfs_mark_buffer_dirty(path->nodes[0]);
 		goto out;
 	default:
