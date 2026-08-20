@@ -232,6 +232,18 @@ static void insert_temp_root_item(struct extent_buffer *buf,
 	btrfs_set_stack_inode_nlink(inode_item, 1);
 	btrfs_set_stack_inode_nbytes(inode_item, cfg->nodesize);
 	btrfs_set_stack_inode_mode(inode_item, S_IFDIR | 0755);
+
+	if (objectid == BTRFS_FS_TREE_OBJECTID) {
+		time_t now = time(NULL);
+		uuid_t uuid;
+
+		uuid_generate(uuid);
+		memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
+		btrfs_set_stack_timespec_sec(&root_item.otime, now);
+		btrfs_set_stack_timespec_sec(&root_item.ctime, now);
+		btrfs_set_stack_inode_flags(inode_item, BTRFS_INODE_ROOT_ITEM_INIT);
+	}
+
 	btrfs_set_root_refs(&root_item, 1);
 	btrfs_set_root_used(&root_item, cfg->nodesize);
 	btrfs_set_root_generation(&root_item, 1);
