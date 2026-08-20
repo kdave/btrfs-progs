@@ -1402,7 +1402,6 @@ static void print_subvolume_show_text(const struct btrfs_util_subvolume_info *su
 		pr_default("\tFlags: \t\t\t-\n");
 
 	pr_default("\tSend transid: \t\t%" PRIu64 "\n", subvol->stransid);
-	pr_default("\tSend time: \t\t%s\n", tstr);
 	if (subvol->stime.tv_sec) {
 		struct tm tm;
 
@@ -1411,6 +1410,8 @@ static void print_subvolume_show_text(const struct btrfs_util_subvolume_info *su
 	} else {
 		strcpy(tstr, "-");
 	}
+	pr_default("\tSend time: \t\t%s\n", tstr);
+
 	pr_default("\tReceive transid: \t%" PRIu64 "\n", subvol->rtransid);
 	if (subvol->rtime.tv_sec) {
 		struct tm tm;
