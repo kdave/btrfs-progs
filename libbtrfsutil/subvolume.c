@@ -1501,8 +1501,18 @@ static enum btrfs_util_error subvolume_iterator_next_tree_search(struct btrfs_ut
 			} else {
 				top->search.key.nr_items = 4096;
 				ret = ioctl(iter->fd, BTRFS_IOC_TREE_SEARCH, &top->search);
-				if (ret == -1)
+				if (ret == -1) {
+					/*
+					 * nr_items was set above but the ioctl
+					 * left buf untouched. Clear it so that
+					 * a caller which keeps iterating does
+					 * not walk the stale buffer.
+					 */
+					top->search.key.nr_items = 0;
+					top->items_pos = 0;
+					top->buf_off = 0;
 					return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+				}
 				top->items_pos = 0;
 				top->buf_off = 0;
 
