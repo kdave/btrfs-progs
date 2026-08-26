@@ -30,7 +30,6 @@
 
 #define BLOCKSIZE (4096)
 static char buf[BLOCKSIZE];
-static int csum_size;
 
 static bool is_valid_csum_type(u16 csum_type)
 {
@@ -53,7 +52,7 @@ static int check_csum_superblock(void *sb)
 	btrfs_csum_data(csum_type, (unsigned char *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
-	return (memcmp(sb, result, csum_size) == 0);
+	return (memcmp(sb, result, btrfs_csum_type_size(csum_type)) == 0);
 }
 
 static void update_block_csum(void *block)
@@ -67,7 +66,7 @@ static void update_block_csum(void *block)
 
 	memset(block, 0, BTRFS_CSUM_SIZE);
 	hdr = (struct btrfs_header *)block;
-	memcpy(&hdr->csum, result, csum_size);
+	memcpy(&hdr->csum, result, btrfs_csum_type_size(csum_type));
 }
 
 static u64 arg_strtou64(const char *str)
@@ -387,7 +386,6 @@ int main(int argc, char **argv)
 	}
 
 	/* verify superblock */
-	csum_size = btrfs_csum_type_size(BTRFS_CSUM_TYPE_CRC32);
 	off = BTRFS_SUPER_INFO_OFFSET;
 
 	ret = pread(fd, buf, BLOCKSIZE, off);
