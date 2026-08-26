@@ -158,7 +158,7 @@ struct sb_field {
 			printf("SET: "#fname" "f_dec" (0x"f_hex")\n", \
 			(f_type)*val, (f_type)*val);				\
 			sb->fname = cpu_to_le##bits(*val);			\
-		} else {						\
+		} else {							\
 			*val = le##bits##_to_cpu(sb->fname);			\
 			printf("GET: "#fname" "f_dec" (0x"f_hex")\n", 	\
 			(f_type)*val, (f_type)*val);			\
