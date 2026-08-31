@@ -233,6 +233,7 @@ objects = \
 	common/parse-utils.o	\
 	common/path-utils.o	\
 	common/rbtree-utils.o	\
+	common/reproducible.o	\
 	common/send-stream.o	\
 	common/send-utils.o	\
 	common/sort-utils.o	\

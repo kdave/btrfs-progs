@@ -452,7 +452,9 @@ dnl execution with error. The static libs are optional.
 PKG_CHECK_MODULES(BLKID, [blkid])
 PKG_STATIC(BLKID_LIBS_STATIC, [blkid])
 
-PKG_CHECK_MODULES(UUID, [uuid])
+dnl uuid >= 2.31 (util-linux, 2017) for uuid_generate_sha1(), used to
+dnl derive deterministic UUIDs for reproducible image creation.
+PKG_CHECK_MODULES(UUID, [uuid >= 2.31])
 PKG_STATIC(UUID_LIBS_STATIC, [uuid])
 
 PKG_CHECK_MODULES(ZLIB, [zlib])

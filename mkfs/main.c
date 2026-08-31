@@ -59,6 +59,7 @@
 #include "common/units.h"
 #include "common/string-utils.h"
 #include "common/string-table.h"
+#include "common/reproducible.h"
 #include "common/root-tree-utils.h"
 #include "cmds/commands.h"
 #include "check/qgroup-verify.h"
@@ -1542,7 +1543,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 dev_byte_count = 0;
 	bool mixed = false;
 	char *label = NULL;
-	int nr_global_roots = sysconf(_SC_NPROCESSORS_ONLN);
+	int nr_global_roots = 1;
 	char *source_dir = NULL;
 	struct rootdir_subvol *rds;
 	struct rootdir_inode_flags_entry *rif;
@@ -1868,6 +1869,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			ret = 1;
 			goto error;
 		}
+	} else if (reproducible_is_deterministic()) {
+		error("DETERMINISTIC_SEED=1 requires -U/--uuid to be specified");
+		ret = 1;
+		goto error;
 	}
 
 	if (*dev_uuid) {
@@ -2044,9 +2049,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	/* This is also fixed in kernel, but the flag has no real meaning anymore. */
-	if (nodesize > sysconf(_SC_PAGE_SIZE))
-		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_BIG_METADATA;
+	features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_BIG_METADATA;
 
 	min_dev_size = btrfs_min_dev_size(nodesize, mixed,
 					  opt_zoned ? zone_size(file) : 0,

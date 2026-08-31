@@ -20,15 +20,16 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/uuid-tree.h"
 #include "kernel-shared/transaction.h"
-#include "common/root-tree-utils.h"
 #include "common/messages.h"
+#include "common/reproducible.h"
+#include "common/root-tree-utils.h"
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid)
 {
 	int ret;
 	struct btrfs_inode_item inode_item;
-	time_t now = time(NULL);
+	time_t now = reproducible_now();
 
 	memset(&inode_item, 0, sizeof(inode_item));
 	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
@@ -293,7 +294,10 @@ static int rescan_subvol_uuid(struct btrfs_trans_handle *trans,
 	}
 	/* The uuid is not set, regenerate one. */
 	if (uuid_is_null(subvol->root_item.uuid)) {
-		uuid_generate(subvol->root_item.uuid);
+		reproducible_uuid_generate(fs_info->super_copy->fsid,
+					   REPRODUCIBLE_UUID_ROLE_SUBVOL,
+					   subvol_key->objectid,
+					   subvol->root_item.uuid);
 		ret = btrfs_update_root(trans, fs_info->tree_root, &subvol->root_key,
 					&subvol->root_item);
 		if (ret < 0) {

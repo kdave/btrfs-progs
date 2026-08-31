@@ -51,6 +51,7 @@
 #include "common/messages.h"
 #include "common/utils.h"
 #include "common/extent-tree-utils.h"
+#include "common/reproducible.h"
 #include "common/root-tree-utils.h"
 #include "common/path-utils.h"
 #include "common/rbtree-utils.h"
@@ -274,6 +275,18 @@ static void free_one_hardlink(struct rb_node *node)
 
 static void stat_to_inode_item(struct btrfs_inode_item *dst, const struct stat *st)
 {
+	bool use_sde = reproducible_has_source_date();
+	time_t now = use_sde ? reproducible_now() : 0;
+	time_t atime = st->st_atime;
+	time_t ctime = st->st_ctime;
+	time_t mtime = st->st_mtime;
+
+	if (use_sde) {
+		ctime = now;
+		mtime = st->st_mtime < now ? st->st_mtime : now;
+		atime = now;
+	}
+
 	/*
 	 * Do not touch size for directory inode, the size would be
 	 * automatically updated during btrfs_link_inode().
@@ -287,14 +300,19 @@ static void stat_to_inode_item(struct btrfs_inode_item *dst, const struct stat *
 	btrfs_set_stack_inode_mode(dst, st->st_mode);
 	btrfs_set_stack_inode_rdev(dst, 0);
 	btrfs_set_stack_inode_flags(dst, 0);
-	btrfs_set_stack_timespec_sec(&dst->atime, st->st_atime);
+	btrfs_set_stack_timespec_sec(&dst->atime, atime);
 	btrfs_set_stack_timespec_nsec(&dst->atime, 0);
-	btrfs_set_stack_timespec_sec(&dst->ctime, st->st_ctime);
+	btrfs_set_stack_timespec_sec(&dst->ctime, ctime);
 	btrfs_set_stack_timespec_nsec(&dst->ctime, 0);
-	btrfs_set_stack_timespec_sec(&dst->mtime, st->st_mtime);
+	btrfs_set_stack_timespec_sec(&dst->mtime, mtime);
 	btrfs_set_stack_timespec_nsec(&dst->mtime, 0);
 	btrfs_set_stack_timespec_sec(&dst->otime, 0);
 	btrfs_set_stack_timespec_nsec(&dst->otime, 0);
+}
+
+static int xattr_name_cmp(const void *a, const void *b)
+{
+	return strcmp(*(const char * const *)a, *(const char * const *)b);
 }
 
 static int add_xattr_item(struct btrfs_trans_handle *trans,
@@ -307,6 +325,9 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 	char *xattr_list_end;
 	char *cur_name;
 	char cur_value[XATTR_SIZE_MAX];
+	char **names = NULL;
+	size_t nr_names = 0;
+	size_t i;
 
 	ret = llistxattr(file_name, xattr_list, XATTR_LIST_MAX);
 	if (ret < 0) {
@@ -319,17 +340,37 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 		return ret;
 
 	xattr_list_end = xattr_list + ret;
-	cur_name = xattr_list;
-	while (cur_name < xattr_list_end) {
+
+	for (cur_name = xattr_list; cur_name < xattr_list_end;
+	     cur_name += strlen(cur_name) + 1)
+		nr_names++;
+
+	names = malloc(nr_names * sizeof(*names));
+	if (!names) {
+		error("not enough memory to process xattrs of %s", file_name);
+		return -ENOMEM;
+	}
+	i = 0;
+	for (cur_name = xattr_list; cur_name < xattr_list_end;
+	     cur_name += strlen(cur_name) + 1)
+		names[i++] = cur_name;
+
+	/* llistxattr() order is filesystem-defined. */
+	if (reproducible_is_enabled())
+		qsort(names, nr_names, sizeof(*names), xattr_name_cmp);
+
+	for (i = 0; i < nr_names; i++) {
+		cur_name = names[i];
 		cur_name_len = strlen(cur_name);
 
 		ret = lgetxattr(file_name, cur_name, cur_value, XATTR_SIZE_MAX);
 		if (ret < 0) {
 			if (errno == ENOTSUP)
-				return 0;
-			error("getting a xattr value failed for %s attr %s: %m",
-				file_name, cur_name);
-			return ret;
+				ret = 0;
+			else
+				error("getting a xattr value failed for %s attr %s: %m",
+					file_name, cur_name);
+			goto out;
 		}
 
 		ret = btrfs_insert_xattr_item(trans, root, cur_name,
@@ -340,10 +381,9 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 			error("inserting a xattr item failed for %s: %m",
 					file_name);
 		}
-
-		cur_name += cur_name_len + 1;
 	}
-
+out:
+	free(names);
 	return ret;
 }
 
@@ -1840,9 +1880,18 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 	struct btrfs_inode_item inode_item = { 0 };
 	struct inode_entry *parent;
 	struct rootdir_subvol *rds;
-	const bool have_hard_links = (!S_ISDIR(st->st_mode) && st->st_nlink > 1);
+	bool have_hard_links;
 	u64 ino;
 	int ret;
+
+	/*
+	 * No stat (FTW_NS) or unreadable directory (FTW_DNR): abort rather
+	 * than dereference a NULL st.
+	 */
+	if (typeflag == FTW_NS || typeflag == FTW_DNR)
+		return -EPERM;
+
+	have_hard_links = (!S_ISDIR(st->st_mode) && st->st_nlink > 1);
 
 	/* The rootdir itself. */
 	if (unlikely(ftwbuf->level == 0)) {
@@ -2168,7 +2217,14 @@ int btrfs_mkfs_fill_dir(struct btrfs_trans_handle *trans, const char *source_dir
 	g_do_reflink = do_reflink;
 	INIT_LIST_HEAD(&current_path.inode_list);
 
-	ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
+	/*
+	 * A reproducible image needs a sorted traversal, which costs extra
+	 * allocation and CPU. A regular mkfs doesn't, so use nftw() there.
+	 */
+	if (reproducible_is_enabled())
+		ret = path_sorted_walk(source_dir, ftw_add_inode);
+	else
+		ret = nftw(source_dir, ftw_add_inode, 32, FTW_PHYS);
 	if (ret) {
 		error("unable to traverse directory %s: %d", source_dir, ret);
 		return ret;
@@ -2265,11 +2321,16 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	/*
 	 * Symbolic link is not followed when creating files, so no need to
 	 * follow them here.
+	 *
+	 * This pass only sums file sizes and counts inodes, a result that is
+	 * independent of walk order, so it always uses nftw() -- the sorted
+	 * walk (see btrfs_mkfs_fill_dir()) is only needed where the order
+	 * feeds the on-disk layout.
 	 */
 	ret = nftw(dir_name, ftw_add_entry_size, 10, FTW_PHYS);
 	rb_free_nodes(&hardlink_root, free_one_hardlink);
 	if (ret < 0) {
-		error("ftw subdir walk of %s failed: %m", dir_name);
+		error("unable to walk subdir of %s: %m", dir_name);
 		exit(1);
 	}
 
