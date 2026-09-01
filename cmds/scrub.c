@@ -1594,14 +1594,6 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	err = 0;
 	for (i = 0; i < fi_args.num_devices; ++i) {
-		/* Revert to the older scrub limit. */
-		ret = write_scrub_device_limit(fdmnt, di_args[i].devid, sp[i].old_limit);
-		if (ret < 0) {
-			errno = -ret;
-			warning("failed to reset scrub throughput limit on devid %llu: %m",
-				di_args[i].devid);
-		}
-
 		if (sp[i].skip)
 			continue;
 		devid = di_args[i].devid;
@@ -1643,6 +1635,16 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		if (sp[i].scrub_args.progress.corrected_errors > 0
 		    || sp[i].scrub_args.progress.unverified_errors > 0)
 			e_correctable++;
+	}
+
+	/* Revert to the older scrub limits. */
+	for (i = 0; i < fi_args.num_devices; ++i) {
+		ret = write_scrub_device_limit(fdmnt, di_args[i].devid, sp[i].old_limit);
+		if (ret < 0) {
+			errno = -ret;
+			warning("failed to reset scrub throughput limit on devid %llu: %m",
+				di_args[i].devid);
+		}
 	}
 
 	if (do_print) {
