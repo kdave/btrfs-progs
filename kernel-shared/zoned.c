@@ -276,10 +276,21 @@ int btrfs_reset_dev_zone(int fd, struct blk_zone *zone)
 {
 	struct blk_zone_range range;
 
-	/* Nothing to do if it is already empty */
-	if (zone->type == BLK_ZONE_TYPE_CONVENTIONAL ||
-	    zone->cond == BLK_ZONE_COND_EMPTY)
+	if (zone->type == BLK_ZONE_TYPE_CONVENTIONAL)
 		return 0;
+
+	if (zone->cond == BLK_ZONE_COND_EMPTY) {
+		char buf[sizeof(struct blk_zone_report) + sizeof(struct blk_zone)] = { 0 };
+		struct blk_zone_report *rep = (struct blk_zone_report *)buf;
+
+		rep->sector = zone->start;
+		rep->nr_zones = 1;
+		if (ioctl(fd, BLKREPORTZONE, rep) == 0 && rep->nr_zones == 1)
+			*zone = *(struct blk_zone *)(rep + 1);
+
+		if (zone->cond == BLK_ZONE_COND_EMPTY)
+			return 0;
+	}
 
 	range.sector = zone->start;
 	range.nr_sectors = zone->len;
