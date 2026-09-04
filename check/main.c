@@ -47,6 +47,7 @@
 #include "kernel-shared/ulist.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/tree-checker.h"
+#include "kernel-shared/zoned.h"
 #include "common/defs.h"
 #include "common/extent-cache.h"
 #include "common/internal.h"
@@ -9129,6 +9130,151 @@ out:
 	return ret;
 }
 
+#ifdef BTRFS_ZONED
+/*
+ * On a zoned filesystem, find sequential zones that are open/written on the
+ * device but are not backed by any dev extent and are not superblock log
+ * zones. Such a zone is unreferenced yet it stays 'active' on the device,
+ * permanently consuming one of the device's limited active zones. This can
+ * cause premature ENOSPC or, on filesystems with a small number of active
+ * zones, allocation hangs.
+ */
+static int check_zoned_active_zones(void)
+{
+	struct btrfs_root *dev_root = gfs_info->dev_root;
+	struct btrfs_device *dev;
+	int ret = 0;
+
+	list_for_each_entry(dev, &gfs_info->fs_devices->devices, dev_list) {
+		struct btrfs_zoned_device_info *zinfo = dev->zone_info;
+		struct btrfs_path path = { 0 };
+		struct btrfs_key key;
+		unsigned long *covered;
+		int shift;
+
+		if (!zinfo || zinfo->model == ZONED_NONE)
+			continue;
+
+		shift = ilog2(zinfo->zone_size);
+		covered = calloc(BITS_TO_LONGS(zinfo->nr_zones), sizeof(unsigned long));
+		if (!covered)
+			return -ENOMEM;
+
+		/* Superblock log zones are written but not backed by a chunk. */
+		for (int mirror = 0; mirror < BTRFS_SUPER_MIRROR_MAX; mirror++) {
+			u32 sb_zno = sb_zone_number(shift, mirror);
+
+			if (sb_zno + BTRFS_NR_SB_LOG_ZONES > zinfo->nr_zones)
+				continue;
+			for (int i = 0; i < BTRFS_NR_SB_LOG_ZONES; i++)
+				set_bit(sb_zno + i, covered);
+		}
+
+		key.objectid = dev->devid;
+		key.type = BTRFS_DEV_EXTENT_KEY;
+		key.offset = 0;
+		ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
+		if (ret < 0) {
+			btrfs_release_path(&path);
+			free(covered);
+			return ret;
+		}
+
+		while (1) {
+			struct btrfs_dev_extent *devext;
+			u64 pstart, plen, zno;
+
+			if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+				ret = btrfs_next_leaf(dev_root, &path);
+				if (ret < 0) {
+					btrfs_release_path(&path);
+					free(covered);
+					return ret;
+				}
+				if (ret > 0)
+					break;
+			}
+
+			btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+			if (key.objectid != dev->devid || key.type != BTRFS_DEV_EXTENT_KEY)
+				break;
+
+			devext = btrfs_item_ptr(path.nodes[0], path.slots[0],
+						struct btrfs_dev_extent);
+			pstart = key.offset;
+			plen = btrfs_dev_extent_length(path.nodes[0], devext);
+			for (zno = pstart >> shift;
+			     zno <= (pstart + plen - 1) >> shift;
+			     zno++) {
+				if (zno < zinfo->nr_zones)
+					set_bit(zno, covered);
+			}
+			path.slots[0]++;
+		}
+		btrfs_release_path(&path);
+
+		ret = 0;
+
+		for (int i = 0; i < zinfo->nr_zones; i++) {
+			struct blk_zone *zone = &zinfo->zones[i];
+
+			if (zone->type == BLK_ZONE_TYPE_CONVENTIONAL)
+				continue;
+			if (zone->cond == BLK_ZONE_COND_EMPTY)
+				continue;
+			if (test_bit(i, covered))
+				continue;
+
+			ret = 1;
+			error(
+"zoned: devid %llu zone %u is open/written but not referenced by any block group",
+			      dev->devid, i);
+			if (opt_check_repair) {
+				ret = btrfs_reset_dev_zone(dev->fd, zone);
+				if (ret) {
+					error(
+"zoned: failed to reset leaked zone %u on devid %llu: %m",
+					      i, dev->devid);
+					free(covered);
+					return ret;
+				}
+				printf("Reset leaked active zone %u on devid %llu\n",
+				       i, dev->devid);
+			}
+		}
+		free(covered);
+	}
+
+	return ret;
+}
+#endif
+
+/*
+ * Zoned device consistency checks.
+ *
+ * These cross-check the on-disk metadata against the physical zone state of
+ * the underlying zoned device(s), as opposed to the tree-internal consistency
+ * checks done elsewhere. They are a no-op on non-zoned filesystems and are run
+ * as part of the device checking, not as a separate numbered check phase.
+ *
+ * Return 0 if clean, 1 if a problem was found (and not repaired), or a
+ * negative errno on a fatal error.
+ */
+static int check_zoned(void)
+{
+	int ret = 0;
+
+	if (!btrfs_is_zoned(gfs_info))
+		return 0;
+
+#ifdef BTRFS_ZONED
+	ret = check_zoned_active_zones();
+	if (ret < 0)
+		return ret;
+#endif
+	return ret;
+}
+
 /*
  * Check if all dev extents are valid (not overlapping nor beyond device
  * boundary).
@@ -9414,7 +9560,14 @@ static int do_check_chunks_and_extents(void)
 		return ret;
 
 	ret = check_and_repair_super_num_devs(gfs_info);
-	return ret;
+	if (ret)
+		return ret;
+
+	/*
+	 * Zoned device consistency checks. Not a separate numbered phase, run
+	 * as part of the extent/device checking. No-op on non-zoned.
+	 */
+	return check_zoned();
 }
 
 static struct extent_buffer *btrfs_fsck_clear_root(
