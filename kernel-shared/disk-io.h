@@ -176,9 +176,6 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices, u64 sb_bytenr,
 			  unsigned sbflags, int skip_devices);
-int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
-			  u64 chunk_root_bytenr);
-
 struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 			      unsigned flags);
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,

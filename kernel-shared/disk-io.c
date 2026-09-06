@@ -1477,8 +1477,8 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 	return 0;
 }
 
-int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
-					  u64 chunk_root_bytenr)
+static int setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
+					   u64 chunk_root_bytenr)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	u64 generation;
@@ -1666,7 +1666,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 	if (fcntl(fp, F_GETFL) & O_DIRECT)
 		fs_info->zoned = 1;
 
-	ret = btrfs_setup_chunk_tree_and_device_map(fs_info, oca->chunk_tree_bytenr);
+	ret = setup_chunk_tree_and_device_map(fs_info, oca->chunk_tree_bytenr);
 	if (ret)
 		goto out_chunk;
 
