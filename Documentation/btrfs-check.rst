@@ -47,10 +47,16 @@ filesystem, similarly the run time. Check the modes that can also affect that.
 SAFE OR ADVISORY OPTIONS
 ------------------------
 
--b|--backup
-        use the first valid set of backup roots stored in the superblock
+--backup-slot <n>
+	use the *n*-th newest set of backup roots stored in the superblock
 
-        This can be combined with *--super* if some of the superblocks are damaged.
+	If *n* is 0, it means the latest backup roots, which should match the superblock.
+	If *n* is 1/2/3, it means the second/third/fourth(oldest) newest backup roots.
+
+	This option conflicts with *-r|--tree-root* and *--chunk-root* options.
+
+-b|--backup
+	this is an alias to *--backup-slot 1* option
 
 --check-data-csum
         verify checksums of data blocks
