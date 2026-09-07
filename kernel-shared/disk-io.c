@@ -1216,15 +1216,27 @@ static int load_important_roots(struct btrfs_fs_info *fs_info,
 	btrfs_setup_root(root, fs_info, BTRFS_BLOCK_GROUP_TREE_OBJECTID);
 
 tree_root:
-	if (backup) {
+	if (root_tree_bytenr) {
+		struct extent_buffer *eb;
+		struct btrfs_tree_parent_check check = { 0 };
+
+		eb = read_tree_block(fs_info, root_tree_bytenr, &check);
+		if (IS_ERR(eb)) {
+			ret = PTR_ERR(eb);
+			errno = -ret;
+			error("unable to read tree block at %llu: %m", root_tree_bytenr);
+			return ret;
+		}
+		bytenr = root_tree_bytenr;
+		level = btrfs_header_level(eb);
+		gen = btrfs_header_generation(eb);
+		free_extent_buffer(eb);
+	} else if (backup) {
 		bytenr = btrfs_backup_tree_root(backup);
 		gen = btrfs_backup_tree_root_gen(backup);
 		level = btrfs_backup_tree_root_level(backup);
 	} else {
-		if (root_tree_bytenr)
-			bytenr = root_tree_bytenr;
-		else
-			bytenr = btrfs_super_root(sb);
+		bytenr = btrfs_super_root(sb);
 		gen = btrfs_super_generation(sb);
 		level = btrfs_super_root_level(sb);
 	}
