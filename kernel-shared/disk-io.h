@@ -113,7 +113,16 @@ enum btrfs_open_ctree_flags {
 	 * Use the superblock of the latest device for the transaction commit.
 	 */
 	OPEN_CTREE_USE_LATEST_BDEV		= (1U << 18),
+
+	/* To use which backup slot. */
+	OPEN_CTREE_BACKUP_SLOT_0		= (1U << 19),
+	OPEN_CTREE_BACKUP_SLOT_1		= (1U << 20),
+	OPEN_CTREE_BACKUP_SLOT_2		= (1U << 21),
+	OPEN_CTREE_BACKUP_SLOT_3		= (1U << 22),
 };
+#define OPEN_CTREE_BACKUP_SLOT_MASK		\
+	(OPEN_CTREE_BACKUP_SLOT_0 | OPEN_CTREE_BACKUP_SLOT_1 |\
+	 OPEN_CTREE_BACKUP_SLOT_2 | OPEN_CTREE_BACKUP_SLOT_3)
 
 /*
  * Modes of superblock access

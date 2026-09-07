@@ -1184,25 +1184,44 @@ out:
 	return ret;
 }
 
+static unsigned int find_target_backup_index(const struct btrfs_super_block *sb,
+					     unsigned int flags)
+{
+	u64 gen = 0;
+	u64 newest_index = 0;
+
+	for (int i = 0; i < BTRFS_NUM_BACKUP_ROOTS; i++) {
+		const struct btrfs_root_backup *backup = sb->super_roots + i;
+
+		if (btrfs_backup_tree_root_gen(backup) > gen) {
+			newest_index = i;
+			gen = btrfs_backup_tree_root_gen(backup);
+		}
+	}
+
+	if (!(flags & OPEN_CTREE_BACKUP_SLOT_MASK))
+		flags |= OPEN_CTREE_BACKUP_SLOT_1;
+
+	if (flags & OPEN_CTREE_BACKUP_SLOT_0)
+		return newest_index;
+	if (flags & OPEN_CTREE_BACKUP_SLOT_1)
+		return (newest_index + BTRFS_NUM_BACKUP_ROOTS - 1) %
+			BTRFS_NUM_BACKUP_ROOTS;
+	if (flags & OPEN_CTREE_BACKUP_SLOT_2)
+		return (newest_index + BTRFS_NUM_BACKUP_ROOTS - 2) %
+			BTRFS_NUM_BACKUP_ROOTS;
+	return (newest_index + BTRFS_NUM_BACKUP_ROOTS - 3) %
+		BTRFS_NUM_BACKUP_ROOTS;
+}
+
 static int load_important_roots(struct btrfs_fs_info *fs_info,
 				u64 root_tree_bytenr, unsigned flags)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
-	struct btrfs_root_backup *backup = NULL;
 	struct btrfs_root *root;
 	u64 bytenr, gen;
 	int level;
-	int index = -1;
 	int ret;
-
-	if (flags & OPEN_CTREE_BACKUP_ROOT) {
-		index = find_best_backup_root(sb);
-		if (index >= BTRFS_NUM_BACKUP_ROOTS) {
-			fprintf(stderr, "Invalid backup root number\n");
-			return -EIO;
-		}
-		backup = sb->super_roots + index;
-	}
 
 	if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE) &&
 	    !(btrfs_super_flags(fs_info->super_copy) &
@@ -1231,7 +1250,10 @@ tree_root:
 		level = btrfs_header_level(eb);
 		gen = btrfs_header_generation(eb);
 		free_extent_buffer(eb);
-	} else if (backup) {
+	} else if (flags & OPEN_CTREE_BACKUP_ROOT) {
+		unsigned int index = find_target_backup_index(sb, flags);
+		struct btrfs_root_backup *backup = sb->super_roots + index;
+
 		bytenr = btrfs_backup_tree_root(backup);
 		gen = btrfs_backup_tree_root_gen(backup);
 		level = btrfs_backup_tree_root_level(backup);
@@ -1490,7 +1512,8 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 }
 
 static int setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
-					   u64 chunk_root_bytenr)
+					   u64 chunk_root_bytenr,
+					   unsigned int flags)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	u64 generation;
@@ -1525,6 +1548,13 @@ static int setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 		}
 		level = btrfs_header_level(eb);
 		free_extent_buffer(eb);
+	} else if (flags & OPEN_CTREE_BACKUP_ROOT) {
+		unsigned int index = find_target_backup_index(sb, flags);
+		struct btrfs_root_backup *backup = sb->super_roots + index;
+
+		chunk_root_bytenr = btrfs_backup_chunk_root(backup);
+		generation = btrfs_backup_chunk_root_gen(backup);
+		level = btrfs_backup_chunk_root_level(backup);
 	} else {
 		chunk_root_bytenr = btrfs_super_chunk_root(sb);
 		generation = btrfs_super_chunk_root_generation(sb);
@@ -1678,7 +1708,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_args *oca
 	if (fcntl(fp, F_GETFL) & O_DIRECT)
 		fs_info->zoned = 1;
 
-	ret = setup_chunk_tree_and_device_map(fs_info, oca->chunk_tree_bytenr);
+	ret = setup_chunk_tree_and_device_map(fs_info, oca->chunk_tree_bytenr, flags);
 	if (ret)
 		goto out_chunk;
 

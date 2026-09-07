@@ -10575,6 +10575,36 @@ static bool check_early_critical_roots(void)
 	return ret;
 }
 
+static int parse_backup_slot(const char *optarg, unsigned int *ctree_flags)
+{
+	u64 slot;
+
+	slot = arg_strtou64(optarg);
+	if (slot >= BTRFS_NUM_BACKUP_ROOTS)
+		return -EINVAL;
+
+	/* Clear any existing slot flag first. */
+	*ctree_flags &= ~OPEN_CTREE_BACKUP_SLOT_MASK;
+	switch (slot) {
+	case 0:
+		*ctree_flags |= OPEN_CTREE_BACKUP_SLOT_0;
+		break;
+	case 1:
+		*ctree_flags |= OPEN_CTREE_BACKUP_SLOT_1;
+		break;
+	case 2:
+		*ctree_flags |= OPEN_CTREE_BACKUP_SLOT_2;
+		break;
+	case 3:
+		*ctree_flags |= OPEN_CTREE_BACKUP_SLOT_3;
+		break;
+	default:
+		return -EINVAL;
+	}
+	*ctree_flags |= OPEN_CTREE_BACKUP_ROOT;
+	return 0;
+}
+
 static const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
@@ -10586,7 +10616,8 @@ static const char * const cmd_check_usage[] = {
 	"",
 	"Starting point selection:",
 	OPTLINE("-s, --super NUMBER", "use this superblock copy"),
-	OPTLINE("-b, --backup", "use the first valid backup root copy"),
+	OPTLINE("--backup-slot <n>", "use the <n>th newest backup root copy"),
+	OPTLINE("-b, --backup", "alias to \"--backup-slot 1\""),
 	OPTLINE("-r, --tree-root ", "use the given bytenr for the tree root"),
 	OPTLINE("--chunk-root BYTENR", "use the given bytenr for the chunk tree root"),
 	"",
@@ -10634,6 +10665,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	bool readonly = false;
 	bool qgroup_report = false;
 	bool force = false;
+	bool backup_slot_set = false;
 	int clear_space_cache = 0;
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
@@ -10647,7 +10679,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
 			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
-			GETOPT_VAL_FORCE, GETOPT_VAL_SKIP_QGROUP_ACCOUNTING };
+			GETOPT_VAL_FORCE, GETOPT_VAL_SKIP_QGROUP_ACCOUNTING,
+			GETOPT_VAL_BACKUP_SLOT };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -10661,6 +10694,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			{ "skip-qgroup-accounting", no_argument, NULL,
 				GETOPT_VAL_SKIP_QGROUP_ACCOUNTING },
 			{ "backup", no_argument, NULL, 'b' },
+			{ "backup-slot", required_argument, NULL,
+				GETOPT_VAL_BACKUP_SLOT },
 			{ "subvol-extents", required_argument, NULL, 'E' },
 			{ "qgroup-report", no_argument, NULL, 'Q' },
 			{ "tree-root", required_argument, NULL, 'r' },
@@ -10681,7 +10716,12 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		switch(c) {
 			case 'a': /* ignored */ break;
 			case 'b':
-				ctree_flags |= OPEN_CTREE_BACKUP_ROOT;
+				ret = parse_backup_slot("1", &ctree_flags);
+				if (ret < 0) {
+					error("invalid backup slot, must be 0/1/2/3");
+					exit(1);
+				}
+				backup_slot_set = true;
 				break;
 			case 's':
 				num = arg_strtou64(optarg);
@@ -10755,6 +10795,14 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				}
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
+			case GETOPT_VAL_BACKUP_SLOT:
+				ret = parse_backup_slot(optarg, &ctree_flags);
+				if (ret < 0) {
+					error("invalid backup slot, must be 0/1/2/3");
+					exit(1);
+				}
+				backup_slot_set = true;
+				break;
 			case GETOPT_VAL_FORCE:
 				force = true;
 				break;
@@ -10784,6 +10832,10 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	if (!check_qgroup_accounting && qgroup_report) {
 		error("--skip-qgroup-accounting is not compatible with --qgroup-report");
+		exit(1);
+	}
+	if (backup_slot_set && (chunk_root_bytenr || tree_root_bytenr)) {
+		error("--backup|--backup-slot is not compatible with --chunk-root|--tree-root");
 		exit(1);
 	}
 
