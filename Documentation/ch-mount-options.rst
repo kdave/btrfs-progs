@@ -343,6 +343,22 @@ rescue
 	  Try to use backup root slots inside super block.
 	  Replaces standalone option *usebackuproot*
 
+	  Before 7.4 kernel, this option will automatically load the newest
+	  slot that can load correct root nodes.
+	  Since 7.4 kernel, this option will always load the second newest
+	  slot.
+
+        * *usebackuproot_0* (since 7.4)
+        * *usebackuproot_1* (since 7.4)
+        * *usebackuproot_2* (since 7.4)
+        * *usebackuproot_3* (since 7.4)
+
+	  Load the exact backup slot 0/1/2/3.
+
+	  For slot 0, it means the newest slot, and should match the current
+	  tree roots recorded in the superblock.
+	  For slot 1/2/3, it means the second/third/fourth(oldest) newest slot.
+
         * *nologreplay* (since 5.9)
 
 	  Do not replay any dirty logs.
