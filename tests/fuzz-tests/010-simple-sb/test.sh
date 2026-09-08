@@ -17,6 +17,8 @@ generate_dataset "sparse"
 run_check_umount_test_dev
 
 # See btrfs-sb-mod --help
+# Note, csum_type cannot be fuzzed as the other fields because superblock could
+# not be written if the value is invalid
 fields=(
 bytenr
 flags
@@ -37,7 +39,6 @@ chunk_root_generation
 compat_flags
 compat_ro_flags
 incompat_flags
-csum_type
 root_level
 chunk_root_level
 log_root_level
