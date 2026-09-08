@@ -32,6 +32,19 @@
 static char buf[BLOCKSIZE];
 static int csum_size;
 
+static bool is_valid_csum_type(u16 csum_type)
+{
+	switch (csum_type) {
+	case BTRFS_CSUM_TYPE_CRC32:
+	case BTRFS_CSUM_TYPE_XXHASH:
+	case BTRFS_CSUM_TYPE_SHA256:
+	case BTRFS_CSUM_TYPE_BLAKE2:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static int check_csum_superblock(void *sb)
 {
 	u8 result[BTRFS_CSUM_SIZE];
@@ -389,6 +402,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	hdr = (struct btrfs_header *)buf;
+	sb = (struct btrfs_super_block *)buf;
+
+	if (!is_valid_csum_type(btrfs_super_csum_type(sb))) {
+		printf("invalid/unsupported checksum type %u\n", btrfs_super_csum_type(sb));
+		exit(1);
+	}
+
 	/* verify checksum */
 	if (!check_csum_superblock(&hdr->csum)) {
 		printf("super block checksum does not match at offset %llu, will be corrected after write\n",
@@ -396,7 +416,6 @@ int main(int argc, char **argv)
 	} else {
 		printf("super block checksum is ok\n");
 	}
-	sb = (struct btrfs_super_block *)buf;
 
 	specidx = 0;
 	for (i = 2; i < argc; i++) {
@@ -438,6 +457,11 @@ int main(int argc, char **argv)
 
 	if (changed) {
 		printf("Update csum\n");
+		if (!is_valid_csum_type(btrfs_super_csum_type(sb))) {
+			printf("invalid/unsupported checksum %d, cannot update final superblock\n",
+			       btrfs_super_csum_type(sb));
+			exit(1);
+		}
 		update_block_csum(buf);
 		ret = pwrite(fd, buf, BLOCKSIZE, off);
 		if (ret <= 0) {
