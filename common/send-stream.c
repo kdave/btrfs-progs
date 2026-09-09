@@ -40,10 +40,24 @@ struct btrfs_send_attribute {
 	char *data;
 };
 
+/*
+ * The stream is read through a buffer of this size. Without it, every
+ * command costs two read() calls, one for the header and one for the
+ * payload, which on a metadata-heavy stream is one system call per few
+ * bytes. 64 KiB is the capacity of a pipe, the usual source; a larger
+ * buffer cannot get more per call, and payloads bigger than the buffer are
+ * read straight into the command buffer.
+ */
+#define BTRFS_SEND_STREAM_READ_BUF	SZ_64K
+
 struct btrfs_send_stream {
 	char *read_buf;
 	size_t read_buf_size;
 	int fd;
+	char *stream_buf;
+	size_t stream_buf_size;
+	size_t stream_buf_pos;
+	size_t stream_buf_len;
 
 	int cmd;
 	struct btrfs_send_attribute cmd_attrs[__BTRFS_SEND_A_MAX + 1];
@@ -73,8 +87,26 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 
 	while (pos < len) {
 		ssize_t rbytes;
+		size_t avail = sctx->stream_buf_len - sctx->stream_buf_pos;
 
-		rbytes = read(sctx->fd, buf + pos, len - pos);
+		if (avail > 0) {
+			size_t n = len - pos < avail ? len - pos : avail;
+
+			memcpy(buf + pos, sctx->stream_buf + sctx->stream_buf_pos, n);
+			sctx->stream_buf_pos += n;
+			pos += n;
+			continue;
+		}
+		if (len - pos >= sctx->stream_buf_size) {
+			rbytes = read(sctx->fd, buf + pos, len - pos);
+		} else {
+			rbytes = read(sctx->fd, sctx->stream_buf, sctx->stream_buf_size);
+			if (rbytes > 0) {
+				sctx->stream_buf_pos = 0;
+				sctx->stream_buf_len = rbytes;
+				continue;
+			}
+		}
 		if (rbytes < 0) {
 			if (errno == EINTR)
 				continue;
@@ -619,6 +651,15 @@ int btrfs_read_and_process_send_stream(int fd,
 	sctx.ops = ops;
 	sctx.user = user;
 	sctx.stream_pos = 0;
+	sctx.stream_buf_pos = 0;
+	sctx.stream_buf_len = 0;
+	sctx.stream_buf_size = BTRFS_SEND_STREAM_READ_BUF;
+	sctx.stream_buf = malloc(sctx.stream_buf_size);
+	if (!sctx.stream_buf) {
+		ret = -ENOMEM;
+		error_mem("send stream buffer");
+		goto out;
+	}
 
 	ret = read_buf(&sctx, (char*)&hdr, sizeof(hdr));
 	if (ret < 0)
@@ -666,6 +707,7 @@ int btrfs_read_and_process_send_stream(int fd,
 	free(sctx.read_buf);
 
 out:
+	free(sctx.stream_buf);
 	if (last_err && !ret)
 		ret = last_err;
 
