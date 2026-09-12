@@ -346,6 +346,10 @@ devices to scan at the time of mount.
         before all block devices are discovered. The waiting is usually done on the
         initramfs/initrd systems.
 
+        Thus using btrfs as a rootfs without an initramfs is not recommended.
+        Adding a new device to the rootfs can easily cause the next boot to fail, as
+        there is no way to register all devices prior to mounting.
+
 .. warning::
         RAID5/6 has known problems and should not be used in production.
 
