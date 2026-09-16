@@ -298,6 +298,7 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	char buf[4096];
 	char *outbuf;
 	u64 ram_size;
+	u64 out_buf_len;
 	ssize_t done;
 	unsigned long ptr;
 	int ret;
@@ -324,13 +325,14 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	}
 
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
-	outbuf = calloc(1, ram_size);
+	out_buf_len = root->fs_info->sectorsize;
+	outbuf = malloc(out_buf_len);
 	if (!outbuf) {
 		error_mem(NULL);
 		return -ENOMEM;
 	}
 
-	ret = decompress(root, buf, outbuf, inline_item_len, &ram_size,
+	ret = decompress(root, buf, outbuf, inline_item_len, &out_buf_len,
 			 compress);
 	if (ret) {
 		free(outbuf);
