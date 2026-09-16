@@ -295,7 +295,8 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 {
 	struct extent_buffer *leaf = path->nodes[0];
 	struct btrfs_file_extent_item *fi;
-	char buf[4096];
+	const u32 blocksize = root->fs_info->sectorsize;
+	char *inbuf;
 	char *outbuf;
 	u64 ram_size;
 	u64 out_buf_len;
@@ -306,16 +307,23 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	int inline_item_len;
 	int compress;
 
+	inbuf = malloc(blocksize);
+	if (!inbuf) {
+		error_mem(NULL);
+		return -ENOMEM;
+	}
+
 	fi = btrfs_item_ptr(leaf, path->slots[0],
 			    struct btrfs_file_extent_item);
 	ptr = btrfs_file_extent_inline_start(fi);
 	len = btrfs_file_extent_ram_bytes(leaf, fi);
 	inline_item_len = btrfs_file_extent_inline_item_len(leaf, path->slots[0]);
-	read_extent_buffer(leaf, buf, ptr, inline_item_len);
+	read_extent_buffer(leaf, inbuf, ptr, inline_item_len);
 
 	compress = btrfs_file_extent_compression(leaf, fi);
 	if (compress == BTRFS_COMPRESS_NONE) {
-		done = pwrite(fd, buf, len, pos);
+		done = pwrite(fd, inbuf, len, pos);
+		free(inbuf);
 		if (done < len) {
 			error("short inline write, wanted %d, did %zd: %m",
 					len, done);
@@ -329,17 +337,20 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	outbuf = malloc(out_buf_len);
 	if (!outbuf) {
 		error_mem(NULL);
+		free(inbuf);
 		return -ENOMEM;
 	}
 
-	ret = decompress(root, buf, outbuf, inline_item_len, &out_buf_len,
+	ret = decompress(root, inbuf, outbuf, inline_item_len, &out_buf_len,
 			 compress);
 	if (ret) {
+		free(inbuf);
 		free(outbuf);
 		return ret;
 	}
 
 	done = pwrite(fd, outbuf, ram_size, pos);
+	free(inbuf);
 	free(outbuf);
 	if (done < ram_size) {
 		error("short compressed inline write, wanted %llu, did %zd: %m",
