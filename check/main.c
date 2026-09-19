@@ -90,6 +90,7 @@ bool check_data_csum = false;
 static bool check_qgroup_accounting = true;
 static bool found_free_ino_cache = false;
 static bool found_unknown_key = false;
+static bool found_invalid_key_type = false;
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -6610,6 +6611,12 @@ static int run_next_block(struct btrfs_root *root,
 			if (check_type_with_root(btrfs_header_owner(buf),
 						 key.type)) {
 				fprintf(stderr, "ignoring invalid key\n");
+				/*
+				 * The item is skipped so the walk can go on,
+				 * but a key that does not belong in this tree
+				 * is still an error.
+				 */
+				found_invalid_key_type = true;
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_ITEM_KEY) {
@@ -9432,6 +9439,7 @@ static int check_chunks_and_extents(void)
 	}
 
 again:
+	found_invalid_key_type = false;
 	ret = load_super_root(&normal_trees, gfs_info->tree_root);
 	if (ret < 0)
 		goto out;
@@ -9497,6 +9505,8 @@ again:
 	ret = check_devices(&dev_cache, &dev_extent_cache);
 	if (ret && err)
 		ret = err;
+	if (!ret && found_invalid_key_type)
+		ret = -EUCLEAN;
 
 out:
 	if (opt_check_repair) {
