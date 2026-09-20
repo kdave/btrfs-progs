@@ -25,6 +25,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
+#include "common/box.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/messages.h"
@@ -43,7 +44,7 @@ static const struct cmd_struct select_super_cmd = {
 	.usagestr = select_super_usage
 };
 
-int main(int argc, char **argv)
+int BOX_MAIN(select_super)(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	int ret;
