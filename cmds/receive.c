@@ -1679,6 +1679,7 @@ static const char * const cmd_receive_usage[] = {
 		"does not require the MOUNT parameter"),
 	OPTLINE("-v", "deprecated, alias for global -v option"),
 	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
 	"",
@@ -1735,6 +1736,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 		enum {
 			GETOPT_VAL_DUMP = GETOPT_VAL_FIRST,
 			GETOPT_VAL_FORCE_DECOMPRESS,
+			GETOPT_VAL_FORMAT,
 		};
 		static const struct option long_opts[] = {
 			{ "max-errors", required_argument, NULL, 'E' },
@@ -1742,6 +1744,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			{ "dump", no_argument, NULL, GETOPT_VAL_DUMP },
 			{ "quiet", no_argument, NULL, 'q' },
 			{ "force-decompress", no_argument, NULL, GETOPT_VAL_FORCE_DECOMPRESS },
+			{ "format", required_argument, NULL, GETOPT_VAL_FORMAT },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -1787,6 +1790,9 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 		case GETOPT_VAL_FORCE_DECOMPRESS:
 			rctx.force_decompress = true;
 			break;
+		case GETOPT_VAL_FORMAT:
+			handle_output_format(optarg);
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
@@ -1819,8 +1825,11 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 		dump_args.root_path[1] = '\0';
 		dump_args.full_subvol_path[0] = '.';
 		dump_args.full_subvol_path[1] = '\0';
+		/* No-op unless the json output format is selected */
+		btrfs_dump_json_start();
 		ret = btrfs_read_and_process_send_stream(receive_fd,
 			&btrfs_print_send_ops, &dump_args, 0, max_errors);
+		btrfs_dump_json_end();
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to dump the send stream: %m");
@@ -1835,4 +1844,4 @@ out:
 
 	return !!ret;
 }
-DEFINE_SIMPLE_COMMAND(receive, "receive");
+DEFINE_COMMAND_WITH_FLAGS(receive, "receive", CMD_FORMAT_JSON);

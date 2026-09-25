@@ -100,6 +100,12 @@ extern const struct format_desc output_formats[2];
 
 const char *output_format_name(unsigned int value);
 
+/*
+ * Set bconf.output_format from the name, print an error and exit on an
+ * unknown one. The name is supposed to come from the --format option.
+ */
+void handle_output_format(const char *format);
+
 __attribute__((noreturn))
 void usage_unknown_option(const struct cmd_struct *cmd, char **argv);
 

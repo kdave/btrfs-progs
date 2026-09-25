@@ -233,39 +233,6 @@ static int cmd_version(const struct cmd_struct *unused, int argc, char **argv)
 }
 static DEFINE_SIMPLE_COMMAND(version, "version");
 
-static void print_output_formats(FILE *outf)
-{
-	int i;
-
-	fputs("Options for --format are:", outf);
-	for (i = 0; i < ARRAY_SIZE(output_formats); i++)
-		fprintf(outf, "%s%s", i ? ", " : " ", output_formats[i].name);
-	fputs("\n", outf);
-}
-
-static void handle_output_format(const char *format)
-{
-	int i;
-	bool found = false;
-
-	for (i = 0; i < ARRAY_SIZE(output_formats); i++) {
-		if (!strcasecmp(format, output_formats[i].name)) {
-			bconf.output_format = output_formats[i].value;
-			found = true;
-			break;
-		}
-	}
-
-	/* Print error for invalid format */
-	if (!found) {
-		bconf.output_format = CMD_FORMAT_TEXT;
-		fprintf(stderr, "error: invalid output format \"%s\"\n\n",
-			format);
-		print_output_formats(stderr);
-		exit(1);
-	}
-}
-
 static void handle_log_level(const char *level) {
 	if (strcasecmp(level, "default") == 0) {
 		bconf.verbose = LOG_DEFAULT;

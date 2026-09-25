@@ -18,10 +18,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <getopt.h>
 #include <unistd.h>
 #include "common/help.h"
+#include "common/messages.h"
 #include "common/string-utils.h"
+#include "common/utils.h"
 #include "cmds/commands.h"
 
 #define USAGE_SHORT		1U
@@ -144,6 +147,39 @@ const char *output_format_name(unsigned int value)
 	}
 
 	return "UNKNOWN";
+}
+
+static void print_output_formats(FILE *outf)
+{
+	int i;
+
+	fputs("Options for --format are:", outf);
+	for (i = 0; i < ARRAY_SIZE(output_formats); i++)
+		fprintf(outf, "%s%s", i ? ", " : " ", output_formats[i].name);
+	fputs("\n", outf);
+}
+
+void handle_output_format(const char *format)
+{
+	int i;
+	bool found = false;
+
+	for (i = 0; i < ARRAY_SIZE(output_formats); i++) {
+		if (!strcasecmp(format, output_formats[i].name)) {
+			bconf.output_format = output_formats[i].value;
+			found = true;
+			break;
+		}
+	}
+
+	/* Print error for invalid format */
+	if (!found) {
+		bconf.output_format = CMD_FORMAT_TEXT;
+		fprintf(stderr, "error: invalid output format \"%s\"\n\n",
+			format);
+		print_output_formats(stderr);
+		exit(1);
+	}
 }
 
 static void hpad(int len, FILE *outf)

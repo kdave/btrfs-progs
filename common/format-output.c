@@ -41,9 +41,9 @@ static void print_uuid(const u8 *uuid)
 	}
 }
 
-static void print_escaped(const char *str)
+static void print_escaped_len(const char *str, size_t len)
 {
-	while (*str) {
+	while (len-- > 0) {
 		switch (*str) {
 		case '\b':			/* 0x08 */
 			putchar('\\');
@@ -81,6 +81,11 @@ static void print_escaped(const char *str)
 		}
 		str++;
 	}
+}
+
+static void print_escaped(const char *str)
+{
+	print_escaped_len(str, strlen(str));
 }
 
 static void fmt_indent1(int indent)
@@ -363,6 +368,11 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		const char *str = va_arg(args, const char *);
 
 		print_escaped(str);
+	} else if (strcmp(row->fmt, "str-len") == 0) {
+		const char *str = va_arg(args, const char *);
+		const unsigned int len = va_arg(args, unsigned int);
+
+		print_escaped_len(str, len);
 	} else if (strcmp(row->fmt, "uuid") == 0) {
 		const u8 *uuid = va_arg(args, const u8*);
 

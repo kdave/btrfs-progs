@@ -30,4 +30,12 @@ struct btrfs_dump_send_args {
 
 extern struct btrfs_send_ops btrfs_print_send_ops;
 
+/*
+ * Wrap the whole stream processing, the dump is printed as one json document.
+ * No-op unless the json output format is selected, must be called in pairs
+ * around btrfs_read_and_process_send_stream().
+ */
+void btrfs_dump_json_start(void);
+void btrfs_dump_json_end(void);
+
 #endif

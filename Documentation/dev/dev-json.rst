@@ -8,6 +8,9 @@ Supported types:
 * string: ``%s``
 * string: ``str`` - backslash escaped special characters (0x08, 0x08, 0x0a, 0x0c, 0x0d, 0x0b),
   the rest of range from *0x00* to *0x1f* as *\\uXXXX* encoding
+* string: ``str-len`` - like *str* but the string is passed with an explicit length
+  (*const char \**, *unsigned int*), it does not have to be terminated by *0x00*
+  and can contain arbitrary bytes, e.g. xattr values
 * bool: ``bool`` - unquoted native json values *true* or *false*
 * qgroupid: ``qgroupid`` - split to 48/16 for level/subvolid
 * size: ``size`` - size with SI/IEC size suffix
@@ -22,6 +25,7 @@ Commands that support json output
 * :command:`btrfs device stats`
 * :command:`btrfs filesystem df`
 * :command:`btrfs qgroup show`
+* :command:`btrfs receive --dump`
 * :command:`btrfs subvolume get-default`
 * :command:`btrfs subvolume list`
 * :command:`btrfs subvolume show`

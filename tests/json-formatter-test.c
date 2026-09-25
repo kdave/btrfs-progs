@@ -135,6 +135,24 @@ static void test5_uuid()
 	fmt_end(&fctx);
 }
 
+static void test6_str_len()
+{
+	static const struct rowspec rows1[] = {
+		{ .key = "value", .fmt = "str-len", .out_text = "value", .out_json = "value" },
+		{ .key = "part", .fmt = "str-len", .out_text = "part", .out_json = "part" },
+		ROWSPEC_END
+	};
+	struct format_ctx fctx;
+	/* Not NUL terminated on purpose, the length is passed separately */
+	char binary[] = { 'a', 0x00, 'b', '\n', 0x1f, '"', '\\', 'x' };
+
+	fmt_start(&fctx, rows1, 32, 0);
+	fmt_print(&fctx, "value", binary, (unsigned int)sizeof(binary));
+	/* The leading part with the embedded 0x00 */
+	fmt_print(&fctx, "part", binary, 3);
+	fmt_end(&fctx);
+}
+
 int main(int argc, char **argv)
 {
 	int testno;
@@ -145,6 +163,7 @@ int main(int argc, char **argv)
 		test3_escape,
 		test4_unquoted_bool,
 		test5_uuid,
+		test6_str_len,
 	};
 	const int testmax = ARRAY_SIZE(tests) - 1;
 

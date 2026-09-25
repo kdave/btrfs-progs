@@ -72,6 +72,10 @@ A subvolume is made read-only after the receiving process finishes successfully 
         octal escape sequence like *'\\NNN'* where N is the char value. Same encoding
         as is used in */proc* files.
 
+        With the global option *--format json* (or *--format=json*) the
+        operations are printed as a json document instead, see the section
+        *JSON output* below.
+
 -q|--quiet
         (deprecated) alias for global *-q* option
 
@@ -85,6 +89,53 @@ A subvolume is made read-only after the receiving process finishes successfully 
 
 -q|--quiet
         suppress all messages except errors
+
+JSON output
+-----------
+
+With *--dump* and the global option *--format json* the stream is printed as a
+single json document, one object per operation, all of them in the
+*operations* array. The document is printed as the stream is read, so it can be
+used for arbitrarily long streams. Each object has the *op* key with the
+operation name and the *path* of the file it applies to, other parameters
+depend on the operation, e.g.:
+
+.. code-block:: json
+
+        {
+          "__header": {
+            "version": "1"
+          },
+          "operations": [
+            {
+              "op": "mkfile",
+              "path": "./snap1/file.txt"
+            },
+            {
+              "op": "write",
+              "path": "./snap1/file.txt",
+              "offset": 0,
+              "length": 4096
+            },
+            {
+              "op": "rename",
+              "path": "./snap1/o257-7-0",
+              "dest": "./snap1/renamed.txt"
+            },
+            {
+              "op": "unlink",
+              "path": "./snap1/old.txt"
+            }
+          ]
+        }
+
+See :doc:`dev/dev-send-stream` for the complete list of operations and their
+parameters, :doc:`dev/dev-json` for the value types. Strings are escaped
+according to the json rules and the numbers are printed as native json
+numbers, i.e. file modes or file attributes are not converted to the octal or
+hexadecimal notation that is used in the text output. Timestamps are printed
+as strings in the same format as the text output, uuids that are all zeros are
+printed as *null*.
 
 BUGS
 ----

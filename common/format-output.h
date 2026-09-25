@@ -31,6 +31,10 @@ struct rowspec {
 	 *   (values: bool or int)
 	 * - str: string type with quoted special characters (use for unknown input source)
 	 *   (values: const char *)
+	 * - str-len: string type with quoted special characters and explicit length,
+	 *   the string does not have to be NUL terminated and may contain
+	 *   arbitrary bytes (use for binary data like xattr values)
+	 *   (values: const char *, unsigned int)
 	 * - uuid: format UUID as text
 	 *   (value: u8 *uuid)
 	 * - date-time: pretty print timestamp, date, time and timezone
