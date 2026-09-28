@@ -1918,6 +1918,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		features.incompat_flags |= BTRFS_FEATURE_INCOMPAT_ZONED;
 	}
 
+	if (features.incompat_flags & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
+		mixed = true;
+
 	/*
 	* Set default profiles according to number of added devices.
 	* For mixed groups defaults are single/single.
