@@ -1186,7 +1186,6 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 {
 	int ret = 0;
 	char *unencoded_data;
-	int sector_shift = 0;
 	u64 written = 0;
 
 	unencoded_data = calloc(unencoded_len, 1);
@@ -1220,10 +1219,9 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_32K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_64K:
 #if COMPRESSION_LZO
-		sector_shift =
-			compression - BTRFS_ENCODED_IO_COMPRESSION_LZO_4K + 12;
 		ret = decompress_lzo(encoded_data, encoded_len, unencoded_data,
-				     unencoded_len, 1U << sector_shift);
+				     unencoded_len, 1U <<
+				     (compression - BTRFS_ENCODED_IO_COMPRESSION_LZO_4K + 12));
 		if (ret)
 			goto out;
 		break;
