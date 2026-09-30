@@ -34,6 +34,50 @@ MOUNT OPTIONS
 
 .. _man-btrfs5-filesystem-features:
 
+MULTI-DEVICE SUPPORT
+--------------------
+
+Btrfs has built-in multi-device support, and supports several profiles that require
+multiple devices, including RAID0, RAID1, RAID1C3, RAID1C4, RAID10, RAID5 and RAID6.
+
+However the multi-device support has some extra requirements/quirks:
+
+- Requires proper device scanning and registration
+  Like all multi-device storage solutions, btrfs has to scan and register all involved
+  devices to mount the filesystem.
+
+  Normally it's done by udev, but for systems without udev, the end users are responsible
+  for proper block file creation and scanning.
+
+- Initramfs required if the rootfs has multiple devices
+  Without an initramfs, the kernel boot sequence doesn't create "/dev/" with every
+  block file, thus it's impossible to register all devices to fulfill the mount, even
+  with the *device=* mount option.
+
+  It's strongly recommended to use an initramfs if btrfs is the rootfs. It's very
+  easy and fast to add a new device to an existing btrfs, without an initramfs the next
+  mount will fail to mount the rootfs.
+
+- Device path shown in the mount output
+  Btrfs maintains an internal device path for each device. The device path is recorded
+  during the initial device scan, and normally doesn't change during the lifespan of that
+  device.
+
+  This can lead to inconvenience if the user space tool doesn't do proper parsing.
+
+  For example, creat a block file at "/tmp/block_file", forget all devices, scan and
+  mount that newly created block file, and then delete "/tmp/block_file".
+
+  This will make btrfs register the device path using "/tmp/block_file", even if that
+  file is later deleted.
+
+  Tools like *lsblk* can still handle such cases by using device numbers, but a lot of
+  other tools won't parse the mount point properly, as the device path no longer exists.
+
+  Normally this should not be a big deal, as udev is the first program to create those
+  block files and scan them.
+
+
 FILESYSTEM FEATURES
 -------------------
 
