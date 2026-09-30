@@ -10,7 +10,7 @@ source "$TEST_TOP/common" || exit
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
-check_glolbal_prereq awk
+check_global_prereq awk
 
 # Create the rootdir with one 10 MB file and 100 hardlinks to it.
 rootdir="$(_mktemp_dir mkfs-rootdir-hardlink-size)"
