@@ -999,19 +999,34 @@ out:
 }
 static DEFINE_COMMAND_WITH_FLAGS(device_stats, "stats", CMD_FORMAT_JSON);
 
+static const struct rowspec device_usage_rowspec[] = {
+	{ .key = "device",       .fmt = "str", .out_json = "device" },
+	{ .key = "devid",        .fmt = "%llu", .out_json = "devid" },
+	{ .key = "device_size",  .fmt = "%llu", .out_json = "device_size" },
+	{ .key = "device_slack", .fmt = "%llu", .out_json = "device_slack" },
+	{ .key = "type",         .fmt = "str", .out_json = "type" },
+	{ .key = "profile",      .fmt = "str", .out_json = "profile" },
+	{ .key = "num_stripes",  .fmt = "%llu", .out_json = "num_stripes" },
+	{ .key = "size",         .fmt = "%llu", .out_json = "size" },
+	{ .key = "unallocated",  .fmt = "%llu", .out_json = "unallocated" },
+	ROWSPEC_END
+};
+
 static const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
 	"Show detailed information about internal allocations in devices.",
 	"",
 	HELPINFO_UNITS_SHORT_LONG,
+	HELPINFO_INSERT_FORMAT,
 	NULL
 };
 
-static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
+static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode, struct format_ctx *fctx)
 {
 	int ret = 0;
 	struct array chunkinfos = { 0 };
 	struct array devinfos = { 0 };
+	const bool json = (bconf.output_format == CMD_FORMAT_JSON);
 
 	ret = load_chunk_and_device_info(fd, &chunkinfos, &devinfos);
 	if (ret)
@@ -1020,10 +1035,22 @@ static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 	for (int i = 0; i < devinfos.length; i++) {
 		const struct device_info *devinfo = devinfos.data[i];
 
-		pr_default("%s, ID: %llu\n", devinfo->path, devinfo->devid);
-		print_device_sizes(devinfo, unit_mode);
-		print_device_chunks(devinfo, &chunkinfos, unit_mode);
-		pr_default("\n");
+		if (json) {
+			fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
+			fmt_print(fctx, "device", devinfo->path);
+			fmt_print(fctx, "devid", devinfo->devid);
+		} else {
+			pr_default("%s, ID: %llu\n", devinfo->path, devinfo->devid);
+		}
+
+		print_device_sizes(devinfo, unit_mode, fctx);
+		print_device_chunks(devinfo, &chunkinfos, unit_mode, fctx);
+
+		if (json) {
+			fmt_print_end_group(fctx, NULL);
+		} else {
+			pr_default("\n");
+		}
 	}
 
 out:
@@ -1040,6 +1067,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 	unsigned unit_mode;
 	int ret = 0;
 	int i;
+	struct format_ctx fctx;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
@@ -1048,10 +1076,13 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
+	fmt_start(&fctx, device_usage_rowspec, 24, 0);
+	fmt_print_start_group(&fctx, "device-usage", JSON_TYPE_ARRAY);
+
 	for (i = optind; i < argc; i++) {
 		int fd;
 
-		if (i > 1)
+		if (i > 1 && bconf.output_format != CMD_FORMAT_JSON)
 			pr_default("\n");
 
 		fd = btrfs_open_dir(argv[i]);
@@ -1060,7 +1091,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		}
 
-		ret = _cmd_device_usage(fd, argv[i], unit_mode);
+		ret = _cmd_device_usage(fd, argv[i], unit_mode, &fctx);
 		btrfs_warn_multiple_profiles(fd);
 		close(fd);
 
@@ -1068,9 +1099,12 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 	}
 
+	fmt_print_end_group(&fctx, "device-usage");
+	fmt_end(&fctx);
+
 	return !!ret;
 }
-static DEFINE_SIMPLE_COMMAND(device_usage, "usage");
+static DEFINE_COMMAND_WITH_FLAGS(device_usage, "usage", CMD_FORMAT_JSON);
 
 static const char * const cmd_device_replace_usage[] = {
 	"btrfs device replace <command> [...]\n"
