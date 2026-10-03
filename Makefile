@@ -366,7 +366,7 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 # built-in sources into "busybox", all files that contain the main function and
 # are not compiled standalone
 progs_box_main = btrfs.o mkfs/main.o image/main.o convert/main.o \
-		 tune/main.o btrfs-find-root.o
+		 tune/main.o btrfs-find-root.o btrfs-map-logical.o
 
 progs_box_all_objects = $(mkfs_objects) $(image_objects) $(convert_objects) $(tune_objects)
 progs_box_all_static_objects = $(static_mkfs_objects) $(static_image_objects) \
@@ -735,6 +735,8 @@ box-links: btrfs.box
 	$(Q)$(LN_S) -sf btrfs.box btrfs-convert
 	@echo "  LN       btrfstune"
 	$(Q)$(LN_S) -sf btrfs.box btrfstune
+	@echo "  LN       btrfs-map-logical"
+	$(Q)$(LN_S) -sf btrfs.box btrfs-map-logical
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
