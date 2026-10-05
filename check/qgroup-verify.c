@@ -60,7 +60,6 @@ struct qgroup_count {
 	u64 qgroupid;
 	int subvol_exists;
 
-	struct btrfs_disk_key key;
 	struct qgroup_info diskinfo;
 
 	struct qgroup_info info;
@@ -863,7 +862,6 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 
 	if (c) {
 		c->qgroupid = btrfs_disk_key_offset(key);
-		c->key = *key;
 
 		item = &c->diskinfo;
 		item->referenced = btrfs_qgroup_info_rfer(leaf, disk);
