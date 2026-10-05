@@ -34,6 +34,8 @@ DECLARE_BOX_MAIN(image);
 DECLARE_BOX_MAIN(convert);
 DECLARE_BOX_MAIN(btrfstune);
 DECLARE_BOX_MAIN(find_root);
+DECLARE_BOX_MAIN(map_logical);
+DECLARE_BOX_MAIN(select_super);
 
 #else
 #define BOX_MAIN(standalone)	main
