@@ -99,6 +99,78 @@ int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info)
 }
 
 /*
+ * Checking the balance item can be a little overkill, as if there is no reloc
+ * tree, we are still safe to modify the fs.
+ *
+ * Return 0 if there is no valid reloc tree found.
+ * Return >0 if there is any valid reloc tree found.
+ * Return <0 for critical errors.
+ */
+static int has_reloc_trees(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key;
+	unsigned int found = 0;
+	int ret;
+
+	key.objectid = BTRFS_TREE_RELOC_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
+	if (ret < 0)
+		goto out;
+	/* This is impossible, as we should not have a tree with (u64)-1 as tree id. */
+	if (unlikely(ret == 0)) {
+		ret = -EUCLEAN;
+		error("invalid reloc tree found, has invalid root key (%llu %u %llu)",
+		      key.objectid, key.type, key.offset);
+		goto out;
+	}
+
+	while (1) {
+		struct btrfs_root_item *ri;
+		struct btrfs_key found_key;
+		struct btrfs_key fs_key;
+		struct btrfs_root *fs_root;
+
+		ret = btrfs_previous_item(tree_root, &path,
+					  BTRFS_TREE_RELOC_OBJECTID, BTRFS_ROOT_ITEM_KEY);
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+		if (ret < 0)
+			goto out;
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key, path.slots[0]);
+		ri = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_root_item);
+		/* Already dropped reloc tree. */
+		if (btrfs_disk_root_refs(path.nodes[0], ri) == 0)
+			continue;
+		fs_key.objectid = found_key.offset;
+		fs_key.type = BTRFS_ROOT_ITEM_KEY;
+		fs_key.offset = (u64)-1;
+		fs_root = btrfs_read_fs_root_no_cache(fs_info, &fs_key);
+		if (IS_ERR(fs_root)) {
+			ret = PTR_ERR(fs_root);
+			if (ret != -ENOENT)
+				goto out;
+			continue;
+		}
+		btrfs_free_fs_root(fs_root);
+		found++;
+		break;
+	}
+
+out:
+	btrfs_release_path(&path);
+	if (ret < 0)
+		return ret;
+	return found;
+}
+
+/*
  * Check running replace or balance.
  *
  * Return <0 for critical errors, mostly tree search failure.
@@ -107,7 +179,6 @@ int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info)
  */
 int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *dev_root = fs_info->dev_root;
 	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
@@ -115,16 +186,10 @@ int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
 	u64 replace_state;
 	int ret;
 
-	key.objectid = BTRFS_BALANCE_OBJECTID;
-	key.type = BTRFS_TEMPORARY_ITEM_KEY;
-	key.offset = 0;
-
-	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
-	btrfs_release_path(&path);
-	if (ret < 0)
+	ret = has_reloc_trees(fs_info);
+	/* Either <0 for error, or >0 for any found reloc tree. */
+	if (ret != 0)
 		return ret;
-	if (ret == 0)
-		return 1;
 
 	key.objectid = 0;
 	key.type = BTRFS_DEV_REPLACE_KEY;
