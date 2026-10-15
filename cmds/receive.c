@@ -1115,6 +1115,64 @@ static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 #endif
 
 #if COMPRESSION_LZO
+static int decompress_lzo_inline(const char *encoded_data, u64 encoded_len,
+				 char *unencoded_data, u64 unencoded_len,
+				 unsigned int sector_size)
+{
+	u32 in_len;
+	lzo_uint out_len;
+	void *buffer = NULL;
+	int ret;
+
+	/*
+	 * Compressed data should not reach sector_size.  And uncompressed data
+	 * should not exceed sector_size.
+	 */
+	if (unlikely(encoded_len >= sector_size || unencoded_len > sector_size)) {
+		error("invalid lzo inlined extent, encoded_len=%llu unencoded_len=%llu blocksize=%u",
+		      encoded_len, unencoded_len, sector_size);
+		return -EUCLEAN;
+	}
+
+	memcpy(&in_len, encoded_data, 4);
+	in_len = le32toh(in_len);
+	if (in_len != encoded_len) {
+		error("invalid lzo header, header len=%u encoded len=%llu",
+		      in_len, encoded_len);
+		return -EIO;
+	}
+
+	memcpy(&in_len, encoded_data + 4, 4);
+	in_len = le32toh(in_len);
+
+	/*
+	 * There should be only one segment for an inlined lzo extent, and
+	 * there should be no padding either.
+	 */
+	if (in_len != encoded_len - 4 * 2) {
+		error("invalid lzo inlined header, segment len=%u encoded_len=%llu",
+		      in_len, encoded_len);
+		return -EUCLEAN;
+	}
+	buffer = calloc(1, sector_size);
+	if (!buffer) {
+		error_mem("lzo output buffer: %m");
+		return -ENOMEM;
+	}
+	out_len = sector_size;
+	ret = lzo1x_decompress_safe((void *)(encoded_data + 4 * 2), in_len,
+				    buffer, &out_len, NULL);
+	if (ret != LZO_E_OK) {
+		error("lzo1x_decompress_safe failed: %d", ret);
+		ret = -EIO;
+		goto out;
+	}
+	memcpy(unencoded_data, buffer, unencoded_len);
+out:
+	free(buffer);
+	return ret;
+}
+
 static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 			  char *unencoded_data, u64 unencoded_len,
 			  unsigned int sector_size)
@@ -1122,8 +1180,21 @@ static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 	uint32_t total_len;
 	size_t in_pos, out_pos;
 
-	if (encoded_len < 4) {
+	/* There should be at least 2 LZO headers, then payload. */
+	if (encoded_len < 4 * 2) {
 		error("lzo header is truncated");
+		return -EIO;
+	}
+	/* Looks like an inlined, pass to dedicated helper. */
+	if (encoded_len < sector_size || unencoded_len < sector_size)
+		return decompress_lzo_inline(encoded_data, encoded_len,
+				unencoded_data, unencoded_len, sector_size);
+
+	/* Everything should be aligned. */
+	if (unlikely(!IS_ALIGNED(encoded_len, sector_size) ||
+		     !IS_ALIGNED(unencoded_len, sector_size))) {
+		error("unaligned lzo extent, encoded_len=%llu unencoded_len=%llu blocksize=%u",
+		      encoded_len, unencoded_len, sector_size);
 		return -EIO;
 	}
 	memcpy(&total_len, encoded_data, 4);
@@ -1161,7 +1232,7 @@ static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 			return -EIO;
 		}
 
-		dst_len = sector_size;
+		dst_len = min_t(u64, sector_size, unencoded_len - out_pos);
 		ret = lzo1x_decompress_safe((void *)(encoded_data + in_pos),
 					    src_len,
 					    (void *)(unencoded_data + out_pos),
