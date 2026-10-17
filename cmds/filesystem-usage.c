@@ -1278,10 +1278,15 @@ out:
 DEFINE_SIMPLE_COMMAND(filesystem_usage, "usage");
 
 void print_device_chunks(const struct device_info *devinfo,
-			 const struct array *chunkinfos, unsigned unit_mode)
+			 const struct array *chunkinfos, unsigned unit_mode,
+			 struct format_ctx *fctx)
 {
 	int i;
 	u64 allocated = 0;
+	const bool json = (bconf.output_format == CMD_FORMAT_JSON);
+
+	if (json)
+		fmt_print_start_group(fctx, "chunks", JSON_TYPE_ARRAY);
 
 	for (i = 0; i < chunkinfos->length; i++) {
 		const char *description;
@@ -1304,20 +1309,29 @@ void print_device_chunks(const struct device_info *devinfo,
 		size = calc_chunk_size(chunk_info);
 		num_stripes = chunk_info->num_stripes;
 
-		if (btrfs_bg_type_is_stripey(profile)) {
-			pr_default("   %s,%s/%llu:%*s%10s\n",
-				   description,
-				   r_mode,
-				   num_stripes,
-				   (int)(20 - strlen(description) - strlen(r_mode)
-						 - count_digits(num_stripes) - 1), "",
-				   pretty_size_mode(size, unit_mode));
+		if (json) {
+			fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
+			fmt_print(fctx, "type", description);
+			fmt_print(fctx, "profile", r_mode);
+			fmt_print(fctx, "num_stripes", num_stripes);
+			fmt_print(fctx, "size", size);
+			fmt_print_end_group(fctx, NULL);
 		} else {
-			pr_default("   %s,%s:%*s%10s\n",
-				   description,
-				   r_mode,
-				   (int)(20 - strlen(description) - strlen(r_mode)), "",
-				   pretty_size_mode(size, unit_mode));
+			if (btrfs_bg_type_is_stripey(profile)) {
+				pr_default("   %s,%s/%llu:%*s%10s\n",
+					   description,
+					   r_mode,
+					   num_stripes,
+					   (int)(20 - strlen(description) - strlen(r_mode)
+							 - count_digits(num_stripes) - 1), "",
+					   pretty_size_mode(size, unit_mode));
+			} else {
+				pr_default("   %s,%s:%*s%10s\n",
+					   description,
+					   r_mode,
+					   (int)(20 - strlen(description) - strlen(r_mode)), "",
+					   pretty_size_mode(size, unit_mode));
+			}
 		}
 
 		allocated += size;
@@ -1328,22 +1342,34 @@ void print_device_chunks(const struct device_info *devinfo,
 	 * If chunkinfos is empty, we cannot compute the unallocated size, so
 	 * don't print incorrect data.
 	 */
-	if (chunkinfos->length == 0)
-		pr_default("   Unallocated: %*s%10s\n",
-			   (int)(20 - strlen("Unallocated")), "", "N/A");
-	else
-		pr_default("   Unallocated: %*s%10s\n",
-			   (int)(20 - strlen("Unallocated")), "",
-			   pretty_size_mode(devinfo->size - allocated,
-					    unit_mode | UNITS_NEGATIVE));
+	if (json) {
+		fmt_print_end_group(fctx, "chunks");
+		if (chunkinfos->length > 0)
+			fmt_print(fctx, "unallocated", devinfo->size - allocated);
+
+	} else {
+		if (chunkinfos->length == 0)
+			pr_default("   Unallocated: %*s%10s\n",
+				   (int)(20 - strlen("Unallocated")), "", "N/A");
+		else
+			pr_default("   Unallocated: %*s%10s\n",
+				   (int)(20 - strlen("Unallocated")), "",
+				   pretty_size_mode(devinfo->size - allocated,
+						    unit_mode | UNITS_NEGATIVE));
+	}
 }
 
-void print_device_sizes(const struct device_info *devinfo, unsigned unit_mode)
+void print_device_sizes(const struct device_info *devinfo, unsigned unit_mode, struct format_ctx *fctx)
 {
-	pr_default("   Device size: %*s%10s\n",
-		(int)(20 - strlen("Device size")), "",
-		pretty_size_mode(devinfo->device_size, unit_mode));
-	pr_default("   Device slack: %*s%10s\n",
-		(int)(20 - strlen("Device slack")), "",
-		pretty_size_mode(calc_slack_size(devinfo), unit_mode));
+	if (bconf.output_format == CMD_FORMAT_JSON) {
+		fmt_print(fctx, "device_size", devinfo->device_size);
+		fmt_print(fctx, "device_slack", calc_slack_size(devinfo));
+	} else {
+		pr_default("   Device size: %*s%10s\n",
+			(int)(20 - strlen("Device size")), "",
+			pretty_size_mode(devinfo->device_size, unit_mode));
+		pr_default("   Device slack: %*s%10s\n",
+			(int)(20 - strlen("Device slack")), "",
+			pretty_size_mode(calc_slack_size(devinfo), unit_mode));
+	}
 }
