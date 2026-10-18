@@ -432,7 +432,10 @@ commit_tree:
 	}
 	return ret;
 error:
+	btrfs_abort_transaction(trans, ret);
 	btrfs_cleanup_aborted_transaction(fs_info);
+	free_extent_buffer(root->commit_root);
+	root->commit_root = NULL;
 	return ret;
 }
 
