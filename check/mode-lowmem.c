@@ -3956,6 +3956,14 @@ static int check_tree_block_backref(u64 root_id, u64 bytenr, int level)
 	}
 
 	node = path.nodes[level];
+	/*
+	 * The item level can be corrupted (higher than the actual tree
+	 * depth), in which case the search above leaves nodes[level] empty.
+	 */
+	if (!node) {
+		err |= REFERENCER_MISSING;
+		goto release_out;
+	}
 	if (btrfs_header_bytenr(node) != bytenr) {
 		error(
 	"extent [%llu %d] referencer bytenr mismatch, wanted: %llu, have: %llu",
