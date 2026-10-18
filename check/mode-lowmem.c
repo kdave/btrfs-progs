@@ -572,6 +572,7 @@ static int delete_item(struct btrfs_root *root, struct btrfs_path *path)
 		ret = PTR_ERR(trans);
 		errno = -ret;
 		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
 		goto out;
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
@@ -1043,6 +1044,13 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 	UASSERT(stage < 3);
 
 	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
+		goto out;
+	}
 	if (stage == 2) {
 		ret = btrfs_unlink(trans, root, ino, dir_ino, index, name,
 				   name_len, 0);
@@ -1058,7 +1066,8 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 		goto out;
 	}
 out:
-	btrfs_commit_transaction(trans, root);
+	if (trans)
+		btrfs_commit_transaction(trans, root);
 
 	if (ret)
 		error("fail to repair inode %llu name %s filetype %u",
