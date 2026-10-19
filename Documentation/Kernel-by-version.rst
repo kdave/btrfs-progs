@@ -294,8 +294,11 @@ Core:
   - structure size optimizations
   - condition annotations"
 
+6.x
+---
+
 6.0 (Oct 2022)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.0-rc1 (1) <https://git.kernel.org/linus/353767e4aaeb7bc818273dfacbb01dd36a9db47a>`__,
@@ -389,7 +392,7 @@ Notable fixes:
   repair happen
 
 6.1 (Dec 2022)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.1-rc1 <https://git.kernel.org/linus/76e45035348c247a70ed50eb29a9906657e4444f>`__,
@@ -474,7 +477,7 @@ Core:
   flushing, buffered write
 
 6.2 (Feb 2023)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.2-rc1 <https://git.kernel.org/linus/149c51f876322d9bfbd5e2d6ffae7aff3d794384>`__,
@@ -536,7 +539,7 @@ Fixes:
 - limit number of send clones by maximum memory allocated
 
 6.3 (Apr 2023)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.3-rc1 <https://git.kernel.org/linus/885ce48739189fac6645ff42d736ee0de0b5917d>`__,
@@ -600,7 +603,7 @@ Fixes:
   work queues (since 6.0)
 
 6.4 (Jun 2023)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.4-rc1 <https://git.kernel.org/linus/85d7ab2463822a4ab096c0b7b59feec962552572>`__,
@@ -657,7 +660,7 @@ Core changes:
    truncating items
 
 6.5 (Aug 2023)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.5-rc1 <https://git.kernel.org/linus/cc423f6337d0a5ff1906f3b3d465d28c0d1705f6>`__,
@@ -686,7 +689,7 @@ User visible changes:
    the zones are reset as needed
 
 6.6 (Oct 2023)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.6-rc1 <https://git.kernel.org/linus/547635c6ac47c7556d6954935b189defe90422f7>`__,
@@ -717,7 +720,7 @@ Core:
 - v0 extent handling completely removed, deprecated long time ago
 
 6.7 (Jan 2024)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.7-rc1 <https://git.kernel.org/linus/d5acbc60fafbe0fc94c552ce916dd592cd4c6371>`__,
@@ -792,7 +795,7 @@ Core changes:
   devices), this allows temp_fsid to work
 
 6.8 (Mar 2024)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.8-rc1 <https://git.kernel.org/linus/affc5af36bbb62073b6aaa4f4459b38937ff5331>`__,
@@ -851,7 +854,7 @@ Fixes:
   create chunks that would not be allowed on sequential zones
 
 6.9 (May 2024)
---------------
+^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.9-rc1 (1) <https://git.kernel.org/linus/43a7548e28a6df12a6170421d9d016c576010baa>`__,
@@ -891,7 +894,7 @@ Other notable changes:
 - additional validation of devices by major:minor numbers
 
 6.10 (Jul 2024)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.10-rc1 (1) <https://git.kernel.org/linus/a3d1f54d7aa4c3be2c6a10768d4ffa1dcb620da9>`__,
@@ -926,7 +929,7 @@ Notable fixes or changes:
 - extent map shrinker, allow memory consumption reduction for direct io loads
 
 6.11 (Sep 2024)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.11-rc1 (1) <https://git.kernel.org/linus/a1b547f0f217cfb06af7eb4ce8488b02d83a0370>`__,
@@ -989,7 +992,7 @@ Other notable changes or fixes:
 - in zoned mode, detect unexpected zone write pointer change
 
 6.12 (Nov 2024)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.12-rc1 (1) <https://git.kernel.org/linus/7a40974fd0efa3698de4c6d1d0ee0436bcc4445d>`__,
@@ -1030,7 +1033,7 @@ Cleanups and refactoring:
 - introduce auto free for btrfs_path structure, use for the simple cases
 
 6.13 (Jan 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.13-rc1 <https://git.kernel.org/linus/c14a8a4c04c5859322eb5801db662b56b2294f67>`__,
@@ -1099,7 +1102,7 @@ Core changes:
   - lockdep assertions
 
 6.14 (Mar 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.14-rc1 <https://git.kernel.org/linus/0eb4aaa230d725fa9b1cd758c0f17abca5597af6>`__,
@@ -1169,7 +1172,7 @@ Core:
   - code moved to new files
 
 6.15 (May 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.15-rc1 <https://git.kernel.org/linus/fd71def6d9abc5ae362fb9995d46049b7b0ed391>`__,
@@ -1235,7 +1238,7 @@ Core:
 - more preparations for large folio support
 
 6.16 (Jul 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.16-rc1 (1) <https://git.kernel.org/linus/5e82ed5ca4b510e0ff53af1e12e94e6aa1fe5a93>`__,
@@ -1284,7 +1287,7 @@ Core:
 - enhanced ASSERT() macro with optional format strings
 
 6.17 (Sep 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.17-rc1 <https://git.kernel.org/linus/f92b71ffca8c7e45e194aecc85e31bd11582f4d2>`__, ...
@@ -1330,7 +1333,7 @@ Core:
   super block is created, allowing the restricted writes after mount
 
 6.18 (Nov 2025)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.18-rc1 <https://git.kernel.org/linus/f3827213abae9291b7525b05e6fd29b1f0536ce6>`__, ...
@@ -1369,7 +1372,7 @@ Core:
   'ref_verify', allowing to better pinpoint leaking references
 
 6.19 (Feb 2026)
----------------
+^^^^^^^^^^^^^^^
 
 Pull requests:
 `v6.19-rc1 <https://git.kernel.org/linus/7696286034ac72cf9b46499be1715ac62fd302c3>`__,
