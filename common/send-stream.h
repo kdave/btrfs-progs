@@ -67,7 +67,22 @@ struct btrfs_send_ops {
 			     int sig_len, char *sig, void *user);
 };
 
-int btrfs_read_and_process_send_stream(int fd,
+/*
+ * Buffered reader of the send streams on one file descriptor. It is kept
+ * across the streams read from the descriptor, as the buffer may already hold
+ * the start of the next stream.
+ */
+struct btrfs_send_stream_reader {
+	int fd;
+	char *buf;
+	size_t pos;
+	size_t len;
+};
+
+int btrfs_send_stream_reader_init(struct btrfs_send_stream_reader *reader,
+				  int fd);
+void btrfs_send_stream_reader_release(struct btrfs_send_stream_reader *reader);
+int btrfs_read_and_process_send_stream(struct btrfs_send_stream_reader *reader,
 				       struct btrfs_send_ops *ops, void *user,
 				       int honor_end_cmd,
 				       u64 max_errors);
