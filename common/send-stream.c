@@ -40,10 +40,18 @@ struct btrfs_send_attribute {
 	char *data;
 };
 
+/* The stream is read through a buffer of this size. */
+#define BTRFS_SEND_STREAM_READ_BUF	SZ_64K
+
 struct btrfs_send_stream {
 	char *read_buf;
 	size_t read_buf_size;
-	int fd;
+	struct btrfs_send_stream_reader *reader;
+	/*
+	 * Stop at the END command and leave the descriptor right after it, as
+	 * the next stream on it may be meant for another reader: no read ahead.
+	 */
+	bool honor_end_cmd;
 
 	int cmd;
 	struct btrfs_send_attribute cmd_attrs[__BTRFS_SEND_A_MAX + 1];
@@ -60,6 +68,36 @@ struct btrfs_send_stream {
 } __attribute__((aligned(64)));
 
 /*
+ * Read up to @len bytes from the stream, like read(2), but through the stream
+ * buffer. A read of at least the buffer size bypasses it. Without @read_ahead
+ * the buffer is drained but not refilled, so nothing past the requested bytes
+ * is taken from the descriptor.
+ */
+static ssize_t read_stream_buffered(struct btrfs_send_stream_reader *reader,
+				    char *buf, size_t len, bool read_ahead)
+{
+	size_t avail = reader->len - reader->pos;
+
+	if (avail == 0) {
+		ssize_t rbytes;
+
+		if (!read_ahead || len >= BTRFS_SEND_STREAM_READ_BUF)
+			return read(reader->fd, buf, len);
+		rbytes = read(reader->fd, reader->buf, BTRFS_SEND_STREAM_READ_BUF);
+		if (rbytes <= 0)
+			return rbytes;
+		reader->pos = 0;
+		reader->len = rbytes;
+		avail = rbytes;
+	}
+	if (len > avail)
+		len = avail;
+	memcpy(buf, reader->buf + reader->pos, len);
+	reader->pos += len;
+	return len;
+}
+
+/*
  * Read len bytes to buf.
  * Return:
  *   0 - success
@@ -74,7 +112,8 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 	while (pos < len) {
 		ssize_t rbytes;
 
-		rbytes = read(sctx->fd, buf + pos, len - pos);
+		rbytes = read_stream_buffered(sctx->reader, buf + pos, len - pos,
+					      !sctx->honor_end_cmd);
 		if (rbytes < 0) {
 			if (errno == EINTR)
 				continue;
@@ -599,12 +638,36 @@ out:
 	return ret;
 }
 
+int btrfs_send_stream_reader_init(struct btrfs_send_stream_reader *reader,
+				  int fd)
+{
+	reader->fd = fd;
+	reader->pos = 0;
+	reader->len = 0;
+	reader->buf = malloc(BTRFS_SEND_STREAM_READ_BUF);
+	if (!reader->buf) {
+		error_mem("send stream buffer");
+		return -ENOMEM;
+	}
+	return 0;
+}
+
+void btrfs_send_stream_reader_release(struct btrfs_send_stream_reader *reader)
+{
+	free(reader->buf);
+	reader->buf = NULL;
+}
+
 /*
  * If max_errors is 0, then don't stop processing the stream if one of the
  * callbacks in btrfs_send_ops structure returns an error. If greater than
  * zero, stop after max_errors errors happened.
+ *
+ * With honor_end_cmd the stream ends at its END command and nothing past it
+ * is read from the descriptor, otherwise the reader may read ahead into the
+ * next stream.
  */
-int btrfs_read_and_process_send_stream(int fd,
+int btrfs_read_and_process_send_stream(struct btrfs_send_stream_reader *reader,
 				       struct btrfs_send_ops *ops, void *user,
 				       int honor_end_cmd,
 				       u64 max_errors)
@@ -615,7 +678,8 @@ int btrfs_read_and_process_send_stream(int fd,
 	u64 errors = 0;
 	int last_err = 0;
 
-	sctx.fd = fd;
+	sctx.reader = reader;
+	sctx.honor_end_cmd = honor_end_cmd;
 	sctx.ops = ops;
 	sctx.user = user;
 	sctx.stream_pos = 0;
