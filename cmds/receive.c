@@ -1557,6 +1557,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	int ret;
 	char *dest_dir_full_path;
 	char root_subvol_path[PATH_MAX];
+	struct btrfs_send_stream_reader reader = { 0 };
 	bool end = false;
 	int iterations = 0;
 
@@ -1656,8 +1657,13 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 			rctx->dest_dir_path++;
 	}
 
+	/* One reader for all the streams, it may have read ahead into the next */
+	ret = btrfs_send_stream_reader_init(&reader, r_fd);
+	if (ret < 0)
+		goto out;
+
 	while (!end) {
-		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops,
+		ret = btrfs_read_and_process_send_stream(&reader, &send_ops,
 							 rctx,
 							 rctx->honor_end_cmd,
 							 max_errors);
@@ -1687,6 +1693,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	ret = 0;
 
 out:
+	btrfs_send_stream_reader_release(&reader);
 	if (rctx->write_fd != -1) {
 		close(rctx->write_fd);
 		rctx->write_fd = -1;
@@ -1883,13 +1890,18 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 
 	if (dump) {
 		struct btrfs_dump_send_args dump_args;
+		struct btrfs_send_stream_reader reader;
 
 		dump_args.root_path[0] = '.';
 		dump_args.root_path[1] = '\0';
 		dump_args.full_subvol_path[0] = '.';
 		dump_args.full_subvol_path[1] = '\0';
-		ret = btrfs_read_and_process_send_stream(receive_fd,
-			&btrfs_print_send_ops, &dump_args, 0, max_errors);
+		ret = btrfs_send_stream_reader_init(&reader, receive_fd);
+		if (ret == 0) {
+			ret = btrfs_read_and_process_send_stream(&reader,
+				&btrfs_print_send_ops, &dump_args, 0, max_errors);
+			btrfs_send_stream_reader_release(&reader);
+		}
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to dump the send stream: %m");
