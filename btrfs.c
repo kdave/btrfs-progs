@@ -208,6 +208,8 @@ static int cmd_help(const struct cmd_struct *unused, int argc, char **argv)
 			printf("- btrfs-convert\n");
 			printf("- btrfstune\n");
 			printf("- btrfs-find-root\n");
+			printf("- btrfs-map-logical\n");
+			printf("- btrfs-select-super\n");
 #else
 			printf("No standalone tools built-in in the busybox style\n");
 #endif
@@ -448,6 +450,10 @@ int main(int argc, char **argv)
 		return btrfstune_main(argc, argv);
 	} else if (strcmp(bname, "btrfs-find-root") == 0) {
 		return find_root_main(argc, argv);
+	} else if (strcmp(bname, "btrfs-map-logical") == 0) {
+		return map_logical_main(argc, argv);
+	} else if (strcmp(bname, "btrfs-select-super") == 0) {
+		return select_super_main(argc, argv);
 #endif
 	} else {
 		int shift;

@@ -31,6 +31,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
+#include "common/box.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/help.h"
@@ -222,7 +223,7 @@ static const struct cmd_struct map_logical_cmd = {
 	.usagestr = map_logical_usage
 };
 
-int main(int argc, char **argv)
+int BOX_MAIN(map_logical)(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
