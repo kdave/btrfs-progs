@@ -61,6 +61,7 @@
 #include "common/string-utils.h"
 #include "common/clear-cache.h"
 #include "common/root-tree-utils.h"
+#include "common/inject-error.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "check/common.h"
@@ -87,6 +88,12 @@ bool no_holes = false;
 bool is_free_space_tree = false;
 bool init_extent_tree = false;
 bool check_data_csum = false;
+/*
+ * Number of data extent reference repairs accumulated in one transaction
+ * during --init-extent-tree, 0 means the option was not specified and the
+ * default per-record transactions are used.
+ */
+static u32 opt_batch_size = 0;
 static bool check_qgroup_accounting = true;
 static bool found_free_ino_cache = false;
 static bool found_unknown_key = false;
@@ -7895,12 +7902,106 @@ static int find_possible_backrefs(struct btrfs_path *path,
 }
 
 /*
+ * Upper bound of --batch-size.  One transaction accumulates one dirty extent
+ * buffer per touched part of the extent tree, so the memory held by an open
+ * batch grows roughly linearly with the number of queued repairs.
+ */
+#define MAX_BATCH_SIZE	4096U
+
+/*
+ * Batching of data extent reference repairs for --init-extent-tree.  Instead
+ * of starting and committing one transaction per repaired extent record, up
+ * to batch_size records share a single transaction which is committed once
+ * full.  Repairs of metadata extent references are not batched and always
+ * commit their own transaction, thus anything queued here has to be committed
+ * before a repair helper starts a transaction of its own.
+ */
+struct extent_ref_batch {
+	/* Transaction the queued repairs are accumulated in, NULL if none */
+	struct btrfs_trans_handle *trans;
+	/* Bytenrs of the queued repairs, for the deferred success messages */
+	u64 *bytenrs;
+	/* Maximum number of repairs per transaction */
+	u32 batch_size;
+	/* Number of repairs queued in the transaction */
+	u32 pending;
+};
+
+/*
+ * Commit the transaction of a batch and report the queued repairs.  The
+ * "Repaired extent references" messages must only be printed once the
+ * transaction committed successfully, a queued repair that was not committed
+ * is not reported as repaired.
+ */
+static int flush_extent_ref_batch(struct extent_ref_batch *batch)
+{
+	int ret;
+	int i;
+
+	if (!batch->trans)
+		return 0;
+
+	if (inject_error(0xf5b47937)) {
+		/*
+		 * Simulate a failure to commit the transaction (e.g. an IO
+		 * error) and discard the queued repairs.
+		 */
+		ret = -EIO;
+		btrfs_abort_transaction(batch->trans, ret);
+		btrfs_commit_transaction(batch->trans, gfs_info->tree_root);
+		batch->trans = NULL;
+		batch->pending = 0;
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		return ret;
+	}
+
+	ret = btrfs_commit_transaction(batch->trans, gfs_info->tree_root);
+	batch->trans = NULL;
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		batch->pending = 0;
+		return ret;
+	}
+
+	for (i = 0; i < batch->pending; i++)
+		fprintf(stderr, "Repaired extent references for %llu\n",
+			batch->bytenrs[i]);
+	batch->pending = 0;
+
+	return 0;
+}
+
+/*
+ * Discard a batch with an open transaction after an error, so no stale
+ * transaction is left behind for the remaining repair steps.
+ */
+static void abort_extent_ref_batch(struct extent_ref_batch *batch, int error)
+{
+	if (!batch->trans)
+		return;
+
+	btrfs_abort_transaction(batch->trans, error);
+	btrfs_commit_transaction(batch->trans, gfs_info->tree_root);
+	batch->trans = NULL;
+	batch->pending = 0;
+}
+
+/*
  * when an incorrect extent item is found, this will delete
  * all of the existing entries for it and recreate them
  * based on what the tree scan found.
+ *
+ * If a non-NULL batch is given, the extent record repairs are accumulated in
+ * the transaction of the batch instead of a per-record transaction.  In that
+ * case rec must be a data extent record, the commit is deferred to
+ * flush_extent_ref_batch(), and the path is released before the batch can be
+ * committed.
  */
 static int fixup_extent_refs(struct cache_tree *extent_cache,
-			     struct extent_record *rec)
+			     struct extent_record *rec,
+			     struct extent_ref_batch *batch)
 {
 	struct btrfs_trans_handle *trans = NULL;
 	int ret;
@@ -7931,12 +8032,27 @@ static int fixup_extent_refs(struct cache_tree *extent_cache,
 	if (ret < 0)
 		goto out;
 
-	trans = btrfs_start_transaction(gfs_info->tree_root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error_msg(ERROR_MSG_START_TRANS, "%m");
-		goto out;
+	if (batch) {
+		if (!batch->trans) {
+			batch->trans = btrfs_start_transaction(
+					gfs_info->tree_root, 1);
+			if (IS_ERR(batch->trans)) {
+				ret = PTR_ERR(batch->trans);
+				batch->trans = NULL;
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
+				goto out;
+			}
+		}
+		trans = batch->trans;
+	} else {
+		trans = btrfs_start_transaction(gfs_info->tree_root, 1);
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "%m");
+			goto out;
+		}
 	}
 
 	/* step two, delete all the existing records */
@@ -7971,6 +8087,18 @@ static int fixup_extent_refs(struct cache_tree *extent_cache,
 			goto out;
 	}
 out:
+	if (batch) {
+		btrfs_release_path(&path);
+		if (!ret) {
+			batch->bytenrs[batch->pending++] = rec->start;
+			if (batch->pending >= batch->batch_size)
+				ret = flush_extent_ref_batch(batch);
+		} else {
+			abort_extent_ref_batch(batch, ret);
+		}
+		return ret;
+	}
+
 	if (!ret && !IS_ERR(trans)) {
 		int err = btrfs_commit_transaction(trans, gfs_info->tree_root);
 
@@ -8308,6 +8436,7 @@ static int check_extent_refs(struct btrfs_root *root,
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
+	struct extent_ref_batch batch = { 0 };
 	u64 super_gen;
 	int ret = 0;
 	int had_dups = 0;
@@ -8378,6 +8507,15 @@ static int check_extent_refs(struct btrfs_root *root,
 	if (had_dups)
 		return -EAGAIN;
 
+	if (opt_check_repair && init_extent_tree && opt_batch_size > 1) {
+		batch.bytenrs = malloc(sizeof(u64) * opt_batch_size);
+		if (!batch.bytenrs) {
+			error_mem(NULL);
+			exit(1);
+		}
+		batch.batch_size = opt_batch_size;
+	}
+
 	super_gen = btrfs_super_generation(gfs_info->super_copy);
 	while (1) {
 		int cur_err = 0;
@@ -8397,6 +8535,10 @@ static int check_extent_refs(struct btrfs_root *root,
 			bool repaired = false;
 
 			if (opt_check_repair) {
+				/* The helper below starts its own transaction */
+				ret = flush_extent_ref_batch(&batch);
+				if (ret)
+					goto repair_abort;
 				ret = repair_extent_item_generation(rec);
 				if (ret == 0)
 					repaired = true;
@@ -8457,15 +8599,32 @@ static int check_extent_refs(struct btrfs_root *root,
 		}
 
 		if (opt_check_repair && fix) {
-			ret = fixup_extent_refs(extent_cache, rec);
+			struct extent_ref_batch *rec_batch = NULL;
+
+			if (batch.batch_size && !rec->metadata) {
+				rec_batch = &batch;
+			} else {
+				/*
+				 * Metadata extent references are repaired one
+				 * transaction per record, commit the pending
+				 * data repairs first.
+				 */
+				ret = flush_extent_ref_batch(&batch);
+				if (ret)
+					goto repair_abort;
+			}
+			ret = fixup_extent_refs(extent_cache, rec, rec_batch);
 			if (ret)
 				goto repair_abort;
 		}
 
-
 		if (rec->bad_full_backref) {
 			fprintf(stderr, "bad full backref, on [%llu]\n", rec->start);
 			if (opt_check_repair) {
+				/* The helper below starts its own transaction */
+				ret = flush_extent_ref_batch(&batch);
+				if (ret)
+					goto repair_abort;
 				ret = fixup_extent_flags(rec);
 				if (ret)
 					goto repair_abort;
@@ -8505,10 +8664,24 @@ next:
 repair_abort:
 	if (opt_check_repair) {
 		if (ret && ret != -EAGAIN) {
+			/* Discard repairs queued in an uncommitted batch */
+			abort_extent_ref_batch(&batch, ret);
+			free(batch.bytenrs);
+			batch.bytenrs = NULL;
 			fprintf(stderr, "failed to repair damaged filesystem, aborting\n");
 			exit(1);
 		} else if (!ret) {
 			struct btrfs_trans_handle *trans;
+
+			/*
+			 * Commit the pending batch before the final
+			 * transaction of the block accounting fixup starts.
+			 */
+			ret = flush_extent_ref_batch(&batch);
+			free(batch.bytenrs);
+			batch.bytenrs = NULL;
+			if (ret)
+				goto repair_abort;
 
 			trans = btrfs_start_transaction(root, 1);
 			if (IS_ERR(trans)) {
@@ -10757,6 +10930,9 @@ static const char * const cmd_check_usage[] = {
 	"Repair options:",
 	OPTLINE("--init-csum-tree", "create a new CRC tree"),
 	OPTLINE("--init-extent-tree", "create a new extent tree"),
+	OPTLINE("--batch-size N", "commit up to N data extent reference repairs in one"),
+	OPTLINE("", "transaction during the --init-extent-tree rebuild (default 1,"),
+	OPTLINE("", "no batching; the option requires --init-extent-tree)"),
 	"",
 	"Check and reporting options:",
 	OPTLINE("--check-data-csum", "verify checksums of data blocks"),
@@ -10800,7 +10976,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
 			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
-			GETOPT_VAL_FORCE, GETOPT_VAL_SKIP_QGROUP_ACCOUNTING };
+			GETOPT_VAL_FORCE, GETOPT_VAL_SKIP_QGROUP_ACCOUNTING,
+			GETOPT_VAL_BATCH_SIZE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -10824,6 +11001,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				GETOPT_VAL_MODE },
 			{ "clear-space-cache", required_argument, NULL,
 				GETOPT_VAL_CLEAR_SPACE_CACHE},
+			{ "batch-size", required_argument, NULL,
+				GETOPT_VAL_BATCH_SIZE },
 			{ "force", no_argument, NULL, GETOPT_VAL_FORCE },
 			{ NULL, 0, NULL, 0}
 		};
@@ -10882,6 +11061,16 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 						OPEN_CTREE_NO_BLOCK_GROUPS);
 				opt_check_repair = 1;
 				break;
+			case GETOPT_VAL_BATCH_SIZE:
+				num = arg_strtou64(optarg);
+				if (num == 0 || num > MAX_BATCH_SIZE) {
+					error(
+					"--batch-size value must be between 1 and %u",
+						MAX_BATCH_SIZE);
+					exit(1);
+				}
+				opt_batch_size = num;
+				break;
 			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = true;
 				break;
@@ -10937,6 +11126,11 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	if (!check_qgroup_accounting && qgroup_report) {
 		error("--skip-qgroup-accounting is not compatible with --qgroup-report");
+		exit(1);
+	}
+
+	if (opt_batch_size && !init_extent_tree) {
+		error("--batch-size is only valid together with --init-extent-tree");
 		exit(1);
 	}
 

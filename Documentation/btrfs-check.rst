@@ -135,6 +135,24 @@ DANGEROUS OPTIONS
         .. warning::
                 Do not use unless you know what you're doing.
 
+--batch-size <N>
+        number of data extent reference repairs accumulated in one
+        transaction during the *--init-extent-tree* rebuild, where *N* is
+        a value between 1 and 4096
+
+        The default value 1 keeps the original behaviour where every repaired
+        data extent reference is committed and flushed in its own
+        transaction.  Larger values can significantly speed up the rebuild on
+        filesystems with many damaged data extents, because the repeated
+        transaction commits and flushes dominate the run time otherwise.  The
+        trade offs are memory held by the queued repairs, and repeating the
+        repairs of an unfinished transaction if the repair is interrupted and
+        restarted.
+
+        Repairs of metadata extent references are always committed one
+        transaction at a time, and force a commit of the pending data repairs
+        first.  This option can only be used together with *--init-extent-tree*.
+
 .. _man-check-option-force:
 
 --force
