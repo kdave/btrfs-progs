@@ -61,6 +61,14 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 	pthread_cond_destroy(&mdres->cond);
 	pthread_mutex_destroy(&mdres->mutex);
 
+	while (!list_empty(&mdres->list)) {
+		struct async_work *async = list_first_entry(&mdres->list,
+						struct async_work, list);
+
+		list_del_init(&async->list);
+		free(async->buffer);
+		free(async);
+	}
 	while ((n = rb_first(&mdres->chunk_tree))) {
 		struct fs_chunk *entry;
 
@@ -590,6 +598,8 @@ static void *restore_worker(void *data)
 		if (ret < 0) {
 			mdres->error = ret;
 			pthread_mutex_unlock(&mdres->mutex);
+			free(async->buffer);
+			free(async);
 			goto out;
 		}
 		mdres->num_items--;
