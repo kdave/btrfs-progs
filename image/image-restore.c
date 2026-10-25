@@ -50,15 +50,6 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 	struct rb_node *n;
 	int i;
 
-	while ((n = rb_first(&mdres->chunk_tree))) {
-		struct fs_chunk *entry;
-
-		entry = rb_entry(n, struct fs_chunk, l);
-		rb_erase(n, &mdres->chunk_tree);
-		rb_erase(&entry->p, &mdres->physical_tree);
-		free(entry);
-	}
-	free_extent_cache_tree(&mdres->sys_chunks);
 	pthread_mutex_lock(&mdres->mutex);
 	mdres->done = 1;
 	pthread_cond_broadcast(&mdres->cond);
@@ -69,6 +60,16 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 
 	pthread_cond_destroy(&mdres->cond);
 	pthread_mutex_destroy(&mdres->mutex);
+
+	while ((n = rb_first(&mdres->chunk_tree))) {
+		struct fs_chunk *entry;
+
+		entry = rb_entry(n, struct fs_chunk, l);
+		rb_erase(n, &mdres->chunk_tree);
+		rb_erase(&entry->p, &mdres->physical_tree);
+		free(entry);
+	}
+	free_extent_cache_tree(&mdres->sys_chunks);
 	free(mdres->original_super);
 }
 
@@ -646,7 +647,7 @@ static int mdrestore_init(struct mdrestore_struct *mdres,
 		}
 	}
 	if (ret)
-		mdrestore_destroy(mdres, i + 1);
+		mdrestore_destroy(mdres, i);
 	return ret;
 }
 
