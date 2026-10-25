@@ -1889,6 +1889,7 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 	}
 
 	if (in != stdin && fseek(in, 0, SEEK_SET)) {
+		ret = -errno;
 		error("seek failed: %m");
 		goto out;
 	}
