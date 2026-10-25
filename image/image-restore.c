@@ -1140,7 +1140,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	}
 
 	if (!item || get_unaligned_le64(&item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
-		error("did not find superblock at %llu", get_unaligned_le64(&item->bytenr));
+		error("did not find superblock");
 		return -EINVAL;
 	}
 
