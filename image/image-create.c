@@ -179,7 +179,7 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	}
 
 	if (ret)
-		metadump_destroy(md, i + 1);
+		metadump_destroy(md, i);
 
 	return ret;
 }
