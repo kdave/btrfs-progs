@@ -1030,6 +1030,12 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 
 		bytenr += IMAGE_BLOCK_SIZE;
 		nritems = get_unaligned_le32(&header->nritems);
+		if (nritems > ITEMS_PER_CLUSTER) {
+			error("invalid nritems, has %u expect <= %zu",
+			      nritems, ITEMS_PER_CLUSTER);
+			ret = -EUCLEAN;
+			goto out;
+		}
 
 		/* Search items for tree blocks in sys chunks */
 		for (i = 0; i < nritems; i++) {
@@ -1138,6 +1144,11 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	mdres->compress_method = header->compress;
 	nritems = get_unaligned_le32(&header->nritems);
+	if (nritems > ITEMS_PER_CLUSTER) {
+		error("invalid nritems, has %u expect <= %zu",
+		      nritems, ITEMS_PER_CLUSTER);
+		return -EUCLEAN;
+	}
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
 
@@ -1316,6 +1327,11 @@ static int add_cluster(struct meta_cluster *cluster,
 
 	bytenr = get_unaligned_le64(&header->bytenr) + IMAGE_BLOCK_SIZE;
 	nritems = get_unaligned_le32(&header->nritems);
+	if (nritems > ITEMS_PER_CLUSTER) {
+		error("invalid nritems, has %u expect <= %zu",
+		      nritems, ITEMS_PER_CLUSTER);
+		return -EUCLEAN;
+	}
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
 		async = calloc(1, sizeof(*async));
