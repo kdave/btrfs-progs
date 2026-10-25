@@ -66,7 +66,8 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 
 		entry = rb_entry(n, struct fs_chunk, l);
 		rb_erase(n, &mdres->chunk_tree);
-		rb_erase(&entry->p, &mdres->physical_tree);
+		if (!RB_EMPTY_NODE(&entry->p))
+			rb_erase(&entry->p, &mdres->physical_tree);
 		free(entry);
 	}
 	free_extent_cache_tree(&mdres->sys_chunks);
@@ -806,6 +807,7 @@ static int read_chunk_tree_block(struct mdrestore_struct *mdres,
 		fs_chunk->physical = btrfs_stripe_offset_nr(eb, chunk, 0);
 		fs_chunk->bytes = btrfs_chunk_length(eb, chunk);
 		INIT_LIST_HEAD(&fs_chunk->list);
+		RB_CLEAR_NODE(&fs_chunk->p);
 
 		if (tree_search(&mdres->physical_tree, &fs_chunk->p,
 				physical_cmp, 1) != NULL)
