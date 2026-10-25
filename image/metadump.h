@@ -30,8 +30,11 @@
 #define ITEMS_PER_CLUSTER ((IMAGE_BLOCK_SIZE - sizeof(struct meta_cluster)) / \
 			   sizeof(struct meta_cluster_item))
 
-#define COMPRESS_NONE		0
-#define COMPRESS_ZLIB		1
+enum image_compression {
+	COMPRESS_NONE,
+	COMPRESS_ZLIB,
+	COMPRESS_LAST,
+};
 
 #define MAX_WORKER_THREADS	(32)
 
