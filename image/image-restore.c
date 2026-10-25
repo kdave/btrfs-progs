@@ -1852,13 +1852,13 @@ int restore_metadump(const char *input, FILE *out, int old_restore,
 		if (get_unaligned_le64(&header->magic) != current_version->magic_cpu ||
 		    get_unaligned_le64(&header->bytenr) != bytenr) {
 			error("bad header in metadump image");
-			ret = -EIO;
-			break;
+			ret = -EUCLEAN;
+			goto out;
 		}
 		ret = add_cluster(cluster, &mdrestore, &bytenr);
 		if (ret) {
 			error("failed to add cluster: %d", ret);
-			break;
+			goto out;
 		}
 	}
 	ret = wait_for_worker(&mdrestore);
