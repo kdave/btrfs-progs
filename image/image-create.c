@@ -68,6 +68,7 @@ static void *dump_worker(void *data)
 			async->bufsize = compressBound(async->size);
 			async->buffer = malloc(async->bufsize);
 			if (!async->buffer) {
+				free(orig);
 				error_mem("async buffer");
 				pthread_mutex_lock(&md->mutex);
 				if (!md->error)
