@@ -1182,14 +1182,12 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	ret = btrfs_check_super(super, 0);
 	if (ret < 0) {
 		error("invalid superblock");
-		return ret;
+		goto out;
 	}
 	ret = add_sys_array(mdres, super);
 	if (ret < 0) {
 		error("failed to read system chunk array");
-		free(buffer);
-		pthread_mutex_unlock(&mdres->mutex);
-		return ret;
+		goto out;
 	}
 	mdres->nodesize = btrfs_super_nodesize(super);
 	if (btrfs_super_incompat_flags(super) &
@@ -1200,9 +1198,12 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	memcpy(mdres->uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
 	mdres->devid = get_unaligned_le64(&super->dev_item.devid);
+out:
 	free(buffer);
 	pthread_mutex_unlock(&mdres->mutex);
 
+	if (ret < 0)
+		return ret;
 	return search_for_chunk_blocks(mdres);
 }
 
