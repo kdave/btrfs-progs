@@ -124,6 +124,14 @@ static void metadump_destroy(struct metadump_struct *md, int num_threads)
 	pthread_cond_destroy(&md->cond);
 	pthread_mutex_destroy(&md->mutex);
 
+	while (!list_empty(&md->ordered)) {
+		struct async_work *async = list_first_entry(&md->ordered,
+				struct async_work, ordered);
+
+		list_del_init(&async->ordered);
+		free(async->buffer);
+		free(async);
+	}
 	while ((n = rb_first(&md->name_tree))) {
 		struct name *name;
 
@@ -828,13 +836,14 @@ int create_metadump(const char *input, FILE *out, int num_threads,
 
 	ret = copy_space_cache(root, &metadump, &path);
 out:
-	ret = flush_pending(&metadump, 1);
-	if (ret) {
-		if (!err)
-			err = ret;
-		error("failed to flush pending data: %d", ret);
+	if (!ret) {
+		ret = flush_pending(&metadump, 1);
+		if (ret)
+			error("failed to flush pending data: %d", ret);
 	}
 
+	if (ret && !err)
+		err = ret;
 	metadump_destroy(&metadump, num_threads);
 
 	btrfs_release_path(&path);
