@@ -1141,6 +1141,11 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		error("bad header in metadump image");
 		return -EIO;
 	}
+	if (header->compress >= COMPRESS_LAST) {
+		error("unsupported compression, has %u expect < %u",
+		      header->compress, COMPRESS_LAST);
+		return -EUCLEAN;
+	}
 
 	mdres->compress_method = header->compress;
 	nritems = get_unaligned_le32(&header->nritems);
@@ -1163,6 +1168,17 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	if (!item || get_unaligned_le64(&item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
 		error("did not find superblock");
 		return -EINVAL;
+	}
+
+	/*
+	 * The super block may get merged with the next block. So here
+	 * only reject uncompressed size that is smaller than a sb.
+	 */
+	if (mdres->compress_method == COMPRESS_NONE &&
+	    get_unaligned_le32(&item->size) < BTRFS_SUPER_INFO_SIZE) {
+		error("incorrect super block size, has %u expect >= %u",
+		      get_unaligned_le32(&item->size), BTRFS_SUPER_INFO_SIZE);
+		return -EUCLEAN;
 	}
 
 	buffer = malloc(get_unaligned_le32(&item->size));
@@ -1188,8 +1204,8 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 			return -ENOMEM;
 		}
 		ret = uncompress(tmp, (unsigned long *)&size, buffer, get_unaligned_le32(&item->size));
-		if (ret != Z_OK) {
-			error("decompression failed with %d", ret);
+		if (ret != Z_OK || size < BTRFS_SUPER_INFO_SIZE) {
+			error("decompression failed or short result");
 			free(buffer);
 			free(tmp);
 			return -EIO;
@@ -1288,17 +1304,29 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 			return -ENOMEM;
 		ret = uncompress(buffer, (unsigned long *)&size,
 				 async->buffer, async->bufsize);
-		if (ret != Z_OK) {
-			error("decompression failed with %d", ret);
+		if (ret != Z_OK || size < BTRFS_SUPER_INFO_SIZE) {
+			error("decompression failed or short result");
 			free(buffer);
 			return -EIO;
 		}
 		outbuf = buffer;
 	} else {
 		outbuf = async->buffer;
+		/* The same check in build_chunk_tree(). */
+		if (async->bufsize < BTRFS_SUPER_INFO_SIZE) {
+			error("incorrect super block size, has %zu expect >= %u",
+			      async->bufsize, BTRFS_SUPER_INFO_SIZE);
+			return -EUCLEAN;
+		}
 	}
 
 	super = (struct btrfs_super_block *)outbuf;
+	ret = btrfs_check_super(super, 0);
+	if (ret < 0) {
+		free(buffer);
+		error("invalid superblock");
+		return ret;
+	}
 	mdres->nodesize = btrfs_super_nodesize(super);
 	if (btrfs_super_incompat_flags(super) &
 	    BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
@@ -1322,6 +1350,12 @@ static int add_cluster(struct meta_cluster *cluster,
 	int ret;
 
 	pthread_mutex_lock(&mdres->mutex);
+	if (header->compress >= COMPRESS_LAST) {
+		pthread_mutex_unlock(&mdres->mutex);
+		error("unsupported compression, has %u expect < %u",
+		      header->compress, COMPRESS_LAST);
+		return -EUCLEAN;
+	}
 	mdres->compress_method = header->compress;
 	pthread_mutex_unlock(&mdres->mutex);
 
