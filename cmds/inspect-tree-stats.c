@@ -40,8 +40,6 @@
 #include "common/units.h"
 #include "cmds/commands.h"
 
-static int verbose = 0;
-
 struct seek {
 	u64 distance;
 	u64 count;
@@ -462,7 +460,6 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 	while ((opt = getopt(argc, argv, "vbt:")) != -1) {
 		switch (opt) {
 		case 'v':
-			verbose++;
 			break;
 		case 'b':
 			unit_mode = UNITS_RAW;
