@@ -70,7 +70,6 @@ static const struct fix_data_checksum_action {
 	},
 };
 
-static int global_repair_mode;
 LIST_HEAD(corrupted_blocks);
 
 static int add_corrupted_block(struct btrfs_fs_info *fs_info, u64 logical,
@@ -486,7 +485,6 @@ int btrfs_recover_fix_data_checksum(const char *path, enum btrfs_fix_data_checks
 		return -EBUSY;
 	}
 
-	global_repair_mode = mode;
 	oca.filename = path;
 	oca.flags = OPEN_CTREE_WRITES;
 	fs_info = open_ctree_fs_info(&oca);
