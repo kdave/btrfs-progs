@@ -67,6 +67,7 @@
 #define ACCOUNTING_MISMATCH	(1U << 7)	/* Used space accounting error */
 #define CHUNK_TYPE_MISMATCH	(1U << 8)	/* Extent type and chunk type don't match */
 #define BACKREF_OUT_OF_ORDER	(1U << 9)	/* Inline backrefs out of order */
+#define INVALID_KEY_TYPE	(1U << 10)	/* Key type does not belong to the tree */
 
 int check_fs_roots_lowmem(void);
 int check_chunks_and_extents_lowmem(void);
