@@ -6364,66 +6364,6 @@ full_backref:
 	return 0;
 }
 
-static void report_mismatch_key_root(u8 key_type, u64 rootid)
-{
-	fprintf(stderr, "Invalid key type(");
-	print_key_type(stderr, 0, key_type);
-	fprintf(stderr, ") found in root(");
-	print_objectid(stderr, rootid, 0);
-	fprintf(stderr, ")\n");
-}
-
-/*
- * Check if the key is valid with its extent buffer.
- *
- * This is a early check in case invalid key exists in a extent buffer
- * This is not comprehensive yet, but should prevent wrong key/item passed
- * further
- */
-static int check_type_with_root(u64 rootid, u8 key_type)
-{
-	switch (key_type) {
-	/* Only valid in chunk tree */
-	case BTRFS_DEV_ITEM_KEY:
-	case BTRFS_CHUNK_ITEM_KEY:
-		if (rootid != BTRFS_CHUNK_TREE_OBJECTID)
-			goto err;
-		break;
-	/* valid in csum and log tree */
-	case BTRFS_EXTENT_CSUM_KEY:
-		if (!(rootid == BTRFS_TREE_LOG_OBJECTID ||
-		      rootid == BTRFS_CSUM_TREE_OBJECTID))
-			goto err;
-		break;
-	case BTRFS_EXTENT_ITEM_KEY:
-	case BTRFS_METADATA_ITEM_KEY:
-		if (rootid != BTRFS_EXTENT_TREE_OBJECTID)
-			goto err;
-		break;
-	/*
-	 * Valid in extent and block group tree. An interrupted conversion
-	 * leaves items in both, so do not look at the feature flag.
-	 */
-	case BTRFS_BLOCK_GROUP_ITEM_KEY:
-		if (rootid != BTRFS_EXTENT_TREE_OBJECTID &&
-		    rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
-			goto err;
-		break;
-	case BTRFS_ROOT_ITEM_KEY:
-		if (rootid != BTRFS_ROOT_TREE_OBJECTID)
-			goto err;
-		break;
-	case BTRFS_DEV_EXTENT_KEY:
-		if (rootid != BTRFS_DEV_TREE_OBJECTID)
-			goto err;
-		break;
-	}
-	return 0;
-err:
-	report_mismatch_key_root(key_type, rootid);
-	return -EINVAL;
-}
-
 static int run_next_block(struct btrfs_root *root,
 			  struct block_info *bits,
 			  int bits_nr,
