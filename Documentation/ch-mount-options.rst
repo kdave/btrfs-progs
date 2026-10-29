@@ -397,7 +397,7 @@ space_cache, space_cache=<version>, nospace_cache
         On an unmounted filesystem the caches (both versions) can be cleared by
         "btrfs check --clear-space-cache".
 
-        The :doc:`btrfs-check` and `:doc:`mkfs.btrfs` commands have full *v2* free space
+        The :doc:`btrfs-check` and :doc:`mkfs.btrfs` commands have full *v2* free space
         cache support since v4.19.
 
         If a version is not explicitly specified, the default implementation will be
@@ -563,4 +563,3 @@ noatime
 
         Note that *noatime* may break applications that rely on atime uptimes like
         the venerable Mutt (unless you use *maildir* mailboxes).
-
