@@ -1584,7 +1584,13 @@ static int check_resize_args(const char *amount, const char *path, u64 *devid_re
 	}
 
 	if (args.is_max) {
-		res_str = "max";
+		if (device_get_partition_size((const char *)di_args[dev_idx].path,
+					      &new_size) == 0) {
+			new_size = round_down(new_size, fi_args.sectorsize);
+			res_str = pretty_size_mode(new_size, UNITS_DEFAULT);
+		} else {
+			res_str = "max";
+		}
 	} else {
 		old_size = di_args[dev_idx].total_bytes;
 
