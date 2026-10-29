@@ -67,6 +67,21 @@ AS_IF([test "x$target_cpu" = 'xx86_64'], [
 AX_CHECK_COMPILE_FLAG([-std=gnu11], [],
 	[AC_MSG_ERROR([std=gnu11 compiler required])])
 
+dnl The __cleanup__ variable attribute is required by kernel-shared/cleanup.h
+AC_MSG_CHECKING([whether the compiler supports __attribute__((__cleanup__))])
+save_ac_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+static void free_int(int *p) { *p = 0; }
+]], [[
+	int x __attribute__((__cleanup__(free_int))) = 1;
+	(void)x;
+]])],
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	 AC_MSG_ERROR([compiler with __attribute__((__cleanup__)) support required])])
+ac_c_werror_flag=$save_ac_c_werror_flag
+
 AC_SYS_LARGEFILE
 
 AC_PROG_INSTALL
