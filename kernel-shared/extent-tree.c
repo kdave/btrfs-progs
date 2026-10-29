@@ -2403,7 +2403,6 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_space_info *sinfo;
 	struct extent_buffer *leaf;
-	struct btrfs_path *path;
 	struct btrfs_key ins;
 	u32 size = sizeof(*extent_item) + sizeof(*iref);
 	u64 start, end;
@@ -2415,6 +2414,8 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	ins.objectid = node->bytenr;
 
 	if (ref->root != BTRFS_REMAP_TREE_OBJECTID) {
+		BTRFS_PATH_AUTO_FREE(path);
+
 		if (skinny_metadata) {
 			ins.type = BTRFS_METADATA_ITEM_KEY;
 			ins.offset = ref->level;
@@ -2462,7 +2463,6 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 		btrfs_set_extent_inline_ref_offset(leaf, iref, ref->root);
 
 		btrfs_mark_buffer_dirty(leaf);
-		btrfs_free_path(path);
 	}
 
 	ret = remove_from_free_space_tree(trans, ins.objectid, fs_info->nodesize);
