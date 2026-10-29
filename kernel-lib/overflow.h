@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "compiler_attributes.h"
 
 /*
  * We need to compute the minimum and maximum values representable in a given
@@ -41,13 +42,6 @@
  */
 #define is_non_negative(a) ((a) > 0 || (a) == 0)
 #define is_negative(a) (!(is_non_negative(a)))
-
-/* Copied from linux.git/include/compiler_attributes.h */
-/*
- *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-warn_005funused_005fresult-function-attribute
- * clang: https://clang.llvm.org/docs/AttributeReference.html#nodiscard-warn-unused-result
- */
-#define __must_check                    __attribute__((__warn_unused_result__))
 
 /*
  * Allows for effectively applying __must_check to a macro so we can have
