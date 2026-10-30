@@ -40,7 +40,7 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *dev_root = fs_info->dev_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -73,7 +73,6 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 	key.offset = 0;
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
 	if (ret < 0) {
-		btrfs_release_path(&path);
 		errno = -ret;
 		error("failed to check the dev-replace status: %m");
 		return ret;
@@ -86,7 +85,6 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 		state = btrfs_dev_replace_replace_state(path.nodes[0], ptr);
 		if (state == BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED ||
 		    state == BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED) {
-			btrfs_release_path(&path);
 			error(
 	"running/suspended dev-replace detected, please finish or cancel it");
 			return -EINVAL;
@@ -105,7 +103,7 @@ static int check_csum_change_requreiment(struct btrfs_fs_info *fs_info, u16 new_
 static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -127,13 +125,11 @@ static int get_last_csum_bytenr(struct btrfs_fs_info *fs_info, u64 *result)
 	 */
 	if (ret > 0) {
 		*result = 0;
-		btrfs_release_path(&path);
 		return 0;
 	}
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	*result = key.offset + btrfs_item_size(path.nodes[0], path.slots[0]) /
 			       fs_info->csum_size * fs_info->sectorsize;
-	btrfs_release_path(&path);
 	return 0;
 }
 
@@ -239,7 +235,6 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 	const unsigned int nr_items = calc_csum_change_nr_items(fs_info, new_csum_type);
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
 	struct btrfs_key key;
 	void *csum_buffer;
 	u64 converted_bytes = 0;
@@ -266,6 +261,7 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 	}
 
 	while (cur < last_csum) {
+		BTRFS_PATH_AUTO_RELEASE(path);
 		u64 csum_start;
 		u64 len;
 		u32 item_size;
@@ -282,13 +278,10 @@ static int generate_new_data_csums_range(struct btrfs_fs_info *fs_info, u64 star
 			ret = btrfs_next_leaf(csum_root, &path);
 			if (ret > 0) {
 				ret = 0;
-				btrfs_release_path(&path);
 				break;
 			}
-			if (ret < 0) {
-				btrfs_release_path(&path);
+			if (ret < 0)
 				goto out;
-			}
 		}
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		UASSERT(key.offset >= cur);
@@ -333,7 +326,7 @@ static int generate_new_data_csums(struct btrfs_fs_info *fs_info, u16 new_csum_t
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -376,7 +369,6 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
 	struct btrfs_trans_handle *trans = 0;
-	struct btrfs_path path = { 0 };
 	struct btrfs_key last_key;
 	unsigned int deleted_leaves = 0;
 	int ret;
@@ -386,6 +378,7 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 	last_key.offset = (u64)-1;
 
 	while (true) {
+		BTRFS_PATH_AUTO_RELEASE(path);
 		int start_slot;
 		int nr;
 
@@ -444,10 +437,8 @@ static int delete_old_data_csums(struct btrfs_fs_info *fs_info)
 			error("failed to delete items: %m");
 			break;
 		}
-		btrfs_release_path(&path);
 		deleted_leaves++;
 	}
-	btrfs_release_path(&path);
 	if (ret < 0)
 		btrfs_abort_transaction(trans, ret);
 	ret = btrfs_commit_transaction(trans, csum_root);
@@ -464,7 +455,6 @@ static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
 	struct btrfs_trans_handle *trans = NULL;
-	struct btrfs_path path = { 0 };
 	struct btrfs_key last_key;
 	unsigned int changed_leaves = 0;
 	u64 super_flags;
@@ -475,6 +465,7 @@ static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 	last_key.offset = (u64)-1;
 
 	while (true) {
+		BTRFS_PATH_AUTO_RELEASE(path);
 		struct btrfs_key found_key;
 		int nr;
 
@@ -527,10 +518,8 @@ static int change_csum_objectids(struct btrfs_fs_info *fs_info)
 			path.slots[0] = i;
 			btrfs_set_item_key_safe(fs_info, &path, &found_key);
 		}
-		btrfs_release_path(&path);
 	}
 out:
-	btrfs_release_path(&path);
 	if (ret < 0) {
 		btrfs_abort_transaction(trans, ret);
 		return ret;
@@ -610,7 +599,7 @@ out:
 static int change_meta_csums(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, 0);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	u64 super_flags;
 	int ret;
@@ -754,7 +743,7 @@ static int get_csum_items_range(struct btrfs_fs_info *fs_info,
 				u32 *last_item_size)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, 0);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -773,17 +762,14 @@ static int get_csum_items_range(struct btrfs_fs_info *fs_info,
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to search csum tree: %m");
-			btrfs_release_path(&path);
 			return ret;
 		}
 		/*
 		 * There is no next leaf, meaning we didn't find any csum item
 		 * with given objectid.
 		 */
-		if (ret > 0) {
-			btrfs_release_path(&path);
+		if (ret > 0)
 			return ret;
-		}
 	}
 
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
@@ -808,16 +794,12 @@ static int get_csum_items_range(struct btrfs_fs_info *fs_info,
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to search csum tree: %m");
-		btrfs_release_path(&path);
 		return ret;
 	}
-	if (ret > 0) {
-		btrfs_release_path(&path);
+	if (ret > 0)
 		return 1;
-	}
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	*last_item_size = btrfs_item_size(path.nodes[0], path.slots[0]);
-	btrfs_release_path(&path);
 	*last_ret = key.offset;
 	return 0;
 }
@@ -834,7 +816,7 @@ static int determine_csum_type(struct btrfs_fs_info *fs_info, u64 logical,
 			       u16 csum_type)
 {
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, logical);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	u16 csum_size = btrfs_csum_type_size(csum_type);
 	u8 csum_expected[BTRFS_CSUM_SIZE];
@@ -851,7 +833,6 @@ static int determine_csum_type(struct btrfs_fs_info *fs_info, u64 logical,
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to search csum tree: %m");
-		btrfs_release_path(&path);
 		return ret;
 	}
 
@@ -859,10 +840,8 @@ static int determine_csum_type(struct btrfs_fs_info *fs_info, u64 logical,
 	 * The csum item size is smaller than expected csum size, no
 	 * more need to check.
 	 */
-	if (btrfs_item_size(path.nodes[0], path.slots[0]) < csum_size) {
-		btrfs_release_path(&path);
+	if (btrfs_item_size(path.nodes[0], path.slots[0]) < csum_size)
 		return 1;
-	}
 	read_extent_buffer(path.nodes[0], csum_expected,
 			   btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 			   csum_size);
@@ -1009,7 +988,7 @@ static int resume_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 {
 	const u64 super_flags = btrfs_super_flags(fs_info->super_copy);
 	struct btrfs_root *tree_root = fs_info->tree_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -1039,7 +1018,6 @@ static int resume_csum_change(struct btrfs_fs_info *fs_info, u16 new_csum_type)
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to locate the csum change item: %m");
-		btrfs_release_path(&path);
 		return ret;
 	}
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);

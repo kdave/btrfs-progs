@@ -98,7 +98,6 @@ static int create_remap_tree(struct btrfs_trans_handle *trans)
 static int extend_block_group_items(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_path path = { 0 };
 	struct btrfs_key key = { 0 };
 	struct extent_buffer *leaf;
 	struct btrfs_block_group_item_v2 *bgi;
@@ -106,6 +105,8 @@ static int extend_block_group_items(struct btrfs_trans_handle *trans)
 	u32 size;
 
 	while (true) {
+		BTRFS_PATH_AUTO_RELEASE(path);
+
 		ret = btrfs_search_slot(trans, fs_info->block_group_root, &key,
 					&path, -1, 1);
 		if (ret < 0)
@@ -113,10 +114,8 @@ static int extend_block_group_items(struct btrfs_trans_handle *trans)
 
 		leaf = path.nodes[0];
 
-		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-			btrfs_release_path(&path);
+		if (path.slots[0] >= btrfs_header_nritems(leaf))
 			break;
-		}
 
 		while (path.slots[0] < btrfs_header_nritems(leaf)) {
 			btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
@@ -143,8 +142,6 @@ static int extend_block_group_items(struct btrfs_trans_handle *trans)
 
 		key.objectid++;
 		key.offset = 0;
-
-		btrfs_release_path(&path);
 	}
 
 	return 0;
@@ -154,7 +151,7 @@ int convert_to_remap_tree(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -166,7 +163,6 @@ int convert_to_remap_tree(struct btrfs_fs_info *fs_info)
 		return ret;
 
 	if (!ret) {
-		btrfs_release_path(&path);
 		error("cannot convert filesystem that has balance already in progress");
 		return -EINVAL;
 	}
