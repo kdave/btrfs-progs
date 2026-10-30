@@ -84,7 +84,7 @@ static int change_buffer_header_uuid(struct extent_buffer *eb, uuid_t new_fsid)
 static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {
 	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
 
@@ -94,7 +94,7 @@ static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsi
 	 */
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
-		goto out;
+		return ret;
 
 	while (1) {
 		struct btrfs_extent_item *ei;
@@ -117,29 +117,22 @@ static int change_extent_tree_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsi
 		eb = read_tree_block(fs_info, bytenr, &check);
 		if (IS_ERR(eb)) {
 			error("failed to read tree block: %llu", bytenr);
-			ret = PTR_ERR(eb);
-			goto out;
+			return PTR_ERR(eb);
 		}
 		ret = change_buffer_header_uuid(eb, new_fsid);
 		free_extent_buffer(eb);
 		if (ret < 0) {
 			error("failed to change uuid of tree block: %llu",
 				bytenr);
-			goto out;
+			return ret;
 		}
 next:
 		ret = btrfs_next_item(root, &path);
 		if (ret < 0)
-			goto out;
-		if (ret > 0) {
-			ret = 0;
-			goto out;
-		}
+			return ret;
+		if (ret > 0)
+			return 0;
 	}
-
-out:
-	btrfs_release_path(&path);
-	return ret;
 }
 
 static int change_device_uuid(struct extent_buffer *eb, int slot,
@@ -164,14 +157,14 @@ static int change_device_uuid(struct extent_buffer *eb, int slot,
 
 static int change_chunk_tree_uuid(struct btrfs_root *root, uuid_t new_fsid)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
 
 	/* No transaction again */
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
-		goto out;
+		return ret;
 
 	while (1) {
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
@@ -181,19 +174,14 @@ static int change_chunk_tree_uuid(struct btrfs_root *root, uuid_t new_fsid)
 		ret = change_device_uuid(path.nodes[0], path.slots[0],
 					 new_fsid);
 		if (ret < 0)
-			goto out;
+			return ret;
 next:
 		ret = btrfs_next_item(root, &path);
 		if (ret < 0)
-			goto out;
-		if (ret > 0) {
-			ret = 0;
-			goto out;
-		}
+			return ret;
+		if (ret > 0)
+			return 0;
 	}
-out:
-	btrfs_release_path(&path);
-	return ret;
 }
 
 static int change_fsid_done(struct btrfs_fs_info *fs_info)
