@@ -412,7 +412,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	info = open_ctree_fs_info(&oca);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
-		return !!ret;
+		return 1;
 	}
 
 	print_mode = follow | traverse | csum_mode;
@@ -426,7 +426,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	root = info->fs_root;
 	if (!root) {
 		error("unable to open %s", argv[optind]);
-		return !!ret;
+		close_ctree(info->chunk_root);
+		return 1;
 	}
 
 	if (!(extent_only || uuid_tree_only || tree_id)) {
