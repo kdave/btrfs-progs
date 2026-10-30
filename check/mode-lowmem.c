@@ -572,6 +572,7 @@ static int delete_item(struct btrfs_root *root, struct btrfs_path *path)
 		ret = PTR_ERR(trans);
 		errno = -ret;
 		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
 		goto out;
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
@@ -1043,6 +1044,13 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 	UASSERT(stage < 3);
 
 	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
+		goto out;
+	}
 	if (stage == 2) {
 		ret = btrfs_unlink(trans, root, ino, dir_ino, index, name,
 				   name_len, 0);
@@ -1058,7 +1066,8 @@ static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 		goto out;
 	}
 out:
-	btrfs_commit_transaction(trans, root);
+	if (trans)
+		btrfs_commit_transaction(trans, root);
 
 	if (ret)
 		error("fail to repair inode %llu name %s filetype %u",
@@ -3947,6 +3956,14 @@ static int check_tree_block_backref(u64 root_id, u64 bytenr, int level)
 	}
 
 	node = path.nodes[level];
+	/*
+	 * The item level can be corrupted (higher than the actual tree
+	 * depth), in which case the search above leaves nodes[level] empty.
+	 */
+	if (!node) {
+		err |= REFERENCER_MISSING;
+		goto release_out;
+	}
 	if (btrfs_header_bytenr(node) != bytenr) {
 		error(
 	"extent [%llu %d] referencer bytenr mismatch, wanted: %llu, have: %llu",
