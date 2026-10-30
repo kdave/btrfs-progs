@@ -993,7 +993,7 @@ static int load_quota_info(struct btrfs_fs_info *info)
 {
 	int ret;
 	struct btrfs_root *root = info->quota_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 
@@ -1008,7 +1008,7 @@ static int load_quota_info(struct btrfs_fs_info *info)
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		error("couldn't search slot: %d", ret);
-		goto out;
+		return ret;
 	}
 
 	while (1) {
@@ -1016,17 +1016,15 @@ static int load_quota_info(struct btrfs_fs_info *info)
 
 		ret = load_one_quota_leaf(leaf);
 		if (ret < 0)
-			goto out;
+			return ret;
 		ret = btrfs_next_leaf(root, &path);
 		if (ret < 0)
-			goto out;
+			return ret;
 		if (ret > 0) {
 			ret = 0;
 			break;
 		}
 	}
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1217,7 +1215,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 	int ret, i, nr, level;
 	struct btrfs_root *root = btrfs_extent_root(info, start);
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_disk_key disk_key;
 	struct extent_buffer *leaf;
 	u64 bytenr = 0, num_bytes = 0;
@@ -1229,7 +1227,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		error("couldn't search slot: %d", ret);
-		goto out;
+		return ret;
 	}
 	path.reada = READA_BACK;
 
@@ -1263,7 +1261,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 				ret = add_inline_refs(info, leaf, i, bytenr,
 						      num_bytes, meta);
 				if (ret)
-					goto out;
+					return ret;
 
 				level = get_tree_block_level(&key, leaf, i);
 				if (level) {
@@ -1292,23 +1290,20 @@ static int scan_extents(struct btrfs_fs_info *info,
 			ret = add_keyed_ref(info, &key, leaf, i, bytenr,
 					    num_bytes);
 			if (ret)
-				goto out;
+				return ret;
 		}
 
 		ret = btrfs_next_leaf(root, &path);
 		if (ret != 0) {
 			if (ret < 0) {
 				error("next leaf failed: %d", ret);
-				goto out;
+				return ret;
 			}
 			break;
 		}
 	}
 done:
 	ret = 0;
-out:
-	btrfs_release_path(&path);
-
 	return ret;
 }
 
@@ -1626,7 +1621,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	int ret;
 	struct btrfs_root *root = info->quota_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_qgroup_info_item *info_item;
 	struct btrfs_key key;
 
@@ -1672,7 +1667,6 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 
 out:
 	btrfs_commit_transaction(trans, root);
-	btrfs_release_path(&path);
 
 	return ret;
 }
@@ -1682,7 +1676,7 @@ static int repair_qgroup_status(struct btrfs_fs_info *info, bool silent)
 	int ret;
 	struct btrfs_root *root = info->quota_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_qgroup_status_item *status_item;
 	bool simple = btrfs_fs_incompat(info, SIMPLE_QUOTA);
@@ -1721,7 +1715,6 @@ static int repair_qgroup_status(struct btrfs_fs_info *info, bool silent)
 
 out:
 	btrfs_commit_transaction(trans, root);
-	btrfs_release_path(&path);
 
 	return ret;
 }
