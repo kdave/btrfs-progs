@@ -224,7 +224,7 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *leaf;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int slot;
 	int ret;
@@ -272,7 +272,6 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 
 		path.slots[0]++;
 	}
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -414,7 +413,7 @@ int btrfs_remove_dev_extent(struct btrfs_fs_info *fs_info, u64 devid, u64 physic
 		.type = BTRFS_DEV_EXTENT_KEY,
 		.offset = physical,
 	};
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dev_extent *dext;
 	struct btrfs_device *dev;
 	u64 length;
