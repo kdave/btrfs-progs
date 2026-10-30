@@ -192,7 +192,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	struct btrfs_inode_item *ii;
 	u64 isize;
@@ -331,7 +331,6 @@ next:
 		read = min_t(u64, isize - start, len);
 	}
 out:
-	btrfs_release_path(&path);
 	if (!ret)
 		ret = read;
 	return ret;

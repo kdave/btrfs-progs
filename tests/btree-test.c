@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	int run_size = 300000;
 	int max_key =  100000000;
 	int tree_size = 2;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 

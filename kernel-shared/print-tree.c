@@ -1768,7 +1768,7 @@ static int next_sibling_tree_block(struct btrfs_fs_info *fs_info,
 static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 {
 	struct btrfs_fs_info *fs_info = root_eb->fs_info;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int root_level = btrfs_header_level(root_eb);
 	int cur_level;
 	int ret;
@@ -1790,23 +1790,20 @@ static void bfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
 		/* Use the leftmost tree block as a starting point */
 		ret = search_leftmost_tree_block(fs_info, &path, root_level);
 		if (ret < 0)
-			goto out;
+			return;
 
 		/* Print all sibling tree blocks */
 		while (1) {
 			btrfs_print_tree(path.nodes[cur_level], mode);
 			ret = next_sibling_tree_block(fs_info, &path);
 			if (ret < 0)
-				goto out;
+				return;
 			if (ret > 0) {
 				ret = 0;
 				break;
 			}
 		}
 	}
-out:
-	btrfs_release_path(&path);
-	return;
 }
 
 static void dfs_print_children(struct extent_buffer *root_eb, unsigned int mode)
