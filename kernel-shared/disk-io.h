@@ -113,7 +113,16 @@ enum btrfs_open_ctree_flags {
 	 * Use the superblock of the latest device for the transaction commit.
 	 */
 	OPEN_CTREE_USE_LATEST_BDEV		= (1U << 18),
+
+	/* To use which backup slot. */
+	OPEN_CTREE_BACKUP_SLOT_0		= (1U << 19),
+	OPEN_CTREE_BACKUP_SLOT_1		= (1U << 20),
+	OPEN_CTREE_BACKUP_SLOT_2		= (1U << 21),
+	OPEN_CTREE_BACKUP_SLOT_3		= (1U << 22),
 };
+#define OPEN_CTREE_BACKUP_SLOT_MASK		\
+	(OPEN_CTREE_BACKUP_SLOT_0 | OPEN_CTREE_BACKUP_SLOT_1 |\
+	 OPEN_CTREE_BACKUP_SLOT_2 | OPEN_CTREE_BACKUP_SLOT_3)
 
 /*
  * Modes of superblock access
@@ -176,9 +185,6 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices, u64 sb_bytenr,
 			  unsigned sbflags, int skip_devices);
-int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
-			  u64 chunk_root_bytenr);
-
 struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 			      unsigned flags);
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
