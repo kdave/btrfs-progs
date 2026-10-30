@@ -109,7 +109,7 @@ int btrfs_clear_v1_cache(struct btrfs_fs_info *fs_info)
 static int has_reloc_trees(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *tree_root = fs_info->tree_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	unsigned int found = 0;
 	int ret;
@@ -164,7 +164,6 @@ static int has_reloc_trees(struct btrfs_fs_info *fs_info)
 	}
 
 out:
-	btrfs_release_path(&path);
 	if (ret < 0)
 		return ret;
 	return found;
@@ -180,7 +179,7 @@ out:
 int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *dev_root = fs_info->dev_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_dev_replace_item *dri;
 	u64 replace_state;
@@ -198,10 +197,8 @@ int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
-	if (ret > 0) {
-		btrfs_release_path(&path);
+	if (ret > 0)
 		return 0;
-	}
 
 	/*
 	 * We still need to check if the dev_replace item to determine if there
@@ -209,7 +206,6 @@ int has_running_replace_or_balance(struct btrfs_fs_info *fs_info)
 	 */
 	dri = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dev_replace_item);
 	replace_state = btrfs_dev_replace_replace_state(path.nodes[0], dri);
-	btrfs_release_path(&path);
 	if (replace_state == BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED ||
 	    replace_state == BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED)
 		return 1;
@@ -384,7 +380,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key = { 0 };
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret = 0;
 	bool found_orphan = false;
 
@@ -394,7 +390,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 
 		ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 		if (ret < 0)
-			goto out;
+			return ret;
 
 		/*
 		 * We should be landing on an item, so if we're above the
@@ -409,8 +405,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 			fprintf(stderr,
 			"Failed to find a space info key at %llu [%llu %u %llu]\n",
 				cur_start, key.objectid, key.type, key.offset);
-			ret = -EINVAL;
-			goto out;
+			return -EINVAL;
 		}
 
 		bg = btrfs_lookup_block_group(fs_info, key.objectid);
@@ -435,8 +430,6 @@ static int check_free_space_tree(struct btrfs_root *root)
 		ret = -EINVAL;
 	else
 		ret = 0;
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -563,7 +556,7 @@ static int check_cache_range(struct btrfs_root *root,
 static int find_next_identity_remap_entry(struct btrfs_fs_info *fs_info, u64 *start, u64 *end)
 {
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	int ret;
 
@@ -572,10 +565,8 @@ static int find_next_identity_remap_entry(struct btrfs_fs_info *fs_info, u64 *st
 	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, fs_info->remap_root, &key, &path, 0, 0);
-	if (ret < 0) {
-		btrfs_release_path(&path);
+	if (ret < 0)
 		return ret;
-	}
 
 	while (1) {
 		leaf = path.nodes[0];
@@ -591,14 +582,11 @@ static int find_next_identity_remap_entry(struct btrfs_fs_info *fs_info, u64 *st
 		if (key.type == BTRFS_IDENTITY_REMAP_KEY) {
 			*start = key.objectid;
 			*end = key.objectid + key.offset - 1;
-			btrfs_release_path(&path);
 			return 0;
 		}
 
 		path.slots[0]++;
 	}
-
-	btrfs_release_path(&path);
 
 	return -ENOENT;
 }
@@ -606,7 +594,7 @@ static int find_next_identity_remap_entry(struct btrfs_fs_info *fs_info, u64 *st
 static int find_next_remap_backref_entry(struct btrfs_fs_info *fs_info, u64 *start, u64 *end)
 {
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	int ret;
 
@@ -615,10 +603,8 @@ static int find_next_remap_backref_entry(struct btrfs_fs_info *fs_info, u64 *sta
 	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, fs_info->remap_root, &key, &path, 0, 0);
-	if (ret < 0) {
-		btrfs_release_path(&path);
+	if (ret < 0)
 		return ret;
-	}
 
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
@@ -636,14 +622,11 @@ static int find_next_remap_backref_entry(struct btrfs_fs_info *fs_info, u64 *sta
 		if (key.type == BTRFS_REMAP_BACKREF_KEY) {
 			*start = key.objectid;
 			*end = key.objectid + key.offset - 1;
-			btrfs_release_path(&path);
 			return 0;
 		}
 
 		path.slots[0]++;
 	}
-
-	btrfs_release_path(&path);
 
 	return -ENOENT;
 }
@@ -886,20 +869,19 @@ int truncate_free_ino_items(struct btrfs_root *root)
 		struct btrfs_file_extent_item *fi;
 		struct btrfs_root *csum_root;
 		struct btrfs_key found_key;
-		struct btrfs_path path = { 0 };
+		BTRFS_PATH_AUTO_RELEASE(path);
 		u8 found_type;
 
 		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret < 0) {
+			btrfs_release_path(&path);
 			btrfs_abort_transaction(trans, ret);
-			goto out;
+			return ret;
 		} else if (ret > 0) {
 			ret = 0;
 			/* No more items, finished truncating */
-			if (path.slots[0] == 0) {
-				btrfs_release_path(&path);
-				goto out;
-			}
+			if (path.slots[0] == 0)
+				return ret;
 			path.slots[0]--;
 		}
 		fi = NULL;
@@ -910,7 +892,6 @@ int truncate_free_ino_items(struct btrfs_root *root)
 		/* Ino cache also has free space bitmaps in the fs stree */
 		if (found_key.objectid != BTRFS_FREE_INO_OBJECTID &&
 		    found_key.objectid != BTRFS_FREE_SPACE_OBJECTID) {
-			btrfs_release_path(&path);
 			/* Now delete the FREE_SPACE_OBJECTID */
 			if (key.objectid == BTRFS_FREE_INO_OBJECTID) {
 				key.objectid = BTRFS_FREE_SPACE_OBJECTID;
@@ -939,9 +920,9 @@ int truncate_free_ino_items(struct btrfs_root *root)
 						root->objectid,
 						BTRFS_FREE_INO_OBJECTID, 0);
 			if (ret < 0) {
-				btrfs_abort_transaction(trans, ret);
 				btrfs_release_path(&path);
-				goto out;
+				btrfs_abort_transaction(trans, ret);
+				return ret;
 			}
 
 			csum_root = btrfs_csum_root(trans->fs_info,
@@ -950,23 +931,21 @@ int truncate_free_ino_items(struct btrfs_root *root)
 					      extent_disk_bytenr,
 					      extent_num_bytes);
 			if (ret < 0) {
-				btrfs_abort_transaction(trans, ret);
 				btrfs_release_path(&path);
-				goto out;
+				btrfs_abort_transaction(trans, ret);
+				return ret;
 			}
 		}
 
 		ret = btrfs_del_item(trans, root, &path);
 		if (ret < 0) {
-			btrfs_abort_transaction(trans, ret);
 			btrfs_release_path(&path);
-			goto out;
+			btrfs_abort_transaction(trans, ret);
+			return ret;
 		}
-		btrfs_release_path(&path);
 	}
 
 	btrfs_commit_transaction(trans, root);
-out:
 	return ret;
 }
 
@@ -986,7 +965,7 @@ static int find_next_root(struct btrfs_fs_info *fs_info, u64 rootid,
 		.type = BTRFS_ROOT_ITEM_KEY,
 		.offset = 0,
 	};
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret;
 
 	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path, 0, 0);
@@ -996,16 +975,12 @@ static int find_next_root(struct btrfs_fs_info *fs_info, u64 rootid,
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		if (key.type == BTRFS_ROOT_ITEM_KEY && key.objectid >= rootid) {
 			memcpy(found_key, &key, sizeof(key));
-			ret = 0;
-			goto out;
+			return 0;
 		}
 		ret = btrfs_next_item(fs_info->tree_root, &path);
 		if (ret)
-			goto out;
+			return ret;
 	}
-out:
-	btrfs_release_path(&path);
-	return ret;
 }
 
 int clear_ino_cache_items(struct btrfs_fs_info *fs_info)

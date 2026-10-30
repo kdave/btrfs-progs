@@ -802,7 +802,7 @@ static int create_image(struct btrfs_root *root,
 {
 	struct btrfs_inode_item buf;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct cache_extent *cache;
 	struct cache_tree used_tmp;
@@ -1510,7 +1510,7 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 			       u64 total_size, char *reserved_ranges[])
 {
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_fs_info *fs_info = image_root->fs_info;
 	u64 checked_bytes = 0;
 	int ret;
@@ -1529,7 +1529,6 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to iterate file extents at offset 0: %m");
-		btrfs_release_path(&path);
 		return ret;
 	}
 
@@ -1674,7 +1673,7 @@ static int do_rollback(const char *devname)
 	struct btrfs_root *image_root;
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dir_item *dir;
 	struct btrfs_inode_item *inode_item;
 	struct btrfs_root_ref *root_ref_item;
@@ -1775,7 +1774,6 @@ static int do_rollback(const char *devname)
 			image_name, strlen(image_name), 0);
 
 	if (!dir || IS_ERR(dir)) {
-		btrfs_release_path(&path);
 		if (dir)
 			ret = PTR_ERR(dir);
 		else
@@ -1793,7 +1791,6 @@ static int do_rollback(const char *devname)
 	ret = btrfs_lookup_inode(NULL, image_root, &path, &key, 0);
 
 	if (ret < 0) {
-		btrfs_release_path(&path);
 		errno = -ret;
 		error("unable to find inode %llu: %m", ino);
 		goto close_fs;

@@ -978,7 +978,7 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	int s_inode_size;
 	struct btrfs_inode_item btrfs_inode;
 	struct btrfs_key inode_key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 
 	inode_key.objectid = objectid;
 	inode_key.type = BTRFS_INODE_ITEM_KEY;
@@ -1062,7 +1062,6 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	write_extent_buffer(path.nodes[0], &btrfs_inode,
 			    btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 			    sizeof(btrfs_inode));
-	btrfs_release_path(&path);
 	return 0;
 }
 

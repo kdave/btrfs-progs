@@ -251,7 +251,6 @@ int record_file_blocks(struct blk_iterate_data *data,
 	int ret = 0;
 	struct btrfs_root *root = data->root;
 	struct btrfs_root *convert_root = data->convert_root;
-	struct btrfs_path path = { 0 };
 	u32 sectorsize = root->fs_info->sectorsize;
 	u64 file_pos = file_block * sectorsize;
 	u64 old_disk_bytenr = disk_block * sectorsize;
@@ -269,6 +268,7 @@ int record_file_blocks(struct blk_iterate_data *data,
 	 */
 	while (cur_off < old_disk_bytenr + num_bytes) {
 		struct btrfs_key key;
+		BTRFS_PATH_AUTO_RELEASE(path);
 		struct btrfs_file_extent_item *fi;
 		struct extent_buffer *node;
 		int slot;
@@ -328,7 +328,6 @@ int record_file_blocks(struct blk_iterate_data *data,
 		 * need to waste CPU cycles now.
 		 */
 	}
-	btrfs_release_path(&path);
 	return ret;
 }
 

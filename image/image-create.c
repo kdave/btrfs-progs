@@ -779,7 +779,7 @@ int create_metadump(const char *input, FILE *out, int num_threads,
 		    int walk_trees, bool dump_data)
 {
 	struct btrfs_root *root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct metadump_struct metadump;
 	int ret;
 	int err = 0;

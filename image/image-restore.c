@@ -1506,7 +1506,7 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *root = fs_info->dev_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	int slot;
@@ -1531,12 +1531,10 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 			if (ret < 0) {
 				errno = -ret;
 				error("failed to search dev tree: %m");
-				goto out;
+				return ret;
 			}
-			if (ret > 0) {
-				ret = 0;
-				goto out;
-			}
+			if (ret > 0)
+				return 0;
 		}
 
 		btrfs_item_key_to_cpu(leaf, &key, slot);
@@ -1547,11 +1545,9 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 			errno = -ret;
 			error("failed to delete dev extent %llu, %llu: %m",
 				key.objectid, key.offset);
-			goto out;
+			return ret;
 		}
 	}
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1653,7 +1649,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_ext;
 	struct btrfs_device *dev;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_key key;
@@ -1677,12 +1673,10 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 		errno = -ret;
 		error("failed to locate last dev extent of devid %llu: %m",
 			devid);
-		btrfs_release_path(&path);
 		return ret;
 	}
 	if (ret == 0) {
 		error("found invalid dev extent devid %llu offset -1", devid);
-		btrfs_release_path(&path);
 		return -EUCLEAN;
 	}
 	ret = btrfs_previous_item(fs_info->dev_root, &path, devid,
@@ -1693,7 +1687,6 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 		errno = -ret;
 		error("failed to locate last dev extent of devid %llu: %m",
 			devid);
-		btrfs_release_path(&path);
 		return ret;
 	}
 
@@ -1776,7 +1769,6 @@ again:
 		path.slots[0]++;
 	}
 
-	btrfs_release_path(&path);
 	return 0;
 }
 
