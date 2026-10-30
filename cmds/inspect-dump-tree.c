@@ -272,7 +272,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_root_item ri;
 	struct extent_buffer *leaf;
@@ -364,7 +364,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			block_bytenr = arg_strtou64(optarg);
 			ret = dump_add_tree_block(&block_root, block_bytenr);
 			if (ret < 0)
-				goto out;
+				return !!ret;
 			break;
 		case 't':
 			ret = parse_tree_id(optarg, &tree_id);
@@ -412,7 +412,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	info = open_ctree_fs_info(&oca);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
-		goto out;
+		return !!ret;
 	}
 
 	print_mode = follow | traverse | csum_mode;
@@ -426,7 +426,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	root = info->fs_root;
 	if (!root) {
 		error("unable to open %s", argv[optind]);
-		goto out;
+		return !!ret;
 	}
 
 	if (!(extent_only || uuid_tree_only || tree_id)) {
@@ -698,8 +698,8 @@ no_node:
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	pr_default("uuid %s\n", uuidbuf);
 close_root:
+	btrfs_release_path(&path);
 	ret = close_ctree(root);
-out:
 	return !!ret;
 }
 DEFINE_SIMPLE_COMMAND(inspect_dump_tree, "dump-tree");

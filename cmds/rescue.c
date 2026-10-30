@@ -374,7 +374,6 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *uuid_root = fs_info->uuid_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = {};
 	struct btrfs_key key = {};
 	int ret;
 
@@ -387,6 +386,7 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 		return PTR_ERR(trans);
 
 	while (1) {
+		BTRFS_PATH_AUTO_RELEASE(path);
 		int nr;
 
 		ret = btrfs_search_slot(trans, uuid_root, &key, &path, -1, 1);
@@ -396,13 +396,10 @@ static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
 		UASSERT(path.slots[0] == 0);
 
 		nr = btrfs_header_nritems(path.nodes[0]);
-		if (nr == 0) {
-			btrfs_release_path(&path);
+		if (nr == 0)
 			break;
-		}
 
 		ret = btrfs_del_items(trans, uuid_root, &path, 0, nr);
-		btrfs_release_path(&path);
 		if (ret < 0)
 			goto out;
 	}
