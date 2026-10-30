@@ -1348,8 +1348,10 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans)
 		key.offset = (u64)-1;
 
 		cur_root = btrfs_read_fs_root(gfs_info, &key);
-		if (IS_ERR(cur_root) || !cur_root) {
-			fprintf(stderr, "Fail to read fs/subvol tree: %lld\n",
+		if (IS_ERR(cur_root)) {
+			ret = PTR_ERR(cur_root);
+			errno = -ret;
+			fprintf(stderr, "Fail to read fs/subvol tree %lld: %m\n",
 				key.objectid);
 			return ret;
 		}
