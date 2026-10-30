@@ -881,7 +881,7 @@ int truncate_free_ino_items(struct btrfs_root *root)
 			ret = 0;
 			/* No more items, finished truncating */
 			if (path.slots[0] == 0)
-				return ret;
+				break;
 			path.slots[0]--;
 		}
 		fi = NULL;
@@ -945,7 +945,11 @@ int truncate_free_ino_items(struct btrfs_root *root)
 		}
 	}
 
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret < 0) {
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+	}
 	return ret;
 }
 
