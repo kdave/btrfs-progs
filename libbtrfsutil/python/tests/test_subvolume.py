@@ -850,11 +850,12 @@ class TestSubvolume(BtrfsTestCase):
     # Only the new API
     def _test_subvolume_iterator_race(self):
         procs = []
+        ctx = multiprocessing.get_context('fork')
         fd = os.open('.', os.O_RDONLY | os.O_DIRECTORY)
         try:
             for i in range(10):
                 procs.append(
-                    multiprocessing.Process(
+                    ctx.Process(
                         target=self._create_and_delete_subvolume,
                         args=(i,),
                         daemon=True,
