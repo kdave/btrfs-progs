@@ -162,7 +162,7 @@ out:
 static int inherit_inode_flags(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 ino, u64 parent_ino)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_inode_item *iitem;
 	u64 parent_inode_flags;
@@ -177,7 +177,7 @@ static int inherit_inode_flags(struct btrfs_trans_handle *trans,
 	if (ret > 0)
 		ret = -ENOENT;
 	if (ret < 0)
-		goto out;
+		return ret;
 
 	iitem = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
 	parent_inode_flags = btrfs_inode_flags(path.nodes[0], iitem);
@@ -189,7 +189,7 @@ static int inherit_inode_flags(struct btrfs_trans_handle *trans,
 	if (ret > 0)
 		ret = -ENOENT;
 	if (ret < 0)
-		goto out;
+		return ret;
 	iitem = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
 	child_inode_flags = btrfs_inode_flags(path.nodes[0], iitem);
 
@@ -206,8 +206,6 @@ static int inherit_inode_flags(struct btrfs_trans_handle *trans,
 			child_inode_flags |= BTRFS_INODE_NODATASUM;
 	}
 	btrfs_set_inode_flags(path.nodes[0], iitem, child_inode_flags);
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 

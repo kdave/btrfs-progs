@@ -2033,7 +2033,7 @@ static int btrfs_stripe_tree_logical_to_physical(struct btrfs_fs_info *fs_info,
 						struct btrfs_bio_stripe *stripe)
 {
 	struct btrfs_root *root = fs_info->stripe_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	int slot;
@@ -2061,7 +2061,7 @@ static int btrfs_stripe_tree_logical_to_physical(struct btrfs_fs_info *fs_info,
 			if (ret == 0)
 				continue;
 			if (ret < 0)
-				goto error;
+				return ret;
 			break;
 		}
 
@@ -2080,15 +2080,12 @@ static int btrfs_stripe_tree_logical_to_physical(struct btrfs_fs_info *fs_info,
 			    btrfs_raid_stride_devid_nr(leaf, extent, i))
 				continue;
 			stripe->physical = btrfs_raid_stride_physical_nr(leaf, extent, i);
-			btrfs_release_path(&path);
 			return 0;
 		}
 next:
 		path.slots[0]++;
 	}
 
-	btrfs_release_path(&path);
-error:
 	return ret;
 }
 
@@ -3053,7 +3050,7 @@ static int check_dev_extent_beyond_bytenr(struct btrfs_fs_info *fs_info,
 					  u64 physical)
 {
 	struct btrfs_root *root = fs_info->dev_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dev_extent *dext;
 	struct btrfs_key key;
 	u64 dext_len;
@@ -3088,7 +3085,6 @@ static int check_dev_extent_beyond_bytenr(struct btrfs_fs_info *fs_info,
 	last_dev_extent_end = dext_len + key.offset;
 
 out:
-	btrfs_release_path(&path);
 	if (ret < 0)
 		return ret;
 	if (last_dev_extent_end <= physical)
@@ -3102,7 +3098,7 @@ static int reset_device_item_total_bytes(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
 	struct btrfs_dev_item *di;
 	u64 old_bytes = device->total_bytes;
@@ -3143,10 +3139,8 @@ static int reset_device_item_total_bytes(struct btrfs_fs_info *fs_info,
 	if (ret < 0) {
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
-		btrfs_release_path(&path);
 		return ret;
 	}
-	btrfs_release_path(&path);
 	printf("Fixed device size for devid %llu, old size: %llu new size: %llu\n",
 		device->devid, old_bytes, device->total_bytes);
 	return 1;
@@ -3154,7 +3148,6 @@ static int reset_device_item_total_bytes(struct btrfs_fs_info *fs_info,
 err:
 	/* We haven't modified anything, it's OK to commit current trans */
 	btrfs_commit_transaction(trans, chunk_root);
-	btrfs_release_path(&path);
 	return ret;
 }
 
