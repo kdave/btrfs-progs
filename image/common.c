@@ -148,7 +148,7 @@ int update_disk_super_on_device(struct btrfs_fs_info *info,
 {
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_super_block disk_super;
 	char dev_uuid[BTRFS_UUID_SIZE];
