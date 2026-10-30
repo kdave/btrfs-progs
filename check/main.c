@@ -7963,6 +7963,14 @@ static int fixup_extent_flags(struct extent_record *rec)
 
 	if (!btrfs_fs_incompat(gfs_info, SKINNY_METADATA))
 		metadata_item = false;
+
+	trans = btrfs_start_transaction(root, 0);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 retry:
 	key.objectid = rec->start;
 	if (metadata_item) {
@@ -7973,14 +7981,6 @@ retry:
 		key.offset = rec->max_size;
 	}
 
-	trans = btrfs_start_transaction(root, 0);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error_msg(ERROR_MSG_START_TRANS, "%m");
-		return ret;
-	}
-
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret < 0) {
 		btrfs_release_path(&path);
@@ -7989,6 +7989,7 @@ retry:
 	} else if (ret) {
 		if (key.type == BTRFS_METADATA_ITEM_KEY) {
 			metadata_item = false;
+			btrfs_release_path(&path);
 			goto retry;
 		}
 		fprintf(stderr, "Didn't find extent for %llu\n", rec->start);
