@@ -32,11 +32,13 @@
 #include "kernel-shared/compression.h"
 #include "kernel-shared/file-item.h"
 #include "kernel-shared/tree-checker.h"
+#include "kernel-shared/print-tree.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
 #include "check/mode-common.h"
 #include "check/repair.h"
+#include "check/common.h"
 
 struct task_ctx g_task_ctx = { 0 };
 
@@ -1704,4 +1706,63 @@ int repair_subvol_orphan_item(struct btrfs_fs_info *fs_info, u64 rootid)
 	}
 	pr_default("Added back missing orphan item for subvolume %llu\n", rootid);
 	return 0;
+}
+
+static void report_mismatch_key_root(u8 key_type, u64 rootid)
+{
+	fprintf(stderr, "Invalid key type(");
+	print_key_type(stderr, 0, key_type);
+	fprintf(stderr, ") found in root(");
+	print_objectid(stderr, rootid, 0);
+	fprintf(stderr, ")\n");
+}
+
+/*
+ * Check if the key is valid with its extent buffer.
+ *
+ * This is a early check in case invalid key exists in a extent buffer
+ * This is not comprehensive yet, but should prevent wrong key/item passed
+ * further
+ */
+int check_type_with_root(u64 rootid, u8 key_type)
+{
+	switch (key_type) {
+	/* Only valid in chunk tree */
+	case BTRFS_DEV_ITEM_KEY:
+	case BTRFS_CHUNK_ITEM_KEY:
+		if (rootid != BTRFS_CHUNK_TREE_OBJECTID)
+			goto err;
+		break;
+	/* valid in csum and log tree */
+	case BTRFS_CSUM_TREE_OBJECTID:
+		if (!(rootid == BTRFS_TREE_LOG_OBJECTID ||
+		      is_fstree(rootid)))
+			goto err;
+		break;
+	case BTRFS_EXTENT_ITEM_KEY:
+	case BTRFS_METADATA_ITEM_KEY:
+		if (rootid != BTRFS_EXTENT_TREE_OBJECTID)
+			goto err;
+		break;
+	case BTRFS_BLOCK_GROUP_ITEM_KEY:
+		if (btrfs_fs_compat_ro(gfs_info, BLOCK_GROUP_TREE)) {
+			if (rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
+				goto err;
+		} else if (rootid != BTRFS_EXTENT_TREE_OBJECTID) {
+			goto err;
+		}
+		break;
+	case BTRFS_ROOT_ITEM_KEY:
+		if (rootid != BTRFS_ROOT_TREE_OBJECTID)
+			goto err;
+		break;
+	case BTRFS_DEV_EXTENT_KEY:
+		if (rootid != BTRFS_DEV_TREE_OBJECTID)
+			goto err;
+		break;
+	}
+	return 0;
+err:
+	report_mismatch_key_root(key_type, rootid);
+	return -EINVAL;
 }

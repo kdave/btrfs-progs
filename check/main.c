@@ -90,6 +90,7 @@ bool check_data_csum = false;
 static bool check_qgroup_accounting = true;
 static bool found_free_ino_cache = false;
 static bool found_unknown_key = false;
+static bool found_invalid_key_type = false;
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -6390,63 +6391,30 @@ full_backref:
 	return 0;
 }
 
-static void report_mismatch_key_root(u8 key_type, u64 rootid)
-{
-	fprintf(stderr, "Invalid key type(");
-	print_key_type(stderr, 0, key_type);
-	fprintf(stderr, ") found in root(");
-	print_objectid(stderr, rootid, 0);
-	fprintf(stderr, ")\n");
-}
-
 /*
- * Check if the key is valid with its extent buffer.
- *
- * This is a early check in case invalid key exists in a extent buffer
- * This is not comprehensive yet, but should prevent wrong key/item passed
- * further
+ * Queue an item to be deleted from the tree @root_id. In repair mode the
+ * items are deleted after all the checks, as the extent tree walk must not
+ * change the trees it is reading. A repair can run the walk more than once,
+ * so an item that is already queued is not added again.
  */
-static int check_type_with_root(u64 rootid, u8 key_type)
+static int queue_bad_item(const struct btrfs_key *key, u64 root_id)
 {
-	switch (key_type) {
-	/* Only valid in chunk tree */
-	case BTRFS_DEV_ITEM_KEY:
-	case BTRFS_CHUNK_ITEM_KEY:
-		if (rootid != BTRFS_CHUNK_TREE_OBJECTID)
-			goto err;
-		break;
-	/* valid in csum and log tree */
-	case BTRFS_CSUM_TREE_OBJECTID:
-		if (!(rootid == BTRFS_TREE_LOG_OBJECTID ||
-		      is_fstree(rootid)))
-			goto err;
-		break;
-	case BTRFS_EXTENT_ITEM_KEY:
-	case BTRFS_METADATA_ITEM_KEY:
-		if (rootid != BTRFS_EXTENT_TREE_OBJECTID)
-			goto err;
-		break;
-	case BTRFS_BLOCK_GROUP_ITEM_KEY:
-		if (btrfs_fs_compat_ro(gfs_info, BLOCK_GROUP_TREE)) {
-			if (rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
-				goto err;
-		} else if (rootid != BTRFS_EXTENT_TREE_OBJECTID) {
-			goto err;
-		}
-		break;
-	case BTRFS_ROOT_ITEM_KEY:
-		if (rootid != BTRFS_ROOT_TREE_OBJECTID)
-			goto err;
-		break;
-	case BTRFS_DEV_EXTENT_KEY:
-		if (rootid != BTRFS_DEV_TREE_OBJECTID)
-			goto err;
-		break;
+	struct bad_item *bad;
+
+	list_for_each_entry(bad, &delete_items, list) {
+		if (bad->root_id == root_id &&
+		    !btrfs_comp_cpu_keys(&bad->key, key))
+			return 0;
 	}
+
+	bad = malloc(sizeof(struct bad_item));
+	if (!bad)
+		return -ENOMEM;
+	INIT_LIST_HEAD(&bad->list);
+	bad->key = *key;
+	bad->root_id = root_id;
+	list_add_tail(&bad->list, &delete_items);
 	return 0;
-err:
-	report_mismatch_key_root(key_type, rootid);
-	return -EINVAL;
 }
 
 static int run_next_block(struct btrfs_root *root,
@@ -6610,6 +6578,16 @@ static int run_next_block(struct btrfs_root *root,
 			if (check_type_with_root(btrfs_header_owner(buf),
 						 key.type)) {
 				fprintf(stderr, "ignoring invalid key\n");
+				/*
+				 * The item is skipped so the walk can go on.
+				 * In repair mode it is deleted from its owner
+				 * later, otherwise it is still an error. A
+				 * block with full backrefs has no single owner
+				 * to delete it from.
+				 */
+				if (!opt_check_repair || !owner ||
+				    queue_bad_item(&key, owner))
+					found_invalid_key_type = true;
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_ITEM_KEY) {
@@ -6698,20 +6676,11 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			}
 			if (key.type == BTRFS_ORPHAN_ITEM_KEY) {
-				struct bad_item *bad;
-
 				if (key.objectid == BTRFS_ORPHAN_OBJECTID)
 					continue;
 				if (!owner)
 					continue;
-				bad = malloc(sizeof(struct bad_item));
-				if (!bad)
-					continue;
-				INIT_LIST_HEAD(&bad->list);
-				memcpy(&bad->key, &key,
-				       sizeof(struct btrfs_key));
-				bad->root_id = owner;
-				list_add_tail(&bad->list, &delete_items);
+				queue_bad_item(&key, owner);
 				continue;
 			}
 			if (key.type != BTRFS_EXTENT_DATA_KEY)
@@ -9432,6 +9401,7 @@ static int check_chunks_and_extents(void)
 	}
 
 again:
+	found_invalid_key_type = false;
 	ret = load_super_root(&normal_trees, gfs_info->tree_root);
 	if (ret < 0)
 		goto out;
@@ -9497,6 +9467,8 @@ again:
 	ret = check_devices(&dev_cache, &dev_extent_cache);
 	if (ret && err)
 		ret = err;
+	if (!ret && found_invalid_key_type)
+		ret = -EUCLEAN;
 
 out:
 	if (opt_check_repair) {
@@ -10019,11 +9991,19 @@ static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 	}
 
 	ret = btrfs_search_slot(trans, root, &bad->key, &path, -1, 1);
-	if (ret) {
-		if (ret > 0)
-			ret = 0;
-		goto out;
+	if (ret > 0) {
+		/*
+		 * The item was seen in this tree during the check, so not
+		 * finding it means it is not deleted. A key out of order with
+		 * the rest of the tree can lead the search to another leaf.
+		 */
+		error("bad item [%llu,%u,%llu] not found in root %llu",
+		      bad->key.objectid, bad->key.type, bad->key.offset,
+		      bad->root_id);
+		ret = -ENOENT;
 	}
+	if (ret)
+		goto out;
 	ret = btrfs_del_item(trans, root, &path);
 out:
 	btrfs_commit_transaction(trans, root);

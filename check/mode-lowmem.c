@@ -5149,6 +5149,20 @@ again:
 	btrfs_item_key_to_cpu(eb, &key, slot);
 	type = key.type;
 
+	/*
+	 * A key that does not belong in this tree is skipped, like the
+	 * original mode does, so the item is not checked as what it claims
+	 * to be. It is still an error, and repair deletes the item.
+	 */
+	if (check_type_with_root(btrfs_header_owner(eb), type)) {
+		ret = INVALID_KEY_TYPE;
+		if (opt_check_repair)
+			ret = delete_item(root, path);
+		err |= ret;
+		++path->slots[0];
+		goto again;
+	}
+
 	switch (type) {
 	case BTRFS_EXTENT_DATA_KEY:
 		ret = check_extent_data_item(root, path, nrefs, account_bytes);
