@@ -1682,7 +1682,7 @@ static int update_inode_item(struct btrfs_trans_handle *trans,
 			     const struct btrfs_inode_item *inode_item,
 			     u64 ino)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = {
 		.objectid = ino,
 		.type = BTRFS_INODE_ITEM_KEY,
@@ -1694,14 +1694,11 @@ static int update_inode_item(struct btrfs_trans_handle *trans,
 	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
 	if (ret > 0)
 		ret = -ENOENT;
-	if (ret < 0) {
-		btrfs_release_path(&path);
+	if (ret < 0)
 		return ret;
-	}
 	item_ptr_off = btrfs_item_ptr_offset(path.nodes[0], path.slots[0]);
 	write_extent_buffer(path.nodes[0], inode_item, item_ptr_off, sizeof(*inode_item));
 	btrfs_mark_buffer_dirty(path.nodes[0]);
-	btrfs_release_path(&path);
 	return 0;
 }
 
@@ -1850,7 +1847,7 @@ out:
 static int read_inode_item(struct btrfs_root *root, struct btrfs_inode_item *inode_item,
 			   u64 ino)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -1862,14 +1859,12 @@ static int read_inode_item(struct btrfs_root *root, struct btrfs_inode_item *ino
 	if (ret > 0)
 		ret = -ENOENT;
 	if (ret < 0)
-		goto out;
+		return ret;
 
 	read_extent_buffer(path.nodes[0], inode_item,
 			   btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 			   sizeof(*inode_item));
-out:
-	btrfs_release_path(&path);
-	return ret;
+	return 0;
 }
 
 static int ftw_add_inode(const char *full_path, const struct stat *st,
@@ -2123,7 +2118,7 @@ static int ftw_add_inode(const char *full_path, const struct stat *st,
 
 static int set_default_subvolume(struct btrfs_trans_handle *trans)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dir_item *di;
 	struct btrfs_key location;
 	struct extent_buffer *leaf;
@@ -2134,8 +2129,6 @@ static int set_default_subvolume(struct btrfs_trans_handle *trans)
 				   btrfs_super_root_dir(trans->fs_info->super_copy),
 				   "default", 7, 1);
 	if (IS_ERR_OR_NULL(di)) {
-		btrfs_release_path(&path);
-
 		if (di)
 			return PTR_ERR(di);
 		else
@@ -2388,7 +2381,7 @@ static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_root *dev_root = fs_info->dev_root;
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_dev_extent *de;
 	int ret;
 
@@ -2399,29 +2392,25 @@ static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
 	if (ret == 0) {
 		error("DEV_EXTENT for devid %llu not found", devid);
-		ret = -EUCLEAN;
-		goto out;
+		return -EUCLEAN;
 	}
 
 	ret = btrfs_previous_item(dev_root, &path, devid, BTRFS_DEV_EXTENT_KEY);
 	if (ret < 0)
-		goto out;
+		return ret;
 
 	/* No dev_extent at all, not really possible for rootdir case */
 	if (ret > 0) {
 		*size_ret = 0;
-		ret = -EUCLEAN;
-		goto out;
+		return -EUCLEAN;
 	}
 
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	de = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			    struct btrfs_dev_extent);
 	*size_ret = key.offset + btrfs_dev_extent_length(path.nodes[0], de);
-out:
-	btrfs_release_path(&path);
 
-	return ret;
+	return 0;
 }
 
 /*
@@ -2439,7 +2428,7 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dev_item *di;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -2486,7 +2475,6 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 	}
-	btrfs_release_path(&path);
 	return ret;
 
 err:

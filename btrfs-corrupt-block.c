@@ -910,6 +910,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		{
 		u64 orig = btrfs_header_generation(eb);
 		u64 bogus = generate_u64(orig);
+		const u64 start = eb->start;
 
 		btrfs_set_header_generation(eb, bogus);
 		csum_tree_block_size(eb, fs_info->csum_size, 0,
@@ -919,7 +920,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to write extent buffer at %llu: %m",
-				eb->start);
+			      start);
 			return ret;
 		}
 		break;
@@ -928,7 +929,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		{
 		struct btrfs_trans_handle *trans;
 		struct btrfs_root *root;
-		struct btrfs_path *path;
+		BTRFS_PATH_AUTO_FREE(path);
 		struct btrfs_key key, root_key;
 		u64 root_objectid;
 		u8 level;
@@ -947,7 +948,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 
 		root = btrfs_read_fs_root(fs_info, &root_key);
 		if (IS_ERR(root)) {
-			error("couldn't find owner root %llu", key.objectid);
+			error("couldn't find owner root %llu", root_key.objectid);
 			return PTR_ERR(root);
 		}
 
@@ -957,7 +958,6 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 
 		trans = btrfs_start_transaction(root, 1);
 		if (IS_ERR(trans)) {
-			btrfs_free_path(path);
 			ret = PTR_ERR(trans);
 			errno = -ret;
 			error_msg(ERROR_MSG_START_TRANS, "%m");
@@ -968,14 +968,17 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 		if (ret < 0) {
 			error("error searching to node %d", ret);
-			btrfs_free_path(path);
 			btrfs_abort_transaction(trans, ret);
 			return ret;
 		}
-		eb = path->nodes[level];
 		shift_items(root, path->nodes[level]);
 		btrfs_mark_buffer_dirty(path->nodes[level]);
-		btrfs_commit_transaction(trans, root);
+		btrfs_release_path(path);
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		}
 		break;
 		}
 	default:
@@ -1502,7 +1505,7 @@ int main(int argc, char **argv)
 	}
 	if (chunk_rec) {
 		struct btrfs_trans_handle *trans;
-		struct btrfs_path *path;
+		BTRFS_PATH_AUTO_FREE(path);
 		int del;
 
 		if (logical == (u64)-1)
@@ -1511,21 +1514,30 @@ int main(int argc, char **argv)
 		path = btrfs_alloc_path();
 		if (!path) {
 			error_mem(NULL);
+			ret = -ENOMEM;
 			goto out_close;
 		}
 
 		if (find_chunk_offset(root->fs_info->chunk_root, path,
 				      logical) != 0) {
-			btrfs_free_path(path);
+			ret = -ENOENT;
 			goto out_close;
 		}
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
 		ret = corrupt_item_nocow(trans, root->fs_info->chunk_root,
 					 path, del);
-		if (ret < 0)
+		btrfs_release_path(path);
+		if (ret < 0) {
 			error("failed to corrupt chunk record");
-		btrfs_commit_transaction(trans, root);
+			btrfs_abort_transaction(trans, ret);
+			goto out_close;
+		}
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		}
 		goto out_close;
 	}
 	if (chunk_tree) {

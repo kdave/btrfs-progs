@@ -266,7 +266,7 @@ err:
 
 static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *root)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -299,7 +299,7 @@ static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *roo
 		/* This will ensure this leaf and all its parent get COWed */
 		ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 		if (ret < 0)
-			goto out;
+			return ret;
 		ret = 0;
 		btrfs_item_key_to_cpu(path.nodes[0], &found_key, 0);
 		UASSERT(btrfs_comp_cpu_keys(&key, &found_key) == 0);
@@ -307,15 +307,10 @@ static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *roo
 next:
 		ret = btrfs_next_leaf(root, &path);
 		if (ret < 0)
-			goto out;
-		if (ret > 0) {
-			ret = 0;
-			goto out;
-		}
+			return ret;
+		if (ret > 0)
+			return 0;
 	}
-out:
-	btrfs_release_path(&path);
-	return ret;
 }
 
 static int recow_global_roots(struct btrfs_trans_handle *trans)
@@ -712,7 +707,6 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *root = btrfs_block_group_root(fs_info);
 	struct btrfs_key key;
 	struct btrfs_key found_key;
-	struct btrfs_path path = { 0 };
 	int ret = 0;
 
 	trans = btrfs_start_transaction(root, 1);
@@ -728,6 +722,8 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 	key.offset = 0;
 
 	while (1) {
+		BTRFS_PATH_AUTO_RELEASE(path);
+
 		/*
 		 * as the rest of the loop may modify the tree, we need to
 		 * start a new search each time.
@@ -789,7 +785,6 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 				  BTRFS_BLOCK_GROUP_DATA))
 				alloc->mixed -= found_key.offset;
 		}
-		btrfs_release_path(&path);
 		key.objectid = found_key.objectid + found_key.offset;
 	}
 out:
@@ -800,7 +795,6 @@ out:
 			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		}
 	}
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -887,7 +881,7 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 			       struct btrfs_fs_info *fs_info,
 			       u64 qgroupid)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_root *quota_root = fs_info->quota_root;
 	struct btrfs_key key;
 	int ret;
@@ -912,7 +906,6 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 	key.offset = qgroupid;
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(struct btrfs_qgroup_limit_item));
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -929,7 +922,7 @@ static int touch_root_subvol(struct btrfs_fs_info *fs_info)
 	};
 	struct extent_buffer *leaf;
 	int slot;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret;
 
 	trans = btrfs_start_transaction(fs_info->fs_root, 1);
@@ -952,11 +945,9 @@ static int touch_root_subvol(struct btrfs_fs_info *fs_info)
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
 	}
-	btrfs_release_path(&path);
 	return 0;
 fail:
 	btrfs_abort_transaction(trans, ret);
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -965,7 +956,7 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	struct btrfs_trans_handle *trans;
 	struct btrfs_qgroup_status_item *qsi;
 	struct btrfs_root *quota_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int qgroup_repaired = 0;
 	bool simple = btrfs_fs_incompat(fs_info, SIMPLE_QUOTA);
@@ -1405,7 +1396,7 @@ static int discard_all_devices(struct btrfs_fs_info *fs_info)
 static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profile)
 {
 	struct btrfs_root *free_space_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	int ret;
 	struct btrfs_key key = {
@@ -1453,7 +1444,7 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 		if (key.type == BTRFS_FREE_SPACE_EXTENT_KEY) {
 			ret = queue_discard_logical(fs_info, key.objectid, key.offset);
 			if (ret < 0)
-				goto out;
+				return ret;
 		} else if (key.type == BTRFS_FREE_SPACE_BITMAP_KEY) {
 			int size, nrbits;
 			void *bitmap;
@@ -1462,8 +1453,7 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 			size = btrfs_item_size(leaf, path.slots[0]);
 			bitmap = malloc(size);
 			if (!bitmap) {
-				ret = -ENOMEM;
-				goto out;
+				return -ENOMEM;
 			}
 
 			read_extent_buffer(leaf, bitmap,
@@ -1483,7 +1473,7 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 				ret = queue_discard_logical(fs_info, addr, length);
 				if (ret < 0) {
 					free(bitmap);
-					goto out;
+					return ret;
 				}
 
 				start_bit = find_next_bit_le(bitmap, nrbits, end_bit);
@@ -1498,10 +1488,6 @@ static int discard_free_space(struct btrfs_fs_info *fs_info, u64 metadata_profil
 
 	/* Every discard range is properly queued. Now submit the real discard request. */
 	return discard_all_devices(fs_info);
-
-out:
-	btrfs_release_path(&path);
-	return ret;
 }
 
 int BOX_MAIN(mkfs)(int argc, char **argv)

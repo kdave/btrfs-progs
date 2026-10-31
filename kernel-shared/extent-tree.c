@@ -2403,7 +2403,6 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_space_info *sinfo;
 	struct extent_buffer *leaf;
-	struct btrfs_path *path;
 	struct btrfs_key ins;
 	u32 size = sizeof(*extent_item) + sizeof(*iref);
 	u64 start, end;
@@ -2415,6 +2414,8 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	ins.objectid = node->bytenr;
 
 	if (ref->root != BTRFS_REMAP_TREE_OBJECTID) {
+		BTRFS_PATH_AUTO_FREE(path);
+
 		if (skinny_metadata) {
 			ins.type = BTRFS_METADATA_ITEM_KEY;
 			ins.offset = ref->level;
@@ -2462,7 +2463,6 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 		btrfs_set_extent_inline_ref_offset(leaf, iref, ref->root);
 
 		btrfs_mark_buffer_dirty(leaf);
-		btrfs_free_path(path);
 	}
 
 	ret = remove_from_free_space_tree(trans, ins.objectid, fs_info->nodesize);
@@ -2782,7 +2782,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *bg_root = fs_info->block_group_root;
-	struct btrfs_path path = {0};
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = {0};
 	int ret;
 
@@ -2809,7 +2809,7 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 
 			btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 			fs_info->last_converted_bg_bytenr = key.objectid;
-			goto out;
+			return ret;
 		}
 		btrfs_release_path(&path);
 
@@ -2820,21 +2820,20 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 
 		ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
 		if (ret < 0)
-			goto out;
+			return ret;
 		ASSERT(ret > 0);
 		ret = btrfs_previous_item(extent_root, &path, 0, BTRFS_BLOCK_GROUP_ITEM_KEY);
 		if (ret < 0)
-			goto out;
+			return ret;
 
 		/* No converted bg item in extent tree.*/
 		if (ret > 0) {
-			ret = 0;
 			fs_info->last_converted_bg_bytenr = (u64)-1;
-			goto out;
+			return 0;
 		}
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		fs_info->last_converted_bg_bytenr = key.objectid;
-		goto out;
+		return ret;
 	}
 	/* Load the first bg in bg tree, that would be our last converted bg. */
 	ret = btrfs_search_slot(NULL, bg_root, &key, &path, 0, 0);
@@ -2847,14 +2846,11 @@ static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 	/* Empty bg tree, no converted bg item at all. */
 	if (btrfs_header_nritems(path.nodes[0]) == 0) {
 		fs_info->last_converted_bg_bytenr = (u64)-1;
-		ret = 0;
-		goto out;
+		return 0;
 	}
 	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	ASSERT(key.type == BTRFS_BLOCK_GROUP_ITEM_KEY);
 	fs_info->last_converted_bg_bytenr = key.objectid;
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -2870,7 +2866,7 @@ out:
 static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 					   struct btrfs_root *root)
 {
-	struct btrfs_path path = {0};
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = { 0 };
 	int ret;
 
@@ -2878,18 +2874,15 @@ static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 
 	while (true) {
 		ret = find_first_block_group(root, &path, &key, fs_info->last_converted_bg_bytenr);
-		if (ret > 0) {
-			ret = 0;
-			goto out;
-		}
-		if (ret != 0) {
-			goto out;
-		}
+		if (ret > 0)
+			return 0;
+		if (ret < 0)
+			return ret;
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 		ret = read_one_block_group(fs_info, &path);
 		if (ret < 0 && ret != -ENOENT)
-			goto out;
+			return ret;
 
 		if (key.offset == 0)
 			key.objectid++;
@@ -2898,17 +2891,14 @@ static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
 		key.offset = 0;
 		btrfs_release_path(&path);
 	}
-	ret = 0;
-out:
-	btrfs_release_path(&path);
-	return ret;
+	return 0;
 }
 
 /* Helper to read all block groups items from specified root. */
 static int read_block_groups_from_root(struct btrfs_fs_info *fs_info,
 					   struct btrfs_root *root)
 {
-	struct btrfs_path path = {0};
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key = {0};
 	int ret;
 
@@ -2916,18 +2906,15 @@ static int read_block_groups_from_root(struct btrfs_fs_info *fs_info,
 
 	while (true) {
 		ret = find_first_block_group(root, &path, &key, (u64)-1);
-		if (ret > 0) {
-			ret = 0;
-			goto out;
-		}
-		if (ret != 0) {
-			goto out;
-		}
+		if (ret > 0)
+			return 0;
+		if (ret < 0)
+			return ret;
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 		ret = read_one_block_group(fs_info, &path);
 		if (ret < 0 && ret != -ENOENT)
-			goto out;
+			return ret;
 
 		if (key.offset == 0)
 			key.objectid++;
@@ -2936,10 +2923,7 @@ static int read_block_groups_from_root(struct btrfs_fs_info *fs_info,
 		key.offset = 0;
 		btrfs_release_path(&path);
 	}
-	ret = 0;
-out:
-	btrfs_release_path(&path);
-	return ret;
+	return 0;
 }
 
 static int read_converting_block_groups(struct btrfs_fs_info *fs_info)
@@ -3472,7 +3456,7 @@ int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_block_group *block_group;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret = 0;
 
 	block_group = btrfs_lookup_block_group(fs_info, bytenr);
@@ -3893,7 +3877,7 @@ int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr)
 	struct btrfs_root *new_root = fs_info->block_group_root;
 	struct btrfs_root *old_root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_block_group *bg;
-	struct btrfs_path path = {0};
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret;
 
 	ASSERT(new_root);

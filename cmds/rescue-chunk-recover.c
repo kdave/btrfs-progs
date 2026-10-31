@@ -584,7 +584,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 	int ret;
 	int i;
 	int slot;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_root *dev_root;
 	struct stripe *stripe;
@@ -607,14 +607,12 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		if (ret < 0) {
 			fprintf(stderr, "Search device extent failed(%d)\n",
 				ret);
-			btrfs_release_path(&path);
 			return ret;
 		} else if (ret > 0) {
 			if (rc->verbose)
 				fprintf(stderr,
 					"No device extent[%llu, %llu]\n",
 					stripe->devid, stripe->offset);
-			btrfs_release_path(&path);
 			return -ENOENT;
 		}
 		l = path.nodes[0];
@@ -629,7 +627,6 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 								dev_extent),
 					btrfs_dev_extent_length(l, dev_extent),
 					chunk->offset, chunk->length);
-			btrfs_release_path(&path);
 			return -ENOENT;
 		}
 		btrfs_release_path(&path);
@@ -645,13 +642,11 @@ bg_check:
 				0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Search block group failed(%d)\n", ret);
-		btrfs_release_path(&path);
 		return ret;
 	} else if (ret > 0) {
 		if (rc->verbose)
 			fprintf(stderr, "No block group[%llu, %llu]\n",
 				key.objectid, key.offset);
-		btrfs_release_path(&path);
 		return -ENOENT;
 	}
 
@@ -664,10 +659,8 @@ bg_check:
 				"Chunk[%llu, %llu]'s type(%llu) is different with Block Group's type(%llu)\n",
 				chunk->offset, chunk->length, chunk->type_flags,
 				btrfs_block_group_flags(l, bg_ptr));
-		btrfs_release_path(&path);
 		return -ENOENT;
 	}
-	btrfs_release_path(&path);
 	return 0;
 }
 
@@ -1028,7 +1021,7 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
 	u64 start = bg->objectid;
 	u64 end = bg->objectid + bg->offset;
@@ -1046,7 +1039,7 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 again:
 	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0)
-		goto err;
+		return ret;
 	else if (ret > 0)
 		ret = 0;
 
@@ -1054,22 +1047,19 @@ again:
 	nitems = btrfs_header_nritems(leaf);
 	if (!nitems) {
 		/* The tree is empty. */
-		ret = 0;
-		goto err;
+		return 0;
 	}
 
 	if (path.slots[0] >= nitems) {
 		ret = btrfs_next_leaf(root, &path);
 		if (ret < 0)
-			goto err;
-		if (ret > 0) {
-			ret = 0;
-			goto err;
-		}
+			return ret;
+		if (ret > 0)
+			return 0;
 		leaf = path.nodes[0];
 		btrfs_item_key_to_cpu(leaf, &key, 0);
 		if (key.objectid >= end)
-			goto err;
+			return ret;
 		btrfs_release_path(&path);
 		goto again;
 	}
@@ -1106,7 +1096,7 @@ again:
 	if (del_nr) {
 		ret = btrfs_del_items(trans, root, &path, del_s, del_nr);
 		if (ret)
-			goto err;
+			return ret;
 	}
 
 	if (key.objectid < end) {
@@ -1118,8 +1108,6 @@ again:
 		btrfs_release_path(&path);
 		goto again;
 	}
-err:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1425,7 +1413,6 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct chunk_record *chunk_rec;
 	struct btrfs_key search_key;
-	struct btrfs_path path = { 0 };
 	u64 used = 0;
 	int ret = 0;
 
@@ -1433,13 +1420,15 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 		return 0;
 
 	list_for_each_entry(chunk_rec, &rc->rebuild_chunks, list) {
+		BTRFS_PATH_AUTO_RELEASE(path);
+
 		search_key.objectid = chunk_rec->offset;
 		search_key.type = BTRFS_EXTENT_ITEM_KEY;
 		search_key.offset = 0;
 		root = btrfs_extent_root(fs_info, chunk_rec->offset);
 		ret = btrfs_search_slot(NULL, root, &search_key, &path, 0, 0);
 		if (ret < 0)
-			goto out;
+			return ret;
 		ret = calculate_bg_used(root, chunk_rec, &path, &used);
 		/*
 		 * Extent tree is damaged, better to rebuild the whole extent
@@ -1458,10 +1447,8 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 		btrfs_release_path(&path);
 		ret = __insert_block_group(trans, chunk_rec, root, used);
 		if (ret < 0)
-			goto out;
+			return ret;
 	}
-out:
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -2008,7 +1995,7 @@ static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
 	int i;
 	int ret = 0;
 	int slot;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key prev_key;
 	struct btrfs_key key;
 	struct btrfs_root *csum_root;
@@ -2131,7 +2118,6 @@ next_csum:
 		num_unordered = count_devext_records(&unordered);
 		if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID6
 					&& num_unordered == 2) {
-			btrfs_release_path(&path);
 			ret = fill_chunk_up(chunk, &unordered, rc);
 			return ret;
 		}
@@ -2186,7 +2172,6 @@ fail_out:
 	ret = !!ret || (list_empty(&unordered) ? 0 : 1);
 	list_splice_init(&candidates, &chunk->dextents);
 	list_splice_init(&unordered, &chunk->dextents);
-	btrfs_release_path(&path);
 
 	return ret;
 }

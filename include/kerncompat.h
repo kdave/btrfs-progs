@@ -38,6 +38,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <features.h>
+#include "compiler_attributes.h"
 
 #ifndef static_assert
 #define static_assert(expr, str) _Static_assert(expr, str)
@@ -56,10 +57,6 @@
 #define __always_inline __inline __attribute__ ((__always_inline__))
 #endif
 
-#endif
-
-#ifndef __maybe_unused
-#define __maybe_unused __attribute__((__unused__))
 #endif
 
 #ifndef BTRFS_DISABLE_BACKTRACE
@@ -775,8 +772,6 @@ struct lock_class_key {
 #define __cold
 #define __user
 #define __pure
-
-#define __printf(a, b)                  __attribute__((__format__(printf, a, b)))
 
 static inline bool sb_rdonly(struct super_block *sb)
 {

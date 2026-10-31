@@ -190,7 +190,7 @@ static int print_filenames(u64 ino, u64 offset, u64 rootid, void *ctx)
 	struct btrfs_root *root;
 	struct btrfs_key key;
 	struct inode_fs_paths *ipath;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	int ret;
 
 	key.objectid = rootid;
@@ -230,7 +230,7 @@ out:
 
 static int iterate_csum_root(struct btrfs_fs_info *fs_info, struct btrfs_root *csum_root)
 {
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	int ret;
 
@@ -263,7 +263,6 @@ next:
 			error("failed to get next csum item: %m");
 		}
 	}
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -333,7 +332,7 @@ static int update_csum_item(struct btrfs_fs_info *fs_info, u64 logical,
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, logical);
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_csum_item *citem;
 	u64 read_len = fs_info->sectorsize;
 	u8 csum[BTRFS_CSUM_SIZE] = { 0 };
@@ -378,7 +377,6 @@ static int update_csum_item(struct btrfs_fs_info *fs_info, u64 logical,
 		logical, mirror);
 out:
 	free(buf);
-	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -387,7 +385,7 @@ static void report_corrupted_blocks(struct btrfs_fs_info *fs_info,
 				    unsigned int mirror)
 {
 	struct corrupted_block *entry;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	enum fix_data_checksum_action_value action;
 
 	if (list_empty(&corrupted_blocks)) {

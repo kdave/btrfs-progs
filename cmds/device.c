@@ -712,7 +712,7 @@ static int get_device_stats_offline(struct btrfs_fs_info *fs_info, u64 devid,
 				    struct btrfs_ioctl_get_dev_stats *stats_args)
 {
 	int ret = 0;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_dev_stats_item *stats_item;
 
@@ -721,11 +721,10 @@ static int get_device_stats_offline(struct btrfs_fs_info *fs_info, u64 devid,
 	key.offset = devid;
 	ret = btrfs_search_slot(NULL, fs_info->dev_root, &key, &path, 0, 0);
 	if (ret < 0)
-		goto out;
+		return ret;
 	if (ret > 0) {
 		pr_debug("no device stats found for devid %llu\n", devid);
-		ret = 0;
-		goto out;
+		return 0;
 	}
 
 	memset(stats_args->values, 0, stats_args->nr_items * sizeof(u64));
@@ -742,9 +741,7 @@ static int get_device_stats_offline(struct btrfs_fs_info *fs_info, u64 devid,
 	stats_args->values[BTRFS_DEV_STAT_GENERATION_ERRS] =
 		btrfs_dev_stats_value(path.nodes[0], stats_item, BTRFS_DEV_STAT_GENERATION_ERRS);
 
-out:
-	btrfs_release_path(&path);
-	return ret;
+	return 0;
 }
 
 /*

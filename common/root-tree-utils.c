@@ -139,7 +139,7 @@ int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 			 int namelen, struct btrfs_root *subvol)
 {
 	struct btrfs_root *tree_root = trans->fs_info->tree_root;
-	struct btrfs_path path = { 0 };
+	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_inode_item *ii;
 	u64 index;
@@ -159,10 +159,8 @@ int btrfs_link_subvolume(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(NULL, parent_root, &key, &path, 0, 0);
 	if (ret > 0)
 		ret = -ENOENT;
-	if (ret < 0) {
-		btrfs_release_path(&path);
+	if (ret < 0)
 		return ret;
-	}
 	ii = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_inode_item);
 	imode = btrfs_inode_mode(path.nodes[0], ii);
 	btrfs_release_path(&path);
@@ -337,7 +335,6 @@ static int rescan_uuid_tree(struct btrfs_fs_info *fs_info)
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *uuid_root = fs_info->uuid_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path path = { 0 };
 	struct btrfs_key key = { 0 };
 	int ret;
 
@@ -356,6 +353,7 @@ static int rescan_uuid_tree(struct btrfs_fs_info *fs_info)
 	while (true) {
 		struct btrfs_key found_key;
 		struct extent_buffer *leaf;
+		BTRFS_PATH_AUTO_RELEASE(path);
 		int slot;
 
 		/* No more subvolume. */
@@ -367,6 +365,7 @@ static int rescan_uuid_tree(struct btrfs_fs_info *fs_info)
 		if (ret < 0) {
 			errno = -ret;
 			error_msg(ERROR_MSG_READ, "iterate subvolumes: %m");
+			btrfs_release_path(&path);
 			btrfs_abort_transaction(trans, ret);
 			return ret;
 		}
@@ -384,7 +383,6 @@ static int rescan_uuid_tree(struct btrfs_fs_info *fs_info)
 			/* No more subvolume. */
 			if (ret > 0) {
 				ret = 0;
-				btrfs_release_path(&path);
 				break;
 			}
 		}
