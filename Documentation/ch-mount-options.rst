@@ -112,9 +112,9 @@ compress, compress=<type[:level]>, compress-force, compress-force=<type[:level]>
         Both *zlib* and *zstd* (since version 5.1) expose the compression level as a
         tunable knob with higher levels trading speed and memory (*zstd*) for higher
         compression ratios. This can be set by appending a colon and the desired level.
-        ZLIB accepts the range [1, 9] and ZSTD accepts [1, 15]. If no level is set,
-        both currently use a default level of 3. The value 0 is an alias for the
-        default level.
+        ZLIB accepts the range [1, 9] and ZSTD accepts [1, 15] and [-15,-1] (since 6.15).
+        If no level is set, both currently use a default level of 3. The value 0 is an
+        alias for the default level.
 
         Otherwise some simple heuristics are applied to detect an incompressible file.
         If the first blocks written to a file are not compressible, the whole file is
