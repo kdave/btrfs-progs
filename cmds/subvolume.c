@@ -112,7 +112,7 @@ static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 		if (ret < 0 && !statvfs_warned) {
 			statvfs_warned = true;
 			warning("cannot check read-only status of the filesystem: %m");
-		} else if (st.f_flag & ST_RDONLY) {
+		} else if (ret == 0 && st.f_flag & ST_RDONLY) {
 			warning("filesystem is now read-only");
 			return 1;
 		}
