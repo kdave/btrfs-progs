@@ -276,6 +276,13 @@ sync <path> [subvolid...]
 
         If the filesystem status changes to read-only then the waiting is interrupted.
 
+	.. note ::
+		Before btrfs-progs v7.4, the wait can be very long, as the subvolume
+		cleanup is triggered by cleaner, which is only woken up every 30s by
+		default.
+		Since btrfs-progs v7.4, this command will manually sync the fs to
+		wake up the cleaner, to greatly reduce the wait time.
+
         ``Options``
 
         -s <N>
