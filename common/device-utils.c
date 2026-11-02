@@ -48,6 +48,10 @@
 #define BLKDISCARD	_IO(0x12,119)
 #endif
 
+#ifndef BLKZEROOUT
+#define BLKZEROOUT	_IO(0x12,127)
+#endif
+
 /*
  * Discard the given range in one go
  */
@@ -127,6 +131,15 @@ int device_zero_blocks(int fd, off_t start, size_t len, bool direct)
 
 #define ZERO_DEV_BYTES SZ_2M
 
+static int device_zeroout_range(int fd, u64 start, u64 len)
+{
+	u64 range[2] = { start, len };
+
+	if (ioctl(fd, BLKZEROOUT, &range) < 0)
+		return -errno;
+	return 0;
+}
+
 /*
  * Zero blocks in the range from start but not after the given device size.
  * (On SPARC the disk labels are preserved too.)
@@ -135,6 +148,7 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 			    off_t start, ssize_t len, u64 dev_size)
 {
 	off_t end = max(start, start + len);
+	int ret;
 
 #ifdef __sparc__
 	/* Don't overwrite the disk labels on SPARC. */
@@ -148,7 +162,17 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 	if (zinfo && zinfo->model == ZONED_HOST_MANAGED)
 		return zero_zone_blocks(fd, zinfo, start, end - start);
 
-	return device_zero_blocks(fd, start, end - start, false);
+	if (!device_zeroout_range(fd, start, end - start))
+		return 0;
+
+	ret = device_zero_blocks(fd, start, end - start, false);
+	if (ret < 0)
+		return ret;
+
+	ret = fsync(fd);
+	if (ret < 0)
+		return -errno;
+	return 0;
 }
 
 /*
@@ -279,6 +303,13 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 		}
 	}
 
+	/*
+	 * Discard drops the page cache and may not zero the data (e.g. QEMU
+	 * discard=ignore), so it must come before zeroing.
+	 */
+	if (!(opflags & PREP_DEVICE_ZONED) && (opflags & PREP_DEVICE_DISCARD))
+		prepare_discard_device(file, fd, byte_count, opflags);
+
 	ret = zero_dev_clamped(fd, zinfo, 0, ZERO_DEV_BYTES, byte_count);
 	for (i = 0 ; !ret && i < BTRFS_SUPER_MIRROR_MAX; i++)
 		ret = zero_dev_clamped(fd, zinfo, btrfs_sb_offset(i),
@@ -292,9 +323,6 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 		error("failed to zero device '%s': %m", file);
 		goto err;
 	}
-
-	if (!(opflags & PREP_DEVICE_ZONED) && (opflags & PREP_DEVICE_DISCARD))
-		prepare_discard_device(file, fd, byte_count, opflags);
 
 	ret = btrfs_wipe_existing_sb(fd, zinfo);
 	if (ret < 0) {
