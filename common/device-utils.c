@@ -293,6 +293,18 @@ int btrfs_prepare_device(int fd, const char *file, u64 *byte_count_ret,
 		goto err;
 	}
 
+	/*
+	 * The zeroes above are buffered. BLKDISCARD drops the discarded range
+	 * from the block device's page cache without writing it back, so
+	 * without this flush they never reach the disk. A device that then
+	 * ignores the discard keeps the old filesystem's signatures, e.g.
+	 * both LUKS2 headers, which blkid prefers over the new btrfs.
+	 */
+	if (fsync(fd) < 0) {
+		error("failed to flush zeroed ranges on '%s': %m", file);
+		goto err;
+	}
+
 	if (!(opflags & PREP_DEVICE_ZONED) && (opflags & PREP_DEVICE_DISCARD))
 		prepare_discard_device(file, fd, byte_count, opflags);
 
