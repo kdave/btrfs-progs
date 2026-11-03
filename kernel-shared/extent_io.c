@@ -624,6 +624,40 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 	memcpy(dst, eb->data + start, len);
 }
 
+/*
+ * The version with extra helper to read the buffer with a size check.
+ *
+ * @min_size:	The minimal size the structure should have.
+ *		If @len is smaller than this, the read is rejected.
+ * @max_size:	Max size of the structure. Any data beyond that will
+ *		be discarded.
+ */
+static int read_eb_structure(const struct extent_buffer *eb,
+			void *dst, size_t min_size, size_t max_size,
+			unsigned long start, unsigned long len)
+{
+	if (unlikely(len < min_size))
+		return -EIO;
+	/*
+	 * We still allow an item larger than expected, but the read
+	 * will be trucnated to the max size.
+	 *
+	 * It shouldn't cause overflow as the length is truncated, and will
+	 * handle future structure expansion well.
+	 */
+	read_extent_buffer(eb, dst, start, min_t(unsigned long, len, max_size));
+	return 0;
+}
+
+int read_extent_buffer_root_item(const struct extent_buffer *leaf,
+				 struct btrfs_root_item *ri, int slot)
+{
+	memset(ri, 0, sizeof(*ri));
+	return read_eb_structure(leaf, ri, btrfs_legacy_root_item_size(),
+			sizeof(*ri), btrfs_item_ptr_offset(leaf, slot),
+			btrfs_item_size(leaf, slot));
+}
+
 void write_extent_buffer_fsid(struct extent_buffer *eb, const void *src)
 {
 	write_extent_buffer(eb, src, btrfs_header_fsid(), BTRFS_FSID_SIZE);

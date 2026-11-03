@@ -644,9 +644,12 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 		goto out;
 	}
 	l = path->nodes[0];
-	read_extent_buffer(l, &root->root_item,
-	       btrfs_item_ptr_offset(l, path->slots[0]),
-	       sizeof(root->root_item));
+	ret = read_extent_buffer_root_item(l, &root->root_item, path->slots[0]);
+	if (ret < 0) {
+		error("bad root item size for key (%llu %u %llu)",
+		      location->objectid, location->type, location->offset);
+		goto out;
+	}
 	memcpy(&root->root_key, location, sizeof(*location));
 	ret = 0;
 out:
@@ -1083,10 +1086,14 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 		}
 
 		btrfs_setup_root(root, fs_info, objectid);
-		read_extent_buffer(path->nodes[0], &root->root_item,
-				   btrfs_item_ptr_offset(path->nodes[0],
-							 path->slots[0]),
-				   sizeof(root->root_item));
+		ret = read_extent_buffer_root_item(path->nodes[0],
+				&root->root_item, path->slots[0]);
+		if (ret < 0) {
+			error("bad root item size for key (%llu %u %llu)",
+			      key.objectid, key.type, key.offset);
+			kfree(root);
+			break;
+		}
 		memcpy(&root->root_key, &key, sizeof(key));
 		ret = read_root_or_create_block(fs_info, root,
 				btrfs_root_bytenr(&root->root_item),
