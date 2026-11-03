@@ -1199,6 +1199,8 @@ static int do_list_roots(struct btrfs_root *root)
 		path.slots[0]++;
 	}
 
+	if (ret < 0)
+		return ret;
 	return 0;
 }
 
