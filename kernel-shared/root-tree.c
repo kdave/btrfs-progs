@@ -62,8 +62,12 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 		ret = -ENOENT;
 		goto out;
 	}
-	read_extent_buffer(l, item, btrfs_item_ptr_offset(l, slot),
-			   sizeof(*item));
+	ret = read_extent_buffer_root_item(l, item, slot);
+	if (ret < 0) {
+		error("bad root item size for key (%llu %u %llu)",
+		      found_key.objectid, found_key.type, found_key.offset);
+		goto out;
+	}
 	memcpy(key, &found_key, sizeof(found_key));
 	ret = 0;
 out:

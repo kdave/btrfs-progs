@@ -54,6 +54,7 @@ static inline int le_test_bit(int nr, const u8 *addr)
 
 struct btrfs_fs_info;
 struct btrfs_trans_handle;
+struct btrfs_root_item;
 
 struct extent_buffer {
 	struct cache_extent cache_node;
@@ -109,6 +110,8 @@ int memcmp_extent_buffer(const struct extent_buffer *eb, const void *ptrv,
 			 unsigned long start, unsigned long len);
 void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start, unsigned long len);
+int read_extent_buffer_root_item(const struct extent_buffer *eb,
+				 struct btrfs_root_item *ri, int slot);
 void write_extent_buffer_fsid(struct extent_buffer *eb, const void *src);
 void write_extent_buffer_chunk_tree_uuid(struct extent_buffer *eb,
 		const void *src);

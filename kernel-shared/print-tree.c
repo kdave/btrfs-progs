@@ -657,12 +657,16 @@ static void print_root_item(struct extent_buffer *leaf, int slot)
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	char flags_str[32] = {0};
 	struct btrfs_key drop_key;
+	int ret;
+
+	ret = read_extent_buffer_root_item(leaf, &root_item, slot);
+	if (ret < 0) {
+		printf("\t\tbad root item size, skipping\n");
+		return;
+	}
 
 	ri = btrfs_item_ptr(leaf, slot, struct btrfs_root_item);
 	len = btrfs_item_size(leaf, slot);
-
-	memset(&root_item, 0, sizeof(root_item));
-	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
 	root_flags_to_str(btrfs_root_flags(&root_item), flags_str);
 
 	printf("\t\tgeneration %llu root_dirid %llu bytenr %llu byte_limit %llu bytes_used %llu\n",
@@ -680,6 +684,12 @@ static void print_root_item(struct extent_buffer *leaf, int slot)
 	printf("\t\tdrop_progress ");
 	btrfs_print_key(&root_item.drop_progress);
 	printf(" drop_level %hhu\n", root_item.drop_level);
+
+	/* Skip newer members for older root item. */
+	if (len < sizeof(root_item)) {
+		printf("\t\tlevel %hhu\n", btrfs_root_level(&root_item));
+		return;
+	}
 
 	printf("\t\tlevel %hhu generation_v2 %llu\n",
 		btrfs_root_level(&root_item), root_item.generation_v2);
