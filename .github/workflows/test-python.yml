@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -c "import sys; print(sys.version)"
+      - run: pip install setuptools
       - name: Configure
         run: ./autogen.sh && ./configure --disable-documentation --disable-programs --disable-static
       - name: Make
