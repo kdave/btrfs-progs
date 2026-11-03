@@ -9532,6 +9532,7 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	struct btrfs_path *path;
 	struct extent_buffer *c;
 	struct btrfs_disk_key disk_key = {};
+	u32 write_size;
 	int ret;
 
 	path = btrfs_alloc_path();
@@ -9579,6 +9580,8 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 		free_extent_buffer(c);
 		return ERR_PTR(ret);
 	}
+	write_size = min_t(u32, sizeof(ri),
+			   btrfs_item_size(path->nodes[0], path->slots[0]));
 	btrfs_set_root_bytenr(&ri, c->start);
 	btrfs_set_root_generation(&ri, trans->transid);
 	btrfs_set_root_refs(&ri, 1);
@@ -9588,7 +9591,7 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	write_extent_buffer(path->nodes[0], &ri,
 			    btrfs_item_ptr_offset(path->nodes[0],
 						  path->slots[0]),
-			    sizeof(ri));
+			    write_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	btrfs_free_path(path);
 	return c;
@@ -10476,11 +10479,15 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 		}
 
 		if (!read_only_mode) {
+			const u32 write_size = min_t(u32, sizeof(ri),
+					btrfs_item_size(path->nodes[0],
+							path->slots[0]));
+
 			btrfs_set_root_bytenr(&ri, rii->bytenr);
 			btrfs_set_root_level(&ri, rii->level);
 			btrfs_set_root_generation(&ri, rii->gen);
 			write_extent_buffer(path->nodes[0], &ri,
-					    offset, sizeof(ri));
+					    offset, write_size);
 		}
 
 		return 1;
