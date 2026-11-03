@@ -274,7 +274,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	struct btrfs_fs_info *info;
 	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
-	struct btrfs_root_item ri;
 	struct extent_buffer *leaf;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key found_key;
@@ -539,15 +538,20 @@ again:
 		btrfs_item_key(leaf, &disk_key, path.slots[0]);
 		btrfs_disk_key_to_cpu(&found_key, &disk_key);
 		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
-			unsigned long offset;
+			struct btrfs_root_item ri;
 			struct extent_buffer *buf;
 			struct btrfs_tree_parent_check check = {
 				.owner_root = key.objectid,
 			};
 			bool skip = (extent_only || device_only || uuid_tree_only);
 
-			offset = btrfs_item_ptr_offset(leaf, slot);
-			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
+			ret = read_extent_buffer_root_item(leaf, &ri, slot);
+			if (ret < 0) {
+				error("bad root item size for key (%llu %u %llu)",
+				      found_key.objectid, found_key.type,
+				      found_key.offset);
+				goto next;
+			}
 			buf = read_tree_block(info, btrfs_root_bytenr(&ri), &check);
 			if (!extent_buffer_uptodate(buf))
 				goto next;

@@ -1156,9 +1156,6 @@ static int do_list_roots(struct btrfs_root *root)
 	struct btrfs_disk_key disk_key;
 	BTRFS_PATH_AUTO_RELEASE(path);
 	struct extent_buffer *leaf;
-	struct btrfs_root_item ri;
-	unsigned long offset;
-	int slot;
 	int ret;
 
 	root = root->fs_info->tree_root;
@@ -1175,6 +1172,9 @@ static int do_list_roots(struct btrfs_root *root)
 	leaf = path.nodes[0];
 
 	while (1) {
+		struct btrfs_root_item ri;
+		int slot;
+
 		slot = path.slots[0];
 		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, &path);
@@ -1190,8 +1190,14 @@ static int do_list_roots(struct btrfs_root *root)
 			continue;
 		}
 
-		offset = btrfs_item_ptr_offset(leaf, slot);
-		read_extent_buffer(leaf, &ri, offset, sizeof(ri));
+		ret = read_extent_buffer_root_item(leaf, &ri, slot);
+		if (ret < 0) {
+			error("bad root item size for key (%llu %u %llu)",
+			      found_key.objectid, found_key.type,
+			      found_key.offset);
+			break;
+		}
+
 		printf(" tree ");
 		btrfs_print_key(&disk_key);
 		printf(" %llu level %d\n", btrfs_root_bytenr(&ri),
@@ -1199,6 +1205,8 @@ static int do_list_roots(struct btrfs_root *root)
 		path.slots[0]++;
 	}
 
+	if (ret < 0)
+		return ret;
 	return 0;
 }
 

@@ -9029,7 +9029,6 @@ static int parse_tree_roots(struct list_head *normal_trees,
 	BTRFS_PATH_AUTO_RELEASE(path);
 	struct btrfs_key key;
 	struct btrfs_key found_key;
-	struct btrfs_root_item ri;
 	struct extent_buffer *leaf;
 	int slot;
 	int ret = 0;
@@ -9052,12 +9051,18 @@ static int parse_tree_roots(struct list_head *normal_trees,
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
-			unsigned long offset;
+			struct btrfs_root_item ri;
 			u64 last_snapshot;
 			u8 level;
 
-			offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
-			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
+			ret = read_extent_buffer_root_item(path.nodes[0], &ri,
+							   path.slots[0]);
+			if (ret < 0) {
+				error("bad root item size for key (%llu %u %llu)",
+				      found_key.objectid, found_key.type,
+				      found_key.offset);
+				break;
+			}
 			last_snapshot = btrfs_root_last_snapshot(&ri);
 			level = btrfs_root_level(&ri);
 			if (btrfs_disk_key_objectid(&ri.drop_progress) == 0) {
@@ -9527,6 +9532,7 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	struct btrfs_path *path;
 	struct extent_buffer *c;
 	struct btrfs_disk_key disk_key = {};
+	u32 write_size;
 	int ret;
 
 	path = btrfs_alloc_path();
@@ -9563,15 +9569,19 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	ret = btrfs_insert_empty_item(trans, gfs_info->tree_root, path, key,
 				      sizeof(ri));
 	if (ret == -EEXIST) {
-		read_extent_buffer(path->nodes[0], &ri,
-				   btrfs_item_ptr_offset(path->nodes[0],
-							 path->slots[0]),
-				   sizeof(ri));
-	} else if (ret) {
+		ret = read_extent_buffer_root_item(path->nodes[0], &ri,
+						   path->slots[0]);
+		if (ret < 0)
+			error("bad root item size for key (%llu %u %llu)",
+			      key->objectid, key->type, key->offset);
+	}
+	if (ret) {
 		btrfs_free_path(path);
 		free_extent_buffer(c);
 		return ERR_PTR(ret);
 	}
+	write_size = min_t(u32, sizeof(ri),
+			   btrfs_item_size(path->nodes[0], path->slots[0]));
 	btrfs_set_root_bytenr(&ri, c->start);
 	btrfs_set_root_generation(&ri, trans->transid);
 	btrfs_set_root_refs(&ri, 1);
@@ -9581,7 +9591,7 @@ static struct extent_buffer *btrfs_fsck_clear_root(
 	write_extent_buffer(path->nodes[0], &ri,
 			    btrfs_item_ptr_offset(path->nodes[0],
 						  path->slots[0]),
-			    sizeof(ri));
+			    write_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	btrfs_free_path(path);
 	return c;
@@ -10153,9 +10163,16 @@ static int load_log_root(u64 root_id, struct btrfs_path *path, struct btrfs_root
 	btrfs_setup_root(tmp_root, gfs_info, root_id);
 
 	leaf = path->nodes[0];
-	read_extent_buffer(leaf, &tmp_root->root_item,
-			   btrfs_item_ptr_offset(leaf, path->slots[0]),
-			   sizeof(tmp_root->root_item));
+	ret = read_extent_buffer_root_item(leaf, &tmp_root->root_item,
+					   path->slots[0]);
+	if (ret < 0) {
+		struct btrfs_key key;
+
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		error("bad root item size for key (%llu %u %llu)",
+		      key.objectid, key.type, key.offset);
+		return ret;
+	}
 
 	tmp_root->root_key.objectid = root_id;
 	tmp_root->root_key.type = BTRFS_ROOT_ITEM_KEY;
@@ -10403,6 +10420,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 	struct root_item_info *rii;
 	struct btrfs_root_item ri;
 	unsigned long offset;
+	int ret;
 
 	entry = lookup_cache_extent(roots_info_cache, root_id, 1);
 	if (!entry) {
@@ -10424,7 +10442,12 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 	}
 
 	offset = btrfs_item_ptr_offset(path->nodes[0], path->slots[0]);
-	read_extent_buffer(path->nodes[0], &ri, offset, sizeof(ri));
+	ret = read_extent_buffer_root_item(path->nodes[0], &ri, path->slots[0]);
+	if (ret < 0) {
+		error("bad root item size for key (%llu %u %llu)",
+		      root_key->objectid, root_key->type, root_key->offset);
+		return ret;
+	}
 
 	if (btrfs_root_bytenr(&ri) != rii->bytenr ||
 	    btrfs_root_level(&ri) != rii->level ||
@@ -10456,11 +10479,15 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 		}
 
 		if (!read_only_mode) {
+			const u32 write_size = min_t(u32, sizeof(ri),
+					btrfs_item_size(path->nodes[0],
+							path->slots[0]));
+
 			btrfs_set_root_bytenr(&ri, rii->bytenr);
 			btrfs_set_root_level(&ri, rii->level);
 			btrfs_set_root_generation(&ri, rii->gen);
 			write_extent_buffer(path->nodes[0], &ri,
-					    offset, sizeof(ri));
+					    offset, write_size);
 		}
 
 		return 1;
