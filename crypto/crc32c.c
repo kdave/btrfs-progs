@@ -98,6 +98,18 @@ void crc32c_init_accel(void)
 	}
 }
 
+#elif defined(__aarch64__) && HAVE_CFLAG_march_armv8_a_crc == 1
+
+uint32_t crc32c_arm64(uint32_t crc, unsigned char const *data, uint32_t length);
+
+void crc32c_init_accel(void)
+{
+	if (cpu_has_feature(CPU_FLAG_CRC32))
+		crc32c_impl = crc32c_arm64;
+	else
+		crc32c_impl = crc32c_ref;
+}
+
 #else
 
 void crc32c_init_accel(void)
@@ -105,7 +117,7 @@ void crc32c_init_accel(void)
 	crc32c_impl = crc32c_ref;
 }
 
-#endif /* __x86_64__ */
+#endif
 
 /*
  * This is the CRC-32C table

@@ -38,6 +38,8 @@ enum cpu_feature {
 	ENUM_CPU_BIT(CPU_FLAG_SHA),
 	ENUM_CPU_BIT(CPU_FLAG_AVX),
 	ENUM_CPU_BIT(CPU_FLAG_AVX2),
+	/* aarch64 */
+	ENUM_CPU_BIT(CPU_FLAG_CRC32),
 };
 
 #undef ENUM_CPU_BIT

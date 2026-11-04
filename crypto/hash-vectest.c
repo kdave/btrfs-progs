@@ -468,6 +468,13 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_PCLMUL,
 		.hash = hash_crc32c
 	}, {
+		.name = "CRC32C-ARMv8",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_CRC32,
+		.hash = hash_crc32c
+	}, {
 		.name = "XXHASH",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,

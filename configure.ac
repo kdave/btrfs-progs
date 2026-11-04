@@ -64,6 +64,12 @@ AS_IF([test "x$target_cpu" = 'xx86_64'], [
 	AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
 ], [])
 
+AS_IF([test "x$target_cpu" = 'xaarch64'], [
+	AX_CHECK_COMPILE_FLAG([-march=armv8-a+crc], [HAVE_CFLAG_march_armv8_a_crc=1], [HAVE_CFLAG_march_armv8_a_crc=0])
+	AC_SUBST([HAVE_CFLAG_march_armv8_a_crc])
+	AC_DEFINE_UNQUOTED([HAVE_CFLAG_march_armv8_a_crc], [$HAVE_CFLAG_march_armv8_a_crc], [Compiler supports -march=armv8-a+crc])
+], [])
+
 AX_CHECK_COMPILE_FLAG([-std=gnu11], [],
 	[AC_MSG_ERROR([std=gnu11 compiler required])])
 

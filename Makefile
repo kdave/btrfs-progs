@@ -165,6 +165,9 @@ endif
 ifeq ($(HAVE_CFLAG_msha),1)
 crypto_sha256_x86_cflags = -msse4.1 -msha
 endif
+ifeq ($(HAVE_CFLAG_march_armv8_a_crc),1)
+crypto_crc32c_arm64_cflags = -march=armv8-a+crc
+endif
 
 LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
 LIBBTRFS_LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
@@ -416,6 +419,10 @@ endif
 ifeq ($(TARGET_CPU),x86_64)
 CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
 ASFLAGS += -fPIC
+endif
+
+ifeq ($(TARGET_CPU),aarch64)
+CRYPTO_OBJECTS += crypto/crc32c-arm64.o
 endif
 
 CHECKER_FLAGS += $(btrfs_convert_cflags)
