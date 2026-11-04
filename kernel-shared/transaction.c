@@ -335,12 +335,25 @@ cleanup:
 void btrfs_cleanup_aborted_transaction(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_trans_handle *trans = fs_info->running_transaction;
+	struct btrfs_block_group *cache;
 	int error = fs_info->transaction_aborted;
 
 	if (!error || !trans)
 		return;
 
 	btrfs_abort_transaction(trans, error);
+	/*
+	 * Dirty block groups are linked to trans->dirty_bgs and are only
+	 * unlinked by a successful commit or by btrfs_write_dirty_block_groups().
+	 * Detach them before the handle is freed, otherwise list_del_init() in
+	 * btrfs_free_block_groups() would write into the freed memory through
+	 * cache->dirty_list.
+	 */
+	while (!list_empty(&trans->dirty_bgs)) {
+		cache = list_first_entry(&trans->dirty_bgs,
+					 struct btrfs_block_group, dirty_list);
+		list_del_init(&cache->dirty_list);
+	}
 	clean_dirty_buffers(trans);
 	btrfs_destroy_delayed_refs(trans);
 	kfree(trans);
@@ -414,6 +427,7 @@ commit_tree:
 	/* There should be no pending delayed refs now */
 	if (!RB_EMPTY_ROOT(&trans->delayed_refs.href_root)) {
 		error("uncommitted delayed refs detected");
+		ret = -EUCLEAN;
 		goto error;
 	}
 	ret = write_ctree_super(trans);
@@ -432,7 +446,10 @@ commit_tree:
 	}
 	return ret;
 error:
+	btrfs_abort_transaction(trans, ret);
 	btrfs_cleanup_aborted_transaction(fs_info);
+	free_extent_buffer(root->commit_root);
+	root->commit_root = NULL;
 	return ret;
 }
 
