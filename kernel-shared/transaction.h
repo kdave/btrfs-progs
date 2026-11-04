@@ -193,6 +193,13 @@ void btrfs_add_dead_root(struct btrfs_root *root);
 int btrfs_defrag_root(struct btrfs_root *root);
 void btrfs_maybe_wake_unfinished_drop(struct btrfs_fs_info *fs_info);
 int btrfs_clean_one_deleted_snapshot(struct btrfs_fs_info *fs_info);
+/*
+ * Commit the current transaction.
+ *
+ * The transaction handle @trans is always consumed: on success it is freed
+ * after the super block is written, on failure it is freed by the error
+ * cleanup.  Callers must not use @trans after this function returns.
+ */
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root);
 void btrfs_commit_transaction_async(struct btrfs_trans_handle *trans);
