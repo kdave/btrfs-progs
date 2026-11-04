@@ -2386,7 +2386,6 @@ static int create_inode_ref(struct btrfs_root *root, struct inode_record *i_rec,
 	}
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret < 0) {
-		ret = PTR_ERR(trans);
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
@@ -8248,8 +8247,9 @@ static int repair_extent_item_generation(struct extent_record *rec)
 	ret = btrfs_commit_transaction(trans, extent_root);
 	if (ret < 0) {
 		errno = -ret;
-		error_msg(ERROR_MSG_START_TRANS, "%m");
-		goto out;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		btrfs_release_path(&path);
+		return ret;
 	}
 	printf("Reset extent item (%llu) generation to %llu\n",
 		key.objectid, new_gen);
