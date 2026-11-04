@@ -254,7 +254,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		.name		= "remap-tree",
 		.incompat_flag	= BTRFS_FEATURE_INCOMPAT_REMAP_TREE,
 		.sysfs_name	= "remap_tree",
-		VERSION_TO_STRING2(compat, 6,20),
+		VERSION_TO_STRING2(compat, 7,0),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
 		.desc		= "remap tree (logical-to-logical block address mapping layer)"
