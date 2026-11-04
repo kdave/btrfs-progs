@@ -2607,7 +2607,7 @@ static int repair_inode_gen_lowmem(struct btrfs_root *root,
 	if (ret < 0) {
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
-		goto error;
+		return ret;
 	}
 	printf("resetting inode generation/transid to %llu for ino %llu\n",
 		transid, key.objectid);
@@ -4415,7 +4415,6 @@ static int repair_extent_item_generation(struct btrfs_path *path)
 	if (ret < 0) {
 		errno = -ret;
 		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
-		btrfs_abort_transaction(trans, ret);
 		return ret;
 	}
 	printf("Reset extent item (%llu) generation to %llu\n",
