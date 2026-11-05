@@ -419,15 +419,15 @@ The corresponding output of :command:`btrfs filesystem df` might look like:
 There's more than one line for type *Data* and *Metadata*, while the profiles
 are *single* and *RAID1*.
 
-This state of the filesystem OK but most likely needs the user/administrator to
+This state of the filesystem is OK, but most likely needs the user/administrator to
 take an action and finish the interrupted tasks. This cannot be easily done
-automatically, also the user knows the expected final profiles.
+automatically, only the user knows the expected final profiles.
 
 In the example above, the filesystem started as a single device and *single*
 block group profile. Then another device was added, followed by balance with
-*convert=raid1* but for some reason hasn't finished. Restarting the balance
-with *convert=raid1* will continue and end up with filesystem with all block
-group profiles *RAID1*.
+*convert=raid1* which for some reason wasn't finished. Restarting the balance
+with *convert=raid1* would continue and lead to a filesystem with only *RAID1* block
+group profiles.
 
 .. note::
         If you're familiar with balance filters, you can use
@@ -436,10 +436,10 @@ group profiles *RAID1*.
         as it would not try to rewrite the already convert *raid1* profiles.
 
 Having just one profile is desired as this also clearly defines the profile of
-newly allocated block groups, otherwise this depends on internal allocation
-policy. When there are multiple profiles present, the order of selection is
-RAID56, RAID10, RAID1, RAID0 as long as the device number constraints are
-satisfied.
+newly allocated block groups. Otherwise, this depends on internal allocation
+policy: When there are multiple profiles present, their order of selection is
+RAID1C4, RAID6, RAID1C3, RAID5, RAID10, RAID1, DUP, RAID0
+as long as the device number constraints are satisfied.
 
 Commands that print the warning were chosen so they're brought to user
 attention when the filesystem state is being changed in that regard. This is:
