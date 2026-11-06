@@ -15,6 +15,9 @@
  */
 
 #include <stdio.h>
+#ifdef __aarch64__
+#include <sys/auxv.h>
+#endif
 #include "common/cpu-utils.h"
 
 unsigned long __cpu_flags = CPU_FLAG_NONE;
@@ -58,6 +61,8 @@ void cpu_print_flags(void) {
 	FLAG(SHA);
 	FLAG(AVX);
 	FLAG(AVX2);
+	FLAG(ARMV8_CRC32);
+	FLAG(ARMV8_PMULL);
 	putchar(10);
 }
 #undef FLAG
@@ -95,6 +100,35 @@ void cpu_detect_flags(void)
 	__cpu_flags_orig = __cpu_flags;
 }
 
+#elif defined(__aarch64__)
+
+/* Values of the kernel's arch/arm64/include/uapi/asm/hwcap.h, for old headers */
+#ifndef HWCAP_PMULL
+#define HWCAP_PMULL		(1 << 4)
+#endif
+#ifndef HWCAP_CRC32
+#define HWCAP_CRC32		(1 << 7)
+#endif
+
+void cpu_detect_flags(void)
+{
+	unsigned long hwcap = getauxval(AT_HWCAP);
+
+	__cpu_flags = CPU_FLAG_NONE;
+	if (hwcap & HWCAP_CRC32)
+		__cpu_flags |= CPU_FLAG_ARMV8_CRC32;
+	if (hwcap & HWCAP_PMULL)
+		__cpu_flags |= CPU_FLAG_ARMV8_PMULL;
+
+	__cpu_flags_orig = __cpu_flags;
+}
+
+#else
+
+void cpu_detect_flags() { }
+
+#endif
+
 void cpu_set_level(unsigned long topbit)
 {
 	if (topbit)
@@ -107,13 +141,3 @@ void cpu_reset_level(void)
 {
 	__cpu_flags = __cpu_flags_orig;
 }
-
-#else
-
-void cpu_detect_flags() { }
-
-void cpu_set_level(unsigned long topbit) { }
-
-void cpu_reset_level(void) { }
-
-#endif

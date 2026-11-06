@@ -418,6 +418,14 @@ CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
 ASFLAGS += -fPIC
 endif
 
+ifeq ($(TARGET_CPU),aarch64)
+CRYPTO_OBJECTS += crypto/crc/arm64/crc32-core.o
+ASFLAGS += -fPIC
+endif
+
+# Assembly copied from the kernel's lib/crc/, with stand-ins for kernel headers
+ASFLAGS += -I$(TOPDIR)/crypto/crc/include
+
 CHECKER_FLAGS += $(btrfs_convert_cflags)
 
 # collect values of the variables above
@@ -919,7 +927,7 @@ clean: $(CLEANDIRS)
 		cmds/*.o cmds/.deps/*.o.d \
 		common/*.o common/.deps/*.o.d \
 		convert/*.o convert/.deps/*.o.d \
-		crypto/*.o crypto/.deps/*.o.d \
+		crypto/*.o crypto/.deps/*.o.d crypto/crc/*/*.o \
 		image/*.o image/.deps/*.o.d \
 		kernel-lib/*.o kernel-lib/.deps/*.o.d \
 		kernel-shared/*.o kernel-shared/.deps/*.o.d \

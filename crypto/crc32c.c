@@ -98,6 +98,50 @@ void crc32c_init_accel(void)
 	}
 }
 
+#elif defined(__aarch64__) && defined(__AARCH64EL__)
+
+/*
+ * The kernel's lib/crc/arm64/crc32-core.S, copied to crypto/crc/arm64/ by
+ * crypto/crc/update-from-kernel.sh, used like crc32c_arch() in the kernel's
+ * lib/crc/arm64/crc32.h.
+ */
+uint32_t crc32c_le_arm64(uint32_t crc, unsigned char const *p, size_t len);
+uint32_t crc32c_le_arm64_4way(uint32_t crc, unsigned char const *p, size_t len);
+
+/* The minimum input length to consider the 4-way interleaved code path */
+#define CRC32C_ARM64_4WAY_MIN_LEN	1024
+
+static uint32_t crc32c_armv8(uint32_t crc, unsigned char const *data, uint32_t length)
+{
+	return crc32c_le_arm64(crc, data, length);
+}
+
+static uint32_t crc32c_armv8_pmull(uint32_t crc, unsigned char const *data, uint32_t length)
+{
+	if (length >= CRC32C_ARM64_4WAY_MIN_LEN) {
+		crc = crc32c_le_arm64_4way(crc, data, length);
+
+		data += length & ~63U;
+		length %= 64;
+
+		if (!length)
+			return crc;
+	}
+
+	return crc32c_le_arm64(crc, data, length);
+}
+
+void crc32c_init_accel(void)
+{
+	if (cpu_has_feature(CPU_FLAG_ARMV8_CRC32) &&
+	    cpu_has_feature(CPU_FLAG_ARMV8_PMULL))
+		crc32c_impl = crc32c_armv8_pmull;
+	else if (cpu_has_feature(CPU_FLAG_ARMV8_CRC32))
+		crc32c_impl = crc32c_armv8;
+	else
+		crc32c_impl = crc32c_ref;
+}
+
 #else
 
 void crc32c_init_accel(void)
@@ -105,7 +149,7 @@ void crc32c_init_accel(void)
 	crc32c_impl = crc32c_ref;
 }
 
-#endif /* __x86_64__ */
+#endif
 
 /*
  * This is the CRC-32C table
