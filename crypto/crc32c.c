@@ -240,7 +240,7 @@ static const uint32_t crc32c_table[256] = {
 
 /*
  * Fallback implementation. Step through buffer one byte at at time, calculates
- * reflected crc using table, can accept an unaligned buffer.
+ * reflected crc using table.
  */
 static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length)
 {
@@ -252,9 +252,5 @@ static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t len
 
 uint32_t crc32c_le(uint32_t crc, unsigned char const *data, uint32_t length)
 {
-	/* Use by-byte access for unaligned buffers */
-	if ((unsigned long)data % sizeof(unsigned long))
-		return crc32c_ref(crc, data, length);
-
 	return crc32c_impl(crc, data, length);
 }
