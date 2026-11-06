@@ -30,6 +30,7 @@
 #include "common/cpu-utils.h"
 
 #ifdef __x86_64__
+#include <x86intrin.h>
 static const int cycles_supported = 1;
 #else
 static const int cycles_supported = 0;
@@ -45,19 +46,10 @@ const int blocksize = 4096;
 int iterations = 100000;
 
 #ifdef __x86_64__
-static __always_inline unsigned long long rdtsc(void)
-{
-	unsigned low, high;
-
-        asm volatile("rdtsc" : "=a" (low), "=d" (high));
-
-        return (low | ((u64)(high) << 32));
-}
-
 static inline u64 read_tsc(void)
 {
-       asm volatile("mfence");
-       return rdtsc();
+	_mm_mfence();
+	return __rdtsc();
 }
 
 #define cpu_cycles()		read_tsc()

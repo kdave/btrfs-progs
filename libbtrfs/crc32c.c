@@ -16,6 +16,9 @@ static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_
 
 #ifdef __x86_64__
 
+#include <cpuid.h>
+#include <nmmintrin.h>
+
 /*
  * Based on a posting to lkml by Austin Zhang <austin.zhang@intel.com>
  *
@@ -27,25 +30,22 @@ static uint32_t (*crc_function)(uint32_t crc, unsigned char const *data, uint32_
  * Volume 2A: Instruction Set Reference, A-M
  */
 #if  __SIZEOF_LONG__ == 8
-#define REX_PRE "0x48, "
 #define SCALE_F 8
+#define crc32c_hw_long(crc, v)	_mm_crc32_u64((crc), (v))
 #else
-#define REX_PRE
 #define SCALE_F 4
+#define crc32c_hw_long(crc, v)	_mm_crc32_u32((crc), (v))
 #endif
 
 static int crc32c_probed = 0;
 static int crc32c_intel_available = 0;
 
+__attribute__((target("sse4.2")))
 static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
 					uint32_t length)
 {
 	while (length--) {
-		__asm__ __volatile__(
-			".byte 0xf2, 0xf, 0x38, 0xf0, 0xf1"
-			:"=S"(crc)
-			:"0"(crc), "c"(*data)
-		);
+		crc = _mm_crc32_u8(crc, *data);
 		data++;
 	}
 
@@ -56,6 +56,7 @@ static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
  * Steps through buffer one byte at at time, calculates reflected 
  * crc using table.
  */
+__attribute__((target("sse4.2")))
 static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	unsigned int iquotient = length / SCALE_F;
@@ -63,11 +64,7 @@ static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t l
 	unsigned long *ptmp = (unsigned long *)data;
 
 	while (iquotient--) {
-		__asm__ __volatile__(
-			".byte 0xf2, " REX_PRE "0xf, 0x38, 0xf1, 0xf1;"
-			:"=S"(crc)
-			:"0"(crc), "c"(*ptmp)
-		);
+		crc = crc32c_hw_long(crc, *ptmp);
 		ptmp++;
 	}
 
@@ -78,31 +75,13 @@ static uint32_t crc32c_intel(uint32_t crc, unsigned char const *data, uint32_t l
 	return crc;
 }
 
-static void do_cpuid(unsigned int *eax, unsigned int *ebx, unsigned int *ecx,
-		     unsigned int *edx)
-{
-	int id = *eax;
-
-	asm("movl %4, %%eax;"
-	    "cpuid;"
-	    "movl %%eax, %0;"
-	    "movl %%ebx, %1;"
-	    "movl %%ecx, %2;"
-	    "movl %%edx, %3;"
-		: "=r" (*eax), "=r" (*ebx), "=r" (*ecx), "=r" (*edx)
-		: "r" (id)
-		: "eax", "ebx", "ecx", "edx");
-}
-
 static void crc32c_intel_probe(void)
 {
 	if (!crc32c_probed) {
 		unsigned int eax, ebx, ecx, edx;
 
-		eax = 1;
-
-		do_cpuid(&eax, &ebx, &ecx, &edx);
-		crc32c_intel_available = (ecx & (1U << 20)) != 0;
+		__cpuid(1, eax, ebx, ecx, edx);
+		crc32c_intel_available = (ecx & bit_SSE4_2) != 0;
 		crc32c_probed = 1;
 	}
 }

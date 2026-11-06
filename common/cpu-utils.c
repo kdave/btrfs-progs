@@ -15,36 +15,13 @@
  */
 
 #include <stdio.h>
+#ifdef __x86_64__
+#include <cpuid.h>
+#endif
 #include "common/cpu-utils.h"
 
 unsigned long __cpu_flags = CPU_FLAG_NONE;
 unsigned long __cpu_flags_orig = CPU_FLAG_NONE;
-
-#ifdef __x86_64__
-/*
- * Do manual cpuid as cpuid.h is not available for all versions.
- *
- * Plain cpuid(level) is __cpuidex(level, 0), otherwise look for the leaf/subleaf
- * modes at https://en.wikipedia.org/wiki/CPUID or compilers' cpuid.h.
- */
-
-#ifndef __cpuidex
-#define __cpuidex(leaf, subleaf, a, b, c, d)				\
-	__asm__ __volatile__ ("cpuid\n\t"				\
-			: "=a" (a), "=b" (b), "=c" (c), "=d" (d)	\
-			: "0" (leaf), "2" (subleaf))
-#endif
-
-#else
-
-#define __cpuidex(leaf, subleaf, a, b, c, d)				\
-	do {								\
-		a = 0;							\
-		b = 0;							\
-		c = 0;							\
-		d = 0;							\
-	} while(0)
-#endif
 
 #define FLAG(name)	if (__cpu_flags & CPU_FLAG_ ## name) printf(" " #name)
 void cpu_print_flags(void) {
@@ -88,7 +65,7 @@ void cpu_detect_flags(void)
 		__cpu_flags |= CPU_FLAG_AVX2;
 
 	/* Flags unsupported by builtins */
-	__cpuidex(7, 0, a, b, c, d);
+	__cpuid_count(7, 0, a, b, c, d);
 	if (b & (1UL << 29))
 		__cpu_flags |= CPU_FLAG_SHA;
 
