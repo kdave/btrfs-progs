@@ -16,86 +16,97 @@
 static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length);
 static uint32_t (*crc32c_impl)(uint32_t crc, unsigned char const *data, uint32_t length) = crc32c_ref;
 
-#ifdef __x86_64__
+#if defined(__x86_64__) && defined(__LP64__)
 
-/* asmlinkage */ unsigned int crc_pcl(const unsigned char *buffer, unsigned int len, unsigned int crc_init);
-static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t len) {
-	return crc_pcl(data, len, crc);
-}
+#include "kerncompat.h"
 
 /*
- * Based on a posting to lkml by Austin Zhang <austin.zhang@intel.com>
- *
- * Using hardware provided CRC32 instruction to accelerate the CRC32 disposal.
- * CRC32C polynomial:0x1EDC6F41(BE)/0x82F63B78(LE)
- * CRC32 is a new instruction in Intel SSE4.2, the reference can be found at:
- * http://www.intel.com/products/processor/manuals/
- * Intel(R) 64 and IA-32 Architectures Software Developer's Manual
- * Volume 2A: Instruction Set Reference, A-M
+ * The kernel's lib/crc/x86/crc32c-3way.S and its [V]PCLMULQDQ template
+ * crc-pclmul-template.S, copied to crypto/crc/x86/ by
+ * crypto/crc/update-from-kernel.sh, used like crc32c_arch() in the kernel's
+ * lib/crc/x86/crc32.h.
  */
-#if  __SIZEOF_LONG__ == 8
-#define REX_PRE "0x48, "
-#define SCALE_F 8
+#ifndef ____cacheline_aligned
+#define ____cacheline_aligned	__attribute__((__aligned__(64)))
+#endif
+#include "crypto/crc/x86/crc-pclmul-consts.h"
+
+uint32_t crc32c_x86_3way(uint32_t crc, const uint8_t *buffer, size_t len);
+uint32_t crc32_lsb_vpclmul_avx512(uint32_t crc, const uint8_t *p, size_t len,
+				  const void *consts_ptr);
+
+/*
+ * The kernel uses the PCLMULQDQ code only from 512 bytes, as below that
+ * kernel_fpu_begin() costs more than it saves. Userspace has no such cost and
+ * crc32c_x86_3way() uses one stream of crc32 instructions below 200 bytes by
+ * itself, so it is used for all lengths, and from 512 bytes VPCLMULQDQ with
+ * AVX-512 where the CPU has it, as in the kernel.
+ */
+#define CRC32C_AVX512_MIN_LEN	512
+
+/* Clang always puts an "rm" operand in memory, like the kernel's ASM_INPUT_RM */
+#ifdef __clang__
+#define CRC32_INPUT_RM		"r"
 #else
-#define REX_PRE
-#define SCALE_F 4
+#define CRC32_INPUT_RM		"rm"
 #endif
 
-static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
-					uint32_t length)
+/* One stream of crc32 instructions, as the kernel's crc32c_arch() for short lengths */
+static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *p, uint32_t len)
 {
-	while (length--) {
-		__asm__ __volatile__(
-			".byte 0xf2, 0xf, 0x38, 0xf0, 0xf1"
-			:"=S"(crc)
-			:"0"(crc), "c"(*data)
-		);
-		data++;
+	size_t num_longs;
+
+	for (num_longs = len / sizeof(unsigned long); num_longs != 0;
+	     num_longs--, p += sizeof(unsigned long)) {
+		unsigned long v;
+
+		memcpy(&v, p, sizeof(v));
+		__asm__("crc32q %1, %q0" : "+r" (crc) : CRC32_INPUT_RM (v));
 	}
+	if (len & 4) {
+		uint32_t v;
+
+		memcpy(&v, p, sizeof(v));
+		__asm__("crc32l %1, %0" : "+r" (crc) : CRC32_INPUT_RM (v));
+		p += 4;
+	}
+	if (len & 2) {
+		uint16_t v;
+
+		memcpy(&v, p, sizeof(v));
+		__asm__("crc32w %1, %0" : "+r" (crc) : CRC32_INPUT_RM (v));
+		p += 2;
+	}
+	if (len & 1)
+		__asm__("crc32b %1, %0" : "+r" (crc) : CRC32_INPUT_RM (*p));
 
 	return crc;
 }
 
-/*
- * Accelerated implementation using SSE 4.2 extension for instruction crc32c.
- * Steps through buffer one byte at at time, calculates reflected crc using
- * table.
- */
-static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t length)
+static uint32_t crc32c_pclmul(uint32_t crc, unsigned char const *data, uint32_t length)
 {
-	unsigned int iquotient = length / SCALE_F;
-	unsigned int iremainder = length % SCALE_F;
-	unsigned long *ptmp = (unsigned long *)data;
+	return crc32c_x86_3way(crc, data, length);
+}
 
-	while (iquotient--) {
-		__asm__ __volatile__(
-			".byte 0xf2, " REX_PRE "0xf, 0x38, 0xf1, 0xf1;"
-			:"=S"(crc)
-			:"0"(crc), "c"(*ptmp)
-		);
-		ptmp++;
-	}
+static uint32_t crc32c_vpclmul_avx512(uint32_t crc, unsigned char const *data, uint32_t length)
+{
+	if (length >= CRC32C_AVX512_MIN_LEN)
+		return crc32_lsb_vpclmul_avx512(crc, data, length,
+				crc32_lsb_0x82f63b78_consts.fold_across_128_bits_consts);
 
-	if (iremainder)
-		crc = crc32c_intel_le_hw_byte(crc, (unsigned char *)ptmp,
-				 iremainder);
-
-	return crc;
+	return crc32c_x86_3way(crc, data, length);
 }
 
 void crc32c_init_accel(void)
 {
-	if (0) {
-	} else if (cpu_has_feature(CPU_FLAG_PCLMUL)) {
-		/* printf("CRC32C: pcl\n"); */
-		crc32c_impl = crc32c_pcl;
-	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
-		/* printf("CRC32c: intel\n"); */
-		crc32c_impl = crc32c_sse42;
-	} else {
-		/* printf("CRC32c: fallback\n"); */
+	if (!cpu_has_feature(CPU_FLAG_SSE42))
 		crc32c_impl = crc32c_ref;
-	}
+	else if (!cpu_has_feature(CPU_FLAG_PCLMUL))
+		crc32c_impl = crc32c_sse42;
+	else if (!cpu_has_feature(CPU_FLAG_VPCLMUL_AVX512))
+		crc32c_impl = crc32c_pclmul;
+	else
+		crc32c_impl = crc32c_vpclmul_avx512;
 }
 
 #elif defined(__aarch64__) && defined(__AARCH64EL__)

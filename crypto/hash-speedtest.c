@@ -192,6 +192,8 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_SSE42 },
 		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_PCLMUL },
+		{ .name = "CRC32C-AVX512", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_VPCLMUL_AVX512 },
 		{ .name = "CRC32C-ARMv8", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_ARMV8_CRC32 },
 		{ .name = "CRC32C-PMULL", .digest = hash_crc32c, .digest_size = 4,

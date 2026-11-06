@@ -414,7 +414,7 @@ CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
 ifeq ($(TARGET_CPU),x86_64)
-CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
+CRYPTO_OBJECTS += crypto/crc/x86/crc32c-3way.o crypto/crc/x86/crc32-pclmul.o
 ASFLAGS += -fPIC
 endif
 

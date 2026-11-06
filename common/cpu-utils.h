@@ -41,6 +41,8 @@ enum cpu_feature {
 	/* aarch64, HWCAP_CRC32 and HWCAP_PMULL */
 	ENUM_CPU_BIT(CPU_FLAG_ARMV8_CRC32),
 	ENUM_CPU_BIT(CPU_FLAG_ARMV8_PMULL),
+	/* x86_64, VPCLMULQDQ with AVX-512 where the kernel uses it */
+	ENUM_CPU_BIT(CPU_FLAG_VPCLMUL_AVX512),
 };
 
 #undef ENUM_CPU_BIT
