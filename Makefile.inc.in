@@ -28,6 +28,7 @@ HAVE_CFLAG_msse2 = @HAVE_CFLAG_msse2@
 HAVE_CFLAG_msse41 = @HAVE_CFLAG_msse41@
 HAVE_CFLAG_mavx2 = @HAVE_CFLAG_mavx2@
 HAVE_CFLAG_msha = @HAVE_CFLAG_msha@
+HAVE_CFLAG_march_armv8_a_crc = @HAVE_CFLAG_march_armv8_a_crc@
 TARGET_CPU = @target_cpu@
 HAVE_GLIBC = @HAVE_GLIBC@
 

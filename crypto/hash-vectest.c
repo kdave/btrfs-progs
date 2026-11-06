@@ -45,6 +45,25 @@ static const struct hash_testvec crc32c_tv[] = {
 		.psize = 7,
 		.digest = "\x41\xf4\x27\xe6",
 	},
+	{
+		.plaintext = "123456789",
+		.psize = 9,
+		.digest = "\x83\x92\x06\xe3",
+	},
+	{
+		/* RFC 3720 B.4 */
+		.plaintext = "\x00\x01\x02\x03\x04\x05\x06\x07"
+			     "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+			     "\x10\x11\x12\x13\x14\x15\x16\x17"
+			     "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f",
+		.psize = 32,
+		.digest = "\x4e\x79\xdd\x46",
+	},
+	{
+		.plaintext = "The quick brown fox jumps over the lazy dog",
+		.psize = 43,
+		.digest = "\x04\x04\x62\x22",
+	},
 };
 
 static const struct hash_testvec xxhash64_tv[] = {
@@ -449,6 +468,13 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_PCLMUL,
 		.hash = hash_crc32c
 	}, {
+		.name = "CRC32C-ARMv8",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_CRC32,
+		.hash = hash_crc32c
+	}, {
 		.name = "XXHASH",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,
@@ -594,6 +620,7 @@ static int test_hash(const struct hash_testspec *spec)
 		int ret;
 		const struct hash_testvec *vec = &spec->testvec[i];
 		u8 csum[CRYPTO_HASH_SIZE_MAX];
+		u8 *buf;
 
 		if (spec->cpu_flag != 0 && !cpu_has_feature(spec->cpu_flag)) {
 			printf("%s skipped, no CPU support\n", spec->name);
@@ -608,12 +635,25 @@ static int test_hash(const struct hash_testspec *spec)
 			header = true;
 		}
 
+		/*
+		 * The accelerated CRC32C implementations are used only for
+		 * aligned buffers, test from one.
+		 */
+		buf = malloc(vec->psize + 1);
+		if (!buf) {
+			error_mem(NULL);
+			return 1;
+		}
+		if (vec->psize)
+			memcpy(buf, vec->plaintext, vec->psize);
+
 		if (spec->cpu_flag) {
 			cpu_set_level(spec->cpu_flag);
 			hash_init_accel();
 		}
-		ret = spec->hash((const u8 *)vec->plaintext, vec->psize, csum);
+		ret = spec->hash(buf, vec->psize, csum);
 		cpu_reset_level();
+		free(buf);
 		if (ret < 0) {
 			error("hash %s = %d", spec->name, ret);
 			return 1;
