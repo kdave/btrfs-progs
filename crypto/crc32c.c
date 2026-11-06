@@ -18,6 +18,8 @@ static uint32_t (*crc32c_impl)(uint32_t crc, unsigned char const *data, uint32_t
 
 #ifdef __x86_64__
 
+#include <nmmintrin.h>
+
 /* asmlinkage */ unsigned int crc_pcl(const unsigned char *buffer, unsigned int len, unsigned int crc_init);
 static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t len) {
 	return crc_pcl(data, len, crc);
@@ -34,22 +36,19 @@ static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t
  * Volume 2A: Instruction Set Reference, A-M
  */
 #if  __SIZEOF_LONG__ == 8
-#define REX_PRE "0x48, "
 #define SCALE_F 8
+#define crc32c_hw_long(crc, v)	_mm_crc32_u64((crc), (v))
 #else
-#define REX_PRE
 #define SCALE_F 4
+#define crc32c_hw_long(crc, v)	_mm_crc32_u32((crc), (v))
 #endif
 
+__attribute__((target("sse4.2")))
 static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
 					uint32_t length)
 {
 	while (length--) {
-		__asm__ __volatile__(
-			".byte 0xf2, 0xf, 0x38, 0xf0, 0xf1"
-			:"=S"(crc)
-			:"0"(crc), "c"(*data)
-		);
+		crc = _mm_crc32_u8(crc, *data);
 		data++;
 	}
 
@@ -61,6 +60,7 @@ static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
  * Steps through buffer one byte at at time, calculates reflected crc using
  * table.
  */
+__attribute__((target("sse4.2")))
 static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t length)
 {
 	unsigned int iquotient = length / SCALE_F;
@@ -68,11 +68,7 @@ static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t l
 	unsigned long *ptmp = (unsigned long *)data;
 
 	while (iquotient--) {
-		__asm__ __volatile__(
-			".byte 0xf2, " REX_PRE "0xf, 0x38, 0xf1, 0xf1;"
-			:"=S"(crc)
-			:"0"(crc), "c"(*ptmp)
-		);
+		crc = crc32c_hw_long(crc, *ptmp);
 		ptmp++;
 	}
 
