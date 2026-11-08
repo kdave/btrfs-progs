@@ -335,11 +335,11 @@ static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t l
 void crc32c_init_accel(void)
 {
 	if (0) {
-	} else if (cpu_has_feature(CPU_FLAG_PCLMUL) &&
-		   cpu_has_feature(CPU_FLAG_SSE42)) {
+	} else if (cpu_has_feature(CPU_FLAG_X64_PCLMUL) &&
+		   cpu_has_feature(CPU_FLAG_X64_SSE42)) {
 		/* printf("CRC32C: pcl\n"); */
 		crc32c_impl = crc32c_pcl;
-	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
+	} else if (cpu_has_feature(CPU_FLAG_X64_SSE42)) {
 		/* printf("CRC32c: intel\n"); */
 		crc32c_impl = crc32c_sse42;
 	} else {

@@ -435,18 +435,18 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_NONE,
 		.hash = hash_crc32c,
 	}, {
-		.name = "CRC32C-SSE42",
+		.name = "CRC32C-X64-SSE42",
 		.digest_size = 4,
 		.testvec = crc32c_tv,
 		.count = ARRAY_SIZE(crc32c_tv),
-		.cpu_flag = CPU_FLAG_SSE42,
+		.cpu_flag = CPU_FLAG_X64_SSE42,
 		.hash = hash_crc32c,
 	}, {
-		.name = "CRC32C-NI",
+		.name = "CRC32C-X64-NI",
 		.digest_size = 4,
 		.testvec = crc32c_tv,
 		.count = ARRAY_SIZE(crc32c_tv),
-		.cpu_flag = CPU_FLAG_PCLMUL,
+		.cpu_flag = CPU_FLAG_X64_PCLMUL,
 		.hash = hash_crc32c
 	}, {
 		.name = "XXHASH",
@@ -503,11 +503,11 @@ static const struct hash_testspec test_spec[] = {
 		.hash = hash_sha256,
 		.backend = CRYPTOPROVIDER_OPENSSL + 1
 	}, {
-		.name = "SHA256-NI",
+		.name = "SHA256-X64-NI",
 		.digest_size = 32,
 		.testvec = sha256_tv,
 		.count = ARRAY_SIZE(sha256_tv),
-		.cpu_flag = CPU_FLAG_SHA,
+		.cpu_flag = CPU_FLAG_X64_SHA,
 		.hash = hash_sha256,
 		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
@@ -559,27 +559,27 @@ static const struct hash_testspec test_spec[] = {
 		.hash = hash_blake2b,
 		.backend = CRYPTOPROVIDER_OPENSSL + 1
 	}, {
-		.name = "BLAKE2-SSE2",
+		.name = "BLAKE2-X64-SSE2",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
-		.cpu_flag = CPU_FLAG_SSE2,
+		.cpu_flag = CPU_FLAG_X64_SSE2,
 		.hash = hash_blake2b,
 		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "BLAKE2-SSE41",
+		.name = "BLAKE2-X64-SSE41",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
-		.cpu_flag = CPU_FLAG_SSE41,
+		.cpu_flag = CPU_FLAG_X64_SSE41,
 		.hash = hash_blake2b,
 		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}, {
-		.name = "BLAKE2-AVX2",
+		.name = "BLAKE2-X64-AVX2",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,
 		.count = ARRAY_SIZE(blake2b_256_tv),
-		.cpu_flag = CPU_FLAG_AVX2,
+		.cpu_flag = CPU_FLAG_X64_AVX2,
 		.hash = hash_blake2b,
 		.backend = CRYPTOPROVIDER_BUILTIN + 1
 	}

@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 	int iter;
 	char *filter = NULL;
 	struct contestant {
-		char name[16];
+		char name[20];
 		int (*digest)(const u8 *buf, size_t length, u8 *out);
 		int digest_size;
 		u64 cycles;
@@ -180,10 +180,10 @@ int main(int argc, char **argv) {
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
 		{ .name = "CRC32C-ref", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_NONE },
-		{ .name = "CRC32C-SSE42", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_SSE42 },
-		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_PCLMUL },
+		{ .name = "CRC32C-X64-SSE42", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_X64_SSE42 },
+		{ .name = "CRC32C-X64-NI", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_X64_PCLMUL },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
@@ -197,8 +197,8 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BOTAN + 1 },
 		{ .name = "SHA256-openssl", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_OPENSSL + 1 },
-		{ .name = "SHA256-NI", .digest = hash_sha256, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SHA, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "SHA256-X64-NI", .digest = hash_sha256, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SHA, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-ref", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-gcrypt", .digest = hash_blake2b, .digest_size = 32,
@@ -211,12 +211,12 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BOTAN + 1 },
 		{ .name = "BLAKE2-openssl", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_OPENSSL + 1 },
-		{ .name = "BLAKE2-SSE2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
-		{ .name = "BLAKE2-SSE41", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
-		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-SSE2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SSE2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-SSE41", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-AVX2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 	};
 	int units = UNITS_CYCLES;
 
@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
 		u64 total = 0;
 
 		if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
-			printf("%14s: no CPU support\n", c->name);
+			printf("%16s: no CPU support\n", c->name);
 			continue;
 		}
 		/* Backend not compiled in */
@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
 		else if (filter && fnmatch(filter, c->name, FNM_CASEFOLD) != 0)
 			continue;
 
-		printf("%14s: ", c->name);
+		printf("%16s: ", c->name);
 		fflush(stdout);
 
 		if (c->cpu_flag) {
