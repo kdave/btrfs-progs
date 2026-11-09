@@ -1883,6 +1883,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 
 		receive_fd = open(fromfile, flags);
 		if (receive_fd < 0) {
+			ret = -errno;
 			error("cannot open %s: %m", fromfile);
 			goto out;
 		}
