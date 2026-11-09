@@ -182,8 +182,10 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE },
 		{ .name = "CRC32C-X64-SSE42", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_X64_SSE42 },
+#if HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL
 		{ .name = "CRC32C-X64-NI", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_X64_PCLMUL },
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL */
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
@@ -197,8 +199,10 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BOTAN + 1 },
 		{ .name = "SHA256-openssl", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_OPENSSL + 1 },
+#if HAVE___BUILTIN_CPU_SUPPORTS__SHA
 		{ .name = "SHA256-X64-NI", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_X64_SHA, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__SHA */
 		{ .name = "BLAKE2-ref", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-gcrypt", .digest = hash_blake2b, .digest_size = 32,

@@ -441,14 +441,19 @@ static const struct hash_testspec test_spec[] = {
 		.count = ARRAY_SIZE(crc32c_tv),
 		.cpu_flag = CPU_FLAG_X64_SSE42,
 		.hash = hash_crc32c,
-	}, {
+	},
+
+#if HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL
+	{
 		.name = "CRC32C-X64-NI",
 		.digest_size = 4,
 		.testvec = crc32c_tv,
 		.count = ARRAY_SIZE(crc32c_tv),
 		.cpu_flag = CPU_FLAG_X64_PCLMUL,
 		.hash = hash_crc32c
-	}, {
+	},
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL */
+	{
 		.name = "XXHASH",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,
@@ -502,7 +507,9 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_NONE,
 		.hash = hash_sha256,
 		.backend = CRYPTOPROVIDER_OPENSSL + 1
-	}, {
+	},
+#ifdef HAVE___BUILTIN_CPU_SUPPORTS__SHA
+	{
 		.name = "SHA256-X64-NI",
 		.digest_size = 32,
 		.testvec = sha256_tv,
@@ -510,7 +517,9 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_X64_SHA,
 		.hash = hash_sha256,
 		.backend = CRYPTOPROVIDER_BUILTIN + 1
-	}, {
+	},
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__SHA */
+	{
 		.name = "BLAKE2-ref",
 		.digest_size = 32,
 		.testvec = blake2b_256_tv,

@@ -15,10 +15,8 @@
  */
 
 #include <stdio.h>
-#ifdef __x86_64__
-#include <cpuid.h>
-#endif
 #include "common/cpu-utils.h"
+#include "common/messages.h"
 
 unsigned long __cpu_flags = CPU_FLAG_NONE;
 unsigned long __cpu_flags_orig = CPU_FLAG_NONE;
@@ -39,14 +37,12 @@ void cpu_print_flags(void) {
 }
 #undef FLAG_X64
 
-#ifdef __x86_64__
 
 void cpu_detect_flags(void)
 {
-	unsigned int a, b, c, d;
-
-	__builtin_cpu_init();
 	__cpu_flags = CPU_FLAG_NONE;
+#ifdef __x86_64__
+	__builtin_cpu_init();
 	if (__builtin_cpu_supports("sse2"))
 		__cpu_flags |= CPU_FLAG_X64_SSE2;
 	if (__builtin_cpu_supports("ssse3"))
@@ -58,39 +54,27 @@ void cpu_detect_flags(void)
 #if HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL
 	if (__builtin_cpu_supports("pclmul"))
 		__cpu_flags |= CPU_FLAG_X64_PCLMUL;
-#endif
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL */
 	if (__builtin_cpu_supports("avx"))
 		__cpu_flags |= CPU_FLAG_X64_AVX;
 	if (__builtin_cpu_supports("avx2"))
 		__cpu_flags |= CPU_FLAG_X64_AVX2;
-
-	/* Flags unsupported by builtins */
-	__cpuid_count(7, 0, a, b, c, d);
-	if (b & (1UL << 29))
+#if HAVE___BUILTIN_CPU_SUPPORTS__SHA
+	if (__builtin_cpu_supports("sha"))
 		__cpu_flags |= CPU_FLAG_X64_SHA;
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__SHA */
+#endif /* __x86_64__ */
 
 	__cpu_flags_orig = __cpu_flags;
 }
 
 void cpu_set_level(unsigned long topbit)
 {
-	if (topbit)
-		__cpu_flags &= (topbit << 1) - 1;
-	else
-		__cpu_flags = CPU_FLAG_NONE;
+	UASSERT(topbit);
+	__cpu_flags &= (topbit << 1) - 1;
 }
 
 void cpu_reset_level(void)
 {
 	__cpu_flags = __cpu_flags_orig;
 }
-
-#else
-
-void cpu_detect_flags() { }
-
-void cpu_set_level(unsigned long topbit) { }
-
-void cpu_reset_level(void) { }
-
-#endif
