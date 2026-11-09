@@ -312,10 +312,8 @@ int main(int argc, char **argv) {
 		printf("%16s: ", c->name);
 		fflush(stdout);
 
-		if (c->cpu_flag) {
-			cpu_set_level(c->cpu_flag);
-			hash_init_accel();
-		}
+		if (c->cpu_flag)
+			hash_force_accel(c->cpu_flag);
 		tstart = get_time();
 		start = get_cycles(units);
 		for (iter = 0; iter < iterations; iter++) {
@@ -327,7 +325,6 @@ int main(int argc, char **argv) {
 		tend = get_time();
 		c->cycles = end - start;
 		c->time = tend - tstart;
-		cpu_reset_level();
 
 		if (units == UNITS_CYCLES || units == UNITS_PERF)
 			total = c->cycles;

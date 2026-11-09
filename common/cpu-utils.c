@@ -16,10 +16,8 @@
 
 #include <stdio.h>
 #include "common/cpu-utils.h"
-#include "common/messages.h"
 
 unsigned long __cpu_flags = CPU_FLAG_NONE;
-unsigned long __cpu_flags_orig = CPU_FLAG_NONE;
 
 #define FLAG_X64(name)	if (__cpu_flags & CPU_FLAG_X64_ ## name) printf(" " #name)
 void cpu_print_flags(void) {
@@ -64,17 +62,4 @@ void cpu_detect_flags(void)
 		__cpu_flags |= CPU_FLAG_X64_SHA;
 #endif /* HAVE___BUILTIN_CPU_SUPPORTS__SHA */
 #endif /* __x86_64__ */
-
-	__cpu_flags_orig = __cpu_flags;
-}
-
-void cpu_set_level(unsigned long topbit)
-{
-	UASSERT(topbit);
-	__cpu_flags &= (topbit << 1) - 1;
-}
-
-void cpu_reset_level(void)
-{
-	__cpu_flags = __cpu_flags_orig;
 }

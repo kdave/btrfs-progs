@@ -44,12 +44,9 @@ enum cpu_feature {
 
 /* Private but in public header to allow inlining */
 extern unsigned long __cpu_flags;
-extern unsigned long __cpu_flags_orig;
 
 /* Public API */
 void cpu_detect_flags(void);
-void cpu_set_level(unsigned long topbit);
-void cpu_reset_level(void);
 void cpu_print_flags(void);
 
 static inline bool cpu_has_feature(enum cpu_feature f)

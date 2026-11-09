@@ -332,30 +332,36 @@ static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t l
 	return crc;
 }
 
-void crc32c_init_accel(void)
-{
-	if (0) {
-	} else if (cpu_has_feature(CPU_FLAG_X64_PCLMUL) &&
-		   cpu_has_feature(CPU_FLAG_X64_SSE42)) {
-		/* printf("CRC32C: pcl\n"); */
-		crc32c_impl = crc32c_pcl;
-	} else if (cpu_has_feature(CPU_FLAG_X64_SSE42)) {
-		/* printf("CRC32c: intel\n"); */
-		crc32c_impl = crc32c_sse42;
-	} else {
-		/* printf("CRC32c: fallback\n"); */
-		crc32c_impl = crc32c_ref;
-	}
-}
-
-#else
+#endif /* __x86_64__ */
 
 void crc32c_init_accel(void)
 {
 	crc32c_impl = crc32c_ref;
+#ifdef __x86_64__
+	if (cpu_has_feature(CPU_FLAG_X64_PCLMUL) &&
+	    cpu_has_feature(CPU_FLAG_X64_SSE42))
+		crc32c_impl = crc32c_pcl;
+	else if (cpu_has_feature(CPU_FLAG_X64_SSE42))
+		crc32c_impl = crc32c_sse42;
+#endif
 }
 
-#endif /* __x86_64__ */
+void crc32c_force_accel(enum cpu_feature f)
+{
+	switch (f) {
+#ifdef __x86_64__
+	case CPU_FLAG_X64_PCLMUL:
+		crc32c_impl = crc32c_pcl;
+		break;
+	case CPU_FLAG_X64_SSE42:
+		crc32c_impl = crc32c_sse42;
+		break;
+#endif
+	default:
+		crc32c_impl = crc32c_ref;
+		break;
+	}
+}
 
 /*
  * This is the CRC-32C table

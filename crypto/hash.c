@@ -49,6 +49,15 @@ int hash_xxhash(const u8 *buf, size_t length, u8 *out)
 	return 0;
 }
 
+void hash_force_accel(enum cpu_feature f)
+{
+	crc32c_force_accel(f);
+#if CRYPTOPROVIDER_BUILTIN == 1
+	blake2_force_accel(f);
+	sha256_force_accel(f);
+#endif
+}
+
 /*
  * Implementations of cryptographic primitives
  */

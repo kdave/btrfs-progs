@@ -617,12 +617,9 @@ static int test_hash(const struct hash_testspec *spec)
 			header = true;
 		}
 
-		if (spec->cpu_flag) {
-			cpu_set_level(spec->cpu_flag);
-			hash_init_accel();
-		}
+		if (spec->cpu_flag)
+			hash_force_accel(spec->cpu_flag);
 		ret = spec->hash((const u8 *)vec->plaintext, vec->psize, csum);
-		cpu_reset_level();
 		if (ret < 0) {
 			error("hash %s = %d", spec->name, ret);
 			return 1;

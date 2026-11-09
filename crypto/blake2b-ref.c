@@ -239,6 +239,30 @@ void blake2_init_accel(void)
 		blake2b_compress = blake2b_compress_ref;
 }
 
+void blake2_force_accel(enum cpu_feature f)
+{
+	switch (f) {
+#if HAVE_CFLAG_mavx2 == 1
+	case CPU_FLAG_X64_AVX2:
+		blake2b_compress = blake2b_compress_avx2;
+		break;
+#endif
+#if HAVE_CFLAG_msse41 == 1
+	case CPU_FLAG_X64_SSE41:
+		blake2b_compress = blake2b_compress_sse41;
+		break;
+#endif
+#if HAVE_CFLAG_msse2 == 1
+	case CPU_FLAG_X64_SSE2:
+		blake2b_compress = blake2b_compress_sse2;
+		break;
+#endif
+	default:
+		blake2b_compress = blake2b_compress_ref;
+		break;
+	}
+}
+
 int blake2b_update( blake2b_state *S, const void *pin, size_t inlen )
 {
   const unsigned char * in = (const unsigned char *)pin;
