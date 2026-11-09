@@ -49,6 +49,7 @@
 /quick-test
 /json-formatter-test
 /hash-speedtest
+/hash-vectest
 
 /aclocal.m4
 /autom4te.cache
