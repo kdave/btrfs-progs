@@ -126,6 +126,7 @@ void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 		     int slot);
 int check_child_node(struct extent_buffer *parent, int slot,
 		     struct extent_buffer *child);
+int check_type_with_root(u64 rootid, u8 key_type);
 void reset_cached_block_groups(void);
 int pin_metadata_blocks(void);
 int exclude_metadata_blocks(void);
