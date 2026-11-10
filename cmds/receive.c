@@ -789,6 +789,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			} else {
 				error("clone: source subvol path %s unreachable from %s",
 					si->path, rctx->full_root_path);
+				ret = -ENOENT;
 				goto out;
 			}
 		} else {
