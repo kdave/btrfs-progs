@@ -2455,6 +2455,7 @@ raid_groups:
 		if (IS_ERR(trans)) {
 			errno = -PTR_ERR(trans);
 			error_msg(ERROR_MSG_START_TRANS, "%m");
+			ret = 1;
 			goto out;
 		}
 
