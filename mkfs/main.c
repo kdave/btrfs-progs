@@ -897,6 +897,9 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(struct btrfs_qgroup_info_item));
+	memset_extent_buffer(path.nodes[0], 0,
+			     btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+			     btrfs_item_size(path.nodes[0], path.slots[0]));
 	btrfs_release_path(&path);
 	if (ret < 0)
 		return ret;
@@ -906,6 +909,9 @@ static int insert_qgroup_items(struct btrfs_trans_handle *trans,
 	key.offset = qgroupid;
 	ret = btrfs_insert_empty_item(trans, quota_root, &path, &key,
 				      sizeof(struct btrfs_qgroup_limit_item));
+	memset_extent_buffer(path.nodes[0], 0,
+			     btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
+			     btrfs_item_size(path.nodes[0], path.slots[0]));
 	return ret;
 }
 
