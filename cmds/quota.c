@@ -284,7 +284,7 @@ static const char *describe_mode(const char *mode)
 
 static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	int ret;
+	int ret = 0;
 	int fsfd = -1;
 	int dirfd = -1;
 	int fd = -1;
@@ -335,6 +335,7 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 	if (fd == -ENOENT) {
 		strncpy_null(buf, "qgroup", sizeof(buf));
 	} else if (fd < 0) {
+		ret = fd;
 		error("cannot read file qgroups/mode: %m");
 		goto out;
 	}
@@ -365,6 +366,7 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 	/* Count */
 	dir = fdopendir(dirfd);
 	if (!dir) {
+		ret = -errno;
 		error("cannot open qgroups/ directory: %m");
 		goto out;
 	}
@@ -389,8 +391,11 @@ static int cmd_quota_status(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 
 		ret = parse_qgroupid(de->d_name, &qgroupid);
-		if (ret < 0)
+		/* Skip files that are not qgroups. */
+		if (ret < 0) {
+			ret = 0;
 			continue;
+		}
 
 		num++;
 		if (btrfs_qgroup_level(qgroupid) == 0)
@@ -404,7 +409,7 @@ out:
 		closedir(dir);
 	close(dirfd);
 	close(fsfd);
-	return 0;
+	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(quota_status, "status");
 
