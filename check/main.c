@@ -6399,13 +6399,14 @@ static int check_type_with_root(u64 rootid, u8 key_type)
 		if (rootid != BTRFS_EXTENT_TREE_OBJECTID)
 			goto err;
 		break;
+	/*
+	 * Valid in extent and block group tree. An interrupted conversion
+	 * leaves items in both, so do not look at the feature flag.
+	 */
 	case BTRFS_BLOCK_GROUP_ITEM_KEY:
-		if (btrfs_fs_compat_ro(gfs_info, BLOCK_GROUP_TREE)) {
-			if (rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
-				goto err;
-		} else if (rootid != BTRFS_EXTENT_TREE_OBJECTID) {
+		if (rootid != BTRFS_EXTENT_TREE_OBJECTID &&
+		    rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
 			goto err;
-		}
 		break;
 	case BTRFS_ROOT_ITEM_KEY:
 		if (rootid != BTRFS_ROOT_TREE_OBJECTID)
