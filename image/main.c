@@ -262,6 +262,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			error("it needs %llu devices but has only %d",
 				total_devs, dev_cnt);
 			close_ctree(info->chunk_root);
+			ret = 1;
 			goto out;
 		}
 
