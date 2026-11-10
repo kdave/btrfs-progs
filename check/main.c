@@ -6389,9 +6389,9 @@ static int check_type_with_root(u64 rootid, u8 key_type)
 			goto err;
 		break;
 	/* valid in csum and log tree */
-	case BTRFS_CSUM_TREE_OBJECTID:
+	case BTRFS_EXTENT_CSUM_KEY:
 		if (!(rootid == BTRFS_TREE_LOG_OBJECTID ||
-		      is_fstree(rootid)))
+		      rootid == BTRFS_CSUM_TREE_OBJECTID))
 			goto err;
 		break;
 	case BTRFS_EXTENT_ITEM_KEY:
