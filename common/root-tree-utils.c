@@ -104,11 +104,11 @@ int btrfs_make_subvolume(struct btrfs_trans_handle *trans, u64 objectid,
 		goto error;
 
 	if (objectid != BTRFS_DATA_RELOC_TREE_OBJECTID) {
-		time_t now = time(NULL);
-		uuid_t uuid;
+		time_t now = reproducible_now();
 
-		uuid_generate(uuid);
-		memcpy(root->root_item.uuid, uuid, BTRFS_UUID_SIZE);
+		reproducible_uuid_generate(fs_info->super_copy->fsid,
+					   REPRODUCIBLE_UUID_ROLE_SUBVOL, objectid,
+					   root->root_item.uuid);
 		btrfs_set_stack_timespec_sec(&root->root_item.otime, now);
 		btrfs_set_stack_timespec_sec(&root->root_item.ctime, now);
 	}
