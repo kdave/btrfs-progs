@@ -97,6 +97,7 @@ AX_GCC_BUILTIN([__builtin_add_overflow])
 AX_GCC_BUILTIN([__builtin_sub_overflow])
 AX_GCC_BUILTIN([__builtin_mul_overflow])
 AX_GCC_BUILTIN([__builtin_cpu_supports__pclmul])
+AX_GCC_BUILTIN([__builtin_cpu_supports__sha])
 
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([inttypes.h])

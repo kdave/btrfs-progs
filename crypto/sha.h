@@ -71,6 +71,7 @@
  */
 
 #include <stdint.h>
+#include "common/cpu-utils.h"
 /*
  * If you do not have the ISO standard stdint.h header file, then you
  * must typedef the following:
@@ -210,6 +211,7 @@ extern int hmacResult(HMACContext *context,
                       uint8_t digest[USHAMaxHashSize]);
 
 void sha256_init_accel(void);
+void sha256_force_accel(enum cpu_feature f);
 
 /* Export for optimized version to silent -Wmissing-prototypes. */
 void sha256_process_x86(uint32_t state[8], const uint8_t data[], uint32_t length);

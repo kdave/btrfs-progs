@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "common/cpu-utils.h"
 
 #if defined(_MSC_VER)
 #define BLAKE2_PACKED(x) __pragma(pack(push, 1)) x __pragma(pack(pop))
@@ -91,6 +92,7 @@ extern "C" {
   int blake2b( void *out, size_t outlen, const void *in, size_t inlen, const void *key, size_t keylen );
 
   void blake2_init_accel(void);
+  void blake2_force_accel(enum cpu_feature f);
 
   /* Export optimized versions to silent -Wmissing-prototypes warnings. */
   void blake2b_compress_avx2( blake2b_state *S, const uint8_t block[BLAKE2B_BLOCKBYTES] );

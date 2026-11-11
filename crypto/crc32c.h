@@ -20,9 +20,11 @@
 #define __CRC32C__
 
 #include <inttypes.h>
+#include "common/cpu-utils.h"
 
 uint32_t crc32c_le(uint32_t seed, unsigned char const *data, uint32_t length);
 void crc32c_init_accel(void);
+void crc32c_force_accel(enum cpu_feature f);
 
 #define crc32c(seed, data, length) crc32c_le(seed, (unsigned char const *)data, length)
 

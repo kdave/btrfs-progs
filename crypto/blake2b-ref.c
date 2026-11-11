@@ -224,19 +224,43 @@ void blake2_init_accel(void)
 {
 	if (0);
 #if HAVE_CFLAG_mavx2 == 1
-	else if (cpu_has_feature(CPU_FLAG_AVX2))
+	else if (cpu_has_feature(CPU_FLAG_X64_AVX2))
 		blake2b_compress = blake2b_compress_avx2;
 #endif
 #if HAVE_CFLAG_msse41 == 1
-	else if (cpu_has_feature(CPU_FLAG_SSE41))
+	else if (cpu_has_feature(CPU_FLAG_X64_SSE41))
 		blake2b_compress = blake2b_compress_sse41;
 #endif
 #if HAVE_CFLAG_msse2 == 1
-	else if (cpu_has_feature(CPU_FLAG_SSE2))
+	else if (cpu_has_feature(CPU_FLAG_X64_SSE2))
 		blake2b_compress = blake2b_compress_sse2;
 #endif
 	else
 		blake2b_compress = blake2b_compress_ref;
+}
+
+void blake2_force_accel(enum cpu_feature f)
+{
+	switch (f) {
+#if HAVE_CFLAG_mavx2 == 1
+	case CPU_FLAG_X64_AVX2:
+		blake2b_compress = blake2b_compress_avx2;
+		break;
+#endif
+#if HAVE_CFLAG_msse41 == 1
+	case CPU_FLAG_X64_SSE41:
+		blake2b_compress = blake2b_compress_sse41;
+		break;
+#endif
+#if HAVE_CFLAG_msse2 == 1
+	case CPU_FLAG_X64_SSE2:
+		blake2b_compress = blake2b_compress_sse2;
+		break;
+#endif
+	default:
+		blake2b_compress = blake2b_compress_ref;
+		break;
+	}
 }
 
 int blake2b_update( blake2b_state *S, const void *pin, size_t inlen )

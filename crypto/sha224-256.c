@@ -110,11 +110,23 @@ static void sha256_process_x86_dispatch(SHA256Context *context)
 void sha256_init_accel(void)
 {
 #if HAVE_CFLAG_msha == 1
-	if (cpu_has_feature(CPU_FLAG_SHA))
+	if (cpu_has_feature(CPU_FLAG_X64_SHA)) {
 		sha256_process_message_block = sha256_process_x86_dispatch;
-	else
+		return;
+	}
 #endif
-		sha256_process_message_block = SHA224_256ProcessMessageBlock;
+	sha256_process_message_block = SHA224_256ProcessMessageBlock;
+}
+
+void sha256_force_accel(enum cpu_feature f)
+{
+#if HAVE_CFLAG_msha == 1
+	if (f == CPU_FLAG_X64_SHA) {
+		sha256_process_message_block = sha256_process_x86_dispatch;
+		return;
+	}
+#endif
+	sha256_process_message_block = SHA224_256ProcessMessageBlock;
 }
 
 /*

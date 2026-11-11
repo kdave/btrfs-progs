@@ -18,6 +18,7 @@
 #define CRYPTO_HASH_H
 
 #include "kerncompat.h"
+#include "common/cpu-utils.h"
 #include <stddef.h>
 
 #define CRYPTO_HASH_SIZE_MAX	32
@@ -28,6 +29,7 @@ int hash_sha256(const u8 *buf, size_t length, u8 *out);
 int hash_blake2b(const u8 *buf, size_t length, u8 *out);
 
 void hash_init_accel(void);
+void hash_force_accel(enum cpu_feature f);
 void hash_init_crc32c(void);
 
 #endif

@@ -27,9 +27,12 @@
 #endif
 #include "crypto/hash.h"
 #include "common/messages.h"
+#include "kernel-lib/sizes.h"
 #include "common/cpu-utils.h"
+#include "kernel-shared/uapi/btrfs_tree.h"
 
 #ifdef __x86_64__
+#include <x86intrin.h>
 static const int cycles_supported = 1;
 #else
 static const int cycles_supported = 0;
@@ -41,23 +44,22 @@ enum {
 	UNITS_PERF,
 };
 
-const int blocksize = 4096;
+/*
+ * Default sizes:
+ * - 16, 255	btrfs_name_hash() on short and max name length
+ * - 4096	data checksum with 4K sectorsize
+ * - 16384	metadata checksum with 16K nodesize, the difference from the
+ *		real size (16K - 32, no csum header) is minimal
+ */
+static const size_t sizes[] = { SZ_16, BTRFS_NAME_LEN, SZ_4K, SZ_16K };
+
 int iterations = 100000;
 
 #ifdef __x86_64__
-static __always_inline unsigned long long rdtsc(void)
-{
-	unsigned low, high;
-
-        asm volatile("rdtsc" : "=a" (low), "=d" (high));
-
-        return (low | ((u64)(high) << 32));
-}
-
 static inline u64 read_tsc(void)
 {
-       asm volatile("mfence");
-       return rdtsc();
+	_mm_mfence();
+	return __rdtsc();
 }
 
 #define cpu_cycles()		read_tsc()
@@ -170,13 +172,11 @@ static const char *units_to_str(int units)
 }
 
 int main(int argc, char **argv) {
-	u8 buf[blocksize];
+	u8 *buf;
 	u8 hash[32];
-	int idx;
-	int iter;
 	char *filter = NULL;
 	struct contestant {
-		char name[16];
+		char name[20];
 		int (*digest)(const u8 *buf, size_t length, u8 *out);
 		int digest_size;
 		u64 cycles;
@@ -188,10 +188,12 @@ int main(int argc, char **argv) {
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
 		{ .name = "CRC32C-ref", .digest = hash_crc32c, .digest_size = 4,
 		  .cpu_flag = CPU_FLAG_NONE },
-		{ .name = "CRC32C-SSE42", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_SSE42 },
-		{ .name = "CRC32C-NI", .digest = hash_crc32c, .digest_size = 4,
-		  .cpu_flag = CPU_FLAG_PCLMUL },
+		{ .name = "CRC32C-X64-SSE42", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_X64_SSE42 },
+#if HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL
+		{ .name = "CRC32C-X64-NI", .digest = hash_crc32c, .digest_size = 4,
+		  .cpu_flag = CPU_FLAG_X64_PCLMUL },
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__PCLMUL */
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256-ref", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
@@ -205,8 +207,10 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BOTAN + 1 },
 		{ .name = "SHA256-openssl", .digest = hash_sha256, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_OPENSSL + 1 },
-		{ .name = "SHA256-NI", .digest = hash_sha256, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SHA, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+#if HAVE___BUILTIN_CPU_SUPPORTS__SHA
+		{ .name = "SHA256-X64-NI", .digest = hash_sha256, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SHA, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+#endif /* HAVE___BUILTIN_CPU_SUPPORTS__SHA */
 		{ .name = "BLAKE2-ref", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 		{ .name = "BLAKE2-gcrypt", .digest = hash_blake2b, .digest_size = 32,
@@ -219,12 +223,12 @@ int main(int argc, char **argv) {
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_BOTAN + 1 },
 		{ .name = "BLAKE2-openssl", .digest = hash_blake2b, .digest_size = 32,
 		  .cpu_flag = CPU_FLAG_NONE, .backend = CRYPTOPROVIDER_OPENSSL + 1 },
-		{ .name = "BLAKE2-SSE2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
-		{ .name = "BLAKE2-SSE41", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
-		{ .name = "BLAKE2-AVX2", .digest = hash_blake2b, .digest_size = 32,
-		  .cpu_flag = CPU_FLAG_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-SSE2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SSE2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-SSE41", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_SSE41, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
+		{ .name = "BLAKE2-X64-AVX2", .digest = hash_blake2b, .digest_size = 32,
+		  .cpu_flag = CPU_FLAG_X64_AVX2, .backend = CRYPTOPROVIDER_BUILTIN + 1 },
 	};
 	int units = UNITS_CYCLES;
 
@@ -286,72 +290,77 @@ int main(int argc, char **argv) {
 			iterations = 1;
 	}
 
-	memset(buf, 0, 4096);
+	buf = malloc(SZ_16K);
+	if (!buf) {
+		error_mem("buffer");
+		return 1;
+	}
 
-	printf("Block size:     %d\n", blocksize);
 	printf("Iterations:     %d\n", iterations);
 	printf("Implementation: %s\n", CRYPTOPROVIDER);
 	printf("Units:          %s\n", units_to_desc(units));
-	printf("\n");
 
-	for (idx = 0; idx < ARRAY_SIZE(contestants); idx++) {
-		struct contestant *c = &contestants[idx];
-		u64 start, end;
-		u64 tstart, tend;
-		u64 total = 0;
+	for (int i = 0; i < ARRAY_SIZE(sizes); i++) {
+		size_t size = sizes[i];
 
-		if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
-			printf("%14s: no CPU support\n", c->name);
-			continue;
+		printf("\nBlock size:     %zu\n", size);
+		for (int idx = 0; idx < ARRAY_SIZE(contestants); idx++) {
+			struct contestant *c = &contestants[idx];
+			u64 start, end;
+			u64 tstart, tend;
+			u64 total = 0;
+
+			if (c->cpu_flag != 0 && !cpu_has_feature(c->cpu_flag)) {
+				printf("%16s: no CPU support\n", c->name);
+				continue;
+			}
+			/* Backend not compiled in */
+			if (c->backend == 1)
+				continue;
+
+			if (c->digest == hash_null_memcpy)
+				/* Always run NULL-MEMCPY to warm up memory. */;
+			else if (filter && fnmatch(filter, c->name, FNM_CASEFOLD) != 0)
+				continue;
+
+			printf("%16s: ", c->name);
+			fflush(stdout);
+
+			if (c->cpu_flag)
+				hash_force_accel(c->cpu_flag);
+			tstart = get_time();
+			start = get_cycles(units);
+			for (int iter = 0; iter < iterations; iter++) {
+				memset(buf, iter & 0xFF, size);
+				memset(hash, 0, 32);
+				c->digest(buf, size, hash);
+			}
+			end = get_cycles(units);
+			tend = get_time();
+			c->cycles = end - start;
+			c->time = tend - tstart;
+
+			if (units == UNITS_CYCLES || units == UNITS_PERF)
+				total = c->cycles;
+			if (units == UNITS_TIME)
+				total = c->time;
+
+			printf("%s: %12llu, %s/i %8llu",
+					units_to_str(units), total,
+					units_to_str(units), total / iterations);
+			if (idx > 0) {
+				float t;
+				float mb;
+
+				t = (float)c->time / 1000 / 1000 / 1000;
+				mb = (float)size * iterations / 1024 / 1024;
+				printf(", %12.3f MiB/s", mb / t);
+			}
+			putchar('\n');
 		}
-		/* Backend not compiled in */
-		if (c->backend == 1)
-			continue;
-
-		if (c->digest == hash_null_memcpy)
-			/* Always run NULL-MEMCPY to warm up memory. */;
-		else if (filter && fnmatch(filter, c->name, FNM_CASEFOLD) != 0)
-			continue;
-
-		printf("%14s: ", c->name);
-		fflush(stdout);
-
-		if (c->cpu_flag) {
-			cpu_set_level(c->cpu_flag);
-			hash_init_accel();
-		}
-		tstart = get_time();
-		start = get_cycles(units);
-		for (iter = 0; iter < iterations; iter++) {
-			memset(buf, iter & 0xFF, blocksize);
-			memset(hash, 0, 32);
-			c->digest(buf, blocksize, hash);
-		}
-		end = get_cycles(units);
-		tend = get_time();
-		c->cycles = end - start;
-		c->time = tend - tstart;
-		cpu_reset_level();
-
-		if (units == UNITS_CYCLES || units == UNITS_PERF)
-			total = c->cycles;
-		if (units == UNITS_TIME)
-			total = c->time;
-
-		printf("%s: %12llu, %s/i %8llu",
-				units_to_str(units), total,
-				units_to_str(units), total / iterations);
-		if (idx > 0) {
-			float t;
-			float mb;
-
-			t = (float)c->time / 1000 / 1000 / 1000;
-			mb = blocksize * iterations / 1024 / 1024;
-			printf(", %12.3f MiB/s", mb / t);
-		}
-		putchar('\n');
 	}
 	perf_finish();
+	free(buf);
 	free(filter);
 
 	return 0;

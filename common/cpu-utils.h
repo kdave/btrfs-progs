@@ -30,26 +30,23 @@
 
 enum cpu_feature {
 	ENUM_CPU_BIT(CPU_FLAG_NONE),
-	ENUM_CPU_BIT(CPU_FLAG_SSE2),
-	ENUM_CPU_BIT(CPU_FLAG_SSSE3),
-	ENUM_CPU_BIT(CPU_FLAG_SSE41),
-	ENUM_CPU_BIT(CPU_FLAG_SSE42),
-	ENUM_CPU_BIT(CPU_FLAG_PCLMUL),
-	ENUM_CPU_BIT(CPU_FLAG_SHA),
-	ENUM_CPU_BIT(CPU_FLAG_AVX),
-	ENUM_CPU_BIT(CPU_FLAG_AVX2),
+	ENUM_CPU_BIT(CPU_FLAG_X64_SSE2),
+	ENUM_CPU_BIT(CPU_FLAG_X64_SSSE3),
+	ENUM_CPU_BIT(CPU_FLAG_X64_SSE41),
+	ENUM_CPU_BIT(CPU_FLAG_X64_SSE42),
+	ENUM_CPU_BIT(CPU_FLAG_X64_PCLMUL),
+	ENUM_CPU_BIT(CPU_FLAG_X64_SHA),
+	ENUM_CPU_BIT(CPU_FLAG_X64_AVX),
+	ENUM_CPU_BIT(CPU_FLAG_X64_AVX2),
 };
 
 #undef ENUM_CPU_BIT
 
 /* Private but in public header to allow inlining */
 extern unsigned long __cpu_flags;
-extern unsigned long __cpu_flags_orig;
 
 /* Public API */
 void cpu_detect_flags(void);
-void cpu_set_level(unsigned long topbit);
-void cpu_reset_level(void);
 void cpu_print_flags(void);
 
 static inline bool cpu_has_feature(enum cpu_feature f)
