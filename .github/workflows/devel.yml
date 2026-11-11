@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         compiler: [ gcc, clang ]
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -49,14 +49,14 @@ jobs:
             Documentation/man-preview.sh "$file" >> $GITHUB_STEP_SUMMARY
           done
       - name: Make static
-        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-26.04' }}
         run: make -j $(nproc) V=1 EXTRA_CFLAGS='-march=x86-64' static
       - name: Make box.static
-        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-24.04' }}
+        if: ${{ matrix.compiler == 'gcc' && matrix.os == 'ubuntu-26.04' }}
         run: make -j $(nproc) V=1 EXTRA_CFLAGS='-march=x86-64' btrfs.box.static
   build-musl:
     name: Build test on musl
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Musl build
         run: sudo docker run kdave/ci-musl-x86_64 ./test-build $GITHUB_REF_NAME --disable-documentation --disable-backtrace --disable-libudev
@@ -65,7 +65,7 @@ jobs:
     strategy:
       matrix:
         compiler: [ gcc, clang ]
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -94,7 +94,7 @@ jobs:
     name: Test mkfs.btrfs
     strategy:
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -118,7 +118,7 @@ jobs:
     name: Test btrfs check
     strategy:
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -144,7 +144,7 @@ jobs:
     name: Test misc
     strategy:
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -168,7 +168,7 @@ jobs:
     name: Test btrfs-convert
     strategy:
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -192,7 +192,7 @@ jobs:
     name: Test cli, fuzz
     strategy:
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
+        os: [ ubuntu-26.04, ubuntu-26.04-arm ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6

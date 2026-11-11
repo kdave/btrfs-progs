@@ -15,7 +15,7 @@ on:
 
 jobs:
   build-ubsan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - run: uname -a
@@ -56,7 +56,7 @@ jobs:
           path: "tests/*-results.txt"
           if-no-files-found: ignore
   build-asan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - run: uname -a
@@ -98,7 +98,7 @@ jobs:
           path: "tests/*-results.txt"
           if-no-files-found: ignore
   build-tsan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - run: uname -a

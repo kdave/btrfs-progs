@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: [ "", "-arm" ]
-    runs-on: "ubuntu-24.04${{ matrix.os }}"
+    runs-on: "ubuntu-26.04${{ matrix.os }}"
     steps:
       - uses: actions/checkout@v6
       - run: sudo apt-get update -qqq
