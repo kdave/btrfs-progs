@@ -282,6 +282,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	struct open_ctree_args oca = { 0 };
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret = 0;
+	int close_ret;
 	int slot;
 	bool extent_only = false;
 	bool device_only = false;
@@ -475,6 +476,7 @@ again:
 	if (tree_id && tree_id == BTRFS_ROOT_TREE_OBJECTID) {
 		if (!info->tree_root->node) {
 			error("cannot print root tree, invalid pointer");
+			ret = -ENOENT;
 			goto close_root;
 		}
 		pr_default("root tree\n");
@@ -486,6 +488,7 @@ again:
 	if (tree_id && tree_id == BTRFS_CHUNK_TREE_OBJECTID) {
 		if (!info->chunk_root->node) {
 			error("cannot print chunk tree, invalid pointer");
+			ret = -ENOENT;
 			goto close_root;
 		}
 		pr_default("chunk tree\n");
@@ -497,6 +500,7 @@ again:
 	if (tree_id && tree_id == BTRFS_TREE_LOG_OBJECTID) {
 		if (!info->log_root_tree) {
 			error("cannot print log root tree, invalid pointer");
+			ret = -ENOENT;
 			goto close_root;
 		}
 		pr_default("log root tree\n");
@@ -508,6 +512,7 @@ again:
 	if (tree_id && tree_id == BTRFS_BLOCK_GROUP_TREE_OBJECTID) {
 		if (!info->block_group_root) {
 			error("cannot print block group tree, invalid pointer");
+			ret = -ENOENT;
 			goto close_root;
 		}
 		pr_default("block group tree\n");
@@ -700,7 +705,9 @@ no_node:
 	pr_default("uuid %s\n", uuidbuf);
 close_root:
 	btrfs_release_path(&path);
-	ret = close_ctree(root);
-	return !!ret;
+	close_ret = close_ctree(root);
+	if (ret < 0)
+		return 1;
+	return !!close_ret;
 }
 DEFINE_SIMPLE_COMMAND(inspect_dump_tree, "dump-tree");

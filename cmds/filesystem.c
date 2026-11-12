@@ -2060,6 +2060,7 @@ static int cmd_filesystem_commit_stats(const struct cmd_struct *cmd, int argc, c
 
 	sysfs_fd = sysfs_open_fsid_file(fd, "commit_stats");
 	if (sysfs_fd < 0) {
+		ret = sysfs_fd;
 		error("no commit_stats file in sysfs");
 		goto out;
 	}
@@ -2113,12 +2114,14 @@ static int cmd_filesystem_commit_stats(const struct cmd_struct *cmd, int argc, c
 		else
 			pr_default("NOTE: Max commit duration has been reset\n");
 	}
+	/* The UUID and the reset are optional, only reading the stats can fail. */
+	ret = 0;
 
 out:
 	close(sysfs_fd);
 	close(fd);
 
-	return 0;
+	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(filesystem_commit_stats, "commit-stats");
 

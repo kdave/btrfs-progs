@@ -781,6 +781,7 @@ static int load_device_info(int fd, struct array *devinfos)
 				fi_args.num_devices);
 			error(
 		"if seed device is used, try running this command as root");
+			ret = -EINVAL;
 			goto out;
 		}
 		memset(&dev_info, 0, sizeof(dev_info));
@@ -837,6 +838,7 @@ static int load_device_info(int fd, struct array *devinfos)
 	if (ndevs != fi_args.num_devices) {
 		error("unexpected number of devices: %d != %llu", ndevs,
 				fi_args.num_devices);
+		ret = -EINVAL;
 		goto out;
 	}
 
