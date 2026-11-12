@@ -2039,7 +2039,7 @@ static int cmd_filesystem_commit_stats(const struct cmd_struct *cmd, int argc, c
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "c", long_options, NULL);
+		c = getopt_long(argc, argv, "z", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
