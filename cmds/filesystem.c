@@ -1996,10 +1996,14 @@ static int cmd_filesystem_mkswapfile(const struct cmd_struct *cmd, int argc, cha
 	pr_default("create swapfile %s size %s (%llu) page size %u\n",
 			fname, pretty_size_mode(size, UNITS_HUMAN), size,
 			page_size);
+	ret = 0;
 out:
 	close(fd);
+	/* The file did not exist before (O_EXCL), do not leave it behind. */
+	if (ret)
+		unlink(fname);
 
-	return 0;
+	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(filesystem_mkswapfile, "mkswapfile");
 
