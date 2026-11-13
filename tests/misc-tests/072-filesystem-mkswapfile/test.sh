@@ -33,4 +33,10 @@ test_mkswapfile_fail --pagesize 128K
 test_mkswapfile_fail --pagesize 1
 test_mkswapfile_fail --pagesize 0
 
+# Failure exit codes were just returning 0 previously. Test failure modes here.
+# 40K passes the minimum size check but is too short for any page size
+test_mkswapfile_fail --size 40K
+# Page count does not fit the 32bit swap header field, fails before allocation
+test_mkswapfile_fail --size 32T --pagesize 4K
+
 rm -f -- swapfile
