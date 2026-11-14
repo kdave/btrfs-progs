@@ -20,9 +20,15 @@ test_get_info()
 {
 	local tmp_out
 
-	tmp_out=$(_mktemp mkfs-get-info)
 	run_check $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super "$dev1"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
+
+	if [ ! -f "/sys/fs/btrfs/features/remap_tree" ]; then
+		_log "skip mount, kernel does not support remap-tree feature"
+		return
+	fi
+
+	tmp_out=$(_mktemp mkfs-get-info)
 
 	run_check $SUDO_HELPER mount -o ro "$dev1" "$TEST_MNT"
 	run_check_stdout "$TOP/btrfs" filesystem df "$TEST_MNT" > "$tmp_out"
@@ -63,33 +69,31 @@ test_mkfs_single  -d  single  -m  dup
 test_mkfs_multi
 test_mkfs_multi   -d  single  -m  single
 
-if [ -f "/sys/fs/btrfs/features/remap_tree" ]; then
-	test_mkfs_single  -d  dup     -m  single
-	test_mkfs_single  -d  dup     -m  dup
+test_mkfs_single  -d  dup     -m  single
+test_mkfs_single  -d  dup     -m  dup
 
-	test_mkfs_multi   -d  raid0   -m  raid0
-	test_mkfs_multi   -d  raid1   -m  raid1
-	test_mkfs_multi   -d  raid10  -m  raid10
-	test_mkfs_multi   -d  raid5   -m  raid5
-	test_mkfs_multi   -d  raid6   -m  raid6
-	test_mkfs_multi   -d  dup     -m  dup
+test_mkfs_multi   -d  raid0   -m  raid0
+test_mkfs_multi   -d  raid1   -m  raid1
+test_mkfs_multi   -d  raid10  -m  raid10
+test_mkfs_multi   -d  raid5   -m  raid5
+test_mkfs_multi   -d  raid6   -m  raid6
+test_mkfs_multi   -d  dup     -m  dup
 
-	if [ -f "/sys/fs/btrfs/features/raid1c34" ]; then
-		test_mkfs_multi   -d  raid1c3 -m  raid1c3
-		test_mkfs_multi   -d  raid1c4 -m  raid1c4
-	else
-		_log "skip mount test, missing support for raid1c34"
-		test_do_mkfs -d raid1c3 -m raid1c3 "${loopdevs[@]}"
-		test_do_mkfs -d raid1c4 -m raid1c4 "${loopdevs[@]}"
-	fi
-
-	# Non-standard profile/device combinations
-
-	# Single device raid0, two device raid10 (simple mount works on older kernels too)
-	test_do_mkfs -d raid0 -m raid0 "$dev1"
-	test_get_info
-	test_do_mkfs -d raid10 -m raid10 "${loopdevs[1]}" "${loopdevs[2]}"
-	test_get_info
+if [ -f "/sys/fs/btrfs/features/raid1c34" ]; then
+	test_mkfs_multi   -d  raid1c3 -m  raid1c3
+	test_mkfs_multi   -d  raid1c4 -m  raid1c4
+else
+	_log "skip mount test, missing support for raid1c34"
+	test_do_mkfs -d raid1c3 -m raid1c3 "${loopdevs[@]}"
+	test_do_mkfs -d raid1c4 -m raid1c4 "${loopdevs[@]}"
 fi
+
+# Non-standard profile/device combinations
+
+# Single device raid0, two device raid10
+test_do_mkfs -d raid0 -m raid0 "$dev1"
+test_get_info
+test_do_mkfs -d raid10 -m raid10 "${loopdevs[1]}" "${loopdevs[2]}"
+test_get_info
 
 cleanup_loopdevs
