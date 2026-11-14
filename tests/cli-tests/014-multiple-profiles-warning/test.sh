@@ -15,6 +15,13 @@ source "$TEST_TOP/common" || exit
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
+# The test is very unreliable, and different kernels have different chunk sizes/layout.
+# Thus the usage filter can sometimes catch all chunks and convert them.
+# Furthermore the device removal can remove the onl device containing the remaining
+# SINGLE chunk.
+# All can lead to false alerts, without proper fallback check for above cases.
+exit
+
 setup_root_helper
 setup_loopdevs 4
 prepare_loopdevs
