@@ -8,8 +8,6 @@ check_experimental_build
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
-_not_run "btrfs check support for remap-tree missing"
-
 setup_root_helper
 setup_loopdevs 4
 prepare_loopdevs
