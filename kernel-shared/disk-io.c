@@ -2355,7 +2355,7 @@ int write_ctree_super(struct btrfs_trans_handle *trans)
 	btrfs_set_super_chunk_root_generation(fs_info->super_copy,
 				btrfs_header_generation(chunk_root->node));
 
-	if (btrfs_fs_incompat(fs_info, REMAP_TREE)) {
+	if (btrfs_fs_incompat(fs_info, REMAP_TREE) && remap_root->node) {
 		btrfs_set_super_remap_root(fs_info->super_copy,
 					   remap_root->node->start);
 		btrfs_set_super_remap_root_level(fs_info->super_copy,
