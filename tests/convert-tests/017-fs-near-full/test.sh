@@ -27,6 +27,12 @@ done
 
 run_check_umount_test_dev
 
-# convert_test_do_convert() will call btrfs check, which should expose any
-# invalid inline extent with too large size
-convert_test_do_convert
+export BTRFS_PROGS_DEBUG_STRICT_CHUNK_ALIGNMENT=y
+# The e2mkfs may use extra space due to their default feature changes.
+# So the convert itself may fail due to lack of space.
+run_mayfail "$TOP/btrfs-convert" "$TEST_DEV"
+if [ $? -ne 0 ]; then
+	_not_run "Not enough space left for btrfs-convert"
+fi
+run_check "$TOP/btrfs" check "$TEST_DEV"
+run_check "$TOP/btrfs" inspect-internal dump-super -Ffa "$TEST_DEV"
