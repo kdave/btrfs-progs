@@ -12,23 +12,22 @@ setup_root_helper
 prepare_test_dev
 
 tmp=$(_mktemp_dir mkfs-rootdir)
-limit=$((128*1024*1024))
 
-# Create dataset of approximate size 256M so the repeated compression does not take that long
-for file in /usr/bin/[gx]*; do
-	run_check cp -axf --update --no-preserve=ownership,context "$file" "$tmp"
-	size=$(du -sb "$tmp" | awk '{print $1}')
-	if [ "$size" -gt "$limit" ]; then
-		break
-	fi
-done
-
-for file in /usr/lib*/lib[abcdef]*; do
-	run_check cp -axf --update --no-preserve=ownership,context "$file" "$tmp"
-	size=$(du -sb "$tmp" | awk '{print $1}')
-	if [ "$size" -gt "$limit" ]; then
-		break
-	fi
+# Create dataset of approximate size 256M so the repeated compression does not
+# take that long.
+# Mix compressible, incompressible and partially compressible files.
+for i in $(seq 1 25); do
+	# Compressible: zeros
+	run_check dd if=/dev/zero of="$tmp/zero_$i" bs=1M count=4 status=none
+	# Incompressible: random data
+	run_check dd if=/dev/urandom of="$tmp/random_$i" bs=1M count=4 status=none
+	# Partially compressible: 64K of random data alternating with 64K of
+	# zeros, so a compressed extent (max 128K) contains both
+	run_check dd if=/dev/zero of="$tmp/mixed_$i" bs=1M count=2 status=none
+	for j in $(seq 0 15); do
+		run_check dd if=/dev/urandom of="$tmp/mixed_$i" bs=64K count=1 \
+			seek=$((j * 2)) conv=notrunc status=none
+	done
 done
 
 run_check du -sh "$tmp"
