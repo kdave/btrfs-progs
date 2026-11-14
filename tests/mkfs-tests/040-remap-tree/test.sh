@@ -4,6 +4,7 @@
 
 source "$TEST_TOP/common" || exit
 
+check_experimental_build
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
@@ -62,7 +63,7 @@ test_mkfs_single  -d  single  -m  dup
 test_mkfs_multi
 test_mkfs_multi   -d  single  -m  single
 
-if _test_config "EXPERIMENTAL" && [ -f "/sys/fs/btrfs/features/remap_tree" ]; then
+if [ -f "/sys/fs/btrfs/features/remap_tree" ]; then
 	test_mkfs_single  -d  dup     -m  single
 	test_mkfs_single  -d  dup     -m  dup
 
