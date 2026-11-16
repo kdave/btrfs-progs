@@ -755,8 +755,10 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 static DEFINE_SIMPLE_COMMAND(balance_cancel, "cancel");
 
 static const char * const cmd_balance_resume_usage[] = {
-	"btrfs balance resume <path>",
+	"btrfs balance resume [options] <path>",
 	"Resume interrupted balance",
+	"",
+	OPTLINE("--background, --bg", "run the balance as a background process"),
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
@@ -767,10 +769,33 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 {
 	struct btrfs_ioctl_balance_args args;
 	const char *path;
+	bool background = false;
 	int fd;
 	int ret;
 
-	clean_args_no_options(cmd, argc, argv);
+	optind = 0;
+	while (1) {
+		enum { GETOPT_VAL_BACKGROUND = GETOPT_VAL_FIRST };
+		static const struct option longopts[] = {
+			{ "background", no_argument, NULL,
+				GETOPT_VAL_BACKGROUND },
+			{ "bg", no_argument, NULL, GETOPT_VAL_BACKGROUND },
+			{ NULL, 0, NULL, 0 }
+		};
+		int opt;
+
+		opt = getopt_long(argc, argv, "", longopts, NULL);
+		if (opt < 0)
+			break;
+
+		switch (opt) {
+		case GETOPT_VAL_BACKGROUND:
+			background = true;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
 
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
@@ -780,6 +805,15 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 	fd = btrfs_open_dir(path);
 	if (fd < 0)
 		return 1;
+
+	if (background) {
+		ret = daemon(0, 0);
+		if (ret < 0) {
+			error("unable to run balance in background: %m");
+			close(fd);
+			return 1;
+		}
+	}
 
 	memset(&args, 0, sizeof(args));
 	args.flags |= BTRFS_BALANCE_RESUME;
