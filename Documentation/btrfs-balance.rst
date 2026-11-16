@@ -26,10 +26,16 @@ pause <path>
         pause running balance operation, this will store the state of the balance
         progress and used filters to the filesystem
 
-resume <path>
+resume [options] <path>
         resume interrupted balance, the balance status must be stored on the filesystem
         from previous run, e.g. after it was paused or forcibly interrupted and mounted
         again with *skip_balance*
+
+        ``Options``
+
+        --background|--bg
+                run the balance operation asynchronously in the background, like
+                *start --background*
 
 start [options] <path>
         start the balance operation according to the specified filters, without any filters
