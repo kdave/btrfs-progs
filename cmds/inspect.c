@@ -991,11 +991,21 @@ static u64 fill_usage(int fd, u64 lstart)
 	struct btrfs_tree_search_args args;
 	struct btrfs_ioctl_search_key *sk;
 	struct btrfs_block_group_item *item;
+	struct btrfs_ioctl_feature_flags feature_flags;
+	u64 tree_id = BTRFS_EXTENT_TREE_OBJECTID;
 	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_GET_FEATURES, &feature_flags);
+	if (ret < 0) {
+		error("cannot get filesystem features: %m");
+		return 1;
+	}
+	if (feature_flags.compat_ro_flags & BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE)
+		tree_id = BTRFS_BLOCK_GROUP_TREE_OBJECTID;
 
 	memset(&args, 0, sizeof(args));
 	sk = btrfs_tree_search_sk(&args);
-	sk->tree_id = BTRFS_EXTENT_TREE_OBJECTID;
+	sk->tree_id = tree_id;
 	sk->min_objectid = lstart;
 	sk->min_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	sk->min_offset = 0;
