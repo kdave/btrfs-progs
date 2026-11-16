@@ -45,12 +45,16 @@ static const char* unit_suffix_decimal[] =
 int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mode)
 {
 	int num_divs;
-	float fraction;
 	u64 base = 0;
 	int mult = 0;
 	const char** suffix = NULL;
 	u64 last_size;
+	u64 value;
+	u64 whole;
+	u64 frac;
+	s64 svalue;
 	int negative;
+	int neg;
 
 	if (str_size == 0)
 		return 0;
@@ -139,13 +143,41 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 		return -1;
 	}
 
-	if (negative) {
-		fraction = (float)(s64)last_size / base;
-	} else {
-		fraction = (float)last_size / base;
+	/*
+	 * Do not use floating point for any unit, explicit or auto detected.
+	 * Bytes and KiB/kB are exact, so print the plain integer.  For MiB
+	 * and larger print the whole part plus two decimal digits computed
+	 * from the integer remainder: a float only has 24 mantissa bits, so
+	 * values above 16 MiB would be rounded to a multiple of the unit.
+	 *
+	 * In auto detection mode the value has already been scaled down and
+	 * last_size holds the value before the final division.
+	 */
+	if ((unit_mode & UNITS_MODE_MASK) == UNITS_RESERVED)
+		value = last_size;
+	else
+		value = size;
+
+	svalue = (s64)value;
+	if (num_divs <= 1) {
+		if (negative)
+			return snprintf(str, str_size, "%lld%s",
+					svalue / (s64)base, suffix[num_divs]);
+		return snprintf(str, str_size, "%llu%s", value / base,
+				suffix[num_divs]);
 	}
 
-	return snprintf(str, str_size, "%.2f%s", fraction, suffix[num_divs]);
+	neg = negative && svalue < 0;
+	whole = neg ? (u64)(-(svalue + 1)) + 1 : value;
+	frac = ((whole % base) * 100 + base / 2) / base;
+	whole /= base;
+	if (frac >= 100) {
+		whole++;
+		frac -= 100;
+	}
+
+	return snprintf(str, str_size, "%s%llu.%02llu%s",
+			neg ? "-" : "", whole, frac, suffix[num_divs]);
 }
 
 void units_set_mode(unsigned *units, unsigned mode)
