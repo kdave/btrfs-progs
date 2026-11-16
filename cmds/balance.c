@@ -661,37 +661,12 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 	if (bconf.verbose > BTRFS_BCONF_QUIET)
 		dump_ioctl_balance_args(&args);
 	if (background) {
-		switch (fork()) {
-		case (-1):
-			error("unable to fork to run balance in background");
+		int ret;
+
+		ret = daemon(0, 0);
+		if (ret < 0) {
+			error("unable to run balance in background: %m");
 			return 1;
-		case (0):
-			setsid();
-			switch(fork()) {
-			case (-1):
-				error(
-				"unable to fork to run balance in background");
-				exit(1);
-			case (0):
-				/*
-				 * Read the return value to silence compiler
-				 * warning. Change to / should succeed and
-				 * we're not in a security-sensitive context.
-				 */
-				i = chdir("/");
-				close(0);
-				close(1);
-				close(2);
-				open("/dev/null", O_RDONLY);
-				open("/dev/null", O_WRONLY);
-				open("/dev/null", O_WRONLY);
-				break;
-			default:
-				exit(0);
-			}
-			break;
-		default:
-			exit(0);
 		}
 	}
 
