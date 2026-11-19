@@ -355,13 +355,16 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			goto leave_with_error;
 		}
 	}
+	btrfs_warn_multiple_profiles(fdmnt);
 	close(fdmnt);
 	return 0;
 
 leave_with_error:
 	free(dstdev);
-	if (fdmnt != -1)
+	if (fdmnt != -1) {
+		btrfs_warn_multiple_profiles(fdmnt);
 		close(fdmnt);
+	}
 	if (fddstdev != -1)
 		close(fddstdev);
 	return 1;
