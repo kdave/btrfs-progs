@@ -1,0 +1,12 @@
+# Written by update-from-kernel.sh, do not edit.
+# copied: files of the kernel's lib/crc/, unchanged in crypto/crc/
+# glue: files of the kernel's lib/crc/ that crypto/crc32c.c follows
+linux 7.3.1 v7.3.1
+copied 481960d2259d32bc8efb7c07c0053d425ab79445c2f6957ae1b2f2be048a3ec5 arm64/crc32-core.S
+copied fc17817b0be98214350083e9645cf8d464697f016e5349dfe76b49ec1a428d42 x86/crc32c-3way.S
+copied ccd3912f3922383f268bd71d1b08792c365bcb82a1a42cb3ce1f5356d795be7b x86/crc-pclmul-template.S
+copied b1f5a46153021a27eb585759bf27fd8d5b8ed135006be67cfd743d3309a6db2d x86/crc32-pclmul.S
+copied 2fce655b0e4aa4d577f4da5fc203a1d714639d879c22a7af76d1c06c0cb91878 x86/crc-pclmul-consts.h
+glue 5124fea907b2f86f0694e5d0f9b7686580d77b6b933afd37c0a26684b4f50f72 arm64/crc32.h
+glue 4628bb6b8a0c26b9b79eb6d733469bf8fe0f5abbda9429cbb53abeeb9c47fdbd x86/crc32.h
+glue cec55c4296853eb2d331ab375435487d3a774f95bd995b5353691258299702b4 x86/crc-pclmul-template.h
