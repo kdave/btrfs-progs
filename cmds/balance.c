@@ -365,6 +365,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 			   args->stat.completed, args->stat.considered);
 	}
 
+	btrfs_warn_multiple_profiles(fd);
 out:
 	close(fd);
 	return ret;
