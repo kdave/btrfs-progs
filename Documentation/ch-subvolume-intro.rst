@@ -136,18 +136,21 @@ directories are highly recommended to be separate subvolumes.
 Mount options
 -------------
 
-Mount options are of two kinds, generic (that are handled by VFS layer) and
-specific, handled by the filesystem. The following list shows which are
-applicable to individual subvolume mounts, while there are more options that
-always affect the whole filesystem:
+Mount options are of two kinds, generic (that are handled by the VFS layer) and
+filesystem-specific (that are handled by btrfs). Generic options can be set
+independently for each subvolume mount:
 
 - Generic: noatime/relatime/..., nodev, nosuid, ro, rw, dirsync
+
+Filesystem-specific options always apply to the whole filesystem and cannot be
+set independently for a subvolume:
+
 - Filesystem-specific: compress, autodefrag, nodatacow, nodatasum
 
-Examples of whole filesystem options are e.g. *space_cache*, *rescue*, *device*,
-*skip_balance*, etc. The exceptional options are *subvol* and *subvolid* that
-are actually used for mounting a given subvolume and can be specified only once
-for the mount.
+Examples of other whole filesystem options are e.g. *space_cache*, *rescue*,
+*device*, *skip_balance*, etc. The exceptional options are *subvol* and
+*subvolid* that are actually used for mounting a given subvolume and can be
+specified only once for the mount.
 
 Subvolumes belong to a single filesystem and, as implemented now, all share the
 same specific mount options. Also, changes done by remount have immediate effect. This
