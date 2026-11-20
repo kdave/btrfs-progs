@@ -215,6 +215,17 @@ specific tests need the following packages installed: `acl`, `attr`,
 `e2fsprogs`, `reiserfsprogs`.
 
 
+## Benchmarks
+
+The script `benchmarks.sh` times btrfs-progs commands end to end on generated
+data. It needs root and a spare device (`-t`, all data on it is lost):
+
+```shell
+$ sudo env BTRFS=$PWD/btrfs tests/benchmarks.sh -t /dev/sdX3
+```
+
+See `tests/benchmarks.sh --help` for the details and options.
+
 ## New test
 
 1. Pick the category for the new test or fallback to `misc-tests` if not sure. For
