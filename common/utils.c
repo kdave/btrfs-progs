@@ -877,10 +877,10 @@ unsigned int rand_range(unsigned int upper)
 {
 	__init_seed();
 	/*
-	 * Use the full 48bits to mod, which would be more uniformly
-	 * distributed
+	 * Use the unsigned value of jrand48(), it returns a signed 32bit
+	 * number and the remainder of a negative number is negative.
 	 */
-	return (unsigned int)(jrand48(rand_seed) % upper);
+	return ((unsigned int)(jrand48(rand_seed))) % upper;
 }
 
 int rand_int(void)
