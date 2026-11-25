@@ -449,6 +449,27 @@ static const struct hash_testspec test_spec[] = {
 		.cpu_flag = CPU_FLAG_PCLMUL,
 		.hash = hash_crc32c
 	}, {
+		.name = "CRC32C-AVX512",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_VPCLMUL_AVX512,
+		.hash = hash_crc32c
+	}, {
+		.name = "CRC32C-ARMv8",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_ARMV8_CRC32,
+		.hash = hash_crc32c
+	}, {
+		.name = "CRC32C-PMULL",
+		.digest_size = 4,
+		.testvec = crc32c_tv,
+		.count = ARRAY_SIZE(crc32c_tv),
+		.cpu_flag = CPU_FLAG_ARMV8_PMULL,
+		.hash = hash_crc32c
+	}, {
 		.name = "XXHASH",
 		.digest_size = 8,
 		.testvec = xxhash64_tv,
@@ -585,10 +606,68 @@ static const struct hash_testspec test_spec[] = {
 	}
 };
 
+/*
+ * Compare the CRC32C of every range up to CRC32C_RANGE_LENGTH bytes, starting
+ * at every offset modulo 16, with a bitwise implementation. This covers the
+ * unaligned starts and ends and the length thresholds where the accelerated
+ * implementations switch code paths.
+ */
+#define CRC32C_RANGE_OFFSETS		16
+#define CRC32C_RANGE_LENGTH		8192
+
+static u32 crc32c_bitwise(u32 crc, u8 byte)
+{
+	int i;
+
+	crc ^= byte;
+	for (i = 0; i < 8; i++)
+		crc = (crc >> 1) ^ (0x82F63B78 & -(crc & 1));
+	return crc;
+}
+
+static int test_crc32c_ranges(const struct hash_testspec *spec)
+{
+	static u8 buf[CRC32C_RANGE_OFFSETS + CRC32C_RANGE_LENGTH];
+	u32 seed = 1;
+	int offset;
+	size_t i;
+
+	/* Pseudo-random data, the same on every run */
+	for (i = 0; i < sizeof(buf); i++) {
+		seed = seed * 1103515245 + 12345;
+		buf[i] = seed >> 16;
+	}
+
+	for (offset = 0; offset < CRC32C_RANGE_OFFSETS; offset++) {
+		u32 crc = ~0U;
+		size_t len;
+
+		for (len = 0; len <= CRC32C_RANGE_LENGTH; len++) {
+			u8 csum[CRYPTO_HASH_SIZE_MAX];
+			u8 want[4];
+
+			put_unaligned_le32(~crc, want);
+			spec->hash(buf + offset, len, csum);
+			if (memcmp(csum, want, sizeof(want)) != 0) {
+				printf("%s offset %d length %zu: MISMATCH\n",
+				       spec->name, offset, len);
+				return 1;
+			}
+			if (len < CRC32C_RANGE_LENGTH)
+				crc = crc32c_bitwise(crc, buf[offset + len]);
+		}
+	}
+	printf("%s lengths 0-%d at offsets 0-%d: match\n", spec->name,
+	       CRC32C_RANGE_LENGTH, CRC32C_RANGE_OFFSETS - 1);
+
+	return 0;
+}
+
 static int test_hash(const struct hash_testspec *spec)
 {
 	int i;
 	bool header = false;
+	int failed = 0;
 
 	for (i = 0; i < spec->count; i++) {
 		int ret;
@@ -632,14 +711,26 @@ static int test_hash(const struct hash_testspec *spec)
 			for (j = 0; j < spec->digest_size; j++)
 				printf(" %02hhx", csum[j]);
 			putchar('\n');
+			failed = 1;
 		}
 	}
 
-	return 0;
+	/* Only if the vectors were tested, i.e. not skipped */
+	if (header && spec->hash == hash_crc32c) {
+		if (spec->cpu_flag) {
+			cpu_set_level(spec->cpu_flag);
+			hash_init_accel();
+		}
+		failed |= test_crc32c_ranges(spec);
+		cpu_reset_level();
+	}
+
+	return failed;
 }
 
 int main(int argc, char **argv) {
 	int i;
+	int ret = 0;
 
 	cpu_detect_flags();
 	cpu_print_flags();
@@ -647,7 +738,7 @@ int main(int argc, char **argv) {
 
 	printf("Implementation: %s\n", CRYPTOPROVIDER);
 	for (i = 0; i < ARRAY_SIZE(test_spec); i++)
-		test_hash(&test_spec[i]);
+		ret |= test_hash(&test_spec[i]);
 
-	return 0;
+	return ret;
 }

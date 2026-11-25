@@ -1,0 +1,77 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Userspace stand-in for the kernel's linux/linkage.h, with what the assembly
+ * files copied from the kernel's lib/crc/ need.
+ *
+ * The functions are hidden, only crypto/crc32c.c calls them. Each function has
+ * its own section, so the linker drops the unused ones (-Wl,--gc-sections).
+ *
+ * Each object file gets the notes that keep the hardening of the program it is
+ * linked into: a non-executable stack, and the x86 CET or arm64 BTI/PAC
+ * properties when the compiler is asked for them (-fcf-protection,
+ * -mbranch-protection), with the matching landing pads.
+ */
+
+#ifndef __CRYPTO_CRC_LINUX_LINKAGE_H__
+#define __CRYPTO_CRC_LINUX_LINKAGE_H__
+
+#if defined(__x86_64__)
+
+/* The compiler's cet.h has the endbr64 landing pad and the CET property note */
+#include <cet.h>
+
+#define SYM_FUNC_START(name)					\
+	.pushsection .text.name, "ax", @progbits ;		\
+	.globl name ; .hidden name ; .type name, @function ;	\
+	.p2align 4 ; name: _CET_ENDBR
+#define SYM_FUNC_END(name)	.size name, . - name ; .popsection
+#define RET			ret
+
+	.pushsection .note.GNU-stack, "", @progbits
+	.popsection
+
+#elif defined(__aarch64__)
+
+#if defined(__ARM_FEATURE_BTI_DEFAULT) && __ARM_FEATURE_BTI_DEFAULT == 1
+#define __SYM_FUNC_LANDING_PAD	hint 34		/* bti c */
+#define __GNU_PROPERTY_AARCH64_BTI	1
+#else
+#define __SYM_FUNC_LANDING_PAD
+#define __GNU_PROPERTY_AARCH64_BTI	0
+#endif
+
+/* The functions do not save the link register, nothing to sign */
+#if defined(__ARM_FEATURE_PAC_DEFAULT) && __ARM_FEATURE_PAC_DEFAULT != 0
+#define __GNU_PROPERTY_AARCH64_PAC	2
+#else
+#define __GNU_PROPERTY_AARCH64_PAC	0
+#endif
+
+#define SYM_FUNC_START(name)					\
+	.pushsection .text.name, "ax", %progbits ;		\
+	.globl name ; .hidden name ; .type name, %function ;	\
+	.balign 4 ; name: __SYM_FUNC_LANDING_PAD
+#define SYM_FUNC_END(name)	.size name, . - name ; .popsection
+
+	.pushsection .note.GNU-stack, "", %progbits
+	.popsection
+
+#if __GNU_PROPERTY_AARCH64_BTI || __GNU_PROPERTY_AARCH64_PAC
+	.pushsection .note.gnu.property, "a"
+	.balign 8
+	.long 4					/* name size */
+	.long 16				/* descriptor size */
+	.long 5					/* NT_GNU_PROPERTY_TYPE_0 */
+	.asciz "GNU"
+	.long 0xc0000000			/* GNU_PROPERTY_AARCH64_FEATURE_1_AND */
+	.long 4
+	.long __GNU_PROPERTY_AARCH64_BTI | __GNU_PROPERTY_AARCH64_PAC
+	.long 0
+	.popsection
+#endif
+
+#else
+#error "No stand-in linkage for this architecture"
+#endif
+
+#endif
