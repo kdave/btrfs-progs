@@ -62,6 +62,20 @@ AS_IF([test "x$target_cpu" = 'xx86_64'], [
 	AX_CHECK_COMPILE_FLAG([-msha], [HAVE_CFLAG_msha=1], [HAVE_CFLAG_msha=0])
 	AC_SUBST([HAVE_CFLAG_msha])
 	AC_DEFINE_UNQUOTED([HAVE_CFLAG_msha], [$HAVE_CFLAG_msha], [Compiler supports -msha])
+
+	AX_CHECK_COMPILE_FLAG([-mpclmul], [HAVE_CFLAG_mpclmul=1], [HAVE_CFLAG_mpclmul=0])
+	AC_SUBST([HAVE_CFLAG_mpclmul])
+	AC_DEFINE_UNQUOTED([HAVE_CFLAG_mpclmul], [$HAVE_CFLAG_mpclmul], [Compiler supports -mpclmul])
+
+	AX_CHECK_COMPILE_FLAG([-mvpclmulqdq], [HAVE_CFLAG_mvpclmulqdq=1], [HAVE_CFLAG_mvpclmulqdq=0])
+	AC_SUBST([HAVE_CFLAG_mvpclmulqdq])
+	AC_DEFINE_UNQUOTED([HAVE_CFLAG_mvpclmulqdq], [$HAVE_CFLAG_mvpclmulqdq], [Compiler supports -mvpclmulqdq])
+], [])
+
+AS_IF([test "x$target_cpu" = 'xaarch64'], [
+	AX_CHECK_COMPILE_FLAG([-march=armv8-a+crc+crypto], [HAVE_CFLAG_march_armv8_crc_crypto=1], [HAVE_CFLAG_march_armv8_crc_crypto=0])
+	AC_SUBST([HAVE_CFLAG_march_armv8_crc_crypto])
+	AC_DEFINE_UNQUOTED([HAVE_CFLAG_march_armv8_crc_crypto], [$HAVE_CFLAG_march_armv8_crc_crypto], [Compiler supports -march=armv8-a+crc+crypto])
 ], [])
 
 AX_CHECK_COMPILE_FLAG([-std=gnu11], [],

@@ -15,7 +15,7 @@
  */
 
 /*
- * Detect CPU feature bits at runtime (x86_64 only)
+ * Detect CPU feature bits at runtime (x86_64 and aarch64)
  */
 
 #ifndef __CPU_UTILS_H__
@@ -38,6 +38,11 @@ enum cpu_feature {
 	ENUM_CPU_BIT(CPU_FLAG_SHA),
 	ENUM_CPU_BIT(CPU_FLAG_AVX),
 	ENUM_CPU_BIT(CPU_FLAG_AVX2),
+	/* VPCLMULQDQ, AVX512F and AVX512VL, and the OS saves the AVX-512 state */
+	ENUM_CPU_BIT(CPU_FLAG_VPCLMUL_AVX512),
+	/* aarch64, HWCAP_CRC32 and HWCAP_PMULL */
+	ENUM_CPU_BIT(CPU_FLAG_ARMV8_CRC32),
+	ENUM_CPU_BIT(CPU_FLAG_ARMV8_PMULL),
 };
 
 #undef ENUM_CPU_BIT
