@@ -16,86 +16,71 @@
 static uint32_t crc32c_ref(uint32_t crc, unsigned char const *data, uint32_t length);
 static uint32_t (*crc32c_impl)(uint32_t crc, unsigned char const *data, uint32_t length) = crc32c_ref;
 
-#ifdef __x86_64__
-
-/* asmlinkage */ unsigned int crc_pcl(const unsigned char *buffer, unsigned int len, unsigned int crc_init);
-static unsigned int crc32c_pcl(uint32_t crc, unsigned char const *data, uint32_t len) {
-	return crc_pcl(data, len, crc);
-}
+#if CRC32C_X86
 
 /*
- * Based on a posting to lkml by Austin Zhang <austin.zhang@intel.com>
- *
- * Using hardware provided CRC32 instruction to accelerate the CRC32 disposal.
- * CRC32C polynomial:0x1EDC6F41(BE)/0x82F63B78(LE)
- * CRC32 is a new instruction in Intel SSE4.2, the reference can be found at:
- * http://www.intel.com/products/processor/manuals/
- * Intel(R) 64 and IA-32 Architectures Software Developer's Manual
- * Volume 2A: Instruction Set Reference, A-M
+ * Below these lengths the generated code runs one stream of crc32 instructions
+ * too, the plain loop does it with less overhead per call.
  */
-#if  __SIZEOF_LONG__ == 8
-#define REX_PRE "0x48, "
-#define SCALE_F 8
-#else
-#define REX_PRE
-#define SCALE_F 4
+#define CRC32C_PCLMUL_MIN_LEN	4080
+#define CRC32C_AVX512_MIN_LEN	256
+
+static uint32_t crc32c_pclmul(uint32_t crc, unsigned char const *data, uint32_t length)
+{
+	if (length < CRC32C_PCLMUL_MIN_LEN)
+		return crc32c_x86_sse42(crc, data, length);
+	return ~crc32c_x86_pclmul(~crc, (const char *)data, length);
+}
+
+#if CRC32C_X86_AVX512
+static uint32_t crc32c_avx512(uint32_t crc, unsigned char const *data, uint32_t length)
+{
+	if (length < CRC32C_AVX512_MIN_LEN)
+		return crc32c_x86_sse42(crc, data, length);
+	return ~crc32c_x86_avx512(~crc, (const char *)data, length);
+}
 #endif
 
-static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
-					uint32_t length)
+void crc32c_init_accel(void)
 {
-	while (length--) {
-		__asm__ __volatile__(
-			".byte 0xf2, 0xf, 0x38, 0xf0, 0xf1"
-			:"=S"(crc)
-			:"0"(crc), "c"(*data)
-		);
-		data++;
+#if CRC32C_X86_AVX512
+	if (cpu_has_feature(CPU_FLAG_VPCLMUL_AVX512)) {
+		crc32c_impl = crc32c_avx512;
+		return;
 	}
-
-	return crc;
+#endif
+	if (cpu_has_feature(CPU_FLAG_PCLMUL))
+		crc32c_impl = crc32c_pclmul;
+	else if (cpu_has_feature(CPU_FLAG_SSE42))
+		crc32c_impl = crc32c_x86_sse42;
+	else
+		crc32c_impl = crc32c_ref;
 }
 
+#elif CRC32C_ARMV8
+
 /*
- * Accelerated implementation using SSE 4.2 extension for instruction crc32c.
- * Steps through buffer one byte at at time, calculates reflected crc using
- * table.
+ * Below this length the generated code runs one stream of crc32c instructions
+ * too, the plain loop does it with less overhead per call.
  */
-static uint32_t crc32c_sse42(uint32_t crc, unsigned char const *data, uint32_t length)
+#define CRC32C_PMULL_MIN_LEN	128
+
+static uint32_t crc32c_pmull(uint32_t crc, unsigned char const *data, uint32_t length)
 {
-	unsigned int iquotient = length / SCALE_F;
-	unsigned int iremainder = length % SCALE_F;
-	unsigned long *ptmp = (unsigned long *)data;
-
-	while (iquotient--) {
-		__asm__ __volatile__(
-			".byte 0xf2, " REX_PRE "0xf, 0x38, 0xf1, 0xf1;"
-			:"=S"(crc)
-			:"0"(crc), "c"(*ptmp)
-		);
-		ptmp++;
-	}
-
-	if (iremainder)
-		crc = crc32c_intel_le_hw_byte(crc, (unsigned char *)ptmp,
-				 iremainder);
-
-	return crc;
+	if (length < CRC32C_PMULL_MIN_LEN)
+		return crc32c_armv8(crc, data, length);
+	return ~crc32c_armv8_pmull(~crc, (const char *)data, length);
 }
 
 void crc32c_init_accel(void)
 {
-	if (0) {
-	} else if (cpu_has_feature(CPU_FLAG_PCLMUL)) {
-		/* printf("CRC32C: pcl\n"); */
-		crc32c_impl = crc32c_pcl;
-	} else if (cpu_has_feature(CPU_FLAG_SSE42)) {
-		/* printf("CRC32c: intel\n"); */
-		crc32c_impl = crc32c_sse42;
-	} else {
-		/* printf("CRC32c: fallback\n"); */
+	if (cpu_has_feature(CPU_FLAG_ARMV8_CRC32) &&
+	    cpu_has_feature(CPU_FLAG_ARMV8_PMULL))
+		crc32c_impl = crc32c_pmull;
+	else if (cpu_has_feature(CPU_FLAG_ARMV8_CRC32))
+		crc32c_impl = crc32c_armv8;
+	else
 		crc32c_impl = crc32c_ref;
-	}
 }
 
 #else
@@ -105,7 +90,7 @@ void crc32c_init_accel(void)
 	crc32c_impl = crc32c_ref;
 }
 
-#endif /* __x86_64__ */
+#endif
 
 /*
  * This is the CRC-32C table

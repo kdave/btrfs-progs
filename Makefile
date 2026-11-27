@@ -107,8 +107,6 @@ ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough) \
 			$(call cc-option, -Wmissing-prototypes) \
 			-Wshadow
 
-ASFLAGS =
-
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
 	 -std=gnu11 \
@@ -164,6 +162,15 @@ crypto_blake2b_avx2_cflags = -mavx2
 endif
 ifeq ($(HAVE_CFLAG_msha),1)
 crypto_sha256_x86_cflags = -msse4.1 -msha
+endif
+ifeq ($(HAVE_CFLAG_mpclmul),1)
+crypto_crc32c_x86_cflags = -msse4.2 -mpclmul
+endif
+ifeq ($(HAVE_CFLAG_mvpclmulqdq),1)
+crypto_crc32c_x86_avx512_cflags = -msse4.2 -mpclmul -mavx512f -mavx512vl -mvpclmulqdq
+endif
+ifeq ($(HAVE_CFLAG_march_armv8_crc_crypto),1)
+crypto_crc32c_arm64_cflags = -march=armv8-a+crc+crypto
 endif
 
 LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
@@ -414,8 +421,11 @@ CRYPTO_CFLAGS = -DCRYPTOPROVIDER_BUILTIN=1
 endif
 
 ifeq ($(TARGET_CPU),x86_64)
-CRYPTO_OBJECTS += crypto/crc32c-pcl-intel-asm_64.o
-ASFLAGS += -fPIC
+CRYPTO_OBJECTS += crypto/crc32c-x86.o crypto/crc32c-x86-avx512.o
+endif
+
+ifeq ($(TARGET_CPU),aarch64)
+CRYPTO_OBJECTS += crypto/crc32c-arm64.o
 endif
 
 CHECKER_FLAGS += $(btrfs_convert_cflags)
@@ -478,13 +488,6 @@ else
 	check_echo = true
 endif
 
-.S.o:
-	@echo "  AS       $@"
-	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
-
-%.static.o: %.S
-	@echo "  AS       $@"
-	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@
 #
 # Pick from per-file variables, btrfs_*_cflags
 #
